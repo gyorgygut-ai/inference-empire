@@ -1,0 +1,271 @@
+import base64
+import io
+import os
+from pathlib import Path
+from typing import Literal, Optional
+
+from pydantic import BaseModel, ConfigDict, Field
+
+from beam import Image, QueueDepthAutoscaler, Volume, endpoint
+
+from r2_upload import Artifact, upload_to_r2
+
+CACHE_PATH = "./hf-cache"
+
+image = (
+    Image(python_version="python3.11")
+    .add_python_packages([
+        "torch==2.9.1",
+        "diffusers==0.39.0",
+        "transformers>=4.57,<5",
+        "accelerate>=0.31.0",
+        "safetensors",
+        "huggingface_hub[hf-transfer]",
+        "pillow",
+        "protobuf",
+        "opencv-python-headless",
+        "peft",
+        "boto3",
+    ])
+    .with_envs({
+        "HF_HOME": CACHE_PATH,
+        "HF_HUB_ENABLE_HF_TRANSFER": "1",
+    })
+)
+
+
+class Krea2Ref2ImgInput(BaseModel):
+    model_config = ConfigDict(title="Krea2Ref2ImgInput")
+    prompt: str
+    reference_image: Optional[str] = Field(default=None)
+    height: int = Field(default=768)
+    width: int = Field(default=768)
+    num_inference_steps: int = Field(default=8)
+    guidance_scale: float = Field(default=0.0)
+    seed: Optional[int] = Field(default=None)
+    lora_scale: float = Field(default=1.0)
+    face_crop: bool = Field(default=True)
+
+
+class Krea2Ref2ImgOutput(BaseModel):
+    model_config = ConfigDict(title="Krea2Ref2ImgOutput")
+    artifact: Artifact
+
+
+def load_pipeline():
+    import torch
+    import torch.distributed as dist
+
+    dist.is_available = lambda: False
+
+    # Krea-2-Turbo's Qwen3-VL text encoder config ships `rope_scaling: null`;
+    # transformers 4.57.x reads it unguarded (modeling_qwen3_vl.py:297) and
+    # crashes with `'NoneType' object has no attribute 'get'`.
+    import transformers.models.qwen3_vl.modeling_qwen3_vl as _q3vl_modeling
+
+    _orig_q3vl_rope_init = _q3vl_modeling.Qwen3VLTextRotaryEmbedding.__init__
+
+    def _q3vl_safe_rope_init(self, config, device=None):
+        if getattr(config, "rope_scaling", None) is None:
+            config.rope_scaling = {
+                "rope_type": "default",
+                "mrope_section": [24, 20, 20],
+            }
+        _orig_q3vl_rope_init(self, config, device)
+
+    _q3vl_modeling.Qwen3VLTextRotaryEmbedding.__init__ = _q3vl_safe_rope_init
+
+    from diffusers import DiffusionPipeline
+    from huggingface_hub import snapshot_download
+    from transformers import AutoTokenizer
+
+    runtime_dir = Path(
+        snapshot_download(
+            "yijunwang2/krea2-reid",
+            allow_patterns=[
+                "pipeline.py",
+                "face_crop.py",
+                "models/*.onnx",
+                "krea2_reid_rank32.safetensors",
+            ],
+            cache_dir=CACHE_PATH,
+        )
+    )
+
+    token = os.environ.get("HF_TOKEN") or None
+
+    # Krea-2-Turbo's tokenizer/ folder ships only tokenizer.json (no
+    # vocab.json), and its tokenizer_config.json stores `extra_special_tokens`
+    # as a raw list. Both break transformers 4.57.x.
+    tokenizer = AutoTokenizer.from_pretrained(
+        "krea/Krea-2-Turbo",
+        subfolder="tokenizer",
+        token=token,
+        trust_remote_code=True,
+        cache_dir=CACHE_PATH,
+        extra_special_tokens={
+            t: t
+            for t in [
+                "<|im_start|>",
+                "<|im_end|>",
+                "<|object_ref_start|>",
+                "<|object_ref_end|>",
+                "<|box_start|>",
+                "<|box_end|>",
+                "<|quad_start|>",
+                "<|quad_end|>",
+                "<|vision_start|>",
+                "<|vision_end|>",
+                "<|vision_pad|>",
+                "<|image_pad|>",
+                "<|video_pad|>",
+            ]
+        },
+    )
+
+    pipe = DiffusionPipeline.from_pretrained(
+        "krea/Krea-2-Turbo",
+        custom_pipeline=str(runtime_dir),
+        torch_dtype=torch.bfloat16,
+        token=token,
+        trust_remote_code=True,
+        tokenizer=None,
+        cache_dir=CACHE_PATH,
+    )
+    pipe.tokenizer = tokenizer
+    pipe.load_lora_weights(
+        runtime_dir,
+        weight_name="krea2_reid_rank32.safetensors",
+        adapter_name="reid",
+    )
+    pipe.set_adapters(["reid"], weights=[1.0])
+    pipe.enable_model_cpu_offload()
+
+    return pipe, runtime_dir, torch
+
+
+def _decode_image(base64_str: str):
+    from PIL import Image as PILImage
+
+    img = PILImage.open(io.BytesIO(base64.b64decode(base64_str)))
+    return img.convert("RGB")
+
+
+def _face_crop(img, runtime_dir: Path, margin: float = 0.4):
+    import cv2
+    import numpy as np
+
+    onnx = any(runtime_dir.glob("models/*face*.onnx"))
+    if not onnx:
+        return img
+
+    bgr = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
+    detector = cv2.FaceDetectorYN_create(
+        str(next(runtime_dir.glob("models/*face*.onnx"))),
+        (bgr.shape[1], bgr.shape[0]),
+        score_threshold=0.5,
+    )
+    _, faces = detector.detect(bgr)
+    if faces is None or len(faces) == 0:
+        return img
+
+    x, y, w, h = (int(v) for v in faces[0][:4])
+    pad_x = int(w * margin)
+    pad_y = int(h * margin)
+    x0 = max(x - pad_x, 0)
+    y0 = max(y - pad_y, 0)
+    x1 = min(x + w + pad_x, bgr.shape[1])
+    y1 = min(y + h + pad_y, bgr.shape[0])
+    crop = bgr[y0:y1, x0:x1]
+
+    from PIL import Image as PILImage
+
+    return PILImage.fromarray(cv2.cvtColor(crop, cv2.COLOR_BGR2RGB))
+
+
+@endpoint(
+    name="krea2-ref2img-worker",
+    cpu=8,
+    memory="64Gi",
+    gpu="RTX5090",
+    image=image,
+    on_start=load_pipeline,
+    volumes=[Volume(name="hf-cache", mount_path=CACHE_PATH)],
+    autoscaler=QueueDepthAutoscaler(max_containers=1, tasks_per_container=1),
+    keep_warm_seconds=0,
+    timeout=300,
+    secrets=["HF_TOKEN", "R2_ACCESS_KEY", "R2_SECRET_KEY"],
+    env={
+        "R2_BUCKET": "generated-media",
+        "R2_ENDPOINT": "https://29b2f092b2dbc0b63f48f491ddc177ee.r2.cloudflarestorage.com",
+        "PYTORCH_NVML_BASED_CUDA_CHECK": "0",
+    },
+)
+def generate(
+    context,
+    prompt: str,
+    reference_image: Optional[str] = None,
+    height: int = 768,
+    width: int = 768,
+    num_inference_steps: int = 8,
+    guidance_scale: float = 0.0,
+    seed: Optional[int] = None,
+    lora_scale: float = 1.0,
+    face_crop: bool = True,
+):
+    pipe, runtime_dir, torch = context.on_start_value
+
+    req = Krea2Ref2ImgInput(
+        prompt=prompt,
+        reference_image=reference_image,
+        height=height,
+        width=width,
+        num_inference_steps=num_inference_steps,
+        guidance_scale=guidance_scale,
+        seed=seed,
+        lora_scale=lora_scale,
+        face_crop=face_crop,
+    )
+
+    pipe.set_adapters(["reid"], weights=[req.lora_scale])
+
+    base_kwargs = {
+        "prompt": req.prompt,
+        "width": req.width,
+        "height": req.height,
+        "num_inference_steps": req.num_inference_steps,
+        "guidance_scale": req.guidance_scale,
+    }
+    if req.seed is not None:
+        base_kwargs["generator"] = torch.Generator(device="cpu").manual_seed(
+            req.seed
+        )
+
+    if req.reference_image:
+        ref = _decode_image(req.reference_image)
+        if req.face_crop:
+            ref = _face_crop(ref, runtime_dir)
+        result = pipe(
+            **base_kwargs,
+            image=ref,
+            reference_max_pixels=384 * 384,
+            vl_image_max_pixels=384 * 384,
+            encode_reference_in_prompt=True,
+            kv_cache=True,
+        )
+    else:
+        result = pipe(**base_kwargs)
+
+    gen_image = result.images[0]
+    buffer = io.BytesIO()
+    gen_image.save(buffer, format="PNG")
+    file_bytes = buffer.getvalue()
+
+    artifact = upload_to_r2(
+        file_bytes,
+        prefix="krea2",
+        extension="png",
+        content_type="image/png",
+    )
+
+    return Krea2Ref2ImgOutput(artifact=artifact).model_dump()

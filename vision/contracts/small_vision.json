@@ -1,0 +1,43 @@
+{
+  "input": {
+    "title": "SmallVisionInput",
+    "required": ["image_base64"],
+    "properties": {
+      "image_base64": { "type": "string" }
+    }
+  },
+  "output": {
+    "title": "SmallVisionOutput",
+    "required": ["classification", "subjects", "description"],
+    "properties": {
+      "classification": {
+        "type": "string",
+        "enum": [
+          "portrait_0p",
+          "portrait_1p",
+          "portrait_2p",
+          "portrait_3p",
+          "portrait_group",
+          "selfie_1p",
+          "selfie_2p",
+          "selfie_group",
+          "group_photo_2p",
+          "group_photo_3p",
+          "group_photo_4p",
+          "group_photo_5p_plus",
+          "group_photo_group",
+          "food_0p",
+          "document_0p",
+          "landscape_0p",
+          "animal_0p",
+          "object_0p",
+          "screenshot_0p",
+          "receipt_0p",
+          "other_0p"
+        ]
+      },
+      "subjects": { "type": "array", "items": { "type": "string" } },
+      "description": { "type": "string" }
+    }
+  }
+}

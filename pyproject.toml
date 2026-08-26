@@ -1,0 +1,25 @@
+[project]
+name = "cloud-workers"
+version = "0.1.0"
+description = "Unified AI worker monorepo"
+requires-python = ">=3.11"
+dependencies = [
+    "runpod-flash",
+    "beam-client",
+    "modal",
+    "pydantic>=2.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "ruff",
+    "mypy",
+]
+
+[tool.ruff]
+line-length = 100
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
