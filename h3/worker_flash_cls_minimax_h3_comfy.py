@@ -236,17 +236,6 @@ class MiniMaxH3ComfyWorker:
             payload["images"] = images
 
         import asyncio
-        try:
-            loop = asyncio.get_running_loop()
-        except RuntimeError:
-            loop = None
-
-        if loop and loop.is_running():
-            # If running in async loop, we can't block easily without nest_asyncio,
-            # but generate handlers in this repo are sync def or called synchronously.
-            # However endpoint.runsync is async. We can use asyncio.run or run_until_complete if needed,
-            # but wait, let's check how other workers call async or if generate is def.
-            pass
 
         # Since generate is a regular `def` method in class-based workers (Pattern C),
         # but endpoint runsync is async, we can run it via asyncio.run or similar.

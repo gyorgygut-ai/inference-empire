@@ -89,7 +89,6 @@ image = (
     scaledown_window=150,
     max_containers=1,
 )
-@modal.concurrent(max_inputs=4)
 class SmallVisionWorker:
     @modal.enter()
     def load(self):

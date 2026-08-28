@@ -185,10 +185,6 @@ class MiniMaxH3Ref2VAWorker:
         self.write_video_audio = write_video_audio
         self.read_audio = read_audio
 
-        self.torch = torch
-        self.write_video_audio = write_video_audio
-        self.read_audio = read_audio
-
         vram_config = {
             "offload_dtype": "disk",
             "offload_device": "disk",

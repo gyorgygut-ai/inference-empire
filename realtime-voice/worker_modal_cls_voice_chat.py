@@ -112,7 +112,7 @@ image = (
     .pip_install(
         "torch==2.9.1",
         "torchaudio==2.9.1",
-        "transformers==4.51.3",
+        "transformers>=4.57,<5",
         "accelerate",
         "bitsandbytes",
         "faster-whisper",

@@ -6,7 +6,7 @@ import pytest
 import numpy as np
 from fastapi.testclient import TestClient
 
-import worker_voice_chat as w
+import worker_modal_cls_voice_chat as w
 
 
 class _FakeStreamer:

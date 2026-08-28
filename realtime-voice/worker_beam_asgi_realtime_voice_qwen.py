@@ -36,7 +36,7 @@ image = (
             "soundfile",
             "faster-whisper",
             "ctranslate2==4.4.0",
-            "transformers==5.2.0",
+            "transformers>=4.57,<5",
             "torch",
             "bitsandbytes",
             "chatterbox-tts==0.1.7",

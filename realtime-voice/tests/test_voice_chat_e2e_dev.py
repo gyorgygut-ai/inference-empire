@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-# Dev E2E requires a running `modal serve worker_voice_chat.py` endpoint.
+# Dev E2E requires a running `modal serve worker_modal_cls_voice_chat.py` endpoint.
 # Set VOICE_CHAT_WS_URL (ws://...) to run against it; otherwise the suite skips.
 WS_URL = os.environ.get("VOICE_CHAT_WS_URL")
 
@@ -12,3 +12,6 @@ def test_dev_e2e_reachable():
     import websockets  # noqa: F401
 
     assert WS_URL.startswith("ws://") or WS_URL.startswith("wss://")
+
+
+# TODO: add dev e2e tests (quick smoke ping, good input sunny path)

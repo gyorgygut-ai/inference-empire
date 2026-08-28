@@ -4,7 +4,7 @@ from pydantic import ValidationError
 
 from tests.conftest import _load_worker
 
-_cls = _load_worker("worker_minimax_h3_ref2va_comfy", "MiniMaxH3Ref2VAComfyWorker")
+_cls = _load_worker("worker_flash_pre_minimax_h3_ref2va_comfy", "MiniMaxH3Ref2VAComfyWorker")
 Input = _cls.Input
 Output = _cls.Output
 

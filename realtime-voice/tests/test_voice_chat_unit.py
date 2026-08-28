@@ -6,7 +6,7 @@ from types import SimpleNamespace
 import numpy as np
 import pytest
 
-import worker_voice_chat as w
+import worker_modal_cls_voice_chat as w
 
 
 # --------------------------------------------------------------------------
