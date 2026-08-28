@@ -40,6 +40,54 @@ WORKERS: dict[str, dict[str, Any]] = {
         "deps": ["torch", "transformers"],
         "pip_deps": ["torch", "transformers"],
     },
+    "minimax_h3_fl2va_beam_tq": {
+        "module": "worker_beam_tq_minimax_h3_fl2va",
+        "class": "MiniMaxH3Fl2VAWorker",
+        "deps": ["torch", "transformers", "diffsynth"],
+        "pip_deps": ["torch", "transformers"],
+    },
+    "minimax_h3_ref2va_beam_tq": {
+        "module": "worker_beam_tq_minimax_h3_ref2va",
+        "class": "MiniMaxH3Ref2VAWorker",
+        "deps": ["torch", "transformers", "diffsynth"],
+        "pip_deps": ["torch", "transformers"],
+    },
+    "minimax_h3_ref2va_comfy_beam_tq": {
+        "module": "worker_beam_tq_minimax_h3_ref2va_comfy",
+        "class": "ValidatedInput",
+        "deps": ["torch"],
+        "pip_deps": ["torch"],
+    },
+    "minimax_h3_fl2va_modal": {
+        "module": "worker_modal_cls_minimax_h3_fl2va",
+        "class": "MiniMaxH3Fl2VAWorker",
+        "deps": ["torch", "transformers", "diffsynth"],
+        "pip_deps": ["torch", "transformers"],
+    },
+    "minimax_h3_ref2va_modal": {
+        "module": "worker_modal_cls_minimax_h3_ref2va",
+        "class": "MiniMaxH3Ref2VAWorker",
+        "deps": ["torch", "transformers", "diffsynth"],
+        "pip_deps": ["torch", "transformers"],
+    },
+    "voice_chatterbox": {
+        "module": "worker_beam_asgi_realtime_voice_chatterbox",
+        "class": "worker",
+        "deps": ["fastapi"],
+        "pip_deps": ["fastapi"],
+    },
+    "voice_openvoice": {
+        "module": "worker_beam_asgi_realtime_voice_openvoice",
+        "class": "worker",
+        "deps": ["fastapi"],
+        "pip_deps": ["fastapi"],
+    },
+    "voice_qwen": {
+        "module": "worker_beam_asgi_realtime_voice_qwen",
+        "class": "worker",
+        "deps": ["fastapi"],
+        "pip_deps": ["fastapi"],
+    },
 }
 
 
