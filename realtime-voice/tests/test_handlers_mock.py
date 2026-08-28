@@ -14,10 +14,12 @@ import types
 import unittest
 from unittest.mock import MagicMock
 
-import numpy as np
+import pytest
 
-from handlers.llm import QwenLLM
-from handlers.stt import WhisperSTT
+numpy = pytest.importorskip("numpy")
+
+from handlers.llm import QwenLLM  # noqa: E402
+from handlers.stt import WhisperSTT  # noqa: E402
 
 try:
     from handlers.tts import QwenTTS

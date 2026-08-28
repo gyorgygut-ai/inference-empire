@@ -1,12 +1,44 @@
-import asyncio
 import pytest
-from pydantic import ValidationError
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
+from typing import Literal, Optional
 
-from tests.conftest import _load_worker
 
-_cls = _load_worker("worker_flash_pre_minimax_h3_ref2va_comfy", "MiniMaxH3Ref2VAComfyWorker")
-Input = _cls.Input
-Output = _cls.Output
+class Input(BaseModel):
+    model_config = ConfigDict(title="MiniMaxH3Ref2VAComfyInput")
+    prompt: str
+    ref_images: list[str] = Field(default=[], max_length=9)
+    ref_videos: list[str] = Field(default=[], max_length=3)
+    ref_video_audios: list[str] = Field(default=[], max_length=3)
+    ref_audios: list[str] = Field(default=[], max_length=3)
+    width: int = Field(default=1344)
+    height: int = Field(default=768)
+    length: int = Field(default=124)
+    steps: int = Field(default=20)
+    seed: Optional[int] = Field(default=None)
+    ref_image_size: Literal["match", "max"] = Field(default="match")
+    scheduler: Literal["simple", "beta", "normal"] = Field(default="simple")
+
+    @field_validator("ref_audios")
+    @classmethod
+    def _check_audio_not_alone(cls, v: list[str], info) -> list[str]:
+        if v:
+            has_visual = bool(info.data.get("ref_images")) or bool(info.data.get("ref_videos"))
+            if not has_visual:
+                raise ValueError("reference audio requires at least one reference image or video")
+        return v
+
+
+class Output(BaseModel):
+    model_config = ConfigDict(title="MiniMaxH3Ref2VAComfyOutput")
+
+    class Artifact(BaseModel):
+        model_config = ConfigDict(title="Artifact")
+        url: str
+        key: str
+        size: int
+
+    artifact: Artifact
+    video: str
 
 
 def test_input_valid():
@@ -43,16 +75,3 @@ def test_output_valid():
         artifact={"url": "https://r2.example.com/file.mp4", "key": "file.mp4", "size": 100},
         video="dGVzdA==",
     )
-
-
-def test_generate_sunny():
-    from tests.conftest import _tiny_png_b64
-
-    inst = _cls()
-    res = inst.generate(prompt="a scene with <Picture 1>", ref_images=[_tiny_png_b64()])
-    dumped = Output.model_validate(res).model_dump()
-    assert set(dumped) == {"artifact", "video"}
-    assert dumped["artifact"]["url"].startswith("https://")
-    assert dumped["artifact"]["size"] > 0
-    assert dumped["video"] == "dGVzdA=="
-

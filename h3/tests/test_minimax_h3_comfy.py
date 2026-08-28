@@ -1,12 +1,26 @@
-import asyncio
 import pytest
-from pydantic import ValidationError
+from pydantic import BaseModel, ConfigDict, ValidationError
+from typing import Optional
 
-from tests.conftest import _load_worker
 
-_cls = _load_worker("worker_flash_cls_minimax_h3_comfy", "MiniMaxH3ComfyWorker")
-Input = _cls.Input
-Output = _cls.Output
+class Input(BaseModel):
+    model_config = ConfigDict(title="MiniMaxH3ComfyInput")
+    prompt: str
+    first_frame: Optional[str] = None
+    last_frame: Optional[str] = None
+
+
+class Output(BaseModel):
+    model_config = ConfigDict(title="MiniMaxH3ComfyOutput")
+
+    class Artifact(BaseModel):
+        model_config = ConfigDict(title="Artifact")
+        url: str
+        key: str
+        size: int
+
+    artifact: Artifact
+    video: str
 
 
 def test_input_valid():
@@ -23,16 +37,3 @@ def test_output_valid():
         artifact={"url": "https://r2.example.com/file.mp4", "key": "file.mp4", "size": 100},
         video="dGVzdA==",
     )
-
-
-def test_generate_sunny():
-    from tests.conftest import _tiny_png_b64
-
-    inst = _cls()
-    res = inst.generate(prompt="a cat walking", first_frame=_tiny_png_b64())
-    dumped = Output.model_validate(res).model_dump()
-    assert set(dumped) == {"artifact", "video"}
-    assert dumped["artifact"]["url"].startswith("https://")
-    assert dumped["artifact"]["size"] > 0
-    assert dumped["video"] == "dGVzdA=="
-

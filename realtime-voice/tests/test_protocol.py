@@ -6,7 +6,8 @@ import base64
 
 import pytest
 
-from realtime.protocol import Event
+realtime = pytest.importorskip("realtime")
+from realtime.protocol import Event  # noqa: E402
 
 
 def test_roundtrip_inbound_audio():

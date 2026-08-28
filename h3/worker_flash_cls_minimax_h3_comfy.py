@@ -1,6 +1,6 @@
 import os
 
-from runpod_flash import CudaVersion, Endpoint, GpuGroup, PodTemplate
+from runpod_flash import Endpoint, GpuGroup, PodTemplate
 
 
 @Endpoint(
@@ -10,7 +10,6 @@ from runpod_flash import CudaVersion, Endpoint, GpuGroup, PodTemplate
     idle_timeout=5,
     flashboot=True,
     execution_timeout_ms=3600_000,
-    min_cuda_version=CudaVersion.V13_0,
     template=PodTemplate(containerDiskInGb=150),
     env={
         "HF_HOME": "/runpod-volume/huggingface-cache",

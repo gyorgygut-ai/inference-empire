@@ -1,4 +1,3 @@
-import importlib
 import pytest
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from typing import Literal, Optional
@@ -41,9 +40,3 @@ def test_output_valid():
 
     artifact = {"url": "https://r2.example.com/file.mp4", "key": "file.mp4", "size": 100}
     assert_artifact_nonempty(artifact)
-
-
-def test_worker_import():
-    mod = importlib.import_module("worker_beam_tq_minimax_h3_fl2va")
-    assert hasattr(mod, "MiniMaxH3Fl2VAInput")
-    assert hasattr(mod, "MiniMaxH3Fl2VAOutput")

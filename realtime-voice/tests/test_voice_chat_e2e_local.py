@@ -3,10 +3,11 @@ import threading
 from types import SimpleNamespace
 
 import pytest
-import numpy as np
-from fastapi.testclient import TestClient
 
-import worker_modal_cls_voice_chat as w
+numpy = pytest.importorskip("numpy")
+np = numpy
+
+import worker_modal_cls_voice_chat as w  # noqa: E402
 
 
 class _FakeStreamer:
@@ -37,6 +38,8 @@ def pipeline():
 
 
 def test_ws_realtime_protocol(pipeline):
+    from fastapi.testclient import TestClient
+
     app = w.build_web_app(pipeline)
     client = TestClient(app)
 

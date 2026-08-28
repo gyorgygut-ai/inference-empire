@@ -1,9 +1,9 @@
-import importlib
-
 import pytest
 
 
 def test_module_import():
+    import importlib
+
     mod = importlib.import_module("worker_beam_asgi_realtime_voice_qwen")
     assert hasattr(mod, "worker")
     assert hasattr(mod, "image")

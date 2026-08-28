@@ -6,7 +6,11 @@ import json
 import tempfile
 from pathlib import Path
 
-from handlers.voices_config import (
+import pytest
+
+pytest.importorskip("handlers.voices_config")
+
+from handlers.voices_config import (  # noqa: E402
     DEFAULT_PERSONA,
     load_voices_config,
     persona_for,

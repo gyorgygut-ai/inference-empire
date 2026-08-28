@@ -9,9 +9,9 @@ from __future__ import annotations
 
 import os
 
-import numpy as np
 import pytest
 
+numpy = pytest.importorskip("numpy")
 pytest.importorskip("faster_whisper")
 
 from handlers.stt import WhisperSTT  # noqa: E402

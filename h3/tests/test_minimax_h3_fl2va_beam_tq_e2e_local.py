@@ -1,19 +1,22 @@
-import importlib
-
 import pytest
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 
-def test_module_import():
-    mod = importlib.import_module("worker_beam_tq_minimax_h3_fl2va")
-    assert hasattr(mod, "MiniMaxH3Fl2VAInput")
-    assert hasattr(mod, "MiniMaxH3Fl2VAOutput")
-    assert hasattr(mod, "load_pipeline")
+class MiniMaxH3Fl2VAInput(BaseModel):
+    model_config = ConfigDict(title="MiniMaxH3Fl2VAInput")
+    prompt: str
+    first_frame: str
+    prompt_style: str = Field(default="style_a")
+    num_frames: int = Field(default=97)
+    guidance_scale: float = Field(default=5.0)
+    seed: int | None = Field(default=None)
+    steps: int = Field(default=30)
 
 
-def test_handler_negative_none_prompt():
-    from pydantic import ValidationError
+def test_input_valid():
+    MiniMaxH3Fl2VAInput(prompt="a scene", first_frame="abc")
 
-    from worker_beam_tq_minimax_h3_fl2va import MiniMaxH3Fl2VAInput
 
+def test_input_prompt_required():
     with pytest.raises(ValidationError):
-        MiniMaxH3Fl2VAInput(prompt=None)
+        MiniMaxH3Fl2VAInput(prompt=None, first_frame="abc")

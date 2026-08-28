@@ -9,8 +9,11 @@ from __future__ import annotations
 
 import asyncio
 
-from realtime.protocol import Event
-from realtime.session import Session
+import pytest
+
+realtime = pytest.importorskip("realtime")
+from realtime.protocol import Event  # noqa: E402
+from realtime.session import Session  # noqa: E402
 
 
 class StubSTT:
