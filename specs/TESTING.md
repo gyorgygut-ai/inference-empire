@@ -1,4 +1,4 @@
-# Testing + Coding
+# Testing Rules
 
 **Test + Code Rules**:
 

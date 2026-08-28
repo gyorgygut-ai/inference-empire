@@ -16,6 +16,17 @@ dev = [
     "ruff",
     "mypy",
 ]
+test = [
+    "torch>=2.0",
+    "transformers>=4.57,<5",
+    "diffsynth[audio]",
+    "numpy",
+    "pillow",
+    "boto3",
+    "faster-whisper",
+    "faster-qwen3-tts",
+    "soundfile",
+]
 
 [tool.ruff]
 line-length = 100

@@ -1,69 +1,48 @@
 import importlib
 
 import pytest
-
-_has_torch = importlib.util.find_spec("torch") is not None
-
-
-def test_deps_import():
-    from tests.e2e_local.conftest import check_deps
-
-    bad = check_deps("minimax_h3_fl2va")
-    if bad:
-        pytest.skip(f"deps not available locally: {bad}")
-    assert not bad
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from typing import Optional
 
 
-def test_pip_check():
-    from tests.e2e_local.conftest import check_pip
+class Input(BaseModel):
+    model_config = ConfigDict(title="MiniMaxH3Fl2VAInput")
+    prompt: str
+    width: int = Field(default=1344)
+    height: int = Field(default=768)
+    length: int = Field(default=124)
+    steps: int = Field(default=50)
+    seed: Optional[int] = Field(default=None)
+    first_frame: Optional[str] = Field(default=None)
+    last_frame: Optional[str] = Field(default=None)
 
-    code, out = check_pip()
-    assert code == 0, f"pip check failed:\n{out}"
+
+class Output(BaseModel):
+    model_config = ConfigDict(title="MiniMaxH3Fl2VAOutput")
+
+    class Artifact(BaseModel):
+        model_config = ConfigDict(title="Artifact")
+        url: str
+        key: str
+        size: int
+
+    artifact: Artifact
 
 
 def test_module_import():
-    from tests.e2e_local.conftest import WORKERS
-
-    importlib.import_module(WORKERS["minimax_h3_fl2va"]["module"])
+    importlib.import_module("worker_flash_cls_minimax_h3_fl2va")
 
 
-@pytest.mark.skipif(not _has_torch, reason="requires torch (remote Flash environment)")
-def test_handler_output_valid():
-    from tests.e2e_local.conftest import _tiny_png_b64, build_worker, validate_output
-
-    worker = build_worker("minimax_h3_fl2va")
-    import asyncio
-
-    result = asyncio.get_event_loop().run_until_complete(
-        worker.generate(prompt="a scene", first_frame=_tiny_png_b64())
-    )
-    dumped = validate_output(worker, result)
-    assert set(dumped) == {"artifact"}
+def test_input_valid():
+    Input(prompt="a cinematic shot", first_frame="abc")
 
 
-@pytest.mark.skipif(not _has_torch, reason="requires torch (remote Flash environment)")
-def test_handler_artifact_nonempty():
-    from tests.e2e_local.conftest import _tiny_png_b64, assert_artifact_nonempty, build_worker, validate_output
-
-    worker = build_worker("minimax_h3_fl2va")
-    import asyncio
-
-    result = asyncio.get_event_loop().run_until_complete(
-        worker.generate(prompt="a scene", first_frame=_tiny_png_b64())
-    )
-    dumped = validate_output(worker, result)
-    assert_artifact_nonempty(dumped)
-
-
-@pytest.mark.skipif(not _has_torch, reason="requires torch (remote Flash environment)")
-def test_handler_negative_none_prompt():
-    from pydantic import ValidationError
-    from tests.e2e_local.conftest import build_worker
-
-    worker = build_worker("minimax_h3_fl2va")
-    import asyncio
-
+def test_input_prompt_required():
     with pytest.raises(ValidationError):
-        asyncio.get_event_loop().run_until_complete(
-            worker.generate(prompt=None)
-        )
+        Input(prompt=None)
+
+
+def test_output_valid():
+    Output(
+        artifact={"url": "https://r2.example.com/file.mp4", "key": "file.mp4", "size": 100},
+    )

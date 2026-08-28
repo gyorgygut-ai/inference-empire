@@ -1,4 +1,4 @@
-# Worker Authoring
+# GPU Workers
 
 ## Critical Specs - Read Before Doing Anything
 

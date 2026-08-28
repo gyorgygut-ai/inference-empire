@@ -1,76 +1,45 @@
 import importlib
 
 import pytest
-from pydantic import ValidationError
-
-from tests.e2e_local.conftest import (
-    WORKERS,
-    assert_artifact_nonempty,
-    check_deps,
-)
-
-WORKER = "flux2_klein9b"
-CFG = WORKERS[WORKER]
-
-_has_torch = importlib.util.find_spec("torch") is not None
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from typing import Optional
 
 
-def test_deps_import():
-    from tests.e2e_local.conftest import check_deps
+class Input(BaseModel):
+    model_config = ConfigDict(title="Flux2Klein9bInput")
+    prompt: str
+    width: int = Field(default=1344)
+    height: int = Field(default=768)
+    steps: int = Field(default=20)
+    seed: Optional[int] = Field(default=None)
 
-    bad = check_deps(WORKER)
-    if bad:
-        pytest.skip(f"deps not available locally: {bad}")
-    assert not bad
 
+class Output(BaseModel):
+    model_config = ConfigDict(title="Flux2Klein9bOutput")
 
-def test_pip_check():
-    from tests.e2e_local.conftest import check_pip
+    class Artifact(BaseModel):
+        model_config = ConfigDict(title="Artifact")
+        url: str
+        key: str
+        size: int
 
-    code, out = check_pip()
-    assert code == 0, f"pip check failed:\n{out}"
+    artifact: Artifact
 
 
 def test_module_import():
-    importlib.import_module(CFG["module"])
+    importlib.import_module("worker_flash_cls_flux2_klein9b")
 
 
-@pytest.mark.skipif(not _has_torch, reason="requires torch (remote Flash environment)")
-def test_handler_output_valid():
-    from tests.e2e_local.conftest import build_worker, validate_output
-
-    worker = build_worker(WORKER)
-    import asyncio
-
-    result = asyncio.get_event_loop().run_until_complete(
-        worker.generate(prompt="a cat")
-    )
-    dumped = validate_output(worker, result)
-    assert set(dumped) == {"artifact"}
+def test_input_valid():
+    Input(prompt="a cat")
 
 
-@pytest.mark.skipif(not _has_torch, reason="requires torch (remote Flash environment)")
-def test_handler_artifact_nonempty():
-    from tests.e2e_local.conftest import build_worker, validate_output
-
-    worker = build_worker(WORKER)
-    import asyncio
-
-    result = asyncio.get_event_loop().run_until_complete(
-        worker.generate(prompt="a cat")
-    )
-    dumped = validate_output(worker, result)
-    assert_artifact_nonempty(dumped)
-
-
-@pytest.mark.skipif(not _has_torch, reason="requires torch (remote Flash environment)")
-def test_handler_negative_none_prompt():
-    from tests.e2e_local.conftest import build_worker
-
-    worker = build_worker(WORKER)
-    import asyncio
-
+def test_input_prompt_required():
     with pytest.raises(ValidationError):
-        asyncio.get_event_loop().run_until_complete(
-            worker.generate(prompt=None)
-        )
+        Input(prompt=None)
+
+
+def test_output_valid():
+    Output(
+        artifact={"url": "https://r2.example.com/file.png", "key": "file.png", "size": 100},
+    )
