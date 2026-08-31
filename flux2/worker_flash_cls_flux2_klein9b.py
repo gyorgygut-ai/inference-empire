@@ -84,14 +84,13 @@ class FluxKleinWorker:
 
 
 
-    def __init__(self):
+    def __init__(self, pipe=None):
         import torch.distributed as dist
         dist.is_available = lambda: False
 
         import base64
         import io
         import os
-
         import diffusers
         import torch
         from PIL import Image
@@ -102,37 +101,41 @@ class FluxKleinWorker:
         self.io = io
         self.Image = Image
 
-        MODEL_ID = "Disty0/FLUX.2-klein-9B-SDNQ-4bit-dynamic-svd-r32"
+        # If pipe injected via DI (for testing), use it; otherwise load real model
+        if pipe is not None:
+            self.pipe = pipe
+        else:
+            MODEL_ID = "Disty0/FLUX.2-klein-9B-SDNQ-4bit-dynamic-svd-r32"
 
-        token = os.environ.get("HF_TOKEN")
+            token = os.environ.get("HF_TOKEN")
 
-        try:
-            pipe = diffusers.Flux2KleinPipeline.from_pretrained(
-                MODEL_ID,
-                torch_dtype=torch.bfloat16,
-                token=token,
-                local_files_only=True,
-            )
-        except OSError:
-            pipe = diffusers.Flux2KleinPipeline.from_pretrained(
-                MODEL_ID,
-                torch_dtype=torch.bfloat16,
-                token=token,
-            )
-        pipe.to("cuda")
+            try:
+                pipe = diffusers.Flux2KleinPipeline.from_pretrained(
+                    MODEL_ID,
+                    torch_dtype=torch.bfloat16,
+                    token=token,
+                    local_files_only=True,
+                )
+            except OSError:
+                pipe = diffusers.Flux2KleinPipeline.from_pretrained(
+                    MODEL_ID,
+                    torch_dtype=torch.bfloat16,
+                    token=token,
+                )
+            pipe.to("cuda")
 
-        from sdnq.common import use_torch_compile
-        from sdnq.loader import apply_sdnq_options_to_model
+            from sdnq.common import use_torch_compile
+            from sdnq.loader import apply_sdnq_options_to_model
 
-        if use_torch_compile and torch.cuda.is_available():
-            pipe.transformer = apply_sdnq_options_to_model(
-                pipe.transformer, use_quantized_matmul=True
-            )
-            pipe.text_encoder = apply_sdnq_options_to_model(
-                pipe.text_encoder, use_quantized_matmul=True
-            )
+            if use_torch_compile and torch.cuda.is_available():
+                pipe.transformer = apply_sdnq_options_to_model(
+                    pipe.transformer, use_quantized_matmul=True
+                )
+                pipe.text_encoder = apply_sdnq_options_to_model(
+                    pipe.text_encoder, use_quantized_matmul=True
+                )
 
-        self.pipe = pipe
+            self.pipe = pipe
 
     def _prepare_image(self, base64_str: str):
         img = self.Image.open(self.io.BytesIO(self.base64.b64decode(base64_str)))
@@ -144,7 +147,7 @@ class FluxKleinWorker:
             img = img.resize((w, h))
         return img
 
-    def generate(
+    def _run_generate(
         self,
         prompt: str,
         height: int = 512,
@@ -155,6 +158,7 @@ class FluxKleinWorker:
         input_image: str | None = None,
         reference_images: list[str] = [],
     ) -> dict:
+        """Pure sync generate logic - testable via DI. Tests call this directly."""
         req = self.Input(
             prompt=prompt,
             height=height,
@@ -193,25 +197,33 @@ class FluxKleinWorker:
         image.save(buffer, format="PNG")
         file_bytes = buffer.getvalue()
 
-        import os
-        import uuid
-        import boto3
+        from r2_upload import upload_to_r2
 
-        bucket = os.environ.get("R2_BUCKET", "generated-media")
-        endpoint = os.environ.get("R2_ENDPOINT")
-        access_key = os.environ.get("R2_ACCESS_KEY")
-        secret_key = os.environ.get("R2_SECRET_KEY")
-
-        key = f"flux2_{uuid.uuid4()}.png"
-        s3 = boto3.client(
-            "s3",
-            endpoint_url=endpoint,
-            aws_access_key_id=access_key,
-            aws_secret_access_key=secret_key,
-        )
-        s3.put_object(Bucket=bucket, Key=key, Body=file_bytes, ContentType="image/png")
-        url = f"{endpoint.rstrip('/')}/{bucket}/{key}"
+        artifact = upload_to_r2(file_bytes, prefix="flux2", extension="png", content_type="image/png")
 
         return self.Output(
-            artifact=self.Output.Artifact(url=url, key=key, size=len(file_bytes))
+            artifact=self.Output.Artifact(url=artifact.url, key=artifact.key, size=artifact.size)
         ).model_dump()
+
+    def generate(
+        self,
+        prompt: str,
+        height: int = 512,
+        width: int = 512,
+        guidance_scale: float = 1.0,
+        num_inference_steps: int = 4,
+        seed: int | None = None,
+        input_image: str | None = None,
+        reference_images: list[str] = [],
+    ) -> dict:
+        """Public API - delegates to _run_generate. Tests call _run_generate directly."""
+        return self._run_generate(
+            prompt=prompt,
+            height=height,
+            width=width,
+            guidance_scale=guidance_scale,
+            num_inference_steps=num_inference_steps,
+            seed=seed,
+            input_image=input_image,
+            reference_images=reference_images,
+        )

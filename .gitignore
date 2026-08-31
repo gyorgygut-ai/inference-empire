@@ -41,10 +41,6 @@ Thumbs.db
 .coverage
 htmlcov/
 
-# Environment
-.env
-.env.local
-
 # Flash
 .flash/
 .flashignore
@@ -60,3 +56,5 @@ htmlcov/
 
 # Ruff
 .ruff_cache/
+
+node_modules

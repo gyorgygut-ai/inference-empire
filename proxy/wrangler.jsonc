@@ -1,0 +1,6 @@
+{
+  "name": "inference-router",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-31",
+  "compatibility_flags": ["nodejs_compat"],
+}

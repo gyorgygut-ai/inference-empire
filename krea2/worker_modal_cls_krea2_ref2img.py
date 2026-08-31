@@ -2,6 +2,7 @@ import base64
 import io
 import os
 import re
+from pathlib import Path
 from typing import Literal, Optional
 
 import modal
@@ -12,11 +13,7 @@ REID_REPO = "yijunwang2/krea2-reid"
 
 app = modal.App("krea2-ref2img-worker")
 
-# Define Secrets
-hf_secret = modal.Secret.from_name("hf-token", required_keys=["HF_TOKEN"])
-r2_secret = modal.Secret.from_name(
-    "r2-creds", required_keys=["R2_BUCKET", "R2_ENDPOINT", "R2_ACCESS_KEY", "R2_SECRET_KEY"]
-)
+dotenv_secret = modal.Secret.from_dotenv(str(Path(__file__).parent.parent / ".env"))
 
 
 class Krea2Ref2ImgInput(BaseModel):
@@ -91,14 +88,14 @@ image = (
             "PYTORCH_NVML_BASED_CUDA_CHECK": "0",
         }
     )
-    .run_function(_download_models, secrets=[modal.Secret.from_name("hf-token")])
+    .run_function(_download_models, secrets=[dotenv_secret])
 )
 
 
 @app.cls(
     image=image,
     gpu=["L40S", "A100-40GB"],
-    secrets=[hf_secret, r2_secret],
+    secrets=[dotenv_secret],
     timeout=900,
     memory=65536,
     scaledown_window=150,

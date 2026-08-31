@@ -5,7 +5,7 @@
 - [Proxy](./specs/PROXY.md)
 - [GPU Workers](./specs/GPU_WORKERS.md)
 - [GUI and CLI](./specs/GUI_AND_CLI.md)
-- [Testing Rules](./specs/TESTING.md)
+- [Testing Checklist](./specs/TEST_CHECKLIST.md)
 
 ---
 
