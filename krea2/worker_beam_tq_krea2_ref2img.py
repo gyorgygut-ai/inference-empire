@@ -1,14 +1,14 @@
 import base64
 import io
 import os
+import uuid
 from pathlib import Path
 from typing import Literal, Optional
 
+import boto3
 from pydantic import BaseModel, ConfigDict, Field
 
 from beam import Image, QueueDepthAutoscaler, Volume, task_queue
-
-from r2_upload import Artifact, upload_to_r2
 
 
 def _load_dotenv(path: Path) -> None:
@@ -47,10 +47,6 @@ image = (
         "HF_HOME": CACHE_PATH,
         "HF_HUB_ENABLE_HF_TRANSFER": "1",
         "HF_TOKEN": os.environ.get("HF_TOKEN", ""),
-        "R2_BUCKET": os.environ.get("R2_BUCKET", "generated-media"),
-        "R2_ENDPOINT": os.environ.get("R2_ENDPOINT", ""),
-        "R2_ACCESS_KEY": os.environ.get("R2_ACCESS_KEY", ""),
-        "R2_SECRET_KEY": os.environ.get("R2_SECRET_KEY", ""),
     })
 )
 
@@ -66,11 +62,6 @@ class Krea2Ref2ImgInput(BaseModel):
     seed: Optional[int] = Field(default=None)
     lora_scale: float = Field(default=1.0)
     face_crop: bool = Field(default=True)
-
-
-class Krea2Ref2ImgOutput(BaseModel):
-    model_config = ConfigDict(title="Krea2Ref2ImgOutput")
-    artifact: Artifact
 
 
 def load_pipeline():
@@ -216,7 +207,7 @@ def _face_crop(img, runtime_dir: Path, margin: float = 0.4):
     keep_warm_seconds=1800,
     checkpoint_enabled=True,
     timeout=3600,
-    secrets=[],
+    secrets=["HF_TOKEN", "R2_ACCESS_KEY", "R2_SECRET_KEY"],
     env={
         "PYTORCH_NVML_BASED_CUDA_CHECK": "0",
     },
@@ -281,11 +272,22 @@ def generate(
     gen_image.save(buffer, format="PNG")
     file_bytes = buffer.getvalue()
 
-    artifact = upload_to_r2(
-        file_bytes,
-        prefix="krea2",
-        extension="png",
-        content_type="image/png",
+    bucket = os.environ.get("R2_BUCKET", "generated-media")
+    endpoint = os.environ["R2_ENDPOINT"]
+    access_key = os.environ["R2_ACCESS_KEY"]
+    secret_key = os.environ["R2_SECRET_KEY"]
+    key = f"krea2_{uuid.uuid4()}.png"
+    s3 = boto3.client(
+        "s3",
+        endpoint_url=endpoint,
+        aws_access_key_id=access_key,
+        aws_secret_access_key=secret_key,
+    )
+    s3.put_object(Bucket=bucket, Key=key, Body=file_bytes, ContentType="image/png")
+    presigned_url = s3.generate_presigned_url(
+        "get_object",
+        Params={"Bucket": bucket, "Key": key},
+        ExpiresIn=3600,
     )
 
-    return Krea2Ref2ImgOutput(artifact=artifact).model_dump()
+    return {"artifact": {"presigned_url": presigned_url}}

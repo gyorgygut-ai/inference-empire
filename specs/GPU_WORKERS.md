@@ -48,6 +48,33 @@ worker_{platform}_{pattern}_{model}.py
 
 ---
 
+## R2 Upload Pattern
+
+- Inline boto3 in each worker — no shared `r2_upload.py` wrapper
+- Contract JSON is source of truth for output schema
+- Return raw dict matching contract — no Pydantic output model needed
+
+```python
+import boto3, os, uuid
+
+# ... in generate(), after artifact is produced:
+
+s3 = boto3.client("s3", endpoint_url=os.environ["R2_ENDPOINT"],
+    aws_access_key_id=os.environ["R2_ACCESS_KEY"],
+    aws_secret_access_key=os.environ["R2_SECRET_KEY"])
+key = f"flux2_{uuid.uuid4()}.png"
+b = os.environ.get("R2_BUCKET", "generated-media")
+s3.put_object(Bucket=b, Key=key, Body=file_bytes, ContentType="image/png")
+return {"artifact": {"presigned_url": s3.generate_presigned_url("get_object",
+    Params={"Bucket": b, "Key": key}, ExpiresIn=3600)}}
+```
+
+- Delete `r2_upload.py` and all `Flux2Klein9bOutput` models
+- Each worker needs `boto3` in its `pip_install`
+- `R2_ENDPOINT`, `R2_ACCESS_KEY`, `R2_SECRET_KEY` via platform secrets
+
+---
+
 ## Dependency Constraints
 
 - `transformers` must stay `>=4.57,<5`

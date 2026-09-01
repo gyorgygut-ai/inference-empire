@@ -111,10 +111,7 @@ def verify_artifact(url: str) -> Image.Image:
 def verify_contract(data: dict):
     """Verify output contract fields."""
     assert "artifact" in data, f"Missing 'artifact' in response: {data}"
-    assert data["artifact"]["url"].startswith("https://"), f"Bad url: {data['artifact']['url']}"
-    assert data["artifact"]["key"].startswith("flux2_"), f"Bad key: {data['artifact']['key']}"
-    assert data["artifact"]["key"].endswith(".png"), f"Bad key extension: {data['artifact']['key']}"
-    assert data["artifact"]["size"] > 0, f"Zero size artifact"
+    assert data["artifact"]["presigned_url"].startswith("https://"), f"Bad presigned_url: {data['artifact']['presigned_url']}"
 
 
 def _parse_beam_deployment_id(stdout: str, name: str) -> str:

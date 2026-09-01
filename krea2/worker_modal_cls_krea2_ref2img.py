@@ -29,18 +29,6 @@ class Krea2Ref2ImgInput(BaseModel):
     face_crop: bool = Field(default=True)
 
 
-class Krea2Ref2ImgOutput(BaseModel):
-    model_config = ConfigDict(title="Krea2Ref2ImgOutput")
-
-    class Artifact(BaseModel):
-        model_config = ConfigDict(title="Artifact")
-        url: str
-        key: str
-        size: int
-
-    artifact: Artifact
-
-
 def _download_models():
     import os
     from huggingface_hub import snapshot_download
@@ -299,11 +287,13 @@ class Krea2Ref2ImgWorker:
             aws_secret_access_key=secret_key,
         )
         s3.put_object(Bucket=bucket, Key=key, Body=file_bytes, ContentType="image/png")
-        url = f"{endpoint.rstrip('/')}/{bucket}/{key}"
+        presigned_url = s3.generate_presigned_url(
+            "get_object",
+            Params={"Bucket": bucket, "Key": key},
+            ExpiresIn=3600,
+        )
 
-        return Krea2Ref2ImgOutput(
-            artifact=Krea2Ref2ImgOutput.Artifact(url=url, key=key, size=len(file_bytes))
-        ).model_dump()
+        return {"artifact": {"presigned_url": presigned_url}}
 
     @modal.fastapi_endpoint(method="POST")
     def generate_web(self, item: Krea2Ref2ImgInput) -> dict:

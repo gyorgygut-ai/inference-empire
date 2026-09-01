@@ -19,11 +19,9 @@
     "properties": {
       "artifact": {
         "type": "object",
-        "required": ["url", "key", "size"],
+        "required": ["presigned_url"],
         "properties": {
-          "url": { "type": "string" },
-          "key": { "type": "string" },
-          "size": { "type": "integer" }
+          "presigned_url": { "type": "string" }
         }
       },
       "video": { "type": "string" }

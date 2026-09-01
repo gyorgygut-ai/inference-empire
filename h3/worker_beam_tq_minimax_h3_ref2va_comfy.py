@@ -2,14 +2,14 @@ import base64
 import os
 import subprocess
 import time
+import uuid
 from typing import Literal, Optional
 
+import boto3
 import requests
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from beam import Image, QueueDepthAutoscaler, Volume, task_queue
-
-from r2_upload import Artifact, upload_to_r2
 
 
 CACHE_PATH = "./hf-cache"
@@ -48,11 +48,6 @@ class Input(BaseModel):
     seed: Optional[int] = Field(default=None)
     ref_image_size: Literal["match", "max"] = Field(default="match")
     scheduler: Literal["simple", "beta", "normal"] = Field(default="simple")
-
-
-class Output(BaseModel):
-    model_config = ConfigDict(title="MiniMaxH3Ref2VAComfyOutput")
-    artifact: Artifact
 
 
 class ValidatedInput(Input):
@@ -377,11 +372,22 @@ def generate(context, prompt: str,
     video_url = f"{comfy_base_url}/view?filename={video_info['filename']}&subfolder={video_info.get('subfolder', '')}&type={video_info.get('type', 'output')}"
     video_bytes = requests.get(video_url, timeout=60).content
 
-    artifact = upload_to_r2(
-        video_bytes,
-        prefix="minimax_ref2va_comfy",
-        extension="mp4",
-        content_type="video/mp4",
+    bucket = os.environ.get("R2_BUCKET", "generated-media")
+    endpoint = os.environ["R2_ENDPOINT"]
+    access_key = os.environ["R2_ACCESS_KEY"]
+    secret_key = os.environ["R2_SECRET_KEY"]
+    key = f"minimax_ref2va_comfy_{uuid.uuid4()}.mp4"
+    s3 = boto3.client(
+        "s3",
+        endpoint_url=endpoint,
+        aws_access_key_id=access_key,
+        aws_secret_access_key=secret_key,
+    )
+    s3.put_object(Bucket=bucket, Key=key, Body=video_bytes, ContentType="video/mp4")
+    presigned_url = s3.generate_presigned_url(
+        "get_object",
+        Params={"Bucket": bucket, "Key": key},
+        ExpiresIn=3600,
     )
 
-    return Output(artifact=artifact).model_dump()
+    return {"artifact": {"presigned_url": presigned_url}}

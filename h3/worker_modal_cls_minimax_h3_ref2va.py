@@ -47,18 +47,6 @@ class MiniMaxH3Ref2VAInput(BaseModel):
     seed: Optional[int] = Field(default=None)
 
 
-class MiniMaxH3Ref2VAOutput(BaseModel):
-    model_config = ConfigDict(title="MiniMaxH3Ref2VAOutput")
-
-    class Artifact(BaseModel):
-        model_config = ConfigDict(title="Artifact")
-        url: str
-        key: str
-        size: int
-
-    artifact: Artifact
-
-
 class ValidatedRef2VAInput(MiniMaxH3Ref2VAInput):
     @field_validator("ref_images")
     @classmethod
@@ -350,9 +338,9 @@ class MiniMaxH3Ref2VAWorker:
             video_bytes = fh.read()
 
         bucket = os.environ.get("R2_BUCKET", "generated-media")
-        endpoint = os.environ.get("R2_ENDPOINT")
-        access_key = os.environ.get("R2_ACCESS_KEY")
-        secret_key = os.environ.get("R2_SECRET_KEY")
+        endpoint = os.environ["R2_ENDPOINT"]
+        access_key = os.environ["R2_ACCESS_KEY"]
+        secret_key = os.environ["R2_SECRET_KEY"]
 
         key = f"minimax_ref2va_{uuid.uuid4()}.mp4"
         s3 = boto3.client(
@@ -362,11 +350,13 @@ class MiniMaxH3Ref2VAWorker:
             aws_secret_access_key=secret_key,
         )
         s3.put_object(Bucket=bucket, Key=key, Body=video_bytes, ContentType="video/mp4")
-        url = f"{endpoint.rstrip('/')}/{bucket}/{key}"
+        presigned_url = s3.generate_presigned_url(
+            "get_object",
+            Params={"Bucket": bucket, "Key": key},
+            ExpiresIn=3600,
+        )
 
-        return MiniMaxH3Ref2VAOutput(
-            artifact=MiniMaxH3Ref2VAOutput.Artifact(url=url, key=key, size=len(video_bytes))
-        ).model_dump()
+        return {"artifact": {"presigned_url": presigned_url}}
 
     @modal.fastapi_endpoint(method="POST")
     def generate_web(self, item: MiniMaxH3Ref2VAInput) -> dict:

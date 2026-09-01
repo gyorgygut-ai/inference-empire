@@ -1,14 +1,17 @@
 import base64
 import io
 import os
+import uuid
 from pathlib import Path
 
+import boto3
 import modal
 from pydantic import BaseModel, ConfigDict, Field
 
 app = modal.App("flux2-klein9b-worker")
 
 dotenv_secret = modal.Secret.from_dotenv(str(Path(__file__).parent.parent / ".env"))
+hf_cache_vol = modal.Volume.from_name("hf-cache", create_if_missing=True)
 
 
 class Flux2Klein9bInput(BaseModel):
@@ -21,18 +24,6 @@ class Flux2Klein9bInput(BaseModel):
     seed: int | None = Field(default=None)
     input_image: str | None = Field(default=None)
     reference_images: list[str] = Field(default=[])
-
-
-class Flux2Klein9bOutput(BaseModel):
-    model_config = ConfigDict(title="Flux2Klein9bOutput")
-
-    class Artifact(BaseModel):
-        model_config = ConfigDict(title="Artifact")
-        url: str
-        key: str
-        size: int
-
-    artifact: Artifact
 
 
 image = (
@@ -72,7 +63,6 @@ def load_pipeline():
         "Disty0/FLUX.2-klein-9B-SDNQ-4bit-dynamic-svd-r32",
         torch_dtype=torch.bfloat16,
         token=token,
-        local_files_only=True,
     )
     pipe.to("cuda")
     return pipe
@@ -80,8 +70,9 @@ def load_pipeline():
 
 @app.cls(
     image=image,
-    gpu="L40S",
+    gpu="L4",
     secrets=[dotenv_secret],
+    volumes={"/root/.cache/huggingface": hf_cache_vol},
     timeout=600,
     memory=32768,
     scaledown_window=150,
@@ -89,15 +80,10 @@ def load_pipeline():
 )
 class FluxKleinWorker:
     @modal.enter()
-    def load(self, pipe=None):
-        if pipe is not None:
-            self.pipe = pipe
-        else:
-            self.pipe = load_pipeline()
+    def load(self):
+        self.pipe = load_pipeline()
 
     def _prepare_image(self, base64_str: str):
-        import base64
-        import io
         from PIL import Image
 
         img = Image.open(io.BytesIO(base64.b64decode(base64_str))).convert("RGB")
@@ -156,13 +142,15 @@ class FluxKleinWorker:
         image.save(buffer, format="PNG")
         file_bytes = buffer.getvalue()
 
-        from r2_upload import upload_to_r2
+        s3 = boto3.client("s3", endpoint_url=os.environ["R2_ENDPOINT"],
+            aws_access_key_id=os.environ["R2_ACCESS_KEY"],
+            aws_secret_access_key=os.environ["R2_SECRET_KEY"])
+        key = f"flux2_{uuid.uuid4()}.png"
+        bucket = os.environ.get("R2_BUCKET", "generated-media")
+        s3.put_object(Bucket=bucket, Key=key, Body=file_bytes, ContentType="image/png")
 
-        artifact = upload_to_r2(file_bytes, prefix="flux2", extension="png", content_type="image/png")
-
-        return Flux2Klein9bOutput(
-            artifact=Flux2Klein9bOutput.Artifact(url=artifact.url, key=artifact.key, size=artifact.size)
-        ).model_dump()
+        return {"artifact": {"presigned_url": s3.generate_presigned_url("get_object",
+            Params={"Bucket": bucket, "Key": key}, ExpiresIn=3600)}}
 
     @modal.method()
     def generate(

@@ -1,4 +1,7 @@
 import os
+import uuid
+
+import boto3
 from pydantic import field_validator
 
 from runpod_flash import Endpoint, GpuGroup, PodTemplate
@@ -51,20 +54,6 @@ class MiniMaxH3Ref2VAComfyWorker:
                     raise ValueError("reference audio requires at least one reference image or video")
             return v
 
-    class Output(BaseModel):
-        from typing import Literal as _Literal, Optional as _Optional
-        from pydantic import BaseModel as _BaseModel, ConfigDict as _ConfigDict, Field as _Field
-
-        model_config = _ConfigDict(title='MiniMaxH3Ref2VAComfyOutput')
-        class Artifact(_BaseModel):
-            from typing import Literal as _Literal, Optional as _Optional
-            from pydantic import ConfigDict as _ConfigDict, Field as _Field
-            model_config = _ConfigDict(title='Artifact')
-            url: str
-            key: str
-            size: int
-        artifact: Artifact
-        video: str
     # --- END CONTRACT: minimax_h3_ref2va_comfy ---
 
     _MAX_REF_IMAGES = 9
@@ -386,9 +375,9 @@ class MiniMaxH3Ref2VAComfyWorker:
         video_bytes = base64.b64decode(data)
 
         bucket = os.environ.get("R2_BUCKET", "generated-media")
-        endpoint_url = os.environ.get("R2_ENDPOINT")
-        access_key = os.environ.get("R2_ACCESS_KEY")
-        secret_key = os.environ.get("R2_SECRET_KEY")
+        endpoint_url = os.environ["R2_ENDPOINT"]
+        access_key = os.environ["R2_ACCESS_KEY"]
+        secret_key = os.environ["R2_SECRET_KEY"]
 
         key = f"minimax_ref2va_comfy_{uuid.uuid4()}.mp4"
         s3 = boto3.client(
@@ -398,9 +387,10 @@ class MiniMaxH3Ref2VAComfyWorker:
             aws_secret_access_key=secret_key,
         )
         s3.put_object(Bucket=bucket, Key=key, Body=video_bytes, ContentType="video/mp4")
-        url = f"{endpoint_url.rstrip('/')}/{bucket}/{key}"
+        presigned_url = s3.generate_presigned_url(
+            "get_object",
+            Params={"Bucket": bucket, "Key": key},
+            ExpiresIn=3600,
+        )
 
-        return self.Output(
-            artifact=self.Output.Artifact(url=url, key=key, size=len(video_bytes)),
-            video=data,
-        ).model_dump()
+        return {"artifact": {"presigned_url": presigned_url}, "video": data}

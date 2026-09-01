@@ -82,9 +82,7 @@ def test_generate_good_succeeded(monkeypatch):
     result = raw._run_generate(prompt="a cat", seed=42)
 
     assert "artifact" in result
-    assert result["artifact"]["url"].startswith("https://test.r2.cloudflarestorage.com/generated-media/")
-    assert result["artifact"]["key"].startswith("flux2_") and result["artifact"]["key"].endswith(".png")
-    assert result["artifact"]["size"] > 0
+    assert result["artifact"]["presigned_url"].startswith("https://test.r2.cloudflarestorage.com/generated-media/")
 
 
 def test_generate_good_but_failed(monkeypatch):
@@ -106,6 +104,4 @@ def test_generate_good_inference_success_uploads_artifact(monkeypatch):
     result = raw._run_generate(prompt="a cat", seed=42)
 
     assert "artifact" in result
-    assert result["artifact"]["url"].startswith("https://test.r2.cloudflarestorage.com/generated-media/")
-    assert result["artifact"]["key"].startswith("flux2_") and result["artifact"]["key"].endswith(".png")
-    assert result["artifact"]["size"] > 0
+    assert result["artifact"]["presigned_url"].startswith("https://test.r2.cloudflarestorage.com/generated-media/")

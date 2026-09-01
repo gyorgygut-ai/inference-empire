@@ -26,18 +26,6 @@ class MiniMaxH3Fl2VAInput(BaseModel):
     last_frame: Optional[str] = Field(default=None)
 
 
-class MiniMaxH3Fl2VAOutput(BaseModel):
-    model_config = ConfigDict(title="MiniMaxH3Fl2VAOutput")
-
-    class Artifact(BaseModel):
-        model_config = ConfigDict(title="Artifact")
-        url: str
-        key: str
-        size: int
-
-    artifact: Artifact
-
-
 image = (
     modal.Image.debian_slim(python_version="3.11")
     .apt_install("git", "ffmpeg", "libgl1", "libglib2.0-0")
@@ -200,9 +188,9 @@ class MiniMaxH3Fl2VAWorker:
             video_bytes = fh.read()
 
         bucket = os.environ.get("R2_BUCKET", "generated-media")
-        endpoint = os.environ.get("R2_ENDPOINT")
-        access_key = os.environ.get("R2_ACCESS_KEY")
-        secret_key = os.environ.get("R2_SECRET_KEY")
+        endpoint = os.environ["R2_ENDPOINT"]
+        access_key = os.environ["R2_ACCESS_KEY"]
+        secret_key = os.environ["R2_SECRET_KEY"]
 
         key = f"minimax_fl2va_{uuid.uuid4()}.mp4"
         s3 = boto3.client(
@@ -212,11 +200,13 @@ class MiniMaxH3Fl2VAWorker:
             aws_secret_access_key=secret_key,
         )
         s3.put_object(Bucket=bucket, Key=key, Body=video_bytes, ContentType="video/mp4")
-        url = f"{endpoint.rstrip('/')}/{bucket}/{key}"
+        presigned_url = s3.generate_presigned_url(
+            "get_object",
+            Params={"Bucket": bucket, "Key": key},
+            ExpiresIn=3600,
+        )
 
-        return MiniMaxH3Fl2VAOutput(
-            artifact=MiniMaxH3Fl2VAOutput.Artifact(url=url, key=key, size=len(video_bytes))
-        ).model_dump()
+        return {"artifact": {"presigned_url": presigned_url}}
 
     @modal.fastapi_endpoint(method="POST")
     def generate_web(self, item: MiniMaxH3Fl2VAInput) -> dict:

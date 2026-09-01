@@ -1,15 +1,14 @@
 import base64
 import io
 import os
+import uuid
 from pathlib import Path
 
+import boto3
 from PIL import Image as PILImage
-from pydantic import field_validator
 
 from beam import Image, QueueDepthAutoscaler, Volume, task_queue
 from pydantic import BaseModel, ConfigDict, Field
-
-from r2_upload import Artifact, upload_to_r2
 
 
 def _load_dotenv(path: Path) -> None:
@@ -43,11 +42,7 @@ image = (
     ])
     .with_envs({
         "HF_HOME": CACHE_PATH,
-        "HF_TOKEN": os.environ.get("HF_TOKEN", ""),
-        "R2_BUCKET": os.environ.get("R2_BUCKET", "generated-media"),
-        "R2_ENDPOINT": os.environ.get("R2_ENDPOINT", ""),
-        "R2_ACCESS_KEY": os.environ.get("R2_ACCESS_KEY", ""),
-        "R2_SECRET_KEY": os.environ.get("R2_SECRET_KEY", ""),
+        "HF_HUB_ENABLE_HF_TRANSFER": "1",
     })
 )
 
@@ -65,18 +60,6 @@ class Flux2Klein9bInput(BaseModel):
     seed: int | None = Field(default=None)
     input_image: str | None = Field(default=None)
     reference_images: list[str] = Field(default=[])
-
-
-class Flux2Klein9bOutput(BaseModel):
-    model_config = ConfigDict(title="Flux2Klein9bOutput")
-
-    class Artifact(BaseModel):
-        model_config = ConfigDict(title="Artifact")
-        url: str
-        key: str
-        size: int
-
-    artifact: Artifact
 
 
 def _prepare_image(base64_str: str):
@@ -110,7 +93,6 @@ def load_pipeline():
         "Disty0/FLUX.2-klein-9B-SDNQ-4bit-dynamic-svd-r32",
         torch_dtype=torch.bfloat16,
         token=token,
-        local_files_only=True,
     )
     pipe.to("cuda")
     return pipe
@@ -164,11 +146,15 @@ def _run_generate(
     image.save(buffer, format="PNG")
     file_bytes = buffer.getvalue()
 
-    artifact = upload_to_r2(file_bytes, prefix="flux2", extension="png", content_type="image/png")
+    s3 = boto3.client("s3", endpoint_url=os.environ["R2_ENDPOINT"],
+        aws_access_key_id=os.environ["R2_ACCESS_KEY"],
+        aws_secret_access_key=os.environ["R2_SECRET_KEY"])
+    key = f"flux2_{uuid.uuid4()}.png"
+    bucket = os.environ.get("R2_BUCKET", "generated-media")
+    s3.put_object(Bucket=bucket, Key=key, Body=file_bytes, ContentType="image/png")
 
-    return Flux2Klein9bOutput(
-        artifact=Flux2Klein9bOutput.Artifact(url=artifact.url, key=artifact.key, size=artifact.size)
-    ).model_dump()
+    return {"artifact": {"presigned_url": s3.generate_presigned_url("get_object",
+        Params={"Bucket": bucket, "Key": key}, ExpiresIn=3600)}}
 
 
 @task_queue(
@@ -183,7 +169,7 @@ def _run_generate(
     keep_warm_seconds=1800,
     checkpoint_enabled=True,
     timeout=3600,
-    secrets=[],
+    secrets=["HF_TOKEN", "R2_ACCESS_KEY", "R2_SECRET_KEY"],
 )
 def generate(context, prompt: str,
              height: int = 512, width: int = 512,

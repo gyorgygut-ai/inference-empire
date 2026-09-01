@@ -1,5 +1,7 @@
 import os
+import uuid
 
+import boto3
 from runpod_flash import Endpoint, GpuGroup
 
 
@@ -52,20 +54,6 @@ class Krea2Ref2ImgWorker:
         seed: _Optional[int] = _Field(default=None)
         lora_scale: float = _Field(default=1.0)
         face_crop: bool = _Field(default=True)
-
-    class Output(BaseModel):
-        from typing import Literal as _Literal, Optional as _Optional
-        from pydantic import BaseModel as _BaseModel, ConfigDict as _ConfigDict, Field as _Field
-
-        model_config = _ConfigDict(title='Krea2Ref2ImgOutput')
-        class Artifact(_BaseModel):
-            from typing import Literal as _Literal, Optional as _Optional
-            from pydantic import ConfigDict as _ConfigDict, Field as _Field
-            model_config = _ConfigDict(title='Artifact')
-            url: str
-            key: str
-            size: int
-        artifact: Artifact
     # --- END CONTRACT: krea2_ref2img ---
 
 
@@ -284,14 +272,10 @@ class Krea2Ref2ImgWorker:
         image.save(buffer, format="PNG")
         file_bytes = buffer.getvalue()
 
-        import os
-        import uuid
-        import boto3
-
         bucket = os.environ.get("R2_BUCKET", "generated-media")
-        endpoint = os.environ.get("R2_ENDPOINT")
-        access_key = os.environ.get("R2_ACCESS_KEY")
-        secret_key = os.environ.get("R2_SECRET_KEY")
+        endpoint = os.environ["R2_ENDPOINT"]
+        access_key = os.environ["R2_ACCESS_KEY"]
+        secret_key = os.environ["R2_SECRET_KEY"]
 
         key = f"krea2_{uuid.uuid4()}.png"
         s3 = boto3.client(
@@ -301,8 +285,10 @@ class Krea2Ref2ImgWorker:
             aws_secret_access_key=secret_key,
         )
         s3.put_object(Bucket=bucket, Key=key, Body=file_bytes, ContentType="image/png")
-        url = f"{endpoint.rstrip('/')}/{bucket}/{key}"
+        presigned_url = s3.generate_presigned_url(
+            "get_object",
+            Params={"Bucket": bucket, "Key": key},
+            ExpiresIn=3600,
+        )
 
-        return self.Output(
-            artifact=self.Output.Artifact(url=url, key=key, size=len(file_bytes))
-        ).model_dump()
+        return {"artifact": {"presigned_url": presigned_url}}

@@ -4,12 +4,11 @@ import os
 import uuid
 from typing import Literal, Optional
 
+import boto3
 from PIL import Image as PILImage
 
 from beam import Image, QueueDepthAutoscaler, Volume, task_queue
 from pydantic import BaseModel, ConfigDict, Field
-
-from r2_upload import Artifact, upload_to_r2
 
 
 CACHE_PATH = "./hf-cache"
@@ -46,11 +45,6 @@ class MiniMaxH3Fl2VAInput(BaseModel):
     seed: Optional[int] = Field(default=None)
     first_frame: Optional[str] = Field(default=None)
     last_frame: Optional[str] = Field(default=None)
-
-
-class MiniMaxH3Fl2VAOutput(BaseModel):
-    model_config = ConfigDict(title="MiniMaxH3Fl2VAOutput")
-    artifact: Artifact
 
 
 def load_pipeline():
@@ -181,13 +175,24 @@ def generate(context, prompt: str, width: int = 1344, height: int = 768,
     with open(output_path, "rb") as fh:
         video_bytes = fh.read()
 
-    artifact = upload_to_r2(
-        video_bytes,
-        prefix="minimax_fl2va",
-        extension="mp4",
-        content_type="video/mp4",
+    bucket = os.environ.get("R2_BUCKET", "generated-media")
+    endpoint = os.environ["R2_ENDPOINT"]
+    access_key = os.environ["R2_ACCESS_KEY"]
+    secret_key = os.environ["R2_SECRET_KEY"]
+    key = f"minimax_fl2va_{uuid.uuid4()}.mp4"
+    s3 = boto3.client(
+        "s3",
+        endpoint_url=endpoint,
+        aws_access_key_id=access_key,
+        aws_secret_access_key=secret_key,
+    )
+    s3.put_object(Bucket=bucket, Key=key, Body=video_bytes, ContentType="video/mp4")
+    presigned_url = s3.generate_presigned_url(
+        "get_object",
+        Params={"Bucket": bucket, "Key": key},
+        ExpiresIn=3600,
     )
 
     os.remove(output_path)
 
-    return MiniMaxH3Fl2VAOutput(artifact=artifact).model_dump()
+    return {"artifact": {"presigned_url": presigned_url}}

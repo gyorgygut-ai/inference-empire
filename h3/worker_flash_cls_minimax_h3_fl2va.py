@@ -1,5 +1,7 @@
 import os
+import uuid
 
+import boto3
 from runpod_flash import Endpoint, GpuGroup
 
 
@@ -48,20 +50,6 @@ class MiniMaxH3Fl2VAWorker:
         seed: _Optional[int] = _Field(default=None)
         first_frame: _Optional[str] = _Field(default=None)
         last_frame: _Optional[str] = _Field(default=None)
-
-    class Output(BaseModel):
-        from typing import Literal as _Literal, Optional as _Optional
-        from pydantic import BaseModel as _BaseModel, ConfigDict as _ConfigDict, Field as _Field
-
-        model_config = _ConfigDict(title='MiniMaxH3Fl2VAOutput')
-        class Artifact(_BaseModel):
-            from typing import Literal as _Literal, Optional as _Optional
-            from pydantic import ConfigDict as _ConfigDict, Field as _Field
-            model_config = _ConfigDict(title='Artifact')
-            url: str
-            key: str
-            size: int
-        artifact: Artifact
     # --- END CONTRACT: minimax_h3_fl2va ---
 
 
@@ -210,14 +198,10 @@ class MiniMaxH3Fl2VAWorker:
         with io.open("/tmp/minimax_h3_fl2va.mp4", "rb") as fh:
             video_bytes = fh.read()
 
-        import os
-        import uuid
-        import boto3
-
         bucket = os.environ.get("R2_BUCKET", "generated-media")
-        endpoint = os.environ.get("R2_ENDPOINT")
-        access_key = os.environ.get("R2_ACCESS_KEY")
-        secret_key = os.environ.get("R2_SECRET_KEY")
+        endpoint = os.environ["R2_ENDPOINT"]
+        access_key = os.environ["R2_ACCESS_KEY"]
+        secret_key = os.environ["R2_SECRET_KEY"]
 
         key = f"minimax_fl2va_{uuid.uuid4()}.mp4"
         s3 = boto3.client(
@@ -227,8 +211,10 @@ class MiniMaxH3Fl2VAWorker:
             aws_secret_access_key=secret_key,
         )
         s3.put_object(Bucket=bucket, Key=key, Body=video_bytes, ContentType="video/mp4")
-        url = f"{endpoint.rstrip('/')}/{bucket}/{key}"
+        presigned_url = s3.generate_presigned_url(
+            "get_object",
+            Params={"Bucket": bucket, "Key": key},
+            ExpiresIn=3600,
+        )
 
-        return self.Output(
-            artifact=self.Output.Artifact(url=url, key=key, size=len(video_bytes))
-        ).model_dump()
+        return {"artifact": {"presigned_url": presigned_url}}

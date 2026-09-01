@@ -1,7 +1,7 @@
 """E2E local tests for flux2 Modal worker.
 
 Modal DI pattern: @app.cls replaces constructor.
-Access raw class via FluxKleinWorker._get_user_cls(), call load(pipe=...) manually.
+Access raw class via FluxKleinWorker._get_user_cls(), call load() manually.
 FakePipeline must include mock `torch` attribute for seed/generator support.
 """
 import pytest
@@ -58,7 +58,9 @@ def _make_raw_worker(monkeypatch, pipe=None):
 
     raw_cls = FluxKleinWorker._get_user_cls()
     raw = raw_cls()
-    raw.load(pipe=pipe if pipe else FakePipeline())
+    raw.load()
+    if pipe is not None:
+        raw.pipe = pipe
     return raw
 
 
@@ -89,9 +91,7 @@ def test_e2e_generate_good_inference_success_returns_contract(monkeypatch):
     result = raw._run_generate(prompt="a cat", seed=42)
 
     assert "artifact" in result
-    assert result["artifact"]["url"].startswith("https://test.r2.cloudflarestorage.com/generated-media/")
-    assert result["artifact"]["key"].startswith("flux2_") and result["artifact"]["key"].endswith(".png")
-    assert result["artifact"]["size"] > 0
+    assert result["artifact"]["presigned_url"].startswith("https://test.r2.cloudflarestorage.com/generated-media/")
 
 
 def test_e2e_generate_good_inference_success_uploads_artifact(monkeypatch):
@@ -99,6 +99,4 @@ def test_e2e_generate_good_inference_success_uploads_artifact(monkeypatch):
     result = raw._run_generate(prompt="a cat", seed=42)
 
     assert "artifact" in result
-    assert result["artifact"]["url"].startswith("https://test.r2.cloudflarestorage.com/generated-media/")
-    assert result["artifact"]["key"].startswith("flux2_") and result["artifact"]["key"].endswith(".png")
-    assert result["artifact"]["size"] > 0
+    assert result["artifact"]["presigned_url"].startswith("https://test.r2.cloudflarestorage.com/generated-media/")

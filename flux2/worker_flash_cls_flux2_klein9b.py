@@ -1,5 +1,7 @@
 import os
+import uuid
 
+import boto3
 from runpod_flash import Endpoint, GpuGroup
 
 
@@ -49,20 +51,6 @@ class FluxKleinWorker:
         seed: _Optional[int] = _Field(default=None)
         input_image: _Optional[str] = _Field(default=None)
         reference_images: list[str] = _Field(default=[])
-
-    class Output(BaseModel):
-        from typing import Literal as _Literal, Optional as _Optional
-        from pydantic import BaseModel as _BaseModel, ConfigDict as _ConfigDict, Field as _Field
-
-        model_config = _ConfigDict(title='Flux2Klein9bOutput')
-        class Artifact(_BaseModel):
-            from typing import Literal as _Literal, Optional as _Optional
-            from pydantic import ConfigDict as _ConfigDict, Field as _Field
-            model_config = _ConfigDict(title='Artifact')
-            url: str
-            key: str
-            size: int
-        artifact: Artifact
     # --- END CONTRACT: flux2_klein9b ---
 
 
@@ -197,13 +185,25 @@ class FluxKleinWorker:
         image.save(buffer, format="PNG")
         file_bytes = buffer.getvalue()
 
-        from r2_upload import upload_to_r2
+        bucket = os.environ.get("R2_BUCKET", "generated-media")
+        endpoint = os.environ["R2_ENDPOINT"]
+        access_key = os.environ["R2_ACCESS_KEY"]
+        secret_key = os.environ["R2_SECRET_KEY"]
+        key = f"flux2_{uuid.uuid4()}.png"
+        s3 = boto3.client(
+            "s3",
+            endpoint_url=endpoint,
+            aws_access_key_id=access_key,
+            aws_secret_access_key=secret_key,
+        )
+        s3.put_object(Bucket=bucket, Key=key, Body=file_bytes, ContentType="image/png")
+        presigned_url = s3.generate_presigned_url(
+            "get_object",
+            Params={"Bucket": bucket, "Key": key},
+            ExpiresIn=3600,
+        )
 
-        artifact = upload_to_r2(file_bytes, prefix="flux2", extension="png", content_type="image/png")
-
-        return self.Output(
-            artifact=self.Output.Artifact(url=artifact.url, key=artifact.key, size=artifact.size)
-        ).model_dump()
+        return {"artifact": {"presigned_url": presigned_url}}
 
     def generate(
         self,
