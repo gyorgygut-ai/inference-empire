@@ -393,4 +393,4 @@ class MiniMaxH3Ref2VAComfyWorker:
             ExpiresIn=3600,
         )
 
-        return {"artifact": {"presigned_url": presigned_url}, "video": data}
+        return {"artifact": {"presigned_url": presigned_url}}
