@@ -1,6 +1,7 @@
 import base64
 import io
 import os
+import time
 import uuid
 from typing import Literal, Optional
 
@@ -65,6 +66,8 @@ image = (
 class MiniMaxH3Fl2VAWorker:
     @modal.enter()
     def load(self):
+        print("[INIT] loading model DiffSynth-Studio/MiniMax-H3-NF4", flush=True)
+        t0 = time.time()
         import torch.distributed as dist
 
         dist.is_available = lambda: False
@@ -131,6 +134,23 @@ class MiniMaxH3Fl2VAWorker:
     def generate(
         self,
         prompt: str,
+        ref_images: list[str] = [],
+        ref_videos: list[str] = [],
+        ref_audios: list[str] = [],
+        width: int = 1344,
+        height: int = 768,
+        length: int = 124,
+        steps: int = 50,
+        seed: Optional[int] = None,
+    ) -> dict:
+        try:
+        t_req = time.time()
+        total_files = len(ref_images) + len(ref_videos) + len(ref_audios)
+        print(f"[REQ] prompt={prompt[:40]}  seed={seed}  files={total_files}", flush=True)
+        import boto3
+
+        req = ValidatedRef2VAInput(
+            prompt=prompt,
         width: int = 1344,
         height: int = 768,
         length: int = 124,
@@ -174,7 +194,10 @@ class MiniMaxH3Fl2VAWorker:
             pipe_kwargs["keyframes"] = keyframes
             pipe_kwargs["keyframe_indices"] = keyframe_indices
 
+        print(f"[GEN] starting inference prompt={prompt[:40]}  num_frames={req.length}", flush=True)
+        t_gen = time.time()
         video, audio = self.pipe(**pipe_kwargs)
+        print(f"[GEN] inference done in {time.time() - t_gen:.1f}s  video={req.length} frames", flush=True)
 
         self.write_video_audio(
             video=video,
@@ -205,8 +228,13 @@ class MiniMaxH3Fl2VAWorker:
             Params={"Bucket": bucket, "Key": key},
             ExpiresIn=3600,
         )
+        print(f"[R2] uploaded key={key} url={presigned_url[:60]}", flush=True)
 
+        print(f"[OK] completed in {time.time() - t_req:.1f}s", flush=True)
         return {"artifact": {"presigned_url": presigned_url}}
+        except Exception as e:
+            print(f"[ERR] {type(e).__name__}: {e}", flush=True)
+            raise
 
     @modal.fastapi_endpoint(method="POST")
     def generate_web(self, item: MiniMaxH3Fl2VAInput) -> dict:

@@ -1,6 +1,7 @@
 import base64
 import io
 import os
+import time
 import uuid
 from pathlib import Path
 
@@ -9,6 +10,9 @@ from PIL import Image as PILImage
 
 from beam import Image, QueueDepthAutoscaler, Volume, task_queue
 from pydantic import BaseModel, ConfigDict, Field
+
+
+START = time.time()
 
 
 def _load_dotenv(path: Path) -> None:
@@ -87,6 +91,9 @@ def load_pipeline():
     except Exception:
         pass
 
+    print("[INIT] loading model Disty0/FLUX.2-klein-9B-SDNQ-4bit-dynamic-svd-r32", flush=True)
+    t0 = time.time()
+
     import diffusers
 
     token = os.environ.get("HF_TOKEN")
@@ -97,6 +104,7 @@ def load_pipeline():
         token=token,
     )
     pipe.to("cuda")
+    print(f"[INIT] model loaded in {time.time() - t0:.1f}s", flush=True)
     return pipe
 
 
@@ -112,6 +120,10 @@ def _run_generate(
     reference_images: list[str] = [],
 ) -> dict:
     """Pure sync generate logic - testable via DI. Tests call this directly."""
+    n_refs = (1 if input_image else 0) + len(reference_images or [])
+    print(f"[REQ] prompt={prompt[:40]}  seed={seed}  files={n_refs}", flush=True)
+    t0 = time.time()
+
     req = Flux2Klein9bInput(
         prompt=prompt,
         height=height,
@@ -142,7 +154,10 @@ def _run_generate(
     if images:
         pipe_kwargs["image"] = images
 
+    print(f"[GEN] starting inference prompt={prompt[:40]}", flush=True)
+    gen_start = time.time()
     image = pipe(**pipe_kwargs).images[0]
+    print(f"[GEN] inference done in {time.time() - gen_start:.1f}s  shape={image.size[0]}x{image.size[1]}", flush=True)
 
     buffer = io.BytesIO()
     image.save(buffer, format="PNG")
@@ -155,8 +170,12 @@ def _run_generate(
     bucket = os.environ.get("R2_BUCKET", "generated-media")
     s3.put_object(Bucket=bucket, Key=key, Body=file_bytes, ContentType="image/png")
 
-    return {"artifact": {"presigned_url": s3.generate_presigned_url("get_object",
-        Params={"Bucket": bucket, "Key": key}, ExpiresIn=3600)}}
+    url = s3.generate_presigned_url("get_object",
+        Params={"Bucket": bucket, "Key": key}, ExpiresIn=3600)
+    print(f"[R2] uploaded key={key} url={url[:60]}", flush=True)
+
+    print(f"[OK] completed in {time.time() - t0:.1f}s", flush=True)
+    return {"artifact": {"presigned_url": url}}
 
 
 @task_queue(
@@ -179,14 +198,18 @@ def generate(context, prompt: str,
              seed: int | None = None, input_image: str | None = None,
              reference_images: list[str] = []) -> dict:
     pipe = context.on_start_value
-    return _run_generate(
-        pipe,
-        prompt=prompt,
-        height=height,
-        width=width,
-        guidance_scale=guidance_scale,
-        num_inference_steps=num_inference_steps,
-        seed=seed,
-        input_image=input_image,
-        reference_images=reference_images,
-    )
+    try:
+        return _run_generate(
+            pipe,
+            prompt=prompt,
+            height=height,
+            width=width,
+            guidance_scale=guidance_scale,
+            num_inference_steps=num_inference_steps,
+            seed=seed,
+            input_image=input_image,
+            reference_images=reference_images,
+        )
+    except Exception as e:
+        print(f"[ERR] {type(e).__name__}: {e}", flush=True)
+        raise

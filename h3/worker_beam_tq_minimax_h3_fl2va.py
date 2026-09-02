@@ -1,6 +1,7 @@
 import base64
 import io
 import os
+import time
 import uuid
 from typing import Literal, Optional
 
@@ -50,6 +51,9 @@ class MiniMaxH3Fl2VAInput(BaseModel):
 def load_pipeline():
     import torch
     import torch.distributed as dist
+
+    print("[INIT] loading model DiffSynth-Studio/MiniMax-H3-NF4", flush=True)
+    t0 = time.time()
 
     try:
         dist.is_available = lambda: False
@@ -105,6 +109,7 @@ def load_pipeline():
         vram_limit=torch.cuda.mem_get_info("cuda")[1] / (1024 ** 3) - 4,
     )
 
+    print(f"[INIT] model loaded in {time.time() - t0:.1f}s", flush=True)
     return pipe, write_video_audio
 
 
@@ -161,7 +166,10 @@ def generate(context, prompt: str, width: int = 1344, height: int = 768,
         pipe_kwargs["keyframes"] = keyframes
         pipe_kwargs["keyframe_indices"] = keyframe_indices
 
+    print(f"[GEN] starting inference prompt={prompt[:40]}  num_frames={req.length}", flush=True)
+    t_gen = time.time()
     video, audio = pipe(**pipe_kwargs)
+    print(f"[GEN] inference done in {time.time() - t_gen:.1f}s  video={req.length} frames", flush=True)
 
     output_path = f"/tmp/minimax_h3_fl2va_{uuid.uuid4()}.mp4"
     write_video_audio(
@@ -192,6 +200,9 @@ def generate(context, prompt: str, width: int = 1344, height: int = 768,
         Params={"Bucket": bucket, "Key": key},
         ExpiresIn=3600,
     )
+    print(f"[R2] uploaded key={key} url={presigned_url[:60]}", flush=True)
+
+    print(f"[OK] completed in {time.time() - t_req:.1f}s", flush=True)
 
     os.remove(output_path)
 

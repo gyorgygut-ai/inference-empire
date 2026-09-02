@@ -1,6 +1,7 @@
 import base64
 import io
 import os
+import time
 import uuid
 from pathlib import Path
 
@@ -9,6 +10,8 @@ import modal
 from pydantic import BaseModel, ConfigDict, Field
 
 app = modal.App("flux2-klein9b-worker")
+
+START_TIME = time.time()
 
 
 @app.local_entrypoint()
@@ -103,7 +106,10 @@ def load_pipeline():
 class FluxKleinWorker:
     @modal.enter()
     def load(self):
+        print("[INIT] loading model Disty0/FLUX.2-klein-9B-SDNQ-4bit-dynamic-svd-r32", flush=True)
+        t0 = time.time()
         self.pipe = load_pipeline()
+        print(f"[INIT] model loaded in {time.time() - t0:.1f}s", flush=True)
 
     def _prepare_image(self, base64_str: str):
         from PIL import Image
@@ -128,6 +134,10 @@ class FluxKleinWorker:
         reference_images: list[str] = [],
     ) -> dict:
         """Pure sync generate logic - testable via DI. Tests call this directly."""
+        t_req = time.time()
+        n_refs = (1 if input_image else 0) + len(reference_images or [])
+        print(f"[REQ] prompt={prompt[:40]}  seed={seed}  files={n_refs}", flush=True)
+
         req = Flux2Klein9bInput(
             prompt=prompt,
             height=height,
@@ -158,7 +168,10 @@ class FluxKleinWorker:
         if images:
             pipe_kwargs["image"] = images
 
+        print(f"[GEN] starting inference prompt={prompt[:40]}", flush=True)
+        t_gen = time.time()
         image = self.pipe(**pipe_kwargs).images[0]
+        print(f"[GEN] inference done in {time.time() - t_gen:.1f}s  shape={image.size[0]}x{image.size[1]}", flush=True)
 
         buffer = io.BytesIO()
         image.save(buffer, format="PNG")
@@ -171,8 +184,12 @@ class FluxKleinWorker:
         bucket = os.environ.get("R2_BUCKET", "generated-media")
         s3.put_object(Bucket=bucket, Key=key, Body=file_bytes, ContentType="image/png")
 
-        return {"artifact": {"presigned_url": s3.generate_presigned_url("get_object",
-            Params={"Bucket": bucket, "Key": key}, ExpiresIn=3600)}}
+        url = s3.generate_presigned_url("get_object",
+            Params={"Bucket": bucket, "Key": key}, ExpiresIn=3600)
+        print(f"[R2] uploaded key={key} url={url[:60]}", flush=True)
+
+        print(f"[OK] completed in {time.time() - t_req:.1f}s", flush=True)
+        return {"artifact": {"presigned_url": url}}
 
     @modal.method()
     def generate(
@@ -187,26 +204,34 @@ class FluxKleinWorker:
         reference_images: list[str] = [],
     ) -> dict:
         """Public API - delegates to _run_generate. Tests call _run_generate directly."""
-        return self._run_generate(
-            prompt=prompt,
-            height=height,
-            width=width,
-            guidance_scale=guidance_scale,
-            num_inference_steps=num_inference_steps,
-            seed=seed,
-            input_image=input_image,
-            reference_images=reference_images,
-        )
+        try:
+            return self._run_generate(
+                prompt=prompt,
+                height=height,
+                width=width,
+                guidance_scale=guidance_scale,
+                num_inference_steps=num_inference_steps,
+                seed=seed,
+                input_image=input_image,
+                reference_images=reference_images,
+            )
+        except Exception as e:
+            print(f"[ERR] {type(e).__name__}: {e}", flush=True)
+            raise
 
     @modal.fastapi_endpoint(method="POST")
     def generate_web(self, item: Flux2Klein9bInput) -> dict:
-        return self.generate.remote(
-            prompt=item.prompt,
-            height=item.height,
-            width=item.width,
-            guidance_scale=item.guidance_scale,
-            num_inference_steps=item.num_inference_steps,
-            seed=item.seed,
-            input_image=item.input_image,
-            reference_images=item.reference_images,
-        )
+        try:
+            return self._run_generate(
+                prompt=item.prompt,
+                height=item.height,
+                width=item.width,
+                guidance_scale=item.guidance_scale,
+                num_inference_steps=item.num_inference_steps,
+                seed=item.seed,
+                input_image=item.input_image,
+                reference_images=item.reference_images,
+            )
+        except Exception as e:
+            print(f"[ERR] {type(e).__name__}: {e}", flush=True)
+            raise

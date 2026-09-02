@@ -1,4 +1,5 @@
 import os
+import time
 import uuid
 
 import boto3
@@ -94,6 +95,8 @@ class FluxKleinWorker:
             self.pipe = pipe
         else:
             MODEL_ID = "Disty0/FLUX.2-klein-9B-SDNQ-4bit-dynamic-svd-r32"
+            print("[INIT] loading model Disty0/FLUX.2-klein-9B-SDNQ-4bit-dynamic-svd-r32", flush=True)
+            t0 = time.time()
 
             token = os.environ.get("HF_TOKEN")
 
@@ -124,6 +127,7 @@ class FluxKleinWorker:
                 )
 
             self.pipe = pipe
+            print(f"[INIT] model loaded in {time.time() - t0:.1f}s", flush=True)
 
     def _prepare_image(self, base64_str: str):
         img = self.Image.open(self.io.BytesIO(self.base64.b64decode(base64_str)))
@@ -147,6 +151,10 @@ class FluxKleinWorker:
         reference_images: list[str] = [],
     ) -> dict:
         """Pure sync generate logic - testable via DI. Tests call this directly."""
+        t_req = time.time()
+        n_refs = (1 if input_image else 0) + len(reference_images or [])
+        print(f"[REQ] prompt={prompt[:40]}  seed={seed}  files={n_refs}", flush=True)
+
         req = self.Input(
             prompt=prompt,
             height=height,
@@ -179,7 +187,10 @@ class FluxKleinWorker:
         if images:
             pipe_kwargs["image"] = images
 
+        print(f"[GEN] starting inference prompt={prompt[:40]}", flush=True)
+        t_gen = time.time()
         image = self.pipe(**pipe_kwargs).images[0]
+        print(f"[GEN] inference done in {time.time() - t_gen:.1f}s  shape={image.size[0]}x{image.size[1]}", flush=True)
 
         buffer = self.io.BytesIO()
         image.save(buffer, format="PNG")
@@ -202,7 +213,9 @@ class FluxKleinWorker:
             Params={"Bucket": bucket, "Key": key},
             ExpiresIn=3600,
         )
+        print(f"[R2] uploaded key={key} url={presigned_url[:60]}", flush=True)
 
+        print(f"[OK] completed in {time.time() - t_req:.1f}s", flush=True)
         return {"artifact": {"presigned_url": presigned_url}}
 
     def generate(
@@ -217,13 +230,17 @@ class FluxKleinWorker:
         reference_images: list[str] = [],
     ) -> dict:
         """Public API - delegates to _run_generate. Tests call _run_generate directly."""
-        return self._run_generate(
-            prompt=prompt,
-            height=height,
-            width=width,
-            guidance_scale=guidance_scale,
-            num_inference_steps=num_inference_steps,
-            seed=seed,
-            input_image=input_image,
-            reference_images=reference_images,
-        )
+        try:
+            return self._run_generate(
+                prompt=prompt,
+                height=height,
+                width=width,
+                guidance_scale=guidance_scale,
+                num_inference_steps=num_inference_steps,
+                seed=seed,
+                input_image=input_image,
+                reference_images=reference_images,
+            )
+        except Exception as e:
+            print(f"[ERR] {type(e).__name__}: {e}", flush=True)
+            raise

@@ -1,4 +1,5 @@
 import os
+import time
 
 from runpod_flash import Endpoint, GpuGroup
 
@@ -65,6 +66,9 @@ class Qwen2VLVisionWorker:
         import torch.distributed as dist
         dist.is_available = lambda: False
 
+        print("[INIT] loading model Qwen/Qwen2-VL-2B-Instruct", flush=True)
+        t0 = time.time()
+
         import torch._higher_order_ops.utils as _hoop
         if not hasattr(_hoop, "setup_compilation_env"):
             _hoop.setup_compilation_env = _hoop._set_compilation_env
@@ -86,6 +90,7 @@ class Qwen2VLVisionWorker:
             device_map="auto",
         ).eval()
         self.processor = AutoProcessor.from_pretrained("Qwen/Qwen2-VL-2B-Instruct")
+        print(f"[INIT] model loaded in {time.time() - t0:.1f}s", flush=True)
 
     def _prepare_image(self, base64_str: str):
         import base64
@@ -96,7 +101,10 @@ class Qwen2VLVisionWorker:
         return img
 
     def analyze(self, image_base64: str) -> dict:
-        req = self.Input(image_base64=image_base64)
+        try:
+            t_req = time.time()
+            print("[REQ] image_base64 provided", flush=True)
+            req = self.Input(image_base64=image_base64)
         image = self._prepare_image(req.image_base64)
 
         messages = [{
@@ -117,12 +125,19 @@ class Qwen2VLVisionWorker:
             do_sample=False,
         )
 
+        print(f"[GEN] starting inference", flush=True)
+        t_gen = time.time()
         output_ids = self.model.generate(**inputs, generation_config=gen_config)
         generated = output_ids[0][inputs.input_ids.shape[1]:]
+        print(f"[GEN] inference done in {time.time() - t_gen:.1f}s", flush=True)
         result = self.processor.decode(generated, skip_special_tokens=True)
 
         import re
         m = re.search(r'\{.*\}', result, re.DOTALL)
         if m:
+            print(f"[OK] completed in {time.time() - t_req:.1f}s", flush=True)
             return self.Output.model_validate_json(m.group()).model_dump()
+        except Exception as e:
+            print(f"[ERR] {type(e).__name__}: {e}", flush=True)
+            raise
         return {"raw": result}

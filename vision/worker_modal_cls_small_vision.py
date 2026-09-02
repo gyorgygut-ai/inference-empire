@@ -1,6 +1,7 @@
 import base64
 import io
 import re
+import time
 from typing import Literal
 
 import modal
@@ -92,6 +93,8 @@ image = (
 class SmallVisionWorker:
     @modal.enter()
     def load(self):
+        print("[INIT] loading model Qwen/Qwen2-VL-2B-Instruct", flush=True)
+        t0 = time.time()
         import torch
         import torch.distributed as dist
 
@@ -112,41 +115,48 @@ class SmallVisionWorker:
             .eval()
         )
         self.processor = AutoProcessor.from_pretrained(REPO_ID)
+        print(f"[INIT] model loaded in {time.time() - t0:.1f}s", flush=True)
 
     @modal.method()
     def analyze(self, image_base64: str) -> dict:
-        from PIL import Image as PILImage
+            try:
+                t_req = time.time()("[REQ] image_base64 provided", flush=True)
+            from PIL import Image as PILImage
 
-        req = SmallVisionInput(image_base64=image_base64)
-        img = PILImage.open(io.BytesIO(base64.b64decode(req.image_base64))).convert("RGB")
+            req = SmallVisionInput(image_base64=image_base64)
+            img = PILImage.open(io.BytesIO(base64.b64decode(req.image_base64))).convert("RGB")
 
-        messages = [{
-            "role": "user",
-            "content": [
-                {"type": "image", "image": img},
-                {"type": "text", "text": self.analyze_prompt},
-            ],
-        }]
+            messages = [{
+                "role": "user",
+                "content": [
+                    {"type": "image", "image": img},
+                    {"type": "text", "text": self.analyze_prompt},
+                ],
+            }]
 
-        text = self.processor.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
-        inputs = self.processor(text=[text], images=[img], return_tensors="pt").to("cuda")
+            text = self.processor.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+            inputs = self.processor(text=[text], images=[img], return_tensors="pt").to("cuda")
 
-        from transformers import GenerationConfig
+            from transformers import GenerationConfig
 
-        gen_config = GenerationConfig(
-            max_new_tokens=512,
-            do_sample=False,
-        )
+            gen_config = GenerationConfig(
+                max_new_tokens=512,
+                do_sample=False,
+            )
 
-        output_ids = self.model.generate(**inputs, generation_config=gen_config)
-        generated = output_ids[0][inputs.input_ids.shape[1] :]
-        result = self.processor.decode(generated, skip_special_tokens=True)
+            print(f"[GEN] starting inference", flush=True)
+            t_gen = time.time()
+            output_ids = self.model.generate(**inputs, generation_config=gen_config)
+            generated = output_ids[0][inputs.input_ids.shape[1] :]
+            print(f"[GEN] inference done in {time.time() - t_gen:.1f}s", flush=True)
+            result = self.processor.decode(generated, skip_special_tokens=True)
 
-        m = re.search(r"\{.*\}", result, re.DOTALL)
-        if m:
-            return SmallVisionOutput.model_validate_json(m.group()).model_dump()
-        return {"raw": result}
+            m = re.search(r"\{.*\}", result, re.DOTALL)
+            if m:
+                return SmallVisionOutput.model_validate_json(m.group()).model_dump()
+            print(f"[OK] completed in {time.time() - t_req:.1f}s", flush=True)
+            return {"raw": result}
 
-    @modal.fastapi_endpoint(method="POST")
+        @modal.fastapi_endpoint(method="POST")
     def analyze_web(self, item: SmallVisionInput) -> dict:
-        return self.analyze.local(item.image_base64)
+            return self.analyze.local(item.image_base64)

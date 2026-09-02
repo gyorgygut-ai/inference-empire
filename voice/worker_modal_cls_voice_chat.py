@@ -4,6 +4,7 @@ import json
 import os
 import re
 import secrets
+import time
 import threading
 from typing import Optional
 
@@ -177,6 +178,9 @@ class VoiceChatPipeline:
 
         dist.is_available = lambda: False
 
+        print("[INIT] loading model Qwen/Qwen3-8B + Whisper + XTTS", flush=True)
+        t0 = time.time()
+
         from transformers import (
             AutoModelForCausalLM,
             AutoTokenizer,
@@ -211,6 +215,7 @@ class VoiceChatPipeline:
         self.gpu_lock = threading.Lock()
         self._current_persona: Optional[str] = None
         self._models_loaded = True
+        print(f"[INIT] model loaded in {time.time() - t0:.1f}s", flush=True)
 
     def _ensure_loaded(self):
         if self._models_loaded:
@@ -340,6 +345,7 @@ class RealtimeSession:
 
     # ---- lifecycle -------------------------------------------------------
     async def on_connect(self):
+        print("[REQ] websocket connected", flush=True)
         await self._emit({"type": "session.created", "session": self.session})
         await self._emit(
             {
@@ -349,8 +355,9 @@ class RealtimeSession:
         )
 
     async def handle_event(self, event: dict):
-        etype = event.get("type")
-        print(f"[WS] <- {etype}  keys={list(event.keys())}", flush=True)
+        try:
+            etype = event.get("type")
+            print(f"[WS] <- {etype}  keys={list(event.keys())}", flush=True)
         if etype == "session.update":
             self._apply_session(event.get("session", {}))
             await self._emit({"type": "session.updated", "session": self.session})
@@ -362,6 +369,9 @@ class RealtimeSession:
             await self._cancel_response()
         # other event types (response.create, conversation.item.truncate, etc.)
         # are ignored; server-VAD drives the flow.
+        except Exception as e:
+            print(f"[ERR] {type(e).__name__}: {e}", flush=True)
+            raise
 
     def _apply_session(self, sess: dict):
         self.session.update({k: v for k, v in sess.items()})
@@ -687,6 +697,7 @@ def build_web_app(pipeline: "VoiceChatPipeline"):
                     continue
                 await session.handle_event(event)
         except WebSocketDisconnect:
+            print("[OK] websocket disconnected", flush=True)
             pass
 
     return web

@@ -1,6 +1,7 @@
 import base64
 import io
 import os
+import time
 import uuid
 from pathlib import Path
 from typing import Literal, Optional
@@ -71,6 +72,9 @@ def load_pipeline():
     import torch.distributed as dist
 
     dist.is_available = lambda: False
+
+    print("[INIT] loading model krea/Krea-2-Turbo", flush=True)
+    t0 = time.time()
 
     # Krea-2-Turbo's Qwen3-VL text encoder config ships `rope_scaling: null`;
     # transformers 4.57.x reads it unguarded (modeling_qwen3_vl.py:297) and
@@ -155,6 +159,7 @@ def load_pipeline():
     pipe.set_adapters(["reid"], weights=[1.0])
     pipe.enable_model_cpu_offload()
 
+    print(f"[INIT] model loaded in {time.time() - t0:.1f}s", flush=True)
     return pipe, runtime_dir, torch
 
 
@@ -227,20 +232,24 @@ def generate(
     face_crop: bool = True,
 ):
     pipe, runtime_dir, torch = context.on_start_value
-    return _run_generate(
-        pipe,
-        runtime_dir,
-        torch,
-        prompt=prompt,
-        reference_image=reference_image,
-        height=height,
-        width=width,
-        num_inference_steps=num_inference_steps,
-        guidance_scale=guidance_scale,
-        seed=seed,
-        lora_scale=lora_scale,
-        face_crop=face_crop,
-    )
+    try:
+        return _run_generate(
+            pipe,
+            runtime_dir,
+            torch,
+            prompt=prompt,
+            reference_image=reference_image,
+            height=height,
+            width=width,
+            num_inference_steps=num_inference_steps,
+            guidance_scale=guidance_scale,
+            seed=seed,
+            lora_scale=lora_scale,
+            face_crop=face_crop,
+        )
+    except Exception as e:
+        print(f"[ERR] {type(e).__name__}: {e}", flush=True)
+        raise
 
 
 def _run_generate(
@@ -258,6 +267,9 @@ def _run_generate(
     face_crop: bool = True,
 ) -> dict:
     """Pure sync generate logic - testable via DI. Tests call this directly."""
+    t_req = time.time()
+    n_files = 1 if reference_image else 0
+    print(f"[REQ] prompt={prompt[:40]}  seed={seed}  files={n_files}", flush=True)
     req = Krea2Ref2ImgInput(
         prompt=prompt,
         reference_image=reference_image,
@@ -284,6 +296,9 @@ def _run_generate(
             req.seed
         )
 
+    print(f"[GEN] starting inference prompt={prompt[:40]}", flush=True)
+    t_gen = time.time()
+
     if req.reference_image:
         ref = _decode_image(req.reference_image)
         if req.face_crop:
@@ -299,6 +314,7 @@ def _run_generate(
     else:
         result = pipe(**base_kwargs)
 
+    print(f"[GEN] inference done in {time.time() - t_gen:.1f}s  shape={gen_image.size[0] if hasattr(gen_image, 'size') else 'unknown'}x{gen_image.size[1] if hasattr(gen_image, 'size') else 'unknown'}", flush=True)
     gen_image = result.images[0]
     buffer = io.BytesIO()
     gen_image.save(buffer, format="PNG")
@@ -321,5 +337,7 @@ def _run_generate(
         Params={"Bucket": bucket, "Key": key},
         ExpiresIn=3600,
     )
+    print(f"[R2] uploaded key={key} url={presigned_url[:60]}", flush=True)
 
+    print(f"[OK] completed in {time.time() - t_req:.1f}s", flush=True)
     return {"artifact": {"presigned_url": presigned_url}}

@@ -1,6 +1,7 @@
 import base64
 import io
 import re
+import time
 from typing import Literal
 
 from PIL import Image as PILImage
@@ -55,6 +56,8 @@ def _build_analyze_prompt() -> str:
 
 
 def load_models():
+    print("[INIT] loading model Qwen/Qwen2-VL-2B-Instruct", flush=True)
+    t0 = time.time()
     import torch
     import torch.distributed as dist
     dist.is_available = lambda: False
@@ -77,6 +80,7 @@ def load_models():
         cache_dir=CACHE_PATH,
     )
 
+    print(f"[INIT] model loaded in {time.time() - t0:.1f}s", flush=True)
     return model, processor, _build_analyze_prompt()
 
 
@@ -93,6 +97,8 @@ def load_models():
     checkpoint_enabled=True,
 )
 def analyze(context, image_base64: str):
+    t_req = time.time()
+    print("[REQ] image_base64 provided", flush=True)
     model, processor, analyze_prompt = context.on_start_value
 
     req = SmallVisionInput(image_base64=image_base64)
@@ -116,11 +122,18 @@ def analyze(context, image_base64: str):
         do_sample=False,
     )
 
+    print(f"[GEN] starting inference", flush=True)
+    t_gen = time.time()
     output_ids = model.generate(**inputs, generation_config=gen_config)
     generated = output_ids[0][inputs.input_ids.shape[1]:]
+    print(f"[GEN] inference done in {time.time() - t_gen:.1f}s", flush=True)
     result = processor.decode(generated, skip_special_tokens=True)
 
     m = re.search(r"\{.*\}", result, re.DOTALL)
+    print(f"[OK] completed in {time.time() - t_req:.1f}s", flush=True)
     if m:
         return SmallVisionOutput.model_validate_json(m.group()).model_dump()
     return {"raw": result}
+    except Exception as e:
+        print(f"[ERR] {type(e).__name__}: {e}", flush=True)
+        raise

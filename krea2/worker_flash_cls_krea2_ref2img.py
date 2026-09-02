@@ -1,4 +1,5 @@
 import os
+import time
 import uuid
 
 import boto3
@@ -77,6 +78,9 @@ class Krea2Ref2ImgWorker:
         import torch.distributed as dist
 
         dist.is_available = lambda: False
+
+        print("[INIT] loading model krea/Krea-2-Turbo", flush=True)
+        t0 = time.time()
 
         # Krea-2-Turbo's Qwen3-VL text encoder config ships `rope_scaling: null`;
         # transformers 4.57.x reads it unguarded (modeling_qwen3_vl.py:297) and
@@ -170,6 +174,7 @@ class Krea2Ref2ImgWorker:
         )
         self.pipe.set_adapters(["reid"], weights=[1.0])
         self.pipe.enable_model_cpu_offload()
+        print(f"[INIT] model loaded in {time.time() - t0:.1f}s", flush=True)
 
     def _decode_image(self, base64_str: str):
         import base64
@@ -225,6 +230,8 @@ class Krea2Ref2ImgWorker:
     ) -> dict:
         import base64
         import io
+        t_req = time.time()
+        print(f"[REQ] prompt={prompt[:40]}  seed={seed}  files={1 if reference_image else 0}", flush=True)
 
         req = self.Input(
             prompt=prompt,
@@ -252,6 +259,9 @@ class Krea2Ref2ImgWorker:
                 req.seed
             )
 
+        print(f"[GEN] starting inference prompt={prompt[:40]}", flush=True)
+        t_gen = time.time()
+
         if req.reference_image:
             ref = self._decode_image(req.reference_image)
             if req.face_crop:
@@ -267,6 +277,7 @@ class Krea2Ref2ImgWorker:
         else:
             result = self.pipe(**base_kwargs)
 
+        print(f"[GEN] inference done in {time.time() - t_gen:.1f}s  shape={image.size[0] if hasattr(image, 'size') else '?'}x{image.size[1] if hasattr(image, 'size') else '?'}", flush=True)
         image = result.images[0]
         buffer = io.BytesIO()
         image.save(buffer, format="PNG")
@@ -290,5 +301,10 @@ class Krea2Ref2ImgWorker:
             Params={"Bucket": bucket, "Key": key},
             ExpiresIn=3600,
         )
+        print(f"[R2] uploaded key={key} url={presigned_url[:60]}", flush=True)
 
+        print(f"[OK] completed in {time.time() - t_req:.1f}s", flush=True)
         return {"artifact": {"presigned_url": presigned_url}}
+        except Exception as e:
+            print(f"[ERR] {type(e).__name__}: {e}", flush=True)
+            raise

@@ -297,6 +297,7 @@ def _start_comfy():
         time.sleep(1)
     else:
         raise RuntimeError("ComfyUI server did not become ready within 60s")
+    print("[INIT] ComfyUI server ready", flush=True)
 
     return "http://127.0.0.1:8188"
 
@@ -327,6 +328,9 @@ def generate(context, prompt: str,
              width: int = 1344, height: int = 768,
              length: int = 124, steps: int = 20, seed: int | None = None,
              ref_image_size: str = "match", scheduler: str = "simple") -> dict:
+    t_req = time.time()
+    n_files = len(ref_images) + len(ref_videos) + len(ref_video_audios) + len(ref_audios)
+    print(f"[REQ] prompt={prompt[:40]}  seed={seed}  files={n_files}", flush=True)
     comfy_base_url = context.on_start_value
 
     req = ValidatedInput(
@@ -349,6 +353,8 @@ def generate(context, prompt: str,
     if images:
         payload["images"] = images
 
+    print(f"[GEN] starting ComfyUI job prompt={prompt[:40]}", flush=True)
+    t_gen = time.time()
     r = requests.post(f"{comfy_base_url}/prompt", json=payload, timeout=30)
     r.raise_for_status()
     prompt_id = r.json()["prompt_id"]
@@ -369,6 +375,7 @@ def generate(context, prompt: str,
     else:
         raise RuntimeError(f"ComfyUI job {prompt_id} did not complete within 600s")
 
+    print(f"[GEN] ComfyUI job done in {time.time() - t_gen:.1f}s", flush=True)
     video_url = f"{comfy_base_url}/view?filename={video_info['filename']}&subfolder={video_info.get('subfolder', '')}&type={video_info.get('type', 'output')}"
     video_bytes = requests.get(video_url, timeout=60).content
 
@@ -389,5 +396,10 @@ def generate(context, prompt: str,
         Params={"Bucket": bucket, "Key": key},
         ExpiresIn=3600,
     )
+    print(f"[R2] uploaded key={key} url={presigned_url[:60]}", flush=True)
 
+    print(f"[OK] completed in {time.time() - t_req:.1f}s", flush=True)
     return {"artifact": {"presigned_url": presigned_url}}
+    except Exception as e:
+        print(f"[ERR] {type(e).__name__}: {e}", flush=True)
+        raise

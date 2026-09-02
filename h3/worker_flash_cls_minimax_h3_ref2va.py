@@ -1,4 +1,5 @@
 import os
+import time
 import uuid
 
 import boto3
@@ -185,6 +186,8 @@ class MiniMaxH3Ref2VAWorker:
             "computation_device": "cuda",
         }
 
+        print("[INIT] loading model DiffSynth-Studio/MiniMax-H3-NF4", flush=True)
+        t0 = time.time()
         self.pipe = MiniMaxH3Pipeline.from_pretrained(
             torch_dtype=torch.bfloat16,
             device="cuda",
@@ -216,6 +219,7 @@ class MiniMaxH3Ref2VAWorker:
             ),
             vram_limit=torch.cuda.mem_get_info("cuda")[1] / (1024 ** 3) - 5,
         )
+        print(f"[INIT] model loaded in {time.time() - t0:.1f}s", flush=True)
 
     def _read_image(self, base64_str: str):
         import base64
@@ -295,10 +299,14 @@ class MiniMaxH3Ref2VAWorker:
         steps: int = 50,
         seed: int | None = None,
     ) -> dict:
-        import base64
-        import io
+        try:
+            t_req = time.time()
+            n_files = len(ref_images) + len(ref_videos) + len(ref_video_audios) + len(ref_audios)
+            print(f"[REQ] prompt={prompt[:40]}  seed={seed}  files={n_files}", flush=True)
+            import base64
+            import io
 
-        req = self.Input(
+            req = self.Input(
             prompt=prompt,
             ref_images=ref_images,
             ref_videos=ref_videos,
@@ -325,7 +333,10 @@ class MiniMaxH3Ref2VAWorker:
         if req.seed is not None:
             pipe_kwargs["seed"] = req.seed
 
+        print(f"[GEN] starting inference prompt={prompt[:40]}  num_frames={req.length}", flush=True)
+        t_gen = time.time()
         video, audio = self.pipe(**pipe_kwargs)
+        print(f"[GEN] inference done in {time.time() - t_gen:.1f}s  video={req.length} frames", flush=True)
 
         self.write_video_audio(
             video=video,
@@ -356,5 +367,10 @@ class MiniMaxH3Ref2VAWorker:
             Params={"Bucket": bucket, "Key": key},
             ExpiresIn=3600,
         )
+        print(f"[R2] uploaded key={key} url={presigned_url[:60]}", flush=True)
 
+        print(f"[OK] completed in {time.time() - t_req:.1f}s", flush=True)
         return {"artifact": {"presigned_url": presigned_url}}
+        except Exception as e:
+            print(f"[ERR] {type(e).__name__}: {e}", flush=True)
+            raise

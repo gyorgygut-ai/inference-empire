@@ -1,6 +1,7 @@
 import base64
 import io
 import os
+import time
 import re
 from pathlib import Path
 from typing import Literal, Optional
@@ -93,6 +94,8 @@ image = (
 class Krea2Ref2ImgWorker:
     @modal.enter()
     def load(self):
+        print("[INIT] loading model krea/Krea-2-Turbo", flush=True)
+        t0 = time.time()
         import torch
         import torch.distributed as dist
 
@@ -176,6 +179,7 @@ class Krea2Ref2ImgWorker:
         )
         self.pipe.set_adapters(["reid"], weights=[1.0])
         self.pipe.enable_model_cpu_offload()
+        print(f"[INIT] model loaded in {time.time() - t0:.1f}s", flush=True)
 
     def _decode_image(self, base64_str: str):
         import base64
@@ -230,6 +234,8 @@ class Krea2Ref2ImgWorker:
     ) -> dict:
         import uuid
         import boto3
+        t_req = time.time()
+        print(f"[REQ] prompt={prompt[:40]}  seed={seed}  files={1 if reference_image else 0}", flush=True)
 
         req = Krea2Ref2ImgInput(
             prompt=prompt,
@@ -255,6 +261,9 @@ class Krea2Ref2ImgWorker:
         if req.seed is not None:
             base_kwargs["generator"] = self.torch.Generator(device="cpu").manual_seed(req.seed)
 
+        print(f"[GEN] starting inference prompt={prompt[:40]}", flush=True)
+        t_gen = time.time()
+
         if req.reference_image:
             ref = self._decode_image(req.reference_image)
             if req.face_crop:
@@ -270,6 +279,7 @@ class Krea2Ref2ImgWorker:
         else:
             result = self.pipe(**base_kwargs)
 
+        print(f"[GEN] inference done in {time.time() - t_gen:.1f}s  shape={image.size[0] if hasattr(image, 'size') else '?'}x{image.size[1] if hasattr(image, 'size') else '?'}", flush=True)
         image = result.images[0]
         buffer = io.BytesIO()
         image.save(buffer, format="PNG")
@@ -293,12 +303,15 @@ class Krea2Ref2ImgWorker:
             Params={"Bucket": bucket, "Key": key},
             ExpiresIn=3600,
         )
+        print(f"[R2] uploaded key={key} url={presigned_url[:60]}", flush=True)
 
+        print(f"[OK] completed in {time.time() - t_req:.1f}s", flush=True)
         return {"artifact": {"presigned_url": presigned_url}}
 
     @modal.fastapi_endpoint(method="POST")
     def generate_web(self, item: Krea2Ref2ImgInput) -> dict:
-        return self.generate.local(
+        try:
+            return self.generate.local(
             prompt=item.prompt,
             reference_image=item.reference_image,
             height=item.height,
@@ -309,3 +322,6 @@ class Krea2Ref2ImgWorker:
             lora_scale=item.lora_scale,
             face_crop=item.face_crop,
         )
+        except Exception as e:
+            print(f"[ERR] {type(e).__name__}: {e}", flush=True)
+            raise

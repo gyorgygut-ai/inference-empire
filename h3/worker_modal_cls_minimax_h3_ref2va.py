@@ -1,6 +1,7 @@
 import base64
 import io
 import os
+import time
 import uuid
 from typing import Literal, Optional
 
@@ -161,6 +162,8 @@ image = (
 class MiniMaxH3Ref2VAWorker:
     @modal.enter()
     def load(self):
+        print("[INIT] loading model DiffSynth-Studio/MiniMax-H3-NF4", flush=True)
+        t0 = time.time()
         import torch.distributed as dist
 
         dist.is_available = lambda: False
@@ -219,6 +222,7 @@ class MiniMaxH3Ref2VAWorker:
             ),
             vram_limit=torch.cuda.mem_get_info("cuda")[1] / (1024**3) - 5,
         )
+        print(f"[INIT] model loaded in {time.time() - t0:.1f}s", flush=True)
 
     def _read_image(self, base64_str: str):
         from PIL import Image
@@ -295,6 +299,10 @@ class MiniMaxH3Ref2VAWorker:
         steps: int = 50,
         seed: Optional[int] = None,
     ) -> dict:
+        try:
+        t_req = time.time()
+        total_files = len(ref_images) + len(ref_videos) + len(ref_video_audios) + len(ref_audios)
+        print(f"[REQ] prompt={prompt[:40]}  seed={seed}  files={total_files}", flush=True)
         import boto3
 
         req = ValidatedRef2VAInput(
@@ -324,7 +332,10 @@ class MiniMaxH3Ref2VAWorker:
         if req.seed is not None:
             pipe_kwargs["seed"] = req.seed
 
+        print(f"[GEN] starting inference prompt={prompt[:40]}  num_frames={req.length}", flush=True)
+        t_gen = time.time()
         video, audio = self.pipe(**pipe_kwargs)
+        print(f"[GEN] inference done in {time.time() - t_gen:.1f}s  video={req.length} frames", flush=True)
 
         self.write_video_audio(
             video=video,
@@ -355,11 +366,17 @@ class MiniMaxH3Ref2VAWorker:
             Params={"Bucket": bucket, "Key": key},
             ExpiresIn=3600,
         )
+        print(f"[R2] uploaded key={key} url={presigned_url[:60]}", flush=True)
 
+        print(f"[OK] completed in {time.time() - t_req:.1f}s", flush=True)
         return {"artifact": {"presigned_url": presigned_url}}
+        except Exception as e:
+            print(f"[ERR] {type(e).__name__}: {e}", flush=True)
+            raise
 
     @modal.fastapi_endpoint(method="POST")
     def generate_web(self, item: MiniMaxH3Ref2VAInput) -> dict:
+        try:
         return self.generate.local(
             prompt=item.prompt,
             ref_images=item.ref_images,
@@ -372,3 +389,6 @@ class MiniMaxH3Ref2VAWorker:
             steps=item.steps,
             seed=item.seed,
         )
+        except Exception as e:
+            print(f"[ERR] {type(e).__name__}: {e}", flush=True)
+            raise
