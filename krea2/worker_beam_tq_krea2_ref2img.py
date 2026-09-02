@@ -227,7 +227,37 @@ def generate(
     face_crop: bool = True,
 ):
     pipe, runtime_dir, torch = context.on_start_value
+    return _run_generate(
+        pipe,
+        runtime_dir,
+        torch,
+        prompt=prompt,
+        reference_image=reference_image,
+        height=height,
+        width=width,
+        num_inference_steps=num_inference_steps,
+        guidance_scale=guidance_scale,
+        seed=seed,
+        lora_scale=lora_scale,
+        face_crop=face_crop,
+    )
 
+
+def _run_generate(
+    pipe,
+    runtime_dir,
+    torch,
+    prompt: str,
+    reference_image: Optional[str] = None,
+    height: int = 768,
+    width: int = 768,
+    num_inference_steps: int = 8,
+    guidance_scale: float = 0.0,
+    seed: Optional[int] = None,
+    lora_scale: float = 1.0,
+    face_crop: bool = True,
+) -> dict:
+    """Pure sync generate logic - testable via DI. Tests call this directly."""
     req = Krea2Ref2ImgInput(
         prompt=prompt,
         reference_image=reference_image,

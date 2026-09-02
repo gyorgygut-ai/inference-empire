@@ -361,6 +361,8 @@ dist.is_available = lambda: False
 - Streaming/WS: `@modal.asgi_app()` returning FastAPI app with WebSocket route
 
 - Invoke: `modal.Function.from_name("app-name","method").spawn(prompt="...",seed=42)` — returns `.task_id` instantly. Do NOT use `modal run` (blocks).
+- For `@app.cls` workers: `modal.Cls.from_name("app","ClsName").().method.remote(...)` — NOT `.remote()` on webhook endpoints.
+- Webhook endpoints (`@modal.fastapi_endpoint`) use `.local(...)` or HTTP POST to the deployed URL.
 
 ### Secrets
 

@@ -51,6 +51,10 @@ class _FakeApp:
         pass
     def cls(self, *a, **kw):
         return lambda cls: cls
+    def local_entrypoint(self, *a, **kw):
+        def dec(f):
+            return f
+        return dec
 
 
 class _FakeCls:

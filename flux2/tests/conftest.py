@@ -26,6 +26,9 @@ class _FakeSecret:
 class _FakeApp:
     def __init__(self, *a, **kw): pass
     def cls(self, *a, **kw): return lambda cls: cls
+    def local_entrypoint(self, *a, **kw):
+        def dec(f): return f
+        return dec
 
 class _FakeCls:
     @staticmethod
