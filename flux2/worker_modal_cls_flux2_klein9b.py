@@ -200,7 +200,7 @@ class FluxKleinWorker:
 
     @modal.fastapi_endpoint(method="POST")
     def generate_web(self, item: Flux2Klein9bInput) -> dict:
-        return self.generate(
+        return self.generate.remote(
             prompt=item.prompt,
             height=item.height,
             width=item.width,

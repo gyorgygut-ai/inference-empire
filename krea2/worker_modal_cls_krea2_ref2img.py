@@ -61,7 +61,7 @@ image = (
         "transformers>=4.57,<5",
         "accelerate==1.14.0",
         "safetensors==0.8.0",
-        "huggingface_hub==1.29.0",
+        "huggingface-hub>=0.34,<2.0",
         "pillow==12.3.0",
         "protobuf==6.33.6",
         "opencv-python-headless==4.12.0.88",
