@@ -57,18 +57,18 @@ image = (
     .apt_install("git", "ffmpeg", "libgl1", "libglib2.0-0")
     .pip_install(
         "torch==2.9.1",
-        "diffusers",
+        "diffusers==0.39.0",
         "transformers>=4.57,<5",
-        "accelerate",
-        "safetensors",
-        "huggingface_hub",
-        "pillow",
-        "protobuf",
-        "opencv-python-headless",
-        "peft",
-        "boto3",
-        "fastapi",
-        "hf_transfer",
+        "accelerate==1.14.0",
+        "safetensors==0.8.0",
+        "huggingface_hub==1.29.0",
+        "pillow==12.3.0",
+        "protobuf==6.33.6",
+        "opencv-python-headless==4.12.0.88",
+        "peft==0.17.0",
+        "boto3==1.43.83",
+        "fastapi==0.141.1",
+        "hf_transfer==0.1.9",
     )
     .env(
         {

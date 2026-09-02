@@ -33,16 +33,18 @@ image = (
     Image(python_version="python3.11")
     .add_python_packages([
         "torch==2.9.1",
-        "transformers>=4.57,<5",
-        "pillow",
-        "accelerate",
-        "diffusers",
-        "sdnq",
-        "boto3",
+        "transformers>=5.0,<6",
+        "accelerate==1.14.0",
+        "diffusers==0.40.0",
+        "sdnq==0.2.6",
+        "pillow==12.3.0",
+        "boto3==1.43.83",
     ])
     .with_envs({
         "HF_HOME": CACHE_PATH,
         "HF_HUB_ENABLE_HF_TRANSFER": "1",
+        "R2_ENDPOINT": "https://29b2f092b2dbc0b63f48f491ddc177ee.r2.cloudflarestorage.com",
+        "R2_BUCKET": "generated-media",
     })
 )
 
@@ -169,7 +171,7 @@ def _run_generate(
     keep_warm_seconds=1800,
     checkpoint_enabled=True,
     timeout=3600,
-    secrets=["HF_TOKEN", "R2_ACCESS_KEY", "R2_SECRET_KEY"],
+    secrets=["HF_TOKEN", "R2_ACCESS_KEY", "R2_SECRET_KEY", "R2_ENDPOINT"],
 )
 def generate(context, prompt: str,
              height: int = 512, width: int = 512,

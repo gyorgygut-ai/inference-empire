@@ -34,19 +34,21 @@ image = (
         "torch==2.9.1",
         "diffusers==0.39.0",
         "transformers>=4.57,<5",
-        "accelerate>=0.31.0",
-        "safetensors",
-        "huggingface_hub[hf-transfer]",
-        "pillow",
-        "protobuf",
-        "opencv-python-headless",
-        "peft",
-        "boto3",
+        "accelerate==1.14.0",
+        "safetensors==0.8.0",
+        "hf_transfer==0.1.9",
+        "pillow==12.3.0",
+        "protobuf==6.33.6",
+        "opencv-python-headless==4.12.0.88",
+        "peft==0.17.0",
+        "boto3==1.43.83",
     ])
     .with_envs({
         "HF_HOME": CACHE_PATH,
         "HF_HUB_ENABLE_HF_TRANSFER": "1",
         "HF_TOKEN": os.environ.get("HF_TOKEN", ""),
+        "R2_ENDPOINT": "https://29b2f092b2dbc0b63f48f491ddc177ee.r2.cloudflarestorage.com",
+        "R2_BUCKET": "generated-media",
     })
 )
 
@@ -207,7 +209,7 @@ def _face_crop(img, runtime_dir: Path, margin: float = 0.4):
     keep_warm_seconds=1800,
     checkpoint_enabled=True,
     timeout=3600,
-    secrets=["HF_TOKEN", "R2_ACCESS_KEY", "R2_SECRET_KEY"],
+    secrets=["HF_TOKEN", "R2_ACCESS_KEY", "R2_SECRET_KEY", "R2_ENDPOINT"],
     env={
         "PYTORCH_NVML_BASED_CUDA_CHECK": "0",
     },

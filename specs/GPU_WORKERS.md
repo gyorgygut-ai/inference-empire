@@ -77,7 +77,9 @@ return {"artifact": {"presigned_url": s3.generate_presigned_url("get_object",
 
 ## Dependency Constraints
 
-- `transformers` must stay `>=4.57,<5`
+- Pin ALL deps to exact versions. Never use bare package names.
+- Krea2 workers: `transformers>=4.57,<5` with `diffusers==0.39.0`
+- Flux2 workers: `transformers>=5.0,<6` with `diffusers==0.40.0` (sdnq requires diffusers>=0.40.0; transformers 4.57.x conflicts with huggingface-hub>=1.23.0 needed by diffusers 0.40.0)
 - Base flash GPU image has broken torch build — use shim:
   ```python
   import torch.distributed as dist
@@ -311,6 +313,8 @@ dist.is_available = lambda: False
 
 Create before deploy: `beam secret create <name> <KEY=value ...>`
 
+- Invoke: `curl -X POST <deployment-url> -H "Authorization: Bearer <token>" -d '{"prompt":"...","seed":42}'` — returns `{"task_id":"..."}`. No client SDK.
+
 ---
 
 ## Modal Rules
@@ -355,6 +359,8 @@ dist.is_available = lambda: False
 
 - Simple: `@modal.fastapi_endpoint(method="POST")` + `@modal.method()`
 - Streaming/WS: `@modal.asgi_app()` returning FastAPI app with WebSocket route
+
+- Invoke: `modal.Function.from_name("app-name","method").spawn(prompt="...",seed=42)` — returns `.task_id` instantly. Do NOT use `modal run` (blocks).
 
 ### Secrets
 

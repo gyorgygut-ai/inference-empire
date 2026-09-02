@@ -10,6 +10,27 @@ from pydantic import BaseModel, ConfigDict, Field
 
 app = modal.App("flux2-klein9b-worker")
 
+
+@app.local_entrypoint()
+def main(
+    prompt: str = "a cat sitting on a rocket ship",
+    height: int = 512,
+    width: int = 512,
+    num_inference_steps: int = 4,
+    seed: int = -1,
+):
+    import json
+
+    worker = FluxKleinWorker()
+    result = worker.generate.remote(
+        prompt=prompt,
+        height=height,
+        width=width,
+        num_inference_steps=num_inference_steps,
+        seed=seed if seed >= 0 else None,
+    )
+    print(json.dumps(result, indent=2))
+
 dotenv_secret = modal.Secret.from_dotenv(str(Path(__file__).parent.parent / ".env"))
 hf_cache_vol = modal.Volume.from_name("hf-cache", create_if_missing=True)
 
@@ -31,13 +52,14 @@ image = (
     .apt_install("git", "ffmpeg", "libgl1", "libglib2.0-0")
     .pip_install(
         "torch==2.9.1",
-        "transformers>=4.57,<5",
-        "accelerate",
-        "diffusers",
-        "sdnq",
-        "boto3",
-        "pillow",
-        "fastapi[standard]",
+        "transformers>=5.0,<6",
+        "accelerate==1.14.0",
+        "diffusers==0.40.0",
+        "sdnq==0.2.6",
+        "boto3==1.43.83",
+        "pillow==12.3.0",
+        "fastapi[standard]==0.141.1",
+        "hf_transfer==0.1.9",
     )
     .env({
         "HF_HOME": "/root/.cache/huggingface",
