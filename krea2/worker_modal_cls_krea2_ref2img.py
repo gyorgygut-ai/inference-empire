@@ -14,6 +14,7 @@ REID_REPO = "yijunwang2/krea2-reid"
 app = modal.App("krea2-ref2img-worker")
 
 dotenv_secret = modal.Secret.from_dotenv(str(Path(__file__).parent.parent / ".env"))
+hf_cache_vol = modal.Volume.from_name("hf-cache", create_if_missing=True)
 
 
 class Krea2Ref2ImgInput(BaseModel):
@@ -76,7 +77,6 @@ image = (
             "PYTORCH_NVML_BASED_CUDA_CHECK": "0",
         }
     )
-    .run_function(_download_models, secrets=[dotenv_secret])
 )
 
 
@@ -84,6 +84,7 @@ image = (
     image=image,
     gpu=["L40S", "A100-40GB"],
     secrets=[dotenv_secret],
+    volumes={"/root/.cache/huggingface": hf_cache_vol},
     timeout=900,
     memory=65536,
     scaledown_window=150,

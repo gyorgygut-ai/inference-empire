@@ -21,24 +21,25 @@ from helpers import (
 
 @pytest.fixture(scope="module")
 def beam_deployment():
-    deployment_id = deploy_beam()
+    deployment_id, endpoint_url, auth_token = deploy_beam()
     try:
-        yield deployment_id
+        yield deployment_id, endpoint_url, auth_token
     finally:
         undeploy_beam(deployment_id)
 
 
 def test_e2e_dev_beam_returns_contract_and_uploads_artifact(beam_deployment):
     """generate() with good input -> returns output contract, R2 bucket has artifact."""
-    data = call_beam(beam_deployment, input_data={
+    deployment_id, endpoint_url, auth_token = beam_deployment
+    data = call_beam(input_data={
         "prompt": "a cat",
         "height": 512,
         "width": 512,
         "guidance_scale": 1.0,
         "num_inference_steps": 4,
-    })
+    }, endpoint_url=endpoint_url, auth_token=auth_token)
     verify_contract(data)
-    verify_artifact(data["artifact"]["url"])
+    verify_artifact(data["artifact"]["presigned_url"])
 
 
 # --- Modal ---
@@ -62,4 +63,4 @@ def test_e2e_dev_modal_returns_contract_and_uploads_artifact(modal_deployed):
         "num_inference_steps": 4,
     })
     verify_contract(data)
-    verify_artifact(data["artifact"]["url"])
+    verify_artifact(data["artifact"]["presigned_url"])

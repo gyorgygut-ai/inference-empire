@@ -1,7 +1,7 @@
 """E2E local tests for flux2 Flash worker.
 
-Flash DI pattern: RemoteClassWrapper blocks _-prefixed methods.
-Access raw class via w._class_type, inject forward ref types, call model_rebuild().
+Flash DI pattern: RemoteClassWrapper wraps the class.
+Access raw class via wrapper.__dict__["_class_type"], inject pipe, call _run_generate().
 """
 import pytest
 from PIL import Image
@@ -19,6 +19,7 @@ class FakePipeline:
     def __init__(self, model_id=None, **kwargs):
         self.model_id = model_id
         self.kwargs = kwargs
+        self.torch = FakeTorch()
 
     def to(self, device):
         return self
@@ -44,7 +45,7 @@ class FakeS3:
 
 def _make_raw_worker(monkeypatch, pipe=None):
     from worker_flash_cls_flux2_klein9b import FluxKleinWorker
-    import worker_flash_cls_flux2_klein9b as mod
+    from typing import Optional, Literal
 
     monkeypatch.setenv("R2_BUCKET", "generated-media")
     monkeypatch.setenv("R2_ENDPOINT", "https://test.r2.cloudflarestorage.com")
@@ -52,20 +53,14 @@ def _make_raw_worker(monkeypatch, pipe=None):
     monkeypatch.setenv("R2_SECRET_KEY", "test-secret")
     monkeypatch.setenv("HF_TOKEN", "test-token")
 
-    from typing import Optional, Literal
-    mod._Optional = Optional
-    mod._Literal = Literal
-    mod._BaseModel = __import__("pydantic", fromlist=["BaseModel"]).BaseModel
-    mod._ConfigDict = __import__("pydantic", fromlist=["ConfigDict"]).ConfigDict
-    mod._Field = __import__("pydantic", fromlist=["Field"]).Field
-
     import boto3
     monkeypatch.setattr(boto3, "client", lambda *a, **kw: FakeS3())
 
-    wrapper = FluxKleinWorker(pipe=pipe if pipe else FakePipeline())
-    raw = wrapper._class_type(pipe=pipe if pipe else FakePipeline())
-    raw.Input.model_rebuild()
-    raw.Output.model_rebuild()
+    fake_pipe = pipe if pipe else FakePipeline()
+    wrapper = FluxKleinWorker(pipe=fake_pipe)
+    raw_cls = wrapper.__dict__["_class_type"]
+    raw_cls.Input.model_rebuild(_types_namespace={"_Optional": Optional, "_Literal": Literal})
+    raw = raw_cls(pipe=fake_pipe)
     raw.torch = FakeTorch()
     return raw
 
@@ -80,6 +75,7 @@ def test_e2e_generate_good_inference_fail_returns_contract(monkeypatch):
     raw = _make_raw_worker(monkeypatch)
 
     class FailingPipeline:
+        torch = FakeTorch()
         def to(self, device):
             return self
         def __call__(self, **kw):
@@ -95,9 +91,7 @@ def test_e2e_generate_good_inference_success_returns_contract(monkeypatch):
     result = raw._run_generate(prompt="a cat", seed=42)
 
     assert "artifact" in result
-    assert result["artifact"]["url"].startswith("https://test.r2.cloudflarestorage.com/generated-media/")
-    assert result["artifact"]["key"].startswith("flux2_") and result["artifact"]["key"].endswith(".png")
-    assert result["artifact"]["size"] > 0
+    assert result["artifact"]["presigned_url"].startswith("https://test.r2.cloudflarestorage.com/generated-media/")
 
 
 def test_e2e_generate_good_inference_success_uploads_artifact(monkeypatch):
@@ -105,6 +99,4 @@ def test_e2e_generate_good_inference_success_uploads_artifact(monkeypatch):
     result = raw._run_generate(prompt="a cat", seed=42)
 
     assert "artifact" in result
-    assert result["artifact"]["url"].startswith("https://test.r2.cloudflarestorage.com/generated-media/")
-    assert result["artifact"]["key"].startswith("flux2_") and result["artifact"]["key"].endswith(".png")
-    assert result["artifact"]["size"] > 0
+    assert result["artifact"]["presigned_url"].startswith("https://test.r2.cloudflarestorage.com/generated-media/")

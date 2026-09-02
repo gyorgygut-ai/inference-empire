@@ -1,8 +1,7 @@
 """E2E local tests for flux2 Modal worker.
 
 Modal DI pattern: @app.cls replaces constructor.
-Access raw class via FluxKleinWorker._get_user_cls(), call load() manually.
-FakePipeline must include mock `torch` attribute for seed/generator support.
+The modal module is mocked in conftest.py before collection.
 """
 import pytest
 from PIL import Image
@@ -56,11 +55,8 @@ def _make_raw_worker(monkeypatch, pipe=None):
     import boto3
     monkeypatch.setattr(boto3, "client", lambda *a, **kw: FakeS3())
 
-    raw_cls = FluxKleinWorker._get_user_cls()
-    raw = raw_cls()
-    raw.load()
-    if pipe is not None:
-        raw.pipe = pipe
+    raw = FluxKleinWorker()
+    raw.pipe = pipe if pipe else FakePipeline()
     return raw
 
 

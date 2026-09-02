@@ -328,7 +328,7 @@ Create before deploy: `beam secret create <name> <KEY=value ...>`
 - Base: `modal.Image.debian_slim(python_version="3.11")`
 - Pin heavy deps; install torch first, then model libs
 - Set `HF_HOME=/root/.cache/huggingface` and `HF_HUB_ENABLE_HF_TRANSFER=1`
-- Bake models with `.run_function(<download_fn>)` — build runs WITHOUT GPU
+- Download and cache on first run with `modal.Volume` + `@modal.enter()` — do NOT bake models into image with `.run_function()`
 - Each worker has its OWN image; do not share across workers
 
 ### Compute

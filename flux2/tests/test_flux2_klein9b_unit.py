@@ -66,7 +66,6 @@ def _make_raw_worker(monkeypatch, pipe=None):
     wrapper = FluxKleinWorker(pipe=pipe if pipe else FakePipeline())
     raw = wrapper._class_type(pipe=pipe if pipe else FakePipeline())
     raw.Input.model_rebuild()
-    raw.Output.model_rebuild()
     raw.torch = FakeTorch()
     return raw
 
