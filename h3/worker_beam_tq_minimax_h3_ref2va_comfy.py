@@ -333,73 +333,74 @@ def generate(context, prompt: str,
     print(f"[REQ] prompt={prompt[:40]}  seed={seed}  files={n_files}", flush=True)
     comfy_base_url = context.on_start_value
 
-    req = ValidatedInput(
-        prompt=prompt,
-        ref_images=ref_images,
-        ref_videos=ref_videos,
-        ref_video_audios=ref_video_audios,
-        ref_audios=ref_audios,
-        width=width,
-        height=height,
-        length=length,
-        steps=steps,
-        seed=seed,
-        ref_image_size=ref_image_size,
-        scheduler=scheduler,
-    )
+    try:
+        req = ValidatedInput(
+            prompt=prompt,
+            ref_images=ref_images,
+            ref_videos=ref_videos,
+            ref_video_audios=ref_video_audios,
+            ref_audios=ref_audios,
+            width=width,
+            height=height,
+            length=length,
+            steps=steps,
+            seed=seed,
+            ref_image_size=ref_image_size,
+            scheduler=scheduler,
+        )
 
-    payload = {"workflow": _build_workflow(req)}
-    images = _build_images(req)
-    if images:
-        payload["images"] = images
+        payload = {"workflow": _build_workflow(req)}
+        images = _build_images(req)
+        if images:
+            payload["images"] = images
 
-    print(f"[GEN] starting ComfyUI job prompt={prompt[:40]}", flush=True)
-    t_gen = time.time()
-    r = requests.post(f"{comfy_base_url}/prompt", json=payload, timeout=30)
-    r.raise_for_status()
-    prompt_id = r.json()["prompt_id"]
+        print(f"[GEN] starting ComfyUI job prompt={prompt[:40]}", flush=True)
+        t_gen = time.time()
+        r = requests.post(f"{comfy_base_url}/prompt", json=payload, timeout=30)
+        r.raise_for_status()
+        prompt_id = r.json()["prompt_id"]
 
-    for _ in range(600):
-        try:
-            r = requests.get(f"{comfy_base_url}/history/{prompt_id}", timeout=10)
-            history = r.json()
-            if prompt_id in history:
-                outputs = history[prompt_id]["outputs"]
-                save_node = outputs.get("save", {})
-                video_info = (save_node.get("videos") or save_node.get("gifs") or [None])[0]
-                if video_info:
-                    break
-        except Exception:
-            pass
-        time.sleep(1)
-    else:
-        raise RuntimeError(f"ComfyUI job {prompt_id} did not complete within 600s")
+        for _ in range(600):
+            try:
+                r = requests.get(f"{comfy_base_url}/history/{prompt_id}", timeout=10)
+                history = r.json()
+                if prompt_id in history:
+                    outputs = history[prompt_id]["outputs"]
+                    save_node = outputs.get("save", {})
+                    video_info = (save_node.get("videos") or save_node.get("gifs") or [None])[0]
+                    if video_info:
+                        break
+            except Exception:
+                pass
+            time.sleep(1)
+        else:
+            raise RuntimeError(f"ComfyUI job {prompt_id} did not complete within 600s")
 
-    print(f"[GEN] ComfyUI job done in {time.time() - t_gen:.1f}s", flush=True)
-    video_url = f"{comfy_base_url}/view?filename={video_info['filename']}&subfolder={video_info.get('subfolder', '')}&type={video_info.get('type', 'output')}"
-    video_bytes = requests.get(video_url, timeout=60).content
+        print(f"[GEN] ComfyUI job done in {time.time() - t_gen:.1f}s", flush=True)
+        video_url = f"{comfy_base_url}/view?filename={video_info['filename']}&subfolder={video_info.get('subfolder', '')}&type={video_info.get('type', 'output')}"
+        video_bytes = requests.get(video_url, timeout=60).content
 
-    bucket = os.environ.get("R2_BUCKET", "generated-media")
-    endpoint = os.environ["R2_ENDPOINT"]
-    access_key = os.environ["R2_ACCESS_KEY"]
-    secret_key = os.environ["R2_SECRET_KEY"]
-    key = f"minimax_ref2va_comfy_{uuid.uuid4()}.mp4"
-    s3 = boto3.client(
-        "s3",
-        endpoint_url=endpoint,
-        aws_access_key_id=access_key,
-        aws_secret_access_key=secret_key,
-    )
-    s3.put_object(Bucket=bucket, Key=key, Body=video_bytes, ContentType="video/mp4")
-    presigned_url = s3.generate_presigned_url(
-        "get_object",
-        Params={"Bucket": bucket, "Key": key},
-        ExpiresIn=3600,
-    )
-    print(f"[R2] uploaded key={key} url={presigned_url[:60]}", flush=True)
+        bucket = os.environ.get("R2_BUCKET", "generated-media")
+        endpoint = os.environ["R2_ENDPOINT"]
+        access_key = os.environ["R2_ACCESS_KEY"]
+        secret_key = os.environ["R2_SECRET_KEY"]
+        key = f"minimax_ref2va_comfy_{uuid.uuid4()}.mp4"
+        s3 = boto3.client(
+            "s3",
+            endpoint_url=endpoint,
+            aws_access_key_id=access_key,
+            aws_secret_access_key=secret_key,
+        )
+        s3.put_object(Bucket=bucket, Key=key, Body=video_bytes, ContentType="video/mp4")
+        presigned_url = s3.generate_presigned_url(
+            "get_object",
+            Params={"Bucket": bucket, "Key": key},
+            ExpiresIn=3600,
+        )
+        print(f"[R2] uploaded key={key} url={presigned_url[:60]}", flush=True)
 
-    print(f"[OK] completed in {time.time() - t_req:.1f}s", flush=True)
-    return {"artifact": {"presigned_url": presigned_url}}
+        print(f"[OK] completed in {time.time() - t_req:.1f}s", flush=True)
+        return {"artifact": {"presigned_url": presigned_url}}
     except Exception as e:
         print(f"[ERR] {type(e).__name__}: {e}", flush=True)
         raise

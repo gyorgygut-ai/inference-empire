@@ -1,5 +1,4 @@
 import os
-import time
 import uuid
 
 import boto3
@@ -186,10 +185,7 @@ class MiniMaxH3Fl2VAWorker:
             pipe_kwargs["keyframes"] = keyframes
             pipe_kwargs["keyframe_indices"] = keyframe_indices
 
-        print(f"[GEN] starting inference prompt={prompt[:40]}  num_frames={req.length}", flush=True)
-        t_gen = time.time()
         video, audio = self.pipe(**pipe_kwargs)
-        print(f"[GEN] inference done in {time.time() - t_gen:.1f}s  video={req.length} frames", flush=True)
 
         self.write_video_audio(
             video=video,
@@ -220,10 +216,5 @@ class MiniMaxH3Fl2VAWorker:
             Params={"Bucket": bucket, "Key": key},
             ExpiresIn=3600,
         )
-        print(f"[R2] uploaded key={key} url={presigned_url[:60]}", flush=True)
 
-        print(f"[OK] completed in {time.time() - t_req:.1f}s", flush=True)
         return {"artifact": {"presigned_url": presigned_url}}
-        except Exception as e:
-            print(f"[ERR] {type(e).__name__}: {e}", flush=True)
-            raise

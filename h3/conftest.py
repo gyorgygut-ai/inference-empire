@@ -118,3 +118,8 @@ beam_mock.task_queue = lambda **kw: lambda f: f
 beam_mock.endpoint = lambda **kw: lambda f: f
 
 sys.modules["beam"] = beam_mock
+
+# Clear cached worker modules so they re-import with mocked beam
+for key in list(sys.modules.keys()):
+    if key.startswith("worker_"):
+        del sys.modules[key]

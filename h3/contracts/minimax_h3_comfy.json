@@ -15,7 +15,7 @@
   },
   "output": {
     "title": "MiniMaxH3ComfyOutput",
-    "required": ["artifact"],
+    "required": ["artifact", "video"],
     "properties": {
       "artifact": {
         "type": "object",
@@ -23,7 +23,8 @@
         "properties": {
           "presigned_url": { "type": "string" }
         }
-      }
+      },
+      "video": { "type": "string" }
     }
   }
 }
