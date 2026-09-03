@@ -1,6 +1,7 @@
 import base64
 import io
 import os
+import time
 import uuid
 from typing import Literal, Optional
 
@@ -137,62 +138,68 @@ def _decode_image(base64_str: str):
 def generate(context, prompt: str, width: int = 1344, height: int = 768,
              length: int = 124, steps: int = 50, seed: int | None = None,
              first_frame: str | None = None, last_frame: str | None = None) -> dict:
-    pipe, write_video_audio = context.on_start_value
+    t_req = time.time()
+    print(f"[REQ] prompt={prompt[:40]}  seed={seed}", flush=True)
+    try:
+        pipe, write_video_audio = context.on_start_value
 
-    pipe_kwargs = {
-        "prompt": prompt,
-        "height": height,
-        "width": width,
-        "num_frames": length,
-        "num_inference_steps": steps,
-    }
-    if seed is not None:
-        pipe_kwargs["seed"] = seed
+        pipe_kwargs = {
+            "prompt": prompt,
+            "height": height,
+            "width": width,
+            "num_frames": length,
+            "num_inference_steps": steps,
+        }
+        if seed is not None:
+            pipe_kwargs["seed"] = seed
 
-    keyframes = []
-    keyframe_indices = []
-    if first_frame:
-        keyframes.append(_decode_image(first_frame))
-        keyframe_indices.append(0)
-    if last_frame:
-        keyframes.append(_decode_image(last_frame))
-        keyframe_indices.append(-1)
-    if keyframes:
-        pipe_kwargs["keyframes"] = keyframes
-        pipe_kwargs["keyframe_indices"] = keyframe_indices
+        keyframes = []
+        keyframe_indices = []
+        if first_frame:
+            keyframes.append(_decode_image(first_frame))
+            keyframe_indices.append(0)
+        if last_frame:
+            keyframes.append(_decode_image(last_frame))
+            keyframe_indices.append(-1)
+        if keyframes:
+            pipe_kwargs["keyframes"] = keyframes
+            pipe_kwargs["keyframe_indices"] = keyframe_indices
 
-    video, audio = pipe(**pipe_kwargs)
+        video, audio = pipe(**pipe_kwargs)
 
-    output_path = f"/tmp/minimax_h3_fl2va_{uuid.uuid4()}.mp4"
-    write_video_audio(
-        video=video,
-        audio=audio,
-        output_path=output_path,
-        fps=24,
-        audio_sample_rate=pipe.audio_vae.sample_rate,
-    )
+        output_path = f"/tmp/minimax_h3_fl2va_{uuid.uuid4()}.mp4"
+        write_video_audio(
+            video=video,
+            audio=audio,
+            output_path=output_path,
+            fps=24,
+            audio_sample_rate=pipe.audio_vae.sample_rate,
+        )
 
-    with open(output_path, "rb") as fh:
-        video_bytes = fh.read()
+        with open(output_path, "rb") as fh:
+            video_bytes = fh.read()
 
-    bucket = os.environ.get("R2_BUCKET", "generated-media")
-    endpoint = os.environ["R2_ENDPOINT"]
-    access_key = os.environ["R2_ACCESS_KEY"]
-    secret_key = os.environ["R2_SECRET_KEY"]
-    key = f"minimax_fl2va_{uuid.uuid4()}.mp4"
-    s3 = boto3.client(
-        "s3",
-        endpoint_url=endpoint,
-        aws_access_key_id=access_key,
-        aws_secret_access_key=secret_key,
-    )
-    s3.put_object(Bucket=bucket, Key=key, Body=video_bytes, ContentType="video/mp4")
-    presigned_url = s3.generate_presigned_url(
-        "get_object",
-        Params={"Bucket": bucket, "Key": key},
-        ExpiresIn=3600,
-    )
+        bucket = os.environ.get("R2_BUCKET", "generated-media")
+        endpoint = os.environ["R2_ENDPOINT"]
+        access_key = os.environ["R2_ACCESS_KEY"]
+        secret_key = os.environ["R2_SECRET_KEY"]
+        key = f"minimax_fl2va_{uuid.uuid4()}.mp4"
+        s3 = boto3.client(
+            "s3",
+            endpoint_url=endpoint,
+            aws_access_key_id=access_key,
+            aws_secret_access_key=secret_key,
+        )
+        s3.put_object(Bucket=bucket, Key=key, Body=video_bytes, ContentType="video/mp4")
+        presigned_url = s3.generate_presigned_url(
+            "get_object",
+            Params={"Bucket": bucket, "Key": key},
+            ExpiresIn=3600,
+        )
 
-    os.remove(output_path)
+        os.remove(output_path)
 
-    return {"artifact": {"presigned_url": presigned_url}}
+        return {"artifact": {"presigned_url": presigned_url}}
+    except Exception as e:
+        print(f"[ERR] {type(e).__name__}: {e}", flush=True)
+        raise

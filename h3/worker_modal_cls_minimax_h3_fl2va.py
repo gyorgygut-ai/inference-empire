@@ -1,6 +1,7 @@
 import base64
 import io
 import os
+import time
 import uuid
 from typing import Literal, Optional
 
@@ -77,6 +78,8 @@ class MiniMaxH3Fl2VAWorker:
         from diffsynth.utils.data.audio_video import write_video_audio
 
         self.torch = torch
+        print('[INIT] loading model DiffSynth-Studio/MiniMax-H3-NF4', flush=True)
+        t0 = time.time()
         self.write_video_audio = write_video_audio
 
         vram_config = {
@@ -139,75 +142,81 @@ class MiniMaxH3Fl2VAWorker:
         first_frame: Optional[str] = None,
         last_frame: Optional[str] = None,
     ) -> dict:
-        import boto3
+        t_req = time.time()
+        print(f"[REQ] prompt={prompt[:40]}  seed={seed}", flush=True)
+        try:
+            import boto3
 
-        req = MiniMaxH3Fl2VAInput(
-            prompt=prompt,
-            width=width,
-            height=height,
-            length=length,
-            steps=steps,
-            seed=seed,
-            first_frame=first_frame,
-            last_frame=last_frame,
-        )
+            req = MiniMaxH3Fl2VAInput(
+                prompt=prompt,
+                width=width,
+                height=height,
+                length=length,
+                steps=steps,
+                seed=seed,
+                first_frame=first_frame,
+                last_frame=last_frame,
+            )
 
-        pipe_kwargs = {
-            "prompt": req.prompt,
-            "height": req.height,
-            "width": req.width,
-            "num_frames": req.length,
-            "num_inference_steps": req.steps,
-        }
-        if req.seed is not None:
-            pipe_kwargs["seed"] = req.seed
+            pipe_kwargs = {
+                "prompt": req.prompt,
+                "height": req.height,
+                "width": req.width,
+                "num_frames": req.length,
+                "num_inference_steps": req.steps,
+            }
+            if req.seed is not None:
+                pipe_kwargs["seed"] = req.seed
 
-        keyframes = []
-        keyframe_indices = []
-        if req.first_frame:
-            keyframes.append(self._decode_image(req.first_frame))
-            keyframe_indices.append(0)
-        if req.last_frame:
-            keyframes.append(self._decode_image(req.last_frame))
-            keyframe_indices.append(-1)
-        if keyframes:
-            pipe_kwargs["keyframes"] = keyframes
-            pipe_kwargs["keyframe_indices"] = keyframe_indices
+            keyframes = []
+            keyframe_indices = []
+            if req.first_frame:
+                keyframes.append(self._decode_image(req.first_frame))
+                keyframe_indices.append(0)
+            if req.last_frame:
+                keyframes.append(self._decode_image(req.last_frame))
+                keyframe_indices.append(-1)
+            if keyframes:
+                pipe_kwargs["keyframes"] = keyframes
+                pipe_kwargs["keyframe_indices"] = keyframe_indices
 
-        video, audio = self.pipe(**pipe_kwargs)
+            video, audio = self.pipe(**pipe_kwargs)
 
-        self.write_video_audio(
-            video=video,
-            audio=audio,
-            output_path="/tmp/minimax_h3_fl2va.mp4",
-            fps=24,
-            audio_sample_rate=self.pipe.audio_vae.sample_rate,
-        )
+            self.write_video_audio(
+                video=video,
+                audio=audio,
+                output_path="/tmp/minimax_h3_fl2va.mp4",
+                fps=24,
+                audio_sample_rate=self.pipe.audio_vae.sample_rate,
+            )
 
-        with io.open("/tmp/minimax_h3_fl2va.mp4", "rb") as fh:
-            video_bytes = fh.read()
+            with io.open("/tmp/minimax_h3_fl2va.mp4", "rb") as fh:
+                video_bytes = fh.read()
 
-        bucket = os.environ.get("R2_BUCKET", "generated-media")
-        endpoint = os.environ["R2_ENDPOINT"]
-        access_key = os.environ["R2_ACCESS_KEY"]
-        secret_key = os.environ["R2_SECRET_KEY"]
+            bucket = os.environ.get("R2_BUCKET", "generated-media")
+            endpoint = os.environ["R2_ENDPOINT"]
+            access_key = os.environ["R2_ACCESS_KEY"]
+            secret_key = os.environ["R2_SECRET_KEY"]
 
-        key = f"minimax_fl2va_{uuid.uuid4()}.mp4"
-        s3 = boto3.client(
-            "s3",
-            endpoint_url=endpoint,
-            aws_access_key_id=access_key,
-            aws_secret_access_key=secret_key,
-        )
-        s3.put_object(Bucket=bucket, Key=key, Body=video_bytes, ContentType="video/mp4")
-        presigned_url = s3.generate_presigned_url(
-            "get_object",
-            Params={"Bucket": bucket, "Key": key},
-            ExpiresIn=3600,
-        )
+            key = f"minimax_fl2va_{uuid.uuid4()}.mp4"
+            s3 = boto3.client(
+                "s3",
+                endpoint_url=endpoint,
+                aws_access_key_id=access_key,
+                aws_secret_access_key=secret_key,
+            )
+            s3.put_object(Bucket=bucket, Key=key, Body=video_bytes, ContentType="video/mp4")
+            presigned_url = s3.generate_presigned_url(
+                "get_object",
+                Params={"Bucket": bucket, "Key": key},
+                ExpiresIn=3600,
+            )
 
-        return {"artifact": {"presigned_url": presigned_url}}
+            return {"artifact": {"presigned_url": presigned_url}}
 
+        except Exception as e:
+            print(f"[ERR] {type(e).__name__}: {e}", flush=True)
+            raise
     @modal.fastapi_endpoint(method="POST")
     def generate_web(self, item: MiniMaxH3Fl2VAInput) -> dict:
         return self.generate.local(

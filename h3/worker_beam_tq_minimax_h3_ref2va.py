@@ -1,6 +1,7 @@
 import base64
 import io
 import os
+import time
 import uuid
 from typing import Literal, Optional
 
@@ -274,105 +275,112 @@ def generate(context, prompt: str,
              ref_audios: list[str] = [],
              width: int = 1344, height: int = 768,
              length: int = 124, steps: int = 50, seed: int | None = None) -> dict:
-    pipe, write_video_audio = context.on_start_value
+    t_req = time.time()
+    total_files = len(ref_images) + len(ref_videos) + len(ref_video_audios) + len(ref_audios)
+    print(f"[REQ] prompt={prompt[:40]}  seed={seed}  files={total_files}", flush=True)
+    try:
+        pipe, write_video_audio = context.on_start_value
 
-    class ValidatedInput(MiniMaxH3Ref2VAInput):
-        @field_validator("ref_images")
-        @classmethod
-        def _check_ref_images(cls, v: list[str]) -> list[str]:
-            return _check_ref_images(cls, v)
+        class ValidatedInput(MiniMaxH3Ref2VAInput):
+            @field_validator("ref_images")
+            @classmethod
+            def _check_ref_images(cls, v: list[str]) -> list[str]:
+                return _check_ref_images(cls, v)
 
-        @field_validator("ref_videos")
-        @classmethod
-        def _check_ref_videos(cls, v: list[str]) -> list[str]:
-            return _check_ref_videos(cls, v)
+            @field_validator("ref_videos")
+            @classmethod
+            def _check_ref_videos(cls, v: list[str]) -> list[str]:
+                return _check_ref_videos(cls, v)
 
-        @field_validator("ref_video_audios")
-        @classmethod
-        def _check_ref_video_audios(cls, v: list[str]) -> list[str]:
-            return _check_ref_video_audios(cls, v)
+            @field_validator("ref_video_audios")
+            @classmethod
+            def _check_ref_video_audios(cls, v: list[str]) -> list[str]:
+                return _check_ref_video_audios(cls, v)
 
-        @field_validator("ref_audios")
-        @classmethod
-        def _check_ref_audios(cls, v: list[str]) -> list[str]:
-            return _check_ref_audios(cls, v)
+            @field_validator("ref_audios")
+            @classmethod
+            def _check_ref_audios(cls, v: list[str]) -> list[str]:
+                return _check_ref_audios(cls, v)
 
-        @field_validator("ref_video_audios")
-        @classmethod
-        def _check_video_audio_pairs(cls, v: list[str], info) -> list[str]:
-            return _check_video_audio_pairs(cls, v, info)
+            @field_validator("ref_video_audios")
+            @classmethod
+            def _check_video_audio_pairs(cls, v: list[str], info) -> list[str]:
+                return _check_video_audio_pairs(cls, v, info)
 
-        @field_validator("ref_audios")
-        @classmethod
-        def _check_audio_not_alone(cls, v: list[str], info) -> list[str]:
-            return _check_audio_not_alone(cls, v, info)
+            @field_validator("ref_audios")
+            @classmethod
+            def _check_audio_not_alone(cls, v: list[str], info) -> list[str]:
+                return _check_audio_not_alone(cls, v, info)
 
-        @field_validator("ref_images", "ref_videos", "ref_video_audios", "ref_audios")
-        @classmethod
-        def _check_total_files(cls, v: list[str], info) -> list[str]:
-            return _check_total_files(cls, v, info)
+            @field_validator("ref_images", "ref_videos", "ref_video_audios", "ref_audios")
+            @classmethod
+            def _check_total_files(cls, v: list[str], info) -> list[str]:
+                return _check_total_files(cls, v, info)
 
-        Input = ValidatedInput
+            Input = ValidatedInput
 
-    req = ValidatedInput(
-        prompt=prompt,
-        ref_images=ref_images,
-        ref_videos=ref_videos,
-        ref_video_audios=ref_video_audios,
-        ref_audios=ref_audios,
-        width=width,
-        height=height,
-        length=length,
-        steps=steps,
-        seed=seed,
-    )
+        req = ValidatedInput(
+            prompt=prompt,
+            ref_images=ref_images,
+            ref_videos=ref_videos,
+            ref_video_audios=ref_video_audios,
+            ref_audios=ref_audios,
+            width=width,
+            height=height,
+            length=length,
+            steps=steps,
+            seed=seed,
+        )
 
-    references = _build_references(req, pipe)
+        references = _build_references(req, pipe)
 
-    pipe_kwargs = {
-        "prompt": req.prompt,
-        "height": req.height,
-        "width": req.width,
-        "num_frames": req.length,
-        "num_inference_steps": req.steps,
-    }
-    if references:
-        pipe_kwargs["references"] = references
-    if req.seed is not None:
-        pipe_kwargs["seed"] = req.seed
+        pipe_kwargs = {
+            "prompt": req.prompt,
+            "height": req.height,
+            "width": req.width,
+            "num_frames": req.length,
+            "num_inference_steps": req.steps,
+        }
+        if references:
+            pipe_kwargs["references"] = references
+        if req.seed is not None:
+            pipe_kwargs["seed"] = req.seed
 
-    video, audio = pipe(**pipe_kwargs)
+        video, audio = pipe(**pipe_kwargs)
 
-    output_path = f"/tmp/minimax_h3_ref2va_{uuid.uuid4()}.mp4"
-    write_video_audio(
-        video=video,
-        audio=audio,
-        output_path=output_path,
-        fps=24,
-        audio_sample_rate=pipe.audio_vae.sample_rate,
-    )
+        output_path = f"/tmp/minimax_h3_ref2va_{uuid.uuid4()}.mp4"
+        write_video_audio(
+            video=video,
+            audio=audio,
+            output_path=output_path,
+            fps=24,
+            audio_sample_rate=pipe.audio_vae.sample_rate,
+        )
 
-    with open(output_path, "rb") as fh:
-        video_bytes = fh.read()
+        with open(output_path, "rb") as fh:
+            video_bytes = fh.read()
 
-    bucket = os.environ.get("R2_BUCKET", "generated-media")
-    endpoint = os.environ["R2_ENDPOINT"]
-    access_key = os.environ["R2_ACCESS_KEY"]
-    secret_key = os.environ["R2_SECRET_KEY"]
-    key = f"minimax_ref2va_{uuid.uuid4()}.mp4"
-    s3 = boto3.client(
-        "s3",
-        endpoint_url=endpoint,
-        aws_access_key_id=access_key,
-        aws_secret_access_key=secret_key,
-    )
-    s3.put_object(Bucket=bucket, Key=key, Body=video_bytes, ContentType="video/mp4")
-    presigned_url = s3.generate_presigned_url(
-        "get_object",
-        Params={"Bucket": bucket, "Key": key},
-        ExpiresIn=3600,
-    )
+        bucket = os.environ.get("R2_BUCKET", "generated-media")
+        endpoint = os.environ["R2_ENDPOINT"]
+        access_key = os.environ["R2_ACCESS_KEY"]
+        secret_key = os.environ["R2_SECRET_KEY"]
+        key = f"minimax_ref2va_{uuid.uuid4()}.mp4"
+        s3 = boto3.client(
+            "s3",
+            endpoint_url=endpoint,
+            aws_access_key_id=access_key,
+            aws_secret_access_key=secret_key,
+        )
+        s3.put_object(Bucket=bucket, Key=key, Body=video_bytes, ContentType="video/mp4")
+        presigned_url = s3.generate_presigned_url(
+            "get_object",
+            Params={"Bucket": bucket, "Key": key},
+            ExpiresIn=3600,
+        )
 
-    os.remove(output_path)
+        os.remove(output_path)
 
-    return {"artifact": {"presigned_url": presigned_url}}
+        return {"artifact": {"presigned_url": presigned_url}}
+    except Exception as e:
+        print(f"[ERR] {type(e).__name__}: {e}", flush=True)
+        raise

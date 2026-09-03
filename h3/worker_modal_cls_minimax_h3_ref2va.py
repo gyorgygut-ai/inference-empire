@@ -1,6 +1,7 @@
 import base64
 import io
 import os
+import time
 import uuid
 from typing import Literal, Optional
 
@@ -174,6 +175,8 @@ class MiniMaxH3Ref2VAWorker:
         from diffsynth.utils.data.audio import read_audio
 
         self.torch = torch
+        print('[INIT] loading model DiffSynth-Studio/MiniMax-H3-NF4', flush=True)
+        t0 = time.time()
         self.write_video_audio = write_video_audio
         self.read_audio = read_audio
 
@@ -295,69 +298,76 @@ class MiniMaxH3Ref2VAWorker:
         steps: int = 50,
         seed: Optional[int] = None,
     ) -> dict:
-        import boto3
+        t_req = time.time()
+        total_files = len(ref_images) + len(ref_videos) + len(ref_video_audios) + len(ref_audios)
+        print(f"[REQ] prompt={prompt[:40]}  seed={seed}  files={total_files}", flush=True)
+        try:
+            import boto3
 
-        req = ValidatedRef2VAInput(
-            prompt=prompt,
-            ref_images=ref_images,
-            ref_videos=ref_videos,
-            ref_video_audios=ref_video_audios,
-            ref_audios=ref_audios,
-            width=width,
-            height=height,
-            length=length,
-            steps=steps,
-            seed=seed,
-        )
+            req = ValidatedRef2VAInput(
+                prompt=prompt,
+                ref_images=ref_images,
+                ref_videos=ref_videos,
+                ref_video_audios=ref_video_audios,
+                ref_audios=ref_audios,
+                width=width,
+                height=height,
+                length=length,
+                steps=steps,
+                seed=seed,
+            )
 
-        references = self._build_references(req)
+            references = self._build_references(req)
 
-        pipe_kwargs = {
-            "prompt": req.prompt,
-            "height": req.height,
-            "width": req.width,
-            "num_frames": req.length,
-            "num_inference_steps": req.steps,
-        }
-        if references:
-            pipe_kwargs["references"] = references
-        if req.seed is not None:
-            pipe_kwargs["seed"] = req.seed
+            pipe_kwargs = {
+                "prompt": req.prompt,
+                "height": req.height,
+                "width": req.width,
+                "num_frames": req.length,
+                "num_inference_steps": req.steps,
+            }
+            if references:
+                pipe_kwargs["references"] = references
+            if req.seed is not None:
+                pipe_kwargs["seed"] = req.seed
 
-        video, audio = self.pipe(**pipe_kwargs)
+            video, audio = self.pipe(**pipe_kwargs)
 
-        self.write_video_audio(
-            video=video,
-            audio=audio,
-            output_path="/tmp/minimax_h3_ref2va.mp4",
-            fps=24,
-            audio_sample_rate=self.pipe.audio_vae.sample_rate,
-        )
+            self.write_video_audio(
+                video=video,
+                audio=audio,
+                output_path="/tmp/minimax_h3_ref2va.mp4",
+                fps=24,
+                audio_sample_rate=self.pipe.audio_vae.sample_rate,
+            )
 
-        with io.open("/tmp/minimax_h3_ref2va.mp4", "rb") as fh:
-            video_bytes = fh.read()
+            with io.open("/tmp/minimax_h3_ref2va.mp4", "rb") as fh:
+                video_bytes = fh.read()
 
-        bucket = os.environ.get("R2_BUCKET", "generated-media")
-        endpoint = os.environ["R2_ENDPOINT"]
-        access_key = os.environ["R2_ACCESS_KEY"]
-        secret_key = os.environ["R2_SECRET_KEY"]
+            bucket = os.environ.get("R2_BUCKET", "generated-media")
+            endpoint = os.environ["R2_ENDPOINT"]
+            access_key = os.environ["R2_ACCESS_KEY"]
+            secret_key = os.environ["R2_SECRET_KEY"]
 
-        key = f"minimax_ref2va_{uuid.uuid4()}.mp4"
-        s3 = boto3.client(
-            "s3",
-            endpoint_url=endpoint,
-            aws_access_key_id=access_key,
-            aws_secret_access_key=secret_key,
-        )
-        s3.put_object(Bucket=bucket, Key=key, Body=video_bytes, ContentType="video/mp4")
-        presigned_url = s3.generate_presigned_url(
-            "get_object",
-            Params={"Bucket": bucket, "Key": key},
-            ExpiresIn=3600,
-        )
+            key = f"minimax_ref2va_{uuid.uuid4()}.mp4"
+            s3 = boto3.client(
+                "s3",
+                endpoint_url=endpoint,
+                aws_access_key_id=access_key,
+                aws_secret_access_key=secret_key,
+            )
+            s3.put_object(Bucket=bucket, Key=key, Body=video_bytes, ContentType="video/mp4")
+            presigned_url = s3.generate_presigned_url(
+                "get_object",
+                Params={"Bucket": bucket, "Key": key},
+                ExpiresIn=3600,
+            )
 
-        return {"artifact": {"presigned_url": presigned_url}}
+            return {"artifact": {"presigned_url": presigned_url}}
 
+        except Exception as e:
+            print(f"[ERR] {type(e).__name__}: {e}", flush=True)
+            raise
     @modal.fastapi_endpoint(method="POST")
     def generate_web(self, item: MiniMaxH3Ref2VAInput) -> dict:
         return self.generate.local(
