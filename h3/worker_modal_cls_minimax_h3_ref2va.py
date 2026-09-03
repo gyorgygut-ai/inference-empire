@@ -167,6 +167,17 @@ class MiniMaxH3Ref2VAWorker:
         dist.is_available = lambda: False
 
         import torch
+        import os
+        # Modal L4 lacks libcudart.so.13 — patch load_library so torchaudio import doesn't crash
+        _orig_load_library = torch.ops.load_library
+        def _patched_load_library(path):
+            try:
+                return _orig_load_library(path)
+            except OSError:
+                pass
+        torch.ops.load_library = _patched_load_library
+
+        import torch
         from diffsynth.pipelines.minimax_h3_audio_video import (
             MiniMaxH3Pipeline,
             ModelConfig,
@@ -333,6 +344,8 @@ class MiniMaxH3Ref2VAWorker:
 
             video, audio = self.pipe(**pipe_kwargs)
 
+            print(f"[GEN] inference done in {time.time() - t_req:.1f}s  shape={video.shape[2]}x{video.shape[3]}  frames={video.shape[1]}", flush=True)
+
             self.write_video_audio(
                 video=video,
                 audio=audio,
@@ -362,6 +375,9 @@ class MiniMaxH3Ref2VAWorker:
                 Params={"Bucket": bucket, "Key": key},
                 ExpiresIn=3600,
             )
+            print(f"[R2] uploaded key={key} url={presigned_url[:60]}", flush=True)
+
+            print(f"[OK] completed in {time.time() - t_req:.1f}s", flush=True)
 
             return {"artifact": {"presigned_url": presigned_url}}
 

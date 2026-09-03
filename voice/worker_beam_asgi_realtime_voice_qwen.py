@@ -63,7 +63,7 @@ def ensure_model(local_dir: str, repo_id: str) -> None:
     from huggingface_hub import snapshot_download
 
     os.makedirs(local_dir, exist_ok=True)
-    print(f"[on_start] downloading {repo_id} -> {local_dir}")
+    print(f"[INIT] downloading {repo_id} -> {local_dir}")
     snapshot_download(
         repo_id=repo_id,
         local_dir=local_dir,
@@ -83,7 +83,7 @@ def ensure_whisper(local_dir: str) -> str:
     from faster_whisper import download_model
 
     os.makedirs(local_dir, exist_ok=True)
-    print(f"[on_start] downloading faster-whisper-large-v3 -> {local_dir}")
+    print(f"[INIT] downloading faster-whisper-large-v3 -> {local_dir}")
     return download_model("large-v3", cache_dir=local_dir)
 
 
@@ -112,7 +112,7 @@ def load_models():
             "llm": QwenLLM(QWEN_PATH).load(),
             "vad": SileroVAD().load(),
         }
-        print(f"[on_start] loaded all models in {time.time() - t0:.1f}s")
+        print(f"[INIT] loaded all models in {time.time() - t0:.1f}s")
         return models
     except Exception:  # noqa: BLE001
         import traceback

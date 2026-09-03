@@ -50,7 +50,7 @@ image = (
 def load_converter():
     t0 = time.time()
     converter = VoiceConverter(device="cpu", watermark=False).load()
-    print(f"[on_start] OpenVoice converter ready in {time.time() - t0:.1f}s")
+    print(f"[INIT] OpenVoice converter ready in {time.time() - t0:.1f}s")
     return converter
 
 

@@ -12,6 +12,8 @@ from pydantic import field_validator
 from beam import Image, QueueDepthAutoscaler, Volume, task_queue
 from pydantic import BaseModel, ConfigDict, Field
 
+START_TIME = time.time()
+
 
 CACHE_PATH = "./hf-cache"
 
@@ -191,6 +193,8 @@ def _build_references(req, pipe) -> list[dict]:
 
 
 def load_pipeline():
+    t0 = time.time()
+    print("[INIT] loading model DiffSynth-Studio/MiniMax-H3-NF4", flush=True)
     import torch
     import torch.distributed as dist
 
@@ -247,6 +251,7 @@ def load_pipeline():
         ),
         vram_limit=torch.cuda.mem_get_info("cuda")[1] / (1024 ** 3) - 5,
     )
+    print(f"[INIT] model loaded in {time.time() - t0:.1f}s", flush=True)
 
     return pipe, write_video_audio
 
@@ -346,7 +351,11 @@ def generate(context, prompt: str,
         if req.seed is not None:
             pipe_kwargs["seed"] = req.seed
 
+        print(f"[GEN] starting inference prompt={req.prompt[:40]}", flush=True)
+        t_gen = time.time()
         video, audio = pipe(**pipe_kwargs)
+
+        print(f"[GEN] inference done in {time.time() - t_gen:.1f}s  shape={video.shape[2]}x{video.shape[3]}  frames={video.shape[1]}", flush=True)
 
         output_path = f"/tmp/minimax_h3_ref2va_{uuid.uuid4()}.mp4"
         write_video_audio(
@@ -377,8 +386,11 @@ def generate(context, prompt: str,
             Params={"Bucket": bucket, "Key": key},
             ExpiresIn=3600,
         )
+        print(f"[R2] uploaded key={key} url={presigned_url[:60]}", flush=True)
 
         os.remove(output_path)
+
+        print(f"[OK] completed in {time.time() - START_TIME:.1f}s", flush=True)
 
         return {"artifact": {"presigned_url": presigned_url}}
     except Exception as e:

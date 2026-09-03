@@ -41,7 +41,7 @@ image = (
 def load_model():
     t0 = time.time()
     tts = Chatterbox(device="cuda").load()
-    print(f"[on_start] Chatterbox ready in {time.time() - t0:.1f}s")
+    print(f"[INIT] Chatterbox ready in {time.time() - t0:.1f}s")
     return tts
 
 
