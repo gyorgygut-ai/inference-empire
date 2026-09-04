@@ -11,6 +11,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+storage = [
+    "boto3",
+]
 dev = [
     "pytest",
     "ruff",
@@ -27,6 +30,10 @@ test = [
     "faster-qwen3-tts",
     "soundfile",
 ]
+
+[tool.setuptools.packages.find]
+where = ["services"]
+include = ["storage*", "platform*", "runner*"]
 
 [tool.ruff]
 line-length = 100

@@ -1,4 +1,4 @@
-from services.storage import Storage
+from services.storage.storage import Storage
 
 
 class FakeR2Storage(Storage):

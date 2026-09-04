@@ -31,26 +31,30 @@ CACHE_PATH = "./hf-cache"
 
 image = (
     Image(python_version="python3.11")
-    .add_python_packages([
-        "torch==2.9.1",
-        "diffusers==0.39.0",
-        "transformers>=4.57,<5",
-        "accelerate==1.14.0",
-        "safetensors==0.8.0",
-        "hf_transfer==0.1.9",
-        "pillow==12.3.0",
-        "protobuf==6.33.6",
-        "opencv-python-headless==4.12.0.88",
-        "peft==0.17.0",
-        "boto3==1.43.83",
-    ])
-    .with_envs({
-        "HF_HOME": CACHE_PATH,
-        "HF_HUB_ENABLE_HF_TRANSFER": "1",
-        "HF_TOKEN": os.environ.get("HF_TOKEN", ""),
-        "R2_ENDPOINT": "https://29b2f092b2dbc0b63f48f491ddc177ee.r2.cloudflarestorage.com",
-        "R2_BUCKET": "generated-media",
-    })
+    .add_python_packages(
+        [
+            "torch==2.9.1",
+            "diffusers==0.39.0",
+            "transformers>=4.57,<5",
+            "accelerate==1.14.0",
+            "safetensors==0.8.0",
+            "hf_transfer==0.1.9",
+            "pillow==12.3.0",
+            "protobuf==6.33.6",
+            "opencv-python-headless==4.12.0.88",
+            "peft==0.17.0",
+            "boto3==1.43.83",
+        ]
+    )
+    .with_envs(
+        {
+            "HF_HOME": CACHE_PATH,
+            "HF_HUB_ENABLE_HF_TRANSFER": "1",
+            "HF_TOKEN": os.environ.get("HF_TOKEN", ""),
+            "R2_ENDPOINT": "https://29b2f092b2dbc0b63f48f491ddc177ee.r2.cloudflarestorage.com",
+            "R2_BUCKET": "generated-media",
+        }
+    )
 )
 
 
@@ -251,7 +255,7 @@ def generate(
         )
     except Exception as e:
         print(f"[ERR] {type(e).__name__}: {e}", flush=True)
-        raise
+        raise RuntimeError(f"inference failed: {e}")
 
 
 def _run_generate(
@@ -295,9 +299,7 @@ def _run_generate(
         "guidance_scale": req.guidance_scale,
     }
     if req.seed is not None:
-        base_kwargs["generator"] = torch.Generator(device="cpu").manual_seed(
-            req.seed
-        )
+        base_kwargs["generator"] = torch.Generator(device="cpu").manual_seed(req.seed)
 
     print(f"[GEN] starting inference prompt={prompt[:40]}", flush=True)
     t_gen = time.time()
@@ -317,7 +319,10 @@ def _run_generate(
     else:
         result = pipe(**base_kwargs)
 
-    print(f"[GEN] inference done in {time.time() - t_gen:.1f}s  shape={gen_image.size[0] if hasattr(gen_image, 'size') else 'unknown'}x{gen_image.size[1] if hasattr(gen_image, 'size') else 'unknown'}", flush=True)
+    print(
+        f"[GEN] inference done in {time.time() - t_gen:.1f}s  shape={gen_image.size[0] if hasattr(gen_image, 'size') else 'unknown'}x{gen_image.size[1] if hasattr(gen_image, 'size') else 'unknown'}",
+        flush=True,
+    )
     gen_image = result.images[0]
     buffer = io.BytesIO()
     gen_image.save(buffer, format="PNG")
@@ -325,7 +330,8 @@ def _run_generate(
 
     key = f"krea2_{uuid.uuid4()}.png"
     if storage is None:
-        from services.real_r2 import RealR2Storage
+        from services.storage.real_r2 import RealR2Storage
+
         storage = RealR2Storage()
     storage.put(key, file_bytes)
     presigned_url = storage.presigned_url(key)

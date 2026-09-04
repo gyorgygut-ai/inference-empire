@@ -2,7 +2,7 @@ import os
 
 import boto3
 
-from services.storage import Storage
+from services.storage.storage import Storage
 
 
 class RealR2Storage(Storage):

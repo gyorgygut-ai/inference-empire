@@ -189,7 +189,7 @@ class VisionBeamWorkerProxy:
 
     def generate(self, **inputs):
         class _FakeContext:
-            on_start_value = (None, None, None)
+            on_start_value = (_mock_model, _mock_processor, "fake prompt")
 
         return self._analyze(_FakeContext(), storage=self.storage, **inputs)
 
@@ -206,13 +206,19 @@ def _make_vision_flash(storage):
     from vision.worker_flash_cls_small_vision import Qwen2VLVisionWorker
 
     class _FakePipe:
-        pass
+        model = _mock_model
+        processor = _mock_processor
 
-    return VisionFlashWorkerProxy(Qwen2VLVisionWorker(pipe=_FakePipe(), storage=storage))
+    worker = Qwen2VLVisionWorker(pipe=_FakePipe(), storage=storage)
+    worker.analyze_prompt = "fake prompt"
+    return VisionFlashWorkerProxy(worker)
 
 
 def _make_vision_beam(storage):
     from vision.worker_beam_eq_small_vision import analyze
+
+    class _FakeContext:
+        on_start_value = (_mock_model, _mock_processor, "prompt")
 
     return VisionBeamWorkerProxy(analyze, storage=storage)
 
@@ -220,7 +226,11 @@ def _make_vision_beam(storage):
 def _make_vision_modal(storage):
     from vision.worker_modal_cls_small_vision import SmallVisionWorker
 
-    return VisionModalWorkerProxy(SmallVisionWorker(storage=storage))
+    worker = SmallVisionWorker(storage=storage)
+    worker.model = _mock_model
+    worker.processor = _mock_processor
+    worker.analyze_prompt = "fake prompt"
+    return VisionModalWorkerProxy(worker)
 
 
 def _make_flux2_flash(storage):
@@ -390,10 +400,10 @@ def _get_worker_factory(service, test_file, target):
 @pytest.fixture(scope="module")
 def storage(request):
     if request.config.getoption("--target") == "live":
-        from services.real_r2 import RealR2Storage
+        from services.storage.real_r2 import RealR2Storage
 
         return RealR2Storage()
-    from services.fake_r2 import FakeR2Storage
+    from services.storage.fake_r2 import FakeR2Storage
 
     return FakeR2Storage()
 
@@ -408,26 +418,26 @@ def platform(request):
 
     if "beam" in test_file:
         if target == "live":
-            from services.beam_platform import RealBeamPlatform
+            from services.platform.beam_platform import RealBeamPlatform
 
             return RealBeamPlatform(worker_factory=factory)
-        from services.beam_platform_fake import FakeBeamPlatform
+        from services.platform.beam_platform_fake import FakeBeamPlatform
 
         return FakeBeamPlatform(worker_factory=factory)
     elif "modal" in test_file:
         if target == "live":
-            from services.modal_platform import RealModalPlatform
+            from services.platform.modal_platform import RealModalPlatform
 
             return RealModalPlatform(worker_factory=factory)
-        from services.modal_platform_fake import FakeModalPlatform
+        from services.platform.modal_platform_fake import FakeModalPlatform
 
         return FakeModalPlatform(worker_factory=factory)
     else:
         if target == "live":
-            from services.flash_platform import RealFlashPlatform
+            from services.platform.flash_platform import RealFlashPlatform
 
             return RealFlashPlatform(worker_factory=factory)
-        from services.flash_platform_fake import FakeFlashPlatform
+        from services.platform.flash_platform_fake import FakeFlashPlatform
 
         return FakeFlashPlatform(worker_factory=factory)
 
@@ -436,17 +446,48 @@ def platform(request):
 def runner(request):
     test_file = request.fspath.basename
     if "flash" in test_file:
-        from services.flash_runner import DirectSyncRunner
+        from services.runner.flash_runner import DirectSyncRunner
 
         return DirectSyncRunner()
     elif "beam" in test_file:
-        from services.beam_runner import DirectAsyncRunner
+        from services.runner.beam_runner import DirectAsyncRunner
 
         return DirectAsyncRunner()
     elif "modal" in test_file:
-        from services.modal_runner import DirectAsyncRunner
+        from services.runner.modal_runner import DirectAsyncRunner
 
         return DirectAsyncRunner()
+
+
+class _MockModel:
+    def __init__(self):
+        self._should_fail = False
+
+    def generate(self, **kw):
+        if self._should_fail:
+            raise RuntimeError("inference failed")
+        return [[1, 2, 3, 4, 5]]
+
+
+class _MockProcessor:
+    def apply_chat_template(self, *a, **kw):
+        return "fake template"
+
+    def __call__(self, *a, **kw):
+        class FakeInputs(dict):
+            input_ids = type("obj", (object,), {"shape": [1, 10]})()
+
+            def to(self, device):
+                return self
+
+        return FakeInputs()
+
+    def decode(self, *a, **kw):
+        return '{"classification": "landscape_0p", "subjects": ["sky"], "description": "blue sky"}'
+
+
+_mock_model = _MockModel()
+_mock_processor = _MockProcessor()
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -454,3 +495,10 @@ def lifecycle(platform):
     platform.deploy()
     yield
     platform.undeploy()
+
+
+@pytest.fixture(autouse=True)
+def _configure_inference_mock(request):
+    test_name = request.node.name
+    if "inference" in test_name:
+        _mock_model._should_fail = "failure" in test_name
