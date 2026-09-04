@@ -51,7 +51,7 @@ class WorkerSpec:
     id: str
     provider: str  # flash | beam | modal
     kind: str  # sync | async
-    shape: str  # flash_cls | flash_pre | modal_cls | beam_tq | beam_eq | beam_asgi | modal_asgi
+    shape: str  # flash_cls | flash_pre | flash_comfy | modal_cls | beam_tq | beam_eq | beam_comfy | beam_asgi | modal_asgi
     module: str
     attr: str  # class name or function name on the module
     method: str | None = None  # generate | analyze; None when attr IS the function

@@ -36,7 +36,7 @@ test = [
 
 [tool.setuptools.packages.find]
 where = ["workers"]
-include = ["services*"]
+include = ["workers*"]
 
 [tool.pytest.ini_options]
 pythonpath = ["."]

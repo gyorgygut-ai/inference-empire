@@ -41,7 +41,7 @@
 ### Logging & Polling
 - Beam single task: `beam logs --task-id <id>`
 - Beam worker tasks: `beam logs --stub-id <name>`
-- Beam poll async task (for e2e_dev): `beam logs --task-id <id> --timeout 3600 --follow` (wait for `[OK]` or `[ERR]`)
+- Beam poll async task (owner live runs): `beam logs --task-id <id> --timeout 3600 --follow` (wait for `[OK]` or `[ERR]`)
 - Modal app logs: `modal app logs <app-name>`
 - Modal container logs: `modal container logs <container-id>`
 
@@ -64,8 +64,3 @@ Log tag order: `[INIT]` → `[REQ]` → `[GEN]` → `[R2]` → `[OK]` (or `[ERR]
 fake (mocked inference, local) — live runs are owner-operated, outside this plan.
 ```
 No proceeding to next level without previous level passing.
-
-### E2E Dev Pattern
-1. Deploys test worker before all tests (`setup_module`)
-2. Runs tests against deployed endpoint
-3. Undeploys after all tests (`teardown_module`)
