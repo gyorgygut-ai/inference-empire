@@ -286,9 +286,6 @@ def generate(context, prompt: str,
     print(f"[REQ] prompt={prompt[:40]}  seed={seed}  files={total_files}", flush=True)
     try:
         pipe, write_video_audio = context.on_start_value
-        if storage is None:
-            from services.real_r2 import RealR2Storage
-            storage = RealR2Storage()
 
         class ValidatedInput(MiniMaxH3Ref2VAInput):
             @field_validator("ref_images")

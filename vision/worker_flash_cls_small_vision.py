@@ -44,11 +44,7 @@ class Qwen2VLVisionWorker:
     # --- END CONTRACT: small_vision ---
 
     def __init__(self, pipe=None, storage=None):
-        if storage:
-            self.storage = storage
-        else:
-            from services.real_r2 import RealR2Storage
-            self.storage = RealR2Storage()
+        self.storage = storage
 
         if pipe is not None:
             self.pipe = pipe

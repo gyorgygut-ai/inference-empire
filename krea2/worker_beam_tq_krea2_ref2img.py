@@ -222,7 +222,7 @@ def _face_crop(img, runtime_dir: Path, margin: float = 0.4):
 def generate(
     context,
     prompt: str,
-    storage=None,
+    storage,
     reference_image: Optional[str] = None,
     height: int = 768,
     width: int = 768,
@@ -233,9 +233,6 @@ def generate(
     face_crop: bool = True,
 ):
     pipe, runtime_dir, torch = context.on_start_value
-    if storage is None:
-        from services.real_r2 import RealR2Storage
-        storage = RealR2Storage()
     try:
         return _run_generate(
             pipe,
@@ -262,7 +259,7 @@ def _run_generate(
     runtime_dir,
     torch,
     prompt: str,
-    storage=None,
+    storage,
     reference_image: Optional[str] = None,
     height: int = 768,
     width: int = 768,

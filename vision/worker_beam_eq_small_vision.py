@@ -128,6 +128,6 @@ def _run_analyze(model, processor, analyze_prompt, image_base64: str) -> dict:
     keep_warm_seconds=0,
     checkpoint_enabled=True,
 )
-def analyze(context, image_base64: str, storage=None):
+def analyze(context, image_base64: str, storage):
     model, processor, analyze_prompt = context.on_start_value
     return _run_analyze(model, processor, analyze_prompt, image_base64)

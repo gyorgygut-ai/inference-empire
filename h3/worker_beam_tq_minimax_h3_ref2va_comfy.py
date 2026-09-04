@@ -333,9 +333,6 @@ def generate(context, prompt: str,
     n_files = len(ref_images) + len(ref_videos) + len(ref_video_audios) + len(ref_audios)
     print(f"[REQ] prompt={prompt[:40]}  seed={seed}  files={n_files}", flush=True)
     comfy_base_url = context.on_start_value
-    if storage is None:
-        from services.real_r2 import RealR2Storage
-        storage = RealR2Storage()
 
     try:
         req = ValidatedInput(

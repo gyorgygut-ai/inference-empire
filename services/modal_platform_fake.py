@@ -1,6 +1,6 @@
 class FakeModalPlatform:
-    def __init__(self):
-        pass
+    def __init__(self, worker_factory=None):
+        self._worker_factory = worker_factory
 
     def deploy(self):
         pass
@@ -8,5 +8,5 @@ class FakeModalPlatform:
     def undeploy(self):
         pass
 
-    def create_worker(self, storage=None):
-        pass
+    def create_worker(self, storage):
+        return self._worker_factory(storage=storage) if self._worker_factory else None

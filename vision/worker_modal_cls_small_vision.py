@@ -91,11 +91,11 @@ image = (
     max_containers=1,
 )
 class SmallVisionWorker:
+    def __init__(self, storage):
+        self.storage = storage
+
     @modal.enter()
     def load(self):
-        from services.real_r2 import RealR2Storage
-        self.storage = RealR2Storage()
-
         print("[INIT] loading model Qwen/Qwen2-VL-2B-Instruct", flush=True)
         t0 = time.time()
         import torch

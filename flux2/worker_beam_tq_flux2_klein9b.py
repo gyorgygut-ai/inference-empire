@@ -192,9 +192,6 @@ def generate(context, prompt: str,
              seed: int | None = None, input_image: str | None = None,
              reference_images: list[str] = [], storage=None) -> dict:
     pipe = context.on_start_value
-    if storage is None:
-        from services.real_r2 import RealR2Storage
-        storage = RealR2Storage()
     try:
         return _run_generate(
             pipe,

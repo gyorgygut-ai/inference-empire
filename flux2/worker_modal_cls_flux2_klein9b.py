@@ -104,10 +104,11 @@ def load_pipeline():
     max_containers=1,
 )
 class FluxKleinWorker:
+    def __init__(self, storage):
+        self.storage = storage
+
     @modal.enter()
     def load(self):
-        from services.real_r2 import RealR2Storage
-        self.storage = RealR2Storage()
         print("[INIT] loading model Disty0/FLUX.2-klein-9B-SDNQ-4bit-dynamic-svd-r32", flush=True)
         t0 = time.time()
         self.pipe = load_pipeline()

@@ -10,14 +10,14 @@ def test_generate_rejects_invalid_input(platform, runner, storage):
 def test_generate_returns_output_contract_on_inference_failure(platform, runner, storage):
     worker = platform.create_worker(storage=storage)
     try:
-        runner.run_sync(worker, image_base64="dGVzdA==")
+        runner.run_sync(worker, image_base64="iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR4nGNgAAIAAAUAAXpeqz8AAAAASUVORK5CYII=")
         assert False, "Should raise"
     except RuntimeError as e:
         assert "inference" in str(e)
 
 
 def test_generate_returns_output_contract_on_inference_success(platform, runner, storage):
-    result = runner.run_sync(platform.create_worker(storage=storage), image_base64="dGVzdA==")
+    result = runner.run_sync(platform.create_worker(storage=storage), image_base64="iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR4nGNgAAIAAAUAAXpeqz8AAAAASUVORK5CYII=")
     assert "classification" in result
     assert result["classification"] in [
         "portrait_0p",

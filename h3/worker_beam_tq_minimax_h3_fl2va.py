@@ -148,9 +148,6 @@ def generate(context, prompt: str, width: int = 1344, height: int = 768,
     print(f"[REQ] prompt={prompt[:40]}  seed={seed}", flush=True)
     try:
         pipe, write_video_audio = context.on_start_value
-        if storage is None:
-            from services.real_r2 import RealR2Storage
-            storage = RealR2Storage()
 
         pipe_kwargs = {
             "prompt": prompt,

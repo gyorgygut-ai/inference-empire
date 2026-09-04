@@ -40,12 +40,8 @@ class MiniMaxH3ComfyWorker:
         last_frame: _Optional[str] = _Field(default=None)
     # --- END CONTRACT: minimax_h3_comfy ---
 
-    def __init__(self, storage=None):
-        if storage:
-            self.storage = storage
-        else:
-            from services.real_r2 import RealR2Storage
-            self.storage = RealR2Storage()
+    def __init__(self, storage):
+        self.storage = storage
 
         import torch.distributed as dist
         dist.is_available = lambda: False

@@ -64,11 +64,11 @@ image = (
     max_containers=1,
 )
 class MiniMaxH3Fl2VAWorker:
+    def __init__(self, storage):
+        self.storage = storage
+
     @modal.enter()
     def load(self):
-        from services.real_r2 import RealR2Storage
-        self.storage = RealR2Storage()
-
         import torch.distributed as dist
 
         dist.is_available = lambda: False
