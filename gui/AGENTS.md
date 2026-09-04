@@ -27,14 +27,17 @@
 
 Mobile:
 - left Workers: dockable, docked closed by default
-- center: assistant-ui chat
+- center: Main
 - right Artifacts: dockable, docked closed by default
 
 Desktop:
-- breakpoint to be determined
-- left Workers: dockable, open by default, next to assistant-ui chat
+- left Workers: dockable, open by default, next to Main chat
 - right Artifacts: fills remaining space
 
-## Constraints
+## State
 
-- Workers and Artifacts render component names as hardcoded strings for v1
+- No persistence after page refresh for v1
+
+## Coding Style & Standards
+
+- Mirror face-value rules: no semicolons (`semi: ["error", "never"]`), no kindergarten-level comments, ESLint rules non-negotiable.

@@ -1,4 +1,17 @@
 @import "tailwindcss";
+
+@media (max-width: 1023px) {
+  [data-state="closed"][data-side="right"] {
+    display: none !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  [data-state="closed"][data-side="right"],
+  [data-state="open"][data-side="right"] {
+    display: flex !important;
+  }
+}
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
@@ -7,7 +20,7 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
+  --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);

@@ -1,9 +1,9 @@
 "use client"
 
 import { useReducer } from "react"
-import { WorkersPanel } from "@/components/panels/WorkersPanel"
-import { ArtifactsPanel } from "@/components/panels/ArtifactsPanel"
-import { ChatPlaceholder } from "@/components/panels/ChatPlaceholder"
+import { Workers } from "@/components/panels/Workers"
+import { Artifacts } from "@/components/panels/Artifacts"
+import { Main } from "@/components/panels/Main"
 
 type State = { opened: "left" | "right" | null }
 type Action = { type: "TOGGLE_LEFT" } | { type: "TOGGLE_RIGHT" } | { type: "CLOSE" }
@@ -28,14 +28,14 @@ export function AppShell() {
 
   return (
     <div className="flex h-dvh">
-      {leftOpen && <WorkersPanel open={leftOpen} onOpenChange={() => dispatch({ type: "TOGGLE_LEFT" })} />}
+      {leftOpen && <Workers open={leftOpen} onOpenChange={() => dispatch({ type: "TOGGLE_LEFT" })} />}
       <div className="min-w-0 flex-1">
-        <ChatPlaceholder
+        <Main
           onToggleLeft={() => dispatch({ type: "TOGGLE_LEFT" })}
           onToggleRight={() => dispatch({ type: "TOGGLE_RIGHT" })}
         />
       </div>
-      {rightOpen && <ArtifactsPanel open={rightOpen} onOpenChange={() => dispatch({ type: "TOGGLE_RIGHT" })} />}
+      <Artifacts open={rightOpen} onOpenChange={() => dispatch({ type: "TOGGLE_RIGHT" })} className="lg:flex-1 lg:w-auto lg:[&_[data-slot=collapsible-content]]:!block" />
     </div>
   )
 }
