@@ -1,12 +1,13 @@
 import { CollapsiblePanel } from "@/components/ui/CollapsiblePanel"
 
 interface WorkersPanelProps {
-  defaultOpen?: boolean
+  open: boolean
+  onOpenChange: (open: boolean) => void
 }
 
-export function WorkersPanel({ defaultOpen }: WorkersPanelProps) {
+export function WorkersPanel({ open, onOpenChange }: WorkersPanelProps) {
   return (
-    <CollapsiblePanel title="Workers" defaultOpen={defaultOpen}>
+    <CollapsiblePanel title="Workers" side="left" open={open} onOpenChange={onOpenChange}>
       Workers
     </CollapsiblePanel>
   )

@@ -1,12 +1,13 @@
 import { CollapsiblePanel } from "@/components/ui/CollapsiblePanel"
 
 interface ArtifactsPanelProps {
-  defaultOpen?: boolean
+  open: boolean
+  onOpenChange: (open: boolean) => void
 }
 
-export function ArtifactsPanel({ defaultOpen }: ArtifactsPanelProps) {
+export function ArtifactsPanel({ open, onOpenChange }: ArtifactsPanelProps) {
   return (
-    <CollapsiblePanel title="Artifacts" defaultOpen={defaultOpen}>
+    <CollapsiblePanel title="Artifacts" side="right" open={open} onOpenChange={onOpenChange}>
       Artifacts
     </CollapsiblePanel>
   )
