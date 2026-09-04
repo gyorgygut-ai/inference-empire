@@ -4,11 +4,13 @@ from __future__ import annotations
 import os
 import time
 import uuid
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 if TYPE_CHECKING:
+    from diffsynth.pipelines.minimax_h3_audio_video import MiniMaxH3Pipeline
+
     from workers.services.storage.storage import Storage
 
 MODEL_ID = "DiffSynth-Studio/MiniMax-H3-NF4"
@@ -51,7 +53,7 @@ class MiniMaxH3Ref2VAInput(BaseModel):
     height: int = Field(default=768)
     length: int = Field(default=124)
     steps: int = Field(default=50)
-    seed: Optional[int] = Field(default=None)
+    seed: int | None = Field(default=None)
 
 
 class ValidatedRef2VAInput(MiniMaxH3Ref2VAInput):
@@ -142,6 +144,7 @@ class MiniMaxH3Ref2VAOutput(BaseModel):
 def read_image(base64_str: str):
     import base64
     import io
+
     from PIL import Image
 
     return Image.open(io.BytesIO(base64.b64decode(base64_str))).convert("RGB")
@@ -150,6 +153,7 @@ def read_image(base64_str: str):
 def read_video(base64_str: str, height: int, width: int, length: int, sample_rate: int) -> list:
     import base64
     import tempfile
+
     from diffsynth.utils.data.minimax_h3 import MiniMaxH3ReferenceLoader
 
     loader = MiniMaxH3ReferenceLoader(
@@ -169,6 +173,7 @@ def read_video(base64_str: str, height: int, width: int, length: int, sample_rat
 def read_audio(base64_str: str, sample_rate: int, duration: float | None = None) -> tuple:
     import base64
     import tempfile
+
     from diffsynth.utils.data.audio import read_audio as _read_audio
 
     with tempfile.NamedTemporaryFile(suffix=".mp3") as fh:
@@ -218,7 +223,7 @@ def load_pipeline(vram_reserve_gb: float = 5.0):
 
     try:
         dist.is_available = lambda: False
-    except Exception:
+    except Exception:  # noqa: BLE001, S110
         pass
 
     from diffsynth.pipelines.minimax_h3_audio_video import (
@@ -275,7 +280,6 @@ def run_generate(
     req: ValidatedRef2VAInput,
 ) -> MiniMaxH3Ref2VAOutput:
     """Takes validated Input, returns Output. Testable via DI."""
-    import io
 
     if storage is None:
         raise ValueError("storage is required")
@@ -316,7 +320,7 @@ def run_generate(
             fps=FPS,
             audio_sample_rate=pipe.audio_vae.sample_rate,
         )
-        with io.open(output_path, "rb") as fh:
+        with open(output_path, "rb") as fh:
             video_bytes = fh.read()
     finally:
         if os.path.exists(output_path):
@@ -329,3 +333,17 @@ def run_generate(
 
     print(f"[OK] completed in {time.time() - t_req:.1f}s", flush=True)
     return MiniMaxH3Ref2VAOutput(artifact=Artifact(presigned_url=presigned_url))
+
+
+def pipe_factory() -> MiniMaxH3Pipeline:
+    """Factory for the minimax-h3 pipeline."""
+    return load_pipeline()[0]
+
+
+def load_dependencies(cache_dir=None):
+    """Load all dependencies for minimax-h3-ref2va worker."""
+    from workers.services.write_video_audio.write_video_audio_factory import (
+        write_video_audio_factory,
+    )
+
+    return pipe_factory(), write_video_audio_factory()

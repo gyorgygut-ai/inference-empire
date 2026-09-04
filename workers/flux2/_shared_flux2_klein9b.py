@@ -3,12 +3,16 @@ from __future__ import annotations
 
 import time
 import uuid
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, ConfigDict, Field
 
 if TYPE_CHECKING:
+    from diffusers import Flux2KleinPipeline
+
     from workers.services.storage.storage import Storage
+    from workers.services.torch_module.torch_module import TorchModule
 
 MODEL_ID = "Disty0/FLUX.2-klein-9B-SDNQ-4bit-dynamic-svd-r32"
 _MAX_WIDTH = 2560
@@ -40,6 +44,7 @@ class Flux2Klein9bOutput(BaseModel):
 def prepare_image(base64_str: str):
     import base64
     import io
+
     from PIL import Image
 
     img = Image.open(io.BytesIO(base64.b64decode(base64_str))).convert("RGB")
@@ -58,6 +63,7 @@ def load_pipeline():
     dist.is_available = lambda: False
 
     import os
+
     import diffusers
     import torch
 
@@ -154,3 +160,21 @@ def run_generate(pipe, torch_module, storage: Storage, req: Flux2Klein9bInput) -
 
     print(f"[OK] completed in {time.time() - t_req:.1f}s", flush=True)
     return Flux2Klein9bOutput(artifact=Artifact(presigned_url=url))
+
+
+@dataclass
+class Flux2Klein9bDeps:
+    pipe: Flux2KleinPipeline
+    torch_module: TorchModule
+
+
+def pipe_factory() -> Flux2KleinPipeline:
+    """Factory for the flux2 pipeline."""
+    return load_pipeline()[0]
+
+
+def load_dependencies():
+    """Load all dependencies for flux2-klein9b worker."""
+    from workers.services.torch_module.torch_module_factory import torch_module_factory
+
+    return pipe_factory(), torch_module_factory()

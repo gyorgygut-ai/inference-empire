@@ -5,9 +5,9 @@ from typing import TYPE_CHECKING
 
 from beam import Image, QueueDepthAutoscaler, Volume, task_queue
 
-from workers.h3.generate_minimax_h3_fl2va import (
+from workers.h3._shared_minimax_h3_fl2va import (
     MiniMaxH3Fl2VAInput,
-    load_pipeline as shared_load_pipeline,
+    load_dependencies,
     run_generate,
 )
 
@@ -42,8 +42,8 @@ image = (
 )
 
 
-def load_pipeline():
-    return shared_load_pipeline()
+def load_deps():
+    return load_dependencies(cache_dir=CACHE_PATH)
 
 
 @task_queue(
@@ -52,7 +52,7 @@ def load_pipeline():
     memory="32Gi",
     gpu="RTX4090",
     image=image,
-    on_start=load_pipeline,
+    on_start=load_deps,
     volumes=[Volume(name="hf-cache", mount_path=CACHE_PATH)],
     autoscaler=QueueDepthAutoscaler(max_containers=1, tasks_per_container=1),
     keep_warm_seconds=1800,

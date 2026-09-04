@@ -5,13 +5,13 @@ from typing import TYPE_CHECKING
 
 from runpod_flash import Endpoint, GpuGroup
 
-from workers.h3.generate_minimax_h3_fl2va import (
+from workers.h3._shared_minimax_h3_fl2va import (
     MiniMaxH3Fl2VAInput,
-    load_pipeline_as_needed,
+    load_dependencies,
     run_generate,
 )
-
 from workers.services.storage.real_r2 import require_storage
+
 if TYPE_CHECKING:
     from workers.services.storage.storage import Storage
 
@@ -47,10 +47,10 @@ if TYPE_CHECKING:
 class MiniMaxH3Fl2VAWorker:
     Input = MiniMaxH3Fl2VAInput
 
-    def __init__(self, storage: Storage, pipe=None):
+    def __init__(self, storage: Storage):
         storage = require_storage(storage)
         self.storage = storage
-        self.pipe, self.write_video_audio = load_pipeline_as_needed(pipe)
+        self.pipe, self.write_video_audio = load_dependencies()
 
     def generate(self, **kwargs) -> dict:
         """Validate at boundary, delegate, return output contract."""

@@ -1,19 +1,18 @@
 from __future__ import annotations
 
 import os
-import time
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from beam import Image, QueueDepthAutoscaler, Volume, task_queue
 
-from workers.krea2.generate_krea2_ref2img import (
+from workers.krea2._shared_krea2_ref2img import (
     Krea2Ref2ImgInput,
-    load_pipeline as shared_load_pipeline,
+    load_dependencies,
     run_generate,
 )
-
 from workers.services.storage.real_r2 import require_storage
+
 if TYPE_CHECKING:
     from workers.services.storage.storage import Storage
 
@@ -64,8 +63,8 @@ image = (
 )
 
 
-def load_pipeline():
-    return shared_load_pipeline(cache_dir=CACHE_PATH)
+def load_deps():
+    return load_dependencies(cache_dir=CACHE_PATH)
 
 
 @task_queue(
@@ -74,7 +73,7 @@ def load_pipeline():
     memory="64Gi",
     gpu="RTX5090",
     image=image,
-    on_start=load_pipeline,
+    on_start=load_deps,
     volumes=[Volume(name="hf-cache", mount_path=CACHE_PATH)],
     autoscaler=QueueDepthAutoscaler(max_containers=1, tasks_per_container=1),
     keep_warm_seconds=1800,
@@ -89,12 +88,12 @@ def generate(
     context,
     prompt: str,
     storage: Storage,
-    reference_image: Optional[str] = None,
+    reference_image: str | None = None,
     height: int = 768,
     width: int = 768,
     num_inference_steps: int = 8,
     guidance_scale: float = 0.0,
-    seed: Optional[int] = None,
+    seed: int | None = None,
     lora_scale: float = 1.0,
     face_crop: bool = True,
 ):
@@ -113,6 +112,6 @@ def generate(
             face_crop=face_crop,
         )
         return run_generate(pipe, runtime_dir, torch_module, storage, req).model_dump()
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         print(f"[ERR] {type(e).__name__}: {e}", flush=True)
         raise RuntimeError(f"inference failed: {e}")

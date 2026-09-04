@@ -6,14 +6,14 @@ from typing import TYPE_CHECKING
 
 from runpod_flash import Endpoint, GpuGroup, PodTemplate
 
-from workers.h3.generate_minimax_h3_comfy import (
+from workers.h3._shared_minimax_h3_comfy import (
     MiniMaxH3ComfyInput,
     build_payload,
     parse_output,
     upload_result,
 )
-
 from workers.services.storage.real_r2 import require_storage
+
 if TYPE_CHECKING:
     from workers.services.storage.storage import Storage
 

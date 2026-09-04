@@ -9,6 +9,7 @@ import io
 import struct
 import sys
 import types
+import typing
 
 import pytest
 
@@ -34,7 +35,12 @@ def pytest_addoption(parser):
 
 @pytest.fixture(scope="session")
 def target(request):
-    return request.config.getoption("--target")
+    target = request.config.getoption("--target")
+    if target == "fake":
+        import os
+        os.environ.setdefault("TORCH_TARGET", "fake")
+        os.environ.setdefault("WRITE_VIDEO_AUDIO_TARGET", "fake")
+    return target
 
 
 @pytest.fixture
@@ -186,8 +192,8 @@ class _FakeFlashEndpoint:
         data = base64.b64encode(fake_mp4_stub()).decode()
 
         class _Job:
-            error = None
-            output = {"images": [{"data": data}]}
+            error: typing.ClassVar = None
+            output: typing.ClassVar = {"images": [{"data": data}]}
 
         return _Job()
 
@@ -285,7 +291,7 @@ def _build_voice_app(module_name: str, monkeypatch):
     fake_event.FakeEvent = dict
     sys.modules["realtime_protocol"] = fake_event
     module = importlib.import_module(module_name)
-    builder = getattr(module, "app", None) or getattr(module, "build_app", None) or getattr(module, "worker")
+    builder = getattr(module, "app", None) or getattr(module, "build_app", None) or module.worker
     app = builder() if callable(builder) else builder
     return app
 
@@ -303,7 +309,8 @@ def _infer(path: str) -> str:
 
 def _decorated(mod, names: tuple) -> tuple:
     """Return (node_name, object) for the first def/class with a matching decorator."""
-    tree = ast.parse(open(mod.__file__).read())
+    with open(mod.__file__) as f:
+        tree = ast.parse(f.read())
     for node in ast.walk(tree):
         for dec in getattr(node, "decorator_list", []):
             f = dec.func if isinstance(dec, ast.Call) else dec
@@ -400,7 +407,7 @@ def _patch_comfy(mod, monkeypatch):
         import runpod_flash
 
         monkeypatch.setattr(runpod_flash, "Endpoint", _FakeFlashEndpoint, raising=False)
-    except Exception:
+    except Exception:  # noqa: BLE001, S110
         pass
     monkeypatch.setattr(mod, "Endpoint", _FakeFlashEndpoint, raising=False)
 
@@ -596,7 +603,7 @@ def modal_cls(modal_platform, target, monkeypatch, request):
             for attr_name, val in zip(("pipe", "torch_module"), vals):
                 try:
                     setattr(inst, attr_name, val)
-                except Exception:
+                except Exception:  # noqa: BLE001, S110
                     pass
         raw = getattr(_c, "generate", None) or getattr(_c, "analyze", None)
         raw = getattr(raw, "_get_raw_f", lambda: raw)()

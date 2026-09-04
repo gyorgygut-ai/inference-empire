@@ -5,9 +5,13 @@ from typing import TYPE_CHECKING
 
 from runpod_flash import Endpoint, GpuGroup
 
-from workers.krea2.generate_krea2_ref2img import Krea2Ref2ImgInput, load_pipeline_as_needed, run_generate
-
+from workers.krea2._shared_krea2_ref2img import (
+    Krea2Ref2ImgInput,
+    load_dependencies,
+    run_generate,
+)
 from workers.services.storage.real_r2 import require_storage
+
 if TYPE_CHECKING:
     from workers.services.storage.storage import Storage
 
@@ -47,7 +51,7 @@ class Krea2Ref2ImgWorker:
     def __init__(self, storage: Storage):
         storage = require_storage(storage)
         self.storage = storage
-        self.pipe, self.runtime_dir, self.torch_module = load_pipeline_as_needed()
+        self.pipe, self.runtime_dir, self.torch_module = load_dependencies()
 
     def generate(self, **kwargs) -> dict:
         """Validate at boundary, delegate, return output contract."""
@@ -56,6 +60,6 @@ class Krea2Ref2ImgWorker:
             return run_generate(
                 self.pipe, self.runtime_dir, self.torch_module, self.storage, req
             ).model_dump()
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             print(f"[ERR] {type(e).__name__}: {e}", flush=True)
             raise RuntimeError(f"inference failed: {e}")

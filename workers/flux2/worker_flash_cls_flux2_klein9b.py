@@ -5,9 +5,13 @@ from typing import TYPE_CHECKING
 
 from runpod_flash import Endpoint, GpuGroup
 
-from workers.flux2.generate_flux2_klein9b import Flux2Klein9bInput, load_pipeline_as_needed, run_generate
-
+from workers.flux2._shared_flux2_klein9b import (
+    Flux2Klein9bInput,
+    load_dependencies,
+    run_generate,
+)
 from workers.services.storage.real_r2 import require_storage
+
 if TYPE_CHECKING:
     from workers.services.storage.storage import Storage
 
@@ -44,16 +48,16 @@ if TYPE_CHECKING:
 class FluxKleinWorker:
     Input = Flux2Klein9bInput
 
-    def __init__(self, storage: Storage, pipe=None):
+    def __init__(self, storage: Storage):
         storage = require_storage(storage)
         self.storage = storage
-        self.pipe, self.torch_module = load_pipeline_as_needed(pipe)
+        self.pipe, self.torch_module = load_dependencies()
 
     def generate(self, **kwargs) -> dict:
         """Validate at boundary, delegate, return output contract."""
         try:
             req = self.Input(**kwargs)
             return run_generate(self.pipe, self.torch_module, self.storage, req).model_dump()
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             print(f"[ERR] {type(e).__name__}: {e}", flush=True)
             raise RuntimeError(f"inference failed: {e}")

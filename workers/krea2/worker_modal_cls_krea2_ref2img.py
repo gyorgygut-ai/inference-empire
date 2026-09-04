@@ -2,19 +2,19 @@ from __future__ import annotations
 
 import time
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import modal
 
-from workers.krea2.generate_krea2_ref2img import (
+from workers.krea2._shared_krea2_ref2img import (
     MODEL_REPO,
     REID_REPO,
     Krea2Ref2ImgInput,
-    load_pipeline as shared_load_pipeline,
+    load_dependencies,
     run_generate,
 )
-
 from workers.services.storage.real_r2 import require_storage
+
 if TYPE_CHECKING:
     from workers.services.storage.storage import Storage
 
@@ -25,8 +25,9 @@ hf_cache_vol = modal.Volume.from_name("hf-cache", create_if_missing=True)
 
 
 def _download_models():
-    from huggingface_hub import snapshot_download
     import os
+
+    from huggingface_hub import snapshot_download
 
     token = os.environ.get("HF_TOKEN") or None
 
@@ -92,7 +93,7 @@ class Krea2Ref2ImgWorker:
     def load(self):
         print("[INIT] loading model krea/Krea-2-Turbo", flush=True)
         t0 = time.time()
-        self.pipe, self.runtime_dir, self.torch_module = shared_load_pipeline()
+        self.pipe, self.runtime_dir, self.torch_module = load_dependencies()
         print(f"[INIT] model loaded in {time.time() - t0:.1f}s", flush=True)
 
     @modal.method()
@@ -103,7 +104,7 @@ class Krea2Ref2ImgWorker:
             return run_generate(
                 self.pipe, self.runtime_dir, self.torch_module, self.storage, req
             ).model_dump()
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             print(f"[ERR] {type(e).__name__}: {e}", flush=True)
             raise RuntimeError(f"inference failed: {e}")
 

@@ -3,13 +3,17 @@ from __future__ import annotations
 
 import time
 import uuid
+from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, ConfigDict, Field
 
 if TYPE_CHECKING:
+    from diffusers import DiffusionPipeline
+
     from workers.services.storage.storage import Storage
+    from workers.services.torch_module.torch_module import TorchModule
 
 MODEL_REPO = "krea/Krea-2-Turbo"
 REID_REPO = "yijunwang2/krea2-reid"
@@ -33,12 +37,12 @@ EXTRA_SPECIAL_TOKENS = [
 class Krea2Ref2ImgInput(BaseModel):
     model_config = ConfigDict(title="Krea2Ref2ImgInput")
     prompt: str
-    reference_image: Optional[str] = Field(default=None)
+    reference_image: str | None = Field(default=None)
     height: int = Field(default=768)
     width: int = Field(default=768)
     num_inference_steps: int = Field(default=8)
     guidance_scale: float = Field(default=0.0)
-    seed: Optional[int] = Field(default=None)
+    seed: int | None = Field(default=None)
     lora_scale: float = Field(default=1.0)
     face_crop: bool = Field(default=True)
 
@@ -81,42 +85,43 @@ def load_pipeline(cache_dir=None):
     _apply_qwen3_vl_rope_patch()
 
     import os
+
     import torch
     from diffusers import DiffusionPipeline
     from huggingface_hub import snapshot_download
     from transformers import AutoTokenizer
 
-    snapshot_kwargs = dict(
-        allow_patterns=[
+    snapshot_kwargs = {
+        "allow_patterns": [
             "pipeline.py",
             "face_crop.py",
             "models/*.onnx",
             "krea2_reid_rank32.safetensors",
         ],
-    )
+    }
     if cache_dir:
         snapshot_kwargs["cache_dir"] = cache_dir
     runtime_dir = Path(snapshot_download(REID_REPO, **snapshot_kwargs))
 
     token = os.environ.get("HF_TOKEN") or None
 
-    tokenizer_kwargs = dict(
-        subfolder="tokenizer",
-        token=token,
-        trust_remote_code=True,
-        extra_special_tokens={t: t for t in EXTRA_SPECIAL_TOKENS},
-    )
+    tokenizer_kwargs = {
+        "subfolder": "tokenizer",
+        "token": token,
+        "trust_remote_code": True,
+        "extra_special_tokens": {t: t for t in EXTRA_SPECIAL_TOKENS},
+    }
     if cache_dir:
         tokenizer_kwargs["cache_dir"] = cache_dir
     tokenizer = AutoTokenizer.from_pretrained(MODEL_REPO, **tokenizer_kwargs)
 
-    pipe_kwargs = dict(
-        custom_pipeline=str(runtime_dir),
-        torch_dtype=torch.bfloat16,
-        token=token,
-        trust_remote_code=True,
-        tokenizer=None,
-    )
+    pipe_kwargs = {
+        "custom_pipeline": str(runtime_dir),
+        "torch_dtype": torch.bfloat16,
+        "token": token,
+        "trust_remote_code": True,
+        "tokenizer": None,
+    }
     if cache_dir:
         pipe_kwargs["cache_dir"] = cache_dir
     pipe = DiffusionPipeline.from_pretrained(MODEL_REPO, **pipe_kwargs)
@@ -144,6 +149,7 @@ def load_pipeline_as_needed(pipe=None, runtime_dir=None, cache_dir=None):
 def decode_image(base64_str: str):
     import base64
     import io
+
     from PIL import Image
 
     img = Image.open(io.BytesIO(base64.b64decode(base64_str)))
@@ -247,3 +253,23 @@ def run_generate(
 
     print(f"[OK] completed in {time.time() - t_req:.1f}s", flush=True)
     return Krea2Ref2ImgOutput(artifact=Artifact(presigned_url=presigned_url))
+
+
+@dataclass
+class Krea2Ref2ImgDeps:
+    pipe: DiffusionPipeline
+    runtime_dir: Path
+    torch_module: TorchModule
+
+
+def pipe_factory() -> DiffusionPipeline:
+    """Factory for the krea2 pipeline."""
+    return load_pipeline()[0]
+
+
+def load_dependencies(cache_dir=None):
+    """Load all dependencies for krea2-ref2img worker."""
+    from workers.services.torch_module.torch_module_factory import torch_module_factory
+
+    _, runtime_dir, _ = load_pipeline(cache_dir=cache_dir)
+    return pipe_factory(), runtime_dir, torch_module_factory()

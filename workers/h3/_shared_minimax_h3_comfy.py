@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import uuid
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -25,9 +25,9 @@ class MiniMaxH3ComfyInput(BaseModel):
     height: int = Field(default=768)
     length: int = Field(default=124)
     steps: int = Field(default=20)
-    seed: Optional[int] = Field(default=None)
-    first_frame: Optional[str] = Field(default=None)
-    last_frame: Optional[str] = Field(default=None)
+    seed: int | None = Field(default=None)
+    first_frame: str | None = Field(default=None)
+    last_frame: str | None = Field(default=None)
 
 
 class Artifact(BaseModel):
@@ -93,7 +93,7 @@ def parse_output(output) -> tuple:
     import base64
 
     if not isinstance(output, dict):
-        raise RuntimeError(f"unexpected output: {output!r}")
+        raise TypeError(f"unexpected output: {output!r}")
     out_images = output.get("images") or []
     if not out_images:
         raise RuntimeError(f"no video in output: {output}")

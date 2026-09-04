@@ -5,10 +5,10 @@ from typing import TYPE_CHECKING
 
 import modal
 
-from workers.h3.generate_minimax_h3_ref2va import (
+from workers.h3._shared_minimax_h3_ref2va import (
     MiniMaxH3Ref2VAInput,
     ValidatedRef2VAInput,
-    load_pipeline as shared_load_pipeline,
+    load_dependencies,
     run_generate,
 )
 
@@ -72,7 +72,6 @@ class MiniMaxH3Ref2VAWorker:
         dist.is_available = lambda: False
 
         import torch
-        # Modal L4 lacks libcudart.so.13 — patch load_library so torchaudio import doesn't crash
         _orig_load_library = torch.ops.load_library
         def _patched_load_library(path):
             try:
@@ -81,7 +80,7 @@ class MiniMaxH3Ref2VAWorker:
                 pass
         torch.ops.load_library = _patched_load_library
 
-        self.pipe, self.write_video_audio = shared_load_pipeline()
+        self.pipe, self.write_video_audio = load_dependencies()
 
     @modal.method()
     def generate(self, **kwargs) -> dict:

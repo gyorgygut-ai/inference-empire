@@ -114,7 +114,7 @@ def load_models():
         }
         print(f"[INIT] loaded all models in {time.time() - t0:.1f}s")
         return models
-    except Exception:  # noqa: BLE001
+    except Exception:
         import traceback
 
         with open(boot_log, "w") as f:

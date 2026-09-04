@@ -4,15 +4,15 @@ from typing import TYPE_CHECKING
 
 import modal
 
-from workers.vision.analyze_small_vision import (
+from workers.services.storage.real_r2 import require_storage
+from workers.vision._shared_small_vision import (
     REPO_ID,
     SmallVisionInput,
     SmallVisionOutput,
-    load_models as shared_load_models,
+    load_dependencies,
     run_analyze,
 )
 
-from workers.services.storage.real_r2 import require_storage
 if TYPE_CHECKING:
     from workers.services.storage.storage import Storage
 
@@ -63,7 +63,7 @@ class SmallVisionWorker:
 
     @modal.enter()
     def load(self):
-        self.model, self.processor, self.analyze_prompt = shared_load_models()
+        self.model, self.processor, self.analyze_prompt = load_dependencies()
 
     def _run_analyze(self, req: SmallVisionInput):
         return run_analyze(self.model, self.processor, self.analyze_prompt, req)
@@ -74,7 +74,7 @@ class SmallVisionWorker:
             req = SmallVisionInput(**kwargs)
             result = self._run_analyze(req)
             return result.model_dump() if isinstance(result, SmallVisionOutput) else result
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             print(f"[ERR] {type(e).__name__}: {e}", flush=True)
             raise RuntimeError(f"inference failed: {e}")
 

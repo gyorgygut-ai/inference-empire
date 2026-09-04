@@ -237,9 +237,9 @@ def _live_voice_call(spec, inputs):
             "content_type": resp.headers.get("content-type"),
             "content_len": len(resp.content),
         }
-    import websocket
-
     import json
+
+    import websocket
 
     ws = websocket.create_connection(base + "/v1/realtime", timeout=300)
     try:

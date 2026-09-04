@@ -9,7 +9,7 @@ import requests
 
 from beam import Image, QueueDepthAutoscaler, Volume, task_queue
 
-from workers.h3.generate_minimax_h3_ref2va_comfy import (
+from workers.h3._shared_minimax_h3_ref2va_comfy import (
     ValidatedRef2VAComfyInput,
     build_payload,
     upload_result,

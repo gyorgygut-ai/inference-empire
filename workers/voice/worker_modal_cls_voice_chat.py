@@ -4,9 +4,8 @@ import json
 import os
 import re
 import secrets
-import time
 import threading
-from typing import Optional
+import time
 
 import modal
 import numpy as np
@@ -214,7 +213,7 @@ class VoiceChatPipeline:
         self.tts = TTS("tts_models/multilingual/multi-dataset/xtts_v2", gpu=True)
 
         self.gpu_lock = threading.Lock()
-        self._current_persona: Optional[str] = None
+        self._current_persona: str | None = None
         self._models_loaded = True
         print(f"[INIT] model loaded in {time.time() - t0:.1f}s", flush=True)
 
@@ -249,7 +248,7 @@ class VoiceChatPipeline:
             }
         return voices
 
-    def _build_inputs(self, persona: Optional[str], prompt: str):
+    def _build_inputs(self, persona: str | None, prompt: str):
         messages = []
         if persona:
             messages.append({"role": "system", "content": persona})
@@ -288,11 +287,11 @@ class RealtimeSession:
         self.pipeline = pipeline
         self.send = None  # async callable(event_dict); wired by the transport
         self.session = self._default_session()
-        self.instructions: Optional[str] = None
+        self.instructions: str | None = None
         self.voice_id: str = DEFAULT_VOICE
         self.language: str = "en"
         self.input_buffer = bytearray()
-        self._vad_16k: Optional[np.ndarray] = None
+        self._vad_16k: np.ndarray | None = None
         # Dependency-free adaptive energy/silence VAD (no external VAD lib).
         self.vad_active = False
         self.vad_silence_samples = 0
@@ -300,9 +299,9 @@ class RealtimeSession:
         self.speech_active = False
         self.response_active = False
         self.interrupted = False
-        self._current_response_id: Optional[str] = None
-        self._current_item_id: Optional[str] = None
-        self._response_task: Optional[asyncio.Task] = None
+        self._current_response_id: str | None = None
+        self._current_item_id: str | None = None
+        self._response_task: asyncio.Task | None = None
 
     # ---- helpers ---------------------------------------------------------
     def _default_session(self) -> dict:
@@ -313,7 +312,7 @@ class RealtimeSession:
             "instructions": "You are a helpful, concise voice assistant. Respond naturally and briefly.",
             "voice": DEFAULT_VOICE,
             "language": "en",
-            "available_voices": [{"id": v, "label": v} for v in self.pipeline.voices.keys()],
+            "available_voices": [{"id": v, "label": v} for v in self.pipeline.voices],
             "available_languages": [
                 {"code": k, "label": lbl} for k, lbl in SUPPORTED_LANGUAGES.items()
             ],
@@ -387,7 +386,7 @@ class RealtimeSession:
     async def _on_audio(self, b64: str):
         try:
             audio = base64.b64decode(b64)
-        except Exception:
+        except Exception:  # noqa: BLE001
             return
         if not audio:
             return
@@ -529,14 +528,14 @@ class RealtimeSession:
         streamer = self.pipeline.streamer_cls(
             self.pipeline.tokenizer, skip_prompt=True, skip_special_tokens=True
         )
-        gen_kwargs = dict(
-            inputs=inputs,
-            max_new_tokens=MAX_NEW_TOKENS,
-            do_sample=True,
-            temperature=0.7,
-            top_p=0.9,
-            streamer=streamer,
-        )
+        gen_kwargs = {
+            "inputs": inputs,
+            "max_new_tokens": MAX_NEW_TOKENS,
+            "do_sample": True,
+            "temperature": 0.7,
+            "top_p": 0.9,
+            "streamer": streamer,
+        }
 
         q: asyncio.Queue = asyncio.Queue()
 
@@ -694,11 +693,10 @@ def build_web_app(pipeline: "VoiceChatPipeline"):
                 raw = await websocket.receive_text()
                 try:
                     event = json.loads(raw)
-                except Exception:
+                except Exception:  # noqa: BLE001, S112
                     continue
                 await session.handle_event(event)
         except WebSocketDisconnect:
             print("[OK] websocket disconnected", flush=True)
-            pass
 
     return web

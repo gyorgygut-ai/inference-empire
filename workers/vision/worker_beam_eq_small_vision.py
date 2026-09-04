@@ -4,14 +4,14 @@ from typing import TYPE_CHECKING
 
 from beam import Image, QueueDepthAutoscaler, Volume, endpoint
 
-from workers.vision.analyze_small_vision import (
+from workers.services.storage.real_r2 import require_storage
+from workers.vision._shared_small_vision import (
     SmallVisionInput,
     SmallVisionOutput,
-    load_models as shared_load_models,
+    load_dependencies,
     run_analyze,
 )
 
-from workers.services.storage.real_r2 import require_storage
 if TYPE_CHECKING:
     from workers.services.storage.storage import Storage
 
@@ -37,8 +37,8 @@ image = (
 )
 
 
-def load_models():
-    return shared_load_models(cache_dir=CACHE_PATH)
+def load_deps():
+    return load_dependencies(cache_dir=CACHE_PATH)
 
 
 @endpoint(
@@ -47,7 +47,7 @@ def load_models():
     memory="16Gi",
     gpu="A10G",
     image=image,
-    on_start=load_models,
+    on_start=load_deps,
     volumes=[Volume(name="hf-cache", mount_path=CACHE_PATH)],
     autoscaler=QueueDepthAutoscaler(max_containers=1, tasks_per_container=1),
     keep_warm_seconds=0,
@@ -60,5 +60,5 @@ def analyze(context, image_base64: str, storage: Storage):
         req = SmallVisionInput(image_base64=image_base64)
         result = run_analyze(model, processor, analyze_prompt, req)
         return result.model_dump() if isinstance(result, SmallVisionOutput) else result
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         raise RuntimeError(f"inference failed: {e}")

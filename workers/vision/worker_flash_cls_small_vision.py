@@ -1,18 +1,17 @@
 from __future__ import annotations
 
-import os
 from typing import TYPE_CHECKING
 
 from runpod_flash import Endpoint, GpuGroup
 
-from workers.vision.analyze_small_vision import (
+from workers.services.storage.real_r2 import require_storage
+from workers.vision._shared_small_vision import (
     SmallVisionInput,
     SmallVisionOutput,
-    load_models_as_needed,
+    load_dependencies,
     run_analyze,
 )
 
-from workers.services.storage.real_r2 import require_storage
 if TYPE_CHECKING:
     from workers.services.storage.storage import Storage
 
@@ -37,17 +36,10 @@ if TYPE_CHECKING:
 class Qwen2VLVisionWorker:
     Input = SmallVisionInput
 
-    def __init__(self, storage: Storage, pipe=None):
+    def __init__(self, storage: Storage):
         storage = require_storage(storage)
         self.storage = storage
-
-        if pipe is not None:
-            self.model, self.processor, self.analyze_prompt = load_models_as_needed(
-                model=getattr(pipe, "model", None),
-                processor=getattr(pipe, "processor", None),
-            )
-        else:
-            self.model, self.processor, self.analyze_prompt = load_models_as_needed()
+        self.model, self.processor, self.analyze_prompt = load_dependencies()
 
     def analyze(self, **kwargs) -> dict:
         """Validate at boundary, delegate, return output contract."""
@@ -55,5 +47,5 @@ class Qwen2VLVisionWorker:
             req = self.Input(**kwargs)
             result = run_analyze(self.model, self.processor, self.analyze_prompt, req)
             return result.model_dump() if isinstance(result, SmallVisionOutput) else result
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             raise RuntimeError(f"inference failed: {e}")

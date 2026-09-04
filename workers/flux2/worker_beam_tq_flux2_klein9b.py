@@ -7,13 +7,13 @@ from typing import TYPE_CHECKING
 
 from beam import Image, QueueDepthAutoscaler, Volume, task_queue
 
-from workers.flux2.generate_flux2_klein9b import (
+from workers.flux2._shared_flux2_klein9b import (
     Flux2Klein9bInput,
-    load_pipeline as shared_load_pipeline,
+    load_dependencies,
     run_generate,
 )
-
 from workers.services.storage.real_r2 import require_storage
+
 if TYPE_CHECKING:
     from workers.services.storage.storage import Storage
 
@@ -63,8 +63,8 @@ image = (
 )
 
 
-def load_pipeline():
-    return shared_load_pipeline()
+def load_deps():
+    return load_dependencies()
 
 
 @task_queue(
@@ -73,7 +73,7 @@ def load_pipeline():
     memory="32Gi",
     gpu="RTX4090",
     image=image,
-    on_start=load_pipeline,
+    on_start=load_deps,
     volumes=[Volume(name="hf-cache", mount_path=CACHE_PATH)],
     autoscaler=QueueDepthAutoscaler(max_containers=1, tasks_per_container=1),
     keep_warm_seconds=1800,
@@ -87,6 +87,6 @@ def generate(context, storage: Storage, **kwargs) -> dict:
     try:
         req = Flux2Klein9bInput(**kwargs)
         return run_generate(pipe, torch_module, storage, req).model_dump()
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         print(f"[ERR] {type(e).__name__}: {e}", flush=True)
         raise RuntimeError(f"inference failed: {e}")

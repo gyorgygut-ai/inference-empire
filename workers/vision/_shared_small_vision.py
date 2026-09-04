@@ -70,7 +70,7 @@ def load_models(cache_dir=None):
 
     from transformers import AutoProcessor, Qwen2VLForConditionalGeneration
 
-    from_kwargs = dict(torch_dtype=torch.bfloat16, device_map="auto")
+    from_kwargs = {"torch_dtype": torch.bfloat16, "device_map": "auto"}
     if cache_dir:
         from_kwargs["cache_dir"] = cache_dir
     model = Qwen2VLForConditionalGeneration.from_pretrained(REPO_ID, **from_kwargs).eval()
@@ -95,6 +95,7 @@ def run_analyze(model, processor, analyze_prompt: str, req: SmallVisionInput):
     """Takes validated Input, returns Output. Testable via DI."""
     import base64
     import io
+
     from PIL import Image as PILImage
 
     t_req = time.time()
@@ -130,3 +131,9 @@ def run_analyze(model, processor, analyze_prompt: str, req: SmallVisionInput):
     if m:
         return SmallVisionOutput.model_validate_json(m.group())
     return {"raw": result}
+
+
+def load_dependencies(cache_dir=None):
+    """Load all dependencies for small-vision worker."""
+    model, processor, analyze_prompt = load_models(cache_dir=cache_dir)
+    return model, processor, analyze_prompt
