@@ -97,6 +97,9 @@ def run_analyze(model, processor, analyze_prompt: str, req: SmallVisionInput):
     import io
     from PIL import Image as PILImage
 
+    t_req = time.time()
+    print(f"[REQ] image_bytes={len(req.image_base64)}", flush=True)
+
     img = PILImage.open(io.BytesIO(base64.b64decode(req.image_base64))).convert("RGB")
 
     messages = [{"role": "user", "content": [
@@ -115,11 +118,15 @@ def run_analyze(model, processor, analyze_prompt: str, req: SmallVisionInput):
         do_sample=False,
     )
 
+    print("[GEN] starting inference", flush=True)
+    t_gen = time.time()
     output_ids = model.generate(**inputs, generation_config=gen_config)
+    print(f"[GEN] inference done in {time.time() - t_gen:.1f}s", flush=True)
     generated = output_ids[0][inputs.input_ids.shape[1]:]
     result = processor.decode(generated, skip_special_tokens=True)
 
     m = re.search(r"\{.*\}", result, re.DOTALL)
+    print(f"[OK] completed in {time.time() - t_req:.1f}s", flush=True)
     if m:
         return SmallVisionOutput.model_validate_json(m.group())
     return {"raw": result}

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import time
 from typing import TYPE_CHECKING
 
 from runpod_flash import Endpoint, GpuGroup, PodTemplate
@@ -53,26 +54,39 @@ class MiniMaxH3ComfyWorker:
 
     def generate(self, **kwargs) -> dict:
         """Validate at boundary, submit to ComfyUI backend, return output contract."""
-        req = self.Input(**kwargs)
-        payload = build_payload(req)
-
-        import asyncio
-
-        async def _run():
-            return await self.endpoint.runsync(payload, timeout=1800)
-
+        t_req = time.time()
         try:
-            job = asyncio.run(_run())
-        except RuntimeError:
-            import concurrent.futures
+            req = self.Input(**kwargs)
+            print(f"[REQ] prompt={req.prompt[:40]}", flush=True)
+            payload = build_payload(req)
 
-            with concurrent.futures.ThreadPoolExecutor() as pool:
-                job = pool.submit(lambda: asyncio.run(_run())).result()
+            import asyncio
 
-        if getattr(job, "error", None):
-            raise RuntimeError(f"job failed: {job.error}")
+            async def _run():
+                return await self.endpoint.runsync(payload, timeout=1800)
 
-        output = getattr(job, "output", None) or job
-        video_bytes, data = parse_output(output)
+            print(f"[GEN] starting ComfyUI job prompt={req.prompt[:40]}", flush=True)
+            t_gen = time.time()
+            try:
+                job = asyncio.run(_run())
+            except RuntimeError:
+                import concurrent.futures
 
-        return upload_result(self.storage, video_bytes, data, prefix="minimax_comfy").model_dump()
+                with concurrent.futures.ThreadPoolExecutor() as pool:
+                    job = pool.submit(lambda: asyncio.run(_run())).result()
+            print(f"[GEN] ComfyUI job done in {time.time() - t_gen:.1f}s", flush=True)
+
+            if getattr(job, "error", None):
+                raise RuntimeError(f"job failed: {job.error}")
+
+            output = getattr(job, "output", None) or job
+            video_bytes, data = parse_output(output)
+
+            result = upload_result(self.storage, video_bytes, data, prefix="minimax_comfy")
+            print(f"[R2] uploaded key={result.artifact.presigned_url[:60]}", flush=True)
+
+            print(f"[OK] completed in {time.time() - t_req:.1f}s", flush=True)
+            return result.model_dump()
+        except Exception as e:
+            print(f"[ERR] {type(e).__name__}: {e}", flush=True)
+            raise
