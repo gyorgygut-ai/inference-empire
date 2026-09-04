@@ -52,18 +52,16 @@ Log tag order: `[INIT]` → `[REQ]` → `[GEN]` → `[R2]` → `[OK]` (or `[ERR]
 ## Testing
 
 ### Run All Tests
-- Unit tests: `python -m pytest h3/tests/ --ignore=h3/tests/e2e_local/ --ignore=h3/tests/e2e_dev/`
-- E2E local tests: `python -m pytest h3/tests/e2e_local/`
-- E2E dev tests: `python -m pytest h3/tests/e2e_dev/`
+- Fake (mocked inference, local): `python -m pytest workers/ --target fake`
+- Per model: `python -m pytest workers/<model>/tests/ --target fake`
+- `--target live` runs are owner-operated only, never part of this repo's execution.
 
 ### Run Per-Worker Tests
-- Unit: `python -m pytest h3/tests/test_<worker-name>_unit.py`
-- Local E2E: `python -m pytest h3/tests/e2e_local/test_<worker-name>_e2e_local.py`
-- Dev E2E: `python -m pytest h3/tests/e2e_dev/test_<worker-name>_e2e_dev.py`
+- Single worker: `python -m pytest workers/<model>/tests/test_<worker-name>.py --target fake -k "<test>"`
 
 ### Test Lifecycle
 ```
-unit (mock inference) → e2e_local (mock inference, DI) → e2e_dev (real inference on deployed worker)
+fake (mocked inference, local) — live runs are owner-operated, outside this plan.
 ```
 No proceeding to next level without previous level passing.
 
