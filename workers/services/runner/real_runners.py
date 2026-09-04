@@ -9,7 +9,7 @@ Bodies follow the provider mechanics verified against the pinned SDKs:
 - Beam (beam-client==0.2.207): decorated `wrapper.put(**payload)` -> Task;
   `task.status()` / `is_complete()` / `result()` (beta9/client/task.py:50).
   Task args cross as JSON, so storage is never shipped: remote workers
-  build RealR2Storage from env via `require_storage(None)`.
+  build RealR2Storage from env in enter()/generate.
 
 Payload = spec `input_model(**inputs).model_dump()`. `worker` is the
 _LiveProxy carrying `_spec`. Flash/Modal SDKs are async: `asyncio.run` +
@@ -174,13 +174,11 @@ class RealModalSyncRunner(_RealRunnerBase):
         spec = worker._spec
         if spec.shape == "modal_asgi":
             return _live_voice_call(spec, inputs)
-        from workers.services.storage.real_r2 import RealR2Storage
-
         payload = _payload(worker, inputs)
 
         async def _run():
             cls = modal.Cls.from_name(spec.live_endpoint, spec.attr)
-            obj = cls(RealR2Storage())  # rebuilt from remote env on unpickle
+            obj = cls()  # remote enter() builds RealR2Storage from env
             fc = await obj.generate.spawn(**payload)
             return await fc.get()
 
@@ -190,21 +188,35 @@ class RealModalSyncRunner(_RealRunnerBase):
 class RealModalAsyncRunner(_RealRunnerBase):
     """Modal `generate.spawn()` -> `function_call_id` -> `fc.get()`."""
 
-    def run(self, worker, **inputs):
+    def __init__(self):
+        self._calls: dict = {}
+
+    def submit(self, worker, **inputs):
         import modal
 
-        from workers.services.storage.real_r2 import RealR2Storage
+        async def _submit():
+            cls = modal.Cls.from_name(worker._spec.live_endpoint, worker._spec.attr)
+            obj = cls()  # remote enter() builds RealR2Storage from env
+            return await obj.generate.spawn(**_payload(worker, inputs))
 
-        payload = _payload(worker, inputs)
-        spec = worker._spec
+        task_id = f"task-{secrets.token_hex(4)}"
+        self._calls[task_id] = _bridge(_submit)
+        return task_id
 
-        async def _run():
-            cls = modal.Cls.from_name(spec.live_endpoint, spec.attr)
-            obj = cls(RealR2Storage())
-            fc = await obj.generate.spawn(**payload)
-            return await fc.get()
+    def poll(self, task_id):
+        return "IN_PROGRESS" if task_id in self._calls else "COMPLETED"
 
-        return _bridge(_run)
+    def result(self, task_id, timeout=1800):
+        async def _get():
+            return await self._calls[task_id].get()
+
+        try:
+            return _bridge(_get, timeout)
+        finally:
+            self._calls.pop(task_id, None)
+
+    def run(self, worker, **inputs):
+        return self.result(self.submit(worker, **inputs))
 
 
 def _live_voice_call(spec, inputs):

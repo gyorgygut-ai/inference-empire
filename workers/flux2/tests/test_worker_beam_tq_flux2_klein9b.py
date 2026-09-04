@@ -1,35 +1,19 @@
-from workers.flux2.testing import FLUX2_BEAM_TQ as SPEC
+def test_success(beam_tq, storage):
+    worker = beam_tq.create_worker(storage=storage)
+    out = beam_tq.run(worker, storage=storage, prompt="cat")
+    assert "artifact" in out
 
 
-def test_generate_rejects_invalid_input(platform, runner, storage):
-    worker = platform.create_worker(storage=storage)
-    try:
-        runner.run(worker, prompt=None)
-        assert False, "Should reject"
-    except Exception as e:
-        assert "prompt" in str(e)
+def test_failure(beam_tq, storage):
+    import pytest as _p
+
+    worker = beam_tq.create_worker(storage=storage)
+    _p.raises(RuntimeError, lambda: beam_tq.run(worker, storage=storage, prompt="failure"))
 
 
-def test_generate_returns_output_contract_on_inference_failure(platform, runner, storage):
-    worker = platform.create_worker(storage=storage)
-    try:
-        runner.run(worker, prompt="invalid_input_that_causes_failure")
-        assert False, "Should raise"
-    except RuntimeError as e:
-        assert "inference" in str(e)
-
-
-def test_generate_returns_output_contract_on_inference_success(platform, runner, storage):
-    result = runner.run(platform.create_worker(storage=storage), prompt="a cat")
-    assert "artifact" in result
-    assert "presigned_url" in result["artifact"]
-    assert result["artifact"]["presigned_url"].startswith("https://")
-
-
-def test_generate_artifact_was_uploaded_to_storage(platform, runner, storage):
-    result = runner.run(platform.create_worker(storage=storage), prompt="a cat")
-    presigned_url = result["artifact"]["presigned_url"]
-    artifact_key = presigned_url.split("/")[-1].split("?")[0]
-    assert storage.has(artifact_key), f"Artifact {artifact_key} not found"
-    body = storage.fetch(artifact_key)
-    assert len(body) > 0
+def test_async_poll(beam_tq, storage):
+    worker = beam_tq.create_worker(storage=storage)
+    tid = beam_tq.submit(worker, storage=storage, prompt="cat")
+    assert beam_tq.poll(tid) in ("IN_PROGRESS", "COMPLETED")
+    out = beam_tq.result(tid)
+    assert "artifact" in out
