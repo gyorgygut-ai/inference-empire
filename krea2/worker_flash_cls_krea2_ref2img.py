@@ -74,7 +74,13 @@ class Krea2Ref2ImgWorker:
 
 
 
-    def __init__(self):
+    def __init__(self, storage=None):
+        if storage:
+            self.storage = storage
+        else:
+            from services.real_r2 import RealR2Storage
+            self.storage = RealR2Storage()
+
         import torch.distributed as dist
 
         dist.is_available = lambda: False
@@ -277,34 +283,16 @@ class Krea2Ref2ImgWorker:
         else:
             result = self.pipe(**base_kwargs)
 
-        print(f"[GEN] inference done in {time.time() - t_gen:.1f}s  shape={image.size[0] if hasattr(image, 'size') else '?'}x{image.size[1] if hasattr(image, 'size') else '?'}", flush=True)
         image = result.images[0]
+        print(f"[GEN] inference done in {time.time() - t_gen:.1f}s  shape={image.size[0] if hasattr(image, 'size') else '?'}x{image.size[1] if hasattr(image, 'size') else '?'}", flush=True)
         buffer = io.BytesIO()
         image.save(buffer, format="PNG")
         file_bytes = buffer.getvalue()
 
-        bucket = os.environ.get("R2_BUCKET", "generated-media")
-        endpoint = os.environ["R2_ENDPOINT"]
-        access_key = os.environ["R2_ACCESS_KEY"]
-        secret_key = os.environ["R2_SECRET_KEY"]
-
         key = f"krea2_{uuid.uuid4()}.png"
-        s3 = boto3.client(
-            "s3",
-            endpoint_url=endpoint,
-            aws_access_key_id=access_key,
-            aws_secret_access_key=secret_key,
-        )
-        s3.put_object(Bucket=bucket, Key=key, Body=file_bytes, ContentType="image/png")
-        presigned_url = s3.generate_presigned_url(
-            "get_object",
-            Params={"Bucket": bucket, "Key": key},
-            ExpiresIn=3600,
-        )
+        self.storage.put(key, file_bytes)
+        presigned_url = self.storage.presigned_url(key)
         print(f"[R2] uploaded key={key} url={presigned_url[:60]}", flush=True)
 
         print(f"[OK] completed in {time.time() - t_req:.1f}s", flush=True)
         return {"artifact": {"presigned_url": presigned_url}}
-        except Exception as e:
-            print(f"[ERR] {type(e).__name__}: {e}", flush=True)
-            raise

@@ -5,31 +5,29 @@
 **Test + Code Rules**:
 
 - Use `pytest` + `tests` folder
-- One test file per test type per worker
-- Each worker file must have unit and e2e tests
+- One test file per worker
+- Each worker file must have e2e tests
 - Any worker change must result in a failing test
 - Tests focus on set input -> expected output
 - Keep test code stupid; aim to avoid mocking & magic
-- Task finished when tests pass, without shortcusts
-- No proceeding until level passed; unit < e2e (local) > e2e (dev)
-- Mock side effects in unit and local e2e; inference, external API calls; DI is the pattern
+- Task finished when tests pass, without shortcuts
+- Mock side effects in local e2e; inference, external API calls; DI is the pattern
+- Same test file for fake and live targets
 
-**Unit Tests**:
+**E2E Tests**:
 
-- [ ] generate(): invalid input -> rejects
-- [ ] generate(): good input -> inference fail -> returns output contract
-- [ ] generate(): good input -> inference success -> returns output contract
-- [ ] generate(): good input -> inference success -> uploads artifact
+Tests are run with `--target fake` (local, mocked adapters) or `--target live` (dev, real adapters).
 
-**E2E Tests (local, isolated)**:
+### Sync (Flash `cls`, `pre`, Beam `eq`)
 
 - [ ] generate(): invalid input -> rejects
 - [ ] generate(): good input -> inference fail -> returns output contract
 - [ ] generate(): good input -> inference success -> returns output contract
 - [ ] generate(): good input -> inference success -> uploads artifact
 
-**E2E Tests (dev)**:
+### Async (Beam `tq`, Beam `asgi`, Modal `cls` with `spawn()`)
 
-Test code deploys test worker before all; undeploys after all.
-
-- [ ] generate(): good input -> returns output contract, R2 bucket has artifact
+- [ ] generate(): invalid input -> rejects (before task submitted)
+- [ ] POST -> task_id -> poll -> returns error contract
+- [ ] POST -> task_id -> poll -> returns output contract
+- [ ] POST -> task_id -> poll -> uploads artifact

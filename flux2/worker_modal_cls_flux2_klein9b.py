@@ -106,6 +106,8 @@ def load_pipeline():
 class FluxKleinWorker:
     @modal.enter()
     def load(self):
+        from services.real_r2 import RealR2Storage
+        self.storage = RealR2Storage()
         print("[INIT] loading model Disty0/FLUX.2-klein-9B-SDNQ-4bit-dynamic-svd-r32", flush=True)
         t0 = time.time()
         self.pipe = load_pipeline()
@@ -177,15 +179,9 @@ class FluxKleinWorker:
         image.save(buffer, format="PNG")
         file_bytes = buffer.getvalue()
 
-        s3 = boto3.client("s3", endpoint_url=os.environ["R2_ENDPOINT"],
-            aws_access_key_id=os.environ["R2_ACCESS_KEY"],
-            aws_secret_access_key=os.environ["R2_SECRET_KEY"])
         key = f"flux2_{uuid.uuid4()}.png"
-        bucket = os.environ.get("R2_BUCKET", "generated-media")
-        s3.put_object(Bucket=bucket, Key=key, Body=file_bytes, ContentType="image/png")
-
-        url = s3.generate_presigned_url("get_object",
-            Params={"Bucket": bucket, "Key": key}, ExpiresIn=3600)
+        self.storage.put(key, file_bytes)
+        url = self.storage.presigned_url(key)
         print(f"[R2] uploaded key={key} url={url[:60]}", flush=True)
 
         print(f"[OK] completed in {time.time() - t_req:.1f}s", flush=True)

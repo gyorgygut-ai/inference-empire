@@ -327,11 +327,15 @@ def generate(context, prompt: str,
              ref_audios: list[str] = [],
              width: int = 1344, height: int = 768,
              length: int = 124, steps: int = 20, seed: int | None = None,
-             ref_image_size: str = "match", scheduler: str = "simple") -> dict:
+             ref_image_size: str = "match", scheduler: str = "simple",
+             storage=None) -> dict:
     t_req = time.time()
     n_files = len(ref_images) + len(ref_videos) + len(ref_video_audios) + len(ref_audios)
     print(f"[REQ] prompt={prompt[:40]}  seed={seed}  files={n_files}", flush=True)
     comfy_base_url = context.on_start_value
+    if storage is None:
+        from services.real_r2 import RealR2Storage
+        storage = RealR2Storage()
 
     try:
         req = ValidatedInput(
@@ -380,23 +384,9 @@ def generate(context, prompt: str,
         video_url = f"{comfy_base_url}/view?filename={video_info['filename']}&subfolder={video_info.get('subfolder', '')}&type={video_info.get('type', 'output')}"
         video_bytes = requests.get(video_url, timeout=60).content
 
-        bucket = os.environ.get("R2_BUCKET", "generated-media")
-        endpoint = os.environ["R2_ENDPOINT"]
-        access_key = os.environ["R2_ACCESS_KEY"]
-        secret_key = os.environ["R2_SECRET_KEY"]
         key = f"minimax_ref2va_comfy_{uuid.uuid4()}.mp4"
-        s3 = boto3.client(
-            "s3",
-            endpoint_url=endpoint,
-            aws_access_key_id=access_key,
-            aws_secret_access_key=secret_key,
-        )
-        s3.put_object(Bucket=bucket, Key=key, Body=video_bytes, ContentType="video/mp4")
-        presigned_url = s3.generate_presigned_url(
-            "get_object",
-            Params={"Bucket": bucket, "Key": key},
-            ExpiresIn=3600,
-        )
+        storage.put(key, video_bytes)
+        presigned_url = storage.presigned_url(key)
         print(f"[R2] uploaded key={key} url={presigned_url[:60]}", flush=True)
 
         print(f"[OK] completed in {time.time() - t_req:.1f}s", flush=True)

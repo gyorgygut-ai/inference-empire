@@ -222,6 +222,7 @@ def _face_crop(img, runtime_dir: Path, margin: float = 0.4):
 def generate(
     context,
     prompt: str,
+    storage=None,
     reference_image: Optional[str] = None,
     height: int = 768,
     width: int = 768,
@@ -232,12 +233,16 @@ def generate(
     face_crop: bool = True,
 ):
     pipe, runtime_dir, torch = context.on_start_value
+    if storage is None:
+        from services.real_r2 import RealR2Storage
+        storage = RealR2Storage()
     try:
         return _run_generate(
             pipe,
             runtime_dir,
             torch,
             prompt=prompt,
+            storage=storage,
             reference_image=reference_image,
             height=height,
             width=width,
@@ -257,6 +262,7 @@ def _run_generate(
     runtime_dir,
     torch,
     prompt: str,
+    storage=None,
     reference_image: Optional[str] = None,
     height: int = 768,
     width: int = 768,
@@ -320,23 +326,12 @@ def _run_generate(
     gen_image.save(buffer, format="PNG")
     file_bytes = buffer.getvalue()
 
-    bucket = os.environ.get("R2_BUCKET", "generated-media")
-    endpoint = os.environ["R2_ENDPOINT"]
-    access_key = os.environ["R2_ACCESS_KEY"]
-    secret_key = os.environ["R2_SECRET_KEY"]
     key = f"krea2_{uuid.uuid4()}.png"
-    s3 = boto3.client(
-        "s3",
-        endpoint_url=endpoint,
-        aws_access_key_id=access_key,
-        aws_secret_access_key=secret_key,
-    )
-    s3.put_object(Bucket=bucket, Key=key, Body=file_bytes, ContentType="image/png")
-    presigned_url = s3.generate_presigned_url(
-        "get_object",
-        Params={"Bucket": bucket, "Key": key},
-        ExpiresIn=3600,
-    )
+    if storage is None:
+        from services.real_r2 import RealR2Storage
+        storage = RealR2Storage()
+    storage.put(key, file_bytes)
+    presigned_url = storage.presigned_url(key)
     print(f"[R2] uploaded key={key} url={presigned_url[:60]}", flush=True)
 
     print(f"[OK] completed in {time.time() - t_req:.1f}s", flush=True)

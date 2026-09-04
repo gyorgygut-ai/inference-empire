@@ -25,7 +25,6 @@ worker_{platform}_{pattern}_{model}.py
 **Platform:** `flash`, `beam`, `modal`
 
 **Patterns:**
-
 - Flash: `qb` (queue), `lb` (routes), `cls` (class), `pre` (pre-built)
 - Beam: `fn` (function), `eq` (endpoint), `tq` (task queue), `asgi`, `pod`
 - Modal: `fn` (function), `cls` (class), `fe` (fastapi endpoint), `asgi`
@@ -38,6 +37,8 @@ worker_{platform}_{pattern}_{model}.py
 - Not all workers produce artifacts; some just return json directly
 - Production deps are inline in worker files, not in pyproject.toml
 
+---
+
 ## Contracts
 
 - Contract JSON lives in `contracts/{name}.json` — source of truth
@@ -48,110 +49,24 @@ worker_{platform}_{pattern}_{model}.py
 
 ---
 
-## R2 Upload Pattern
-
-- Inline boto3 in each worker — no shared `r2_upload.py` wrapper
-- Contract JSON is source of truth for output schema
-- Return raw dict matching contract — no Pydantic output model needed
-
-```python
-import boto3, os, uuid
-
-# ... in generate(), after artifact is produced:
-
-s3 = boto3.client("s3", endpoint_url=os.environ["R2_ENDPOINT"],
-    aws_access_key_id=os.environ["R2_ACCESS_KEY"],
-    aws_secret_access_key=os.environ["R2_SECRET_KEY"])
-key = f"flux2_{uuid.uuid4()}.png"
-b = os.environ.get("R2_BUCKET", "generated-media")
-s3.put_object(Bucket=b, Key=key, Body=file_bytes, ContentType="image/png")
-return {"artifact": {"presigned_url": s3.generate_presigned_url("get_object",
-    Params={"Bucket": b, "Key": key}, ExpiresIn=3600)}}
-```
-
-- Delete `r2_upload.py` and all `Flux2Klein9bOutput` models
-- Each worker needs `boto3` in its `pip_install`
-- `R2_ENDPOINT`, `R2_ACCESS_KEY`, `R2_SECRET_KEY` via platform secrets
-
----
-
-## Dependency Constraints
+## Dependency Constraints & Shims
 
 - Pin ALL deps to exact versions. Never use bare package names.
 - Krea2 workers: `transformers>=4.57,<5` with `diffusers==0.39.0`
-- Flux2 workers: `transformers>=5.0,<6` with `diffusers==0.40.0` (sdnq requires diffusers>=0.40.0; transformers 4.57.x conflicts with huggingface-hub>=1.23.0 needed by diffusers 0.40.0)
-- Base flash GPU image has broken torch build — use shim:
+- Flux2 workers: `transformers>=5.0,<6` with `diffusers==0.40.0`
+- **Torch load shim** (required for flash/beam/modal):
   ```python
   import torch.distributed as dist
   dist.is_available = lambda: False
   ```
+- **Async by default for long tasks**: Long-running tasks (>30s) MUST use async patterns. Beam: `tq` not `eq`. Modal: `.spawn()` not webhooks. Sync only for tasks <30s.
 
 ---
 
 ## Flash Rules
 
-**Activate related skills** when working on Runpod Flash.
-
-### Use Flash CLI — Not Runpod REST/GraphQL
-
-| Intent    | Command                  | Do NOT                 |
-| --------- | ------------------------ | ---------------------- |
-| Local dev | `flash dev`              | Run uvicorn manually   |
-| Deploy    | `flash deploy`           | Call REST API directly |
-| Preview   | `flash deploy --preview` | Write docker-compose   |
-| Tear down | `flash undeploy`         | Call deleteEndpoint    |
-
-Flash is a Python SDK for deploying AI workloads to Runpod GPUs. You write decorated functions, Flash handles infrastructure.
-
-### Patterns
-
-#### Pattern A: Queue-based function (`qb`)
-
-```python
-@Endpoint(name="worker", gpu=GpuType.NVIDIA_GEFORCE_RTX_4090, workers=(0, 3), dependencies=["torch"])
-async def process(input_data: dict) -> dict:
-    import torch
-    return {"gpu": torch.cuda.get_device_name(0)}
-```
-
-#### Pattern B: Load-balanced routes (`lb`)
-
-```python
-api = Endpoint(name="api", cpu="cpu3c-1-2", workers=(1, 3))
-
-@api.get("/health")
-async def health():
-    return {"status": "ok"}
-
-@api.post("/compute")
-async def compute(numbers: list[float]) -> dict:
-    return {"sum": sum(numbers)}
-```
-
-#### Pattern C: Class-based worker (`cls`)
-
-```python
-@Endpoint(name="model", gpu=GpuType.NVIDIA_GEFORCE_RTX_4090, workers=(1, 3), dependencies=["torch", "transformers"])
-class MyModel:
-    def __init__(self):
-        import torch
-        self.pipe = pipeline("text-generation", device="cuda")
-
-    async def generate(self, prompt: str) -> dict:
-        return {"text": self.pipe(prompt)[0]["generated_text"]}
-```
-
-#### Pattern D: Pre-built container (`pre`)
-
-```python
-vllm = Endpoint(name="vllm", image="runpod/worker-v1-vllm:v2.18.1", gpu=GpuGroup.ADA_24, workers=(0, 3))
-result = await vllm.runsync({"input": {"prompt": "hello"}})
-```
-
-### Rules
-
 - `import torch` INSIDE function body, never at module level
-- Declare deps in `@Endpoint(dependencies=[...])`, not in pyproject.toml
+- Declare deps in `@Endpoint(dependencies=[...])`, not pyproject.toml
 - `workers=N` is shorthand for `(0, N)`
 - Class workers: model loading in `__init__`, request handling in instance methods
 - Cross-worker calls use `await`
@@ -162,212 +77,26 @@ result = await vllm.runsync({"input": {"prompt": "hello"}})
 
 ## Beam Rules
 
-**Activate related skills** when working on Beam.
-
-### Use Beam CLI — Not Beam REST/GraphQL
-
-| Intent    | Command       | Do NOT                 |
-| --------- | ------------- | ---------------------- |
-| Local dev | `beam serve`  | Run uvicorn manually   |
-| Deploy    | `beam deploy` | Call REST API directly |
-| Logs      | `beam logs`   | —                      |
-
-Beam is a Python SDK for deploying AI workloads to cloud GPUs. You write decorated functions, Beam handles infrastructure.
-
-### Layout
-
-- One worker per file: `worker_{platform}_{pattern}_{model}.py`
-- Each worker is a decorated function with `on_start` for pipeline loading
+- One worker per file
+- Decorated function with `on_start` for pipeline loading
 - Pydantic `BaseModel` inputs/outputs use `ConfigDict(title=...)`
-
-### Image
-
-```python
-from beam import Image
-
-image = (
-    Image(python_version="python3.11")  # or python3.10 for ASGI
-    .add_python_packages([
-        "torch==2.9.1",
-        "transformers>=4.57,<5",
-        # ... other deps
-    ])
-    .add_commands(["apt-get update && apt-get install -y ffmpeg"])  # system deps
-    .with_envs({
-        "HF_HOME": CACHE_PATH,
-        "HF_HUB_ENABLE_HF_TRANSFER": "1",
-    })
-)
-```
-
-### Volumes
-
-Use `Volume` for caching models across cold starts:
-
-```python
-from beam import Volume
-
-CACHE_PATH = "./hf-cache"
-volume = Volume(name="hf-cache", mount_path=CACHE_PATH)
-```
-
-### Patterns
-
-#### Pattern A: Endpoint (`eq`)
-
-```python
-from beam import endpoint, QueueDepthAutoscaler
-
-@endpoint(
-    name="worker-name",
-    cpu=8,
-    memory="64Gi",
-    gpu="RTX4090",
-    image=image,
-    on_start=load_pipeline,
-    volumes=[Volume(name="hf-cache", mount_path=CACHE_PATH)],
-    autoscaler=QueueDepthAutoscaler(max_containers=1, tasks_per_container=1),
-    keep_warm_seconds=0,
-    timeout=300,
-    secrets=["HF_TOKEN", "R2_ACCESS_KEY", "R2_SECRET_KEY"],
-    env={...},
-)
-def generate(context, prompt: str, ...):
-    pipe = context.on_start_value
-    # ...
-```
-
-#### Pattern B: Task Queue (`tq`)
-
-```python
-from beam import task_queue, QueueDepthAutoscaler
-
-@task_queue(
-    name="worker-name",
-    cpu=1,
-    memory="32Gi",
-    gpu="RTX4090",
-    image=image,
-    on_start=load_pipeline,
-    volumes=[Volume(name="hf-cache", mount_path=CACHE_PATH)],
-    autoscaler=QueueDepthAutoscaler(max_containers=1, tasks_per_container=1),
-    keep_warm_seconds=1800,
-    checkpoint_enabled=True,
-    timeout=3600,
-    secrets=["HF_TOKEN", "R2_ACCESS_KEY", "R2_SECRET_KEY"],
-    env={...},
-)
-def generate(context, prompt: str, ...) -> dict:
-    pipe = context.on_start_value
-    # ...
-```
-
-#### Pattern C: ASGI (`asgi`)
-
-```python
-from beam import asgi, QueueDepthAutoscaler
-
-@asgi(
-    name="worker-name",
-    image=image,
-    volumes=[volume],
-    on_start=load_models,
-    gpu="RTX4090",
-    cpu=4,
-    memory="32Gi",
-    concurrent_requests=4,
-    keep_warm_seconds=10,
-    timeout=-1,
-    authorized=True,
-    checkpoint_enabled=True,
-    secrets=["HF_TOKEN"],
-    autoscaler=QueueDepthAutoscaler(max_containers=1, min_containers=0),
-)
-def worker(context):
-    models = context.on_start_value
-    return build_app(models, ...)
-```
-
-### Compute
-
-- GPU: smallest that fits. `RTX4090` (24 GB) default; `RTX5090` for newer models
-- `timeout`: 300 s default; -1 for unbounded (ASGI); 3600 s for video
-- `memory`: 32-64 Gi depending on model size
-- `keep_warm_seconds`: 0 for stateless; 1800 for task queues; 10 for ASGI
-- `checkpoint_enabled=True` for task queues to survive container restarts
-
-### Concurrency
-
-- `max_containers=1` for GPU workers
-- Do NOT use concurrent execution for model inference — not thread-safe
-- Serialize GPU access with `threading.Lock` if needed
-
-### torch load shim
-
-```python
-import torch.distributed as dist
-dist.is_available = lambda: False
-```
-
-### Secrets
-
-Create before deploy: `beam secret create <name> <KEY=value ...>`
-
-- Invoke: `curl -X POST <deployment-url> -H "Authorization: Bearer <token>" -d '{"prompt":"...","seed":42}'` — returns `{"task_id":"..."}`. No client SDK.
+- Image: Python 3.11/3.10, exact pinned deps, system packages (`ffmpeg`), env (`HF_HOME`, `HF_HUB_ENABLE_HF_TRANSFER=1`)
+- Volumes: use `Volume` for caching models across cold starts (`./hf-cache`)
+- Compute: smallest GPU that fits (`RTX4090` default), timeout 300s (or 3600s for video), memory 32-64Gi, checkpoint_enabled=True for task queues
+- Concurrency: `max_containers=1` for GPU workers, no concurrent execution for model inference (serialize with `threading.Lock`)
+- Secrets: create before deploy (`beam secret create`)
 
 ---
 
 ## Modal Rules
 
-**Activate related skills** when working on Modal.
-
-### Layout
-
 - One worker per file: `worker_{platform}_{pattern}_{model}.py`
-- Each worker is a `modal.App` with one `@app.cls` and `@modal.enter()`-loaded pipeline
+- App with `@app.cls` and `@modal.enter()`-loaded pipeline
 - Pydantic `BaseModel` inputs/outputs use `ConfigDict(title=...)`
-
-### Image
-
-- Base: `modal.Image.debian_slim(python_version="3.11")`
-- Pin heavy deps; install torch first, then model libs
-- Set `HF_HOME=/root/.cache/huggingface` and `HF_HUB_ENABLE_HF_TRANSFER=1`
-- Download and cache on first run with `modal.Volume` + `@modal.enter()` — do NOT bake models into image with `.run_function()`
-- Each worker has its OWN image; do not share across workers
-
-### Compute
-
-- GPU: smallest that fits. `L4` (24 GB) default for multi-model; `T4` (16 GB) only when footprint fits
-- `scaledown_window`: 60–150 s for bursty workers
-- `max_containers=1` for single-session
-- `timeout`: 300 s default; 3600 s for voice/chat
-- `memory`: 32768 for LLM-bearing workers
-
-### Concurrency
-
-- Do NOT use `@modal.concurrent` for model inference — not thread-safe
-- Serialize GPU access with `threading.Lock`
-
-### torch load shim
-
-```python
-import torch.distributed as dist
-dist.is_available = lambda: False
-```
-
-### Endpoints
-
-- Simple: `@modal.fastapi_endpoint(method="POST")` + `@modal.method()`
-- Streaming/WS: `@modal.asgi_app()` returning FastAPI app with WebSocket route
-
-- Invoke: `modal.Function.from_name("app-name","method").spawn(prompt="...",seed=42)` — returns `.task_id` instantly. Do NOT use `modal run` (blocks).
-- For `@app.cls` workers: `modal.Cls.from_name("app","ClsName").().method.remote(...)` — NOT `.remote()` on webhook endpoints.
-- Webhook endpoints (`@modal.fastapi_endpoint`) use `.local(...)` or HTTP POST to the deployed URL.
-
-### Secrets
-
-- `modal.Secret.from_name("r2-creds", required_keys=[...])`
-- Create before deploy: `modal secret create <name> <KEY=value ...>`
+- Image: `modal.Image.debian_slim(python_version="3.11")`, pin deps, set `HF_HOME` and `HF_HUB_ENABLE_HF_TRANSFER=1`, use `modal.Volume` + `@modal.enter()` for model caching
+- Compute: smallest GPU that fits (`L4` default), `scaledown_window` 60–150s, `max_containers=1`, timeout 300s (3600s for voice/video)
+- Concurrency: no `@modal.concurrent` for inference, serialize with `threading.Lock`
+- Endpoints: `@app.cls` workers invoked via `modal.Cls.from_name().().method.remote()` or `.spawn()`
 
 ---
 
@@ -380,4 +109,4 @@ dist.is_available = lambda: False
 
 ---
 
-See [Testing Specs](./TESTING.md)
+See [COMMANDS.md](./COMMANDS.md) and [Testing Specs](./TESTING.md)

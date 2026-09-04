@@ -84,23 +84,7 @@ def load_models():
     return model, processor, _build_analyze_prompt()
 
 
-@endpoint(
-    name="small-vision-worker",
-    cpu=2,
-    memory="16Gi",
-    gpu="A10G",
-    image=image,
-    on_start=load_models,
-    volumes=[Volume(name="hf-cache", mount_path=CACHE_PATH)],
-    autoscaler=QueueDepthAutoscaler(max_containers=1, tasks_per_container=1),
-    keep_warm_seconds=0,
-    checkpoint_enabled=True,
-)
-def analyze(context, image_base64: str):
-    t_req = time.time()
-    print("[REQ] image_base64 provided", flush=True)
-    model, processor, analyze_prompt = context.on_start_value
-
+def _run_analyze(model, processor, analyze_prompt, image_base64: str) -> dict:
     req = SmallVisionInput(image_base64=image_base64)
     img = PILImage.open(io.BytesIO(base64.b64decode(req.image_base64))).convert("RGB")
 
@@ -122,18 +106,28 @@ def analyze(context, image_base64: str):
         do_sample=False,
     )
 
-    print(f"[GEN] starting inference", flush=True)
-    t_gen = time.time()
     output_ids = model.generate(**inputs, generation_config=gen_config)
     generated = output_ids[0][inputs.input_ids.shape[1]:]
-    print(f"[GEN] inference done in {time.time() - t_gen:.1f}s", flush=True)
     result = processor.decode(generated, skip_special_tokens=True)
 
     m = re.search(r"\{.*\}", result, re.DOTALL)
-    print(f"[OK] completed in {time.time() - t_req:.1f}s", flush=True)
     if m:
         return SmallVisionOutput.model_validate_json(m.group()).model_dump()
     return {"raw": result}
-    except Exception as e:
-        print(f"[ERR] {type(e).__name__}: {e}", flush=True)
-        raise
+
+
+@endpoint(
+    name="small-vision-worker",
+    cpu=2,
+    memory="16Gi",
+    gpu="A10G",
+    image=image,
+    on_start=load_models,
+    volumes=[Volume(name="hf-cache", mount_path=CACHE_PATH)],
+    autoscaler=QueueDepthAutoscaler(max_containers=1, tasks_per_container=1),
+    keep_warm_seconds=0,
+    checkpoint_enabled=True,
+)
+def analyze(context, image_base64: str, storage=None):
+    model, processor, analyze_prompt = context.on_start_value
+    return _run_analyze(model, processor, analyze_prompt, image_base64)

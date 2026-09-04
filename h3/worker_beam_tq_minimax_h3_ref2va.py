@@ -279,12 +279,16 @@ def generate(context, prompt: str,
              ref_video_audios: list[str] = [],
              ref_audios: list[str] = [],
              width: int = 1344, height: int = 768,
-             length: int = 124, steps: int = 50, seed: int | None = None) -> dict:
+             length: int = 124, steps: int = 50, seed: int | None = None,
+             storage=None) -> dict:
     t_req = time.time()
     total_files = len(ref_images) + len(ref_videos) + len(ref_video_audios) + len(ref_audios)
     print(f"[REQ] prompt={prompt[:40]}  seed={seed}  files={total_files}", flush=True)
     try:
         pipe, write_video_audio = context.on_start_value
+        if storage is None:
+            from services.real_r2 import RealR2Storage
+            storage = RealR2Storage()
 
         class ValidatedInput(MiniMaxH3Ref2VAInput):
             @field_validator("ref_images")
@@ -369,23 +373,9 @@ def generate(context, prompt: str,
         with open(output_path, "rb") as fh:
             video_bytes = fh.read()
 
-        bucket = os.environ.get("R2_BUCKET", "generated-media")
-        endpoint = os.environ["R2_ENDPOINT"]
-        access_key = os.environ["R2_ACCESS_KEY"]
-        secret_key = os.environ["R2_SECRET_KEY"]
         key = f"minimax_ref2va_{uuid.uuid4()}.mp4"
-        s3 = boto3.client(
-            "s3",
-            endpoint_url=endpoint,
-            aws_access_key_id=access_key,
-            aws_secret_access_key=secret_key,
-        )
-        s3.put_object(Bucket=bucket, Key=key, Body=video_bytes, ContentType="video/mp4")
-        presigned_url = s3.generate_presigned_url(
-            "get_object",
-            Params={"Bucket": bucket, "Key": key},
-            ExpiresIn=3600,
-        )
+        storage.put(key, video_bytes)
+        presigned_url = storage.presigned_url(key)
         print(f"[R2] uploaded key={key} url={presigned_url[:60]}", flush=True)
 
         os.remove(output_path)

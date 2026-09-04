@@ -94,6 +94,8 @@ image = (
 class Krea2Ref2ImgWorker:
     @modal.enter()
     def load(self):
+        from services.real_r2 import RealR2Storage
+        self.storage = RealR2Storage()
         print("[INIT] loading model krea/Krea-2-Turbo", flush=True)
         t0 = time.time()
         import torch
@@ -285,24 +287,9 @@ class Krea2Ref2ImgWorker:
         image.save(buffer, format="PNG")
         file_bytes = buffer.getvalue()
 
-        bucket = os.environ.get("R2_BUCKET", "generated-media")
-        endpoint = os.environ.get("R2_ENDPOINT")
-        access_key = os.environ.get("R2_ACCESS_KEY")
-        secret_key = os.environ.get("R2_SECRET_KEY")
-
         key = f"krea2_{uuid.uuid4()}.png"
-        s3 = boto3.client(
-            "s3",
-            endpoint_url=endpoint,
-            aws_access_key_id=access_key,
-            aws_secret_access_key=secret_key,
-        )
-        s3.put_object(Bucket=bucket, Key=key, Body=file_bytes, ContentType="image/png")
-        presigned_url = s3.generate_presigned_url(
-            "get_object",
-            Params={"Bucket": bucket, "Key": key},
-            ExpiresIn=3600,
-        )
+        self.storage.put(key, file_bytes)
+        presigned_url = self.storage.presigned_url(key)
         print(f"[R2] uploaded key={key} url={presigned_url[:60]}", flush=True)
 
         print(f"[OK] completed in {time.time() - t_req:.1f}s", flush=True)
