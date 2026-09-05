@@ -8,7 +8,7 @@ from workers.services.write_video_audio.write_video_audio_real import RealWriteV
 
 def write_video_audio_factory(target: str | None = None) -> RealWriteVideoAudio | FakeWriteVideoAudio:
     if target is None:
-        target = os.environ.get("WRITE_VIDEO_AUDIO_TARGET", "real")
+        target = os.environ.get("RUN_TARGET", "real")
     if target == "fake":
         return FakeWriteVideoAudio()
     if target == "real":

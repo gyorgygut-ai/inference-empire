@@ -3,6 +3,7 @@
 import { useReducer } from "react";
 import { Workers } from "@/components/panels/Workers";
 import { Artifacts } from "@/components/panels/Artifacts";
+
 import { Main } from "@/components/panels/Main";
 
 type State = { opened: "left" | "right" | null };
@@ -42,7 +43,6 @@ export function AppShell() {
       <Artifacts
         open={rightOpen}
         onOpenChange={() => dispatch({ type: "TOGGLE_RIGHT" })}
-        className="lg:flex-1 lg:w-auto lg:[&_[data-slot=collapsible-content]]:!block"
       />
     </div>
   );

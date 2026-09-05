@@ -1,8 +1,8 @@
-import { PanelLeft, PanelRight } from "lucide-react"
+import { PanelLeft, PanelRight } from "lucide-react";
 
 interface MainProps {
-  onToggleLeft: () => void
-  onToggleRight: () => void
+  onToggleLeft: () => void;
+  onToggleRight: () => void;
 }
 
 export function Main({ onToggleLeft, onToggleRight }: MainProps) {
@@ -17,12 +17,12 @@ export function Main({ onToggleLeft, onToggleRight }: MainProps) {
         >
           <PanelLeft className="h-4 w-4" />
         </button>
-        <span className="text-sm font-medium text-foreground">Chat</span>
+        <span className="text-sm font-medium text-foreground mx-2">Chat</span>
         <button
           type="button"
           aria-label="Toggle Artifacts"
           onClick={onToggleRight}
-          className="lg:hidden flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+          className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
         >
           <PanelRight className="h-4 w-4" />
         </button>
@@ -31,5 +31,5 @@ export function Main({ onToggleLeft, onToggleRight }: MainProps) {
         Chat UI placeholder
       </div>
     </section>
-  )
+  );
 }

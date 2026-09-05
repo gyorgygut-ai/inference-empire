@@ -9,25 +9,34 @@
 - Each worker file must have e2e tests
 - Any worker change must result in a failing test
 - Tests focus on set input -> expected output
-- Keep test code stupid; aim to avoid mocking & magic
+- Keep test code stupid; aim to avoid too much mocking & magic
 - Task finished when tests pass, without shortcuts
-- Mock side effects in local e2e; inference, external API calls; DI is the pattern
-- Same test file for fake and live targets
 
-**E2E Tests**:
+## Unit Tests
 
-Tests are run with `--target fake` (local, mocked adapters) or `--target live` (dev, real adapters).
+**Rules**:
 
-### Sync (Flash `cls`, `pre`, Beam `eq`)
+- Tests-first worker architecture with `_shared_*` file in worker folder
+- `load_dependencies` and `do_inference` always used from shared
+- `load_dependencies` mocked with fakes to avoid side effects
 
-- [ ] generate(): invalid input -> rejects
-- [ ] generate(): good input -> inference fail -> returns output contract
-- [ ] generate(): good input -> inference success -> returns output contract
-- [ ] generate(): good input -> inference success -> uploads artifact
+**Cases**:
 
-### Async (Beam `tq`, Beam `asgi`, Modal `cls` with `spawn()`)
+- [ ] Inference requested with right args
+- [ ] Fake bucket has "uploaded" artifact
+- [ ] `do_inference` returns output contract
 
-- [ ] generate(): invalid input -> rejects (before task submitted)
-- [ ] POST -> task_id -> poll -> returns error contract
-- [ ] POST -> task_id -> poll -> returns output contract
-- [ ] POST -> task_id -> poll -> uploads artifact
+## E2E Tests
+
+**Rules**:
+
+- E2E tests kept minimal, because they are slow
+- With a distinct pytest fixture per type
+- Sync (Flash `cls`, `pre`, Beam `eq`) direct response
+- Async (Beam `tq`, Beam `asgi`, Modal `cls` with `spawn()`) task_id polling
+
+**Tests**:
+
+- [ ] Worker deployed to test env in before ALL, undeployed after tests
+- [ ] Invalid input: should reject
+- [ ] Good input: should return contract + artifact must exist in bucket (if applicable)

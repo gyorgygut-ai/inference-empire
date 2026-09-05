@@ -8,7 +8,7 @@ from workers.services.torch_module.torch_module_real import RealTorchModule
 
 def torch_module_factory(target: str | None = None) -> RealTorchModule | FakeTorchModule:
     if target is None:
-        target = os.environ.get("TORCH_TARGET", "real")
+        target = os.environ.get("RUN_TARGET", "real")
     if target == "fake":
         return FakeTorchModule()
     if target == "real":
