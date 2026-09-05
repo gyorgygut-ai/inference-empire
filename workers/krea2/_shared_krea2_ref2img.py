@@ -269,7 +269,7 @@ def pipe_factory() -> DiffusionPipeline:
 
 def load_dependencies(cache_dir=None):
     """Load all dependencies for krea2-ref2img worker."""
-    from workers.services.torch_module.torch_module_factory import torch_module_factory
+    from workers.services.torch_module.torch_module_real import RealTorchModule
 
     _, runtime_dir, _ = load_pipeline(cache_dir=cache_dir)
-    return pipe_factory(), runtime_dir, torch_module_factory()
+    return pipe_factory(), runtime_dir, RealTorchModule()

@@ -8,7 +8,7 @@ from pathlib import Path
 class RealBeamPlatform:
     def __init__(self, worker_factory=None):
         self._worker_factory = worker_factory
-        self._spec = None  # attached by workers/conftest.py platform fixture
+        self._spec = None
 
     def _handler(self):
         # "file:function" — beam deploys the decorated attr from the module.

@@ -342,8 +342,8 @@ def pipe_factory() -> MiniMaxH3Pipeline:
 
 def load_dependencies(cache_dir=None):
     """Load all dependencies for minimax-h3-ref2va worker."""
-    from workers.services.write_video_audio.write_video_audio_factory import (
-        write_video_audio_factory,
+    from workers.services.write_video_audio.write_video_audio_real import (
+        RealWriteVideoAudio,
     )
 
-    return pipe_factory(), write_video_audio_factory()
+    return pipe_factory(), RealWriteVideoAudio()

@@ -7,7 +7,7 @@ from pathlib import Path
 class RealFlashPlatform:
     def __init__(self, worker_factory=None):
         self._worker_factory = worker_factory
-        self._spec = None  # attached by workers/conftest.py platform fixture
+        self._spec = None
 
     def _worker_dir(self):
         # spec.module = "workers.<model>.worker_..." -> workers/<model>/

@@ -175,6 +175,6 @@ def pipe_factory() -> Flux2KleinPipeline:
 
 def load_dependencies():
     """Load all dependencies for flux2-klein9b worker."""
-    from workers.services.torch_module.torch_module_factory import torch_module_factory
+    from workers.services.torch_module.torch_module_real import RealTorchModule
 
-    return pipe_factory(), torch_module_factory()
+    return pipe_factory(), RealTorchModule()

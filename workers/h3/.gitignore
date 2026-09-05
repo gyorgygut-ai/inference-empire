@@ -45,7 +45,6 @@ dist/
 Thumbs.db
 
 # Non-Flash workers
-test_*.py
 worker_beam_*.py
 worker_modal_*.py
 

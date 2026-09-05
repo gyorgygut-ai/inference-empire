@@ -38,10 +38,6 @@ test = [
 where = ["workers"]
 include = ["workers*"]
 
-[tool.pytest.ini_options]
-pythonpath = ["."]
-testpaths = ["workers"]
-
 [tool.ruff]
 line-length = 100
 

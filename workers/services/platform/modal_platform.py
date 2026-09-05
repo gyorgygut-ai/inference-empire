@@ -7,7 +7,7 @@ from pathlib import Path
 class RealModalPlatform:
     def __init__(self, worker_factory=None):
         self._worker_factory = worker_factory
-        self._spec = None  # attached by workers/conftest.py platform fixture
+        self._spec = None
 
     def _worker_file(self):
         return str(Path(*self._spec.module.split(".")).with_suffix(".py"))
