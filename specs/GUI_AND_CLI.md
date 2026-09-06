@@ -1,3 +1,0 @@
-# GUI and CLI
-
-TODO

@@ -1,11 +1,12 @@
 # Agent Implementation Spec
 
-## Critical Specs - Read Before Doing Anything
+This is a monorepo for all my custom inference related code.
 
-- [Proxy](./specs/PROXY.md)
-- [GPU Workers](./specs/GPU_WORKERS.md)
-- [GUI and CLI](./specs/GUI_AND_CLI.md)
-- [Testing Checklist](./specs/TEST_CHECKLIST.md)
+## Key Components / Subfolders
+
+- [Chat GUI](./gui/AGENTS.md)
+- [Cloud GPU Workers](./workers/AGENTS.md)
+- [Inference Router Proxy](./proxy/AGENTS.md)
 
 ---
 

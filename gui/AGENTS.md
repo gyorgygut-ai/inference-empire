@@ -1,12 +1,5 @@
 # GUI Agent Implementation Spec
 
-## Critical Specs - Read Before Doing Anything
-
-- [GUI and CLI](../specs/GUI_AND_CLI.md)
-- [Proxy](../specs/PROXY.md)
-- [GPU Workers](../specs/GPU_WORKERS.md)
-- [Testing Checklist](../specs/TEST_CHECKLIST.md)
-
 ## Golden Rules
 
 - Use conventional commits
@@ -26,11 +19,13 @@
 ## UI Layout
 
 Mobile:
+
 - left Workers: dockable, docked closed by default
 - center: Main
 - right Artifacts: dockable, docked closed by default
 
 Desktop:
+
 - left Workers: dockable, open by default, next to Main chat
 - right Artifacts: fills remaining space
 
