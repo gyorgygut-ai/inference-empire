@@ -4,6 +4,9 @@ import pytest
 
 from workers.e2e_targets import DeployedRunner, LocalTarget, deploy, undeploy
 from workers.services.deps.dep_check import check_worker
+from workers.services.mock_server.beam.fake import clear as beam_clear
+from workers.services.mock_server.flash.fake import clear as flash_clear
+from workers.services.mock_server.modal.fake import clear as modal_clear
 from workers.services.platform.beam_platform_local import LocalBeamPlatform
 from workers.services.platform.flash_platform_local import LocalFlashPlatform
 from workers.services.platform.modal_platform_local import LocalModalPlatform
@@ -37,6 +40,17 @@ def local_fake_session():
     finally:
         for platform in platforms:
             platform.undeploy()
+
+
+@pytest.fixture(scope="module", autouse=True)
+def clear_fakes():
+    flash_clear()
+    beam_clear()
+    modal_clear()
+    yield
+    flash_clear()
+    beam_clear()
+    modal_clear()
 
 
 @pytest.fixture(scope="module")
