@@ -38,6 +38,14 @@ test = [
 where = ["workers"]
 include = ["workers*"]
 
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["workers"]
+markers = [
+    "local_e2e: end-to-end against canned fakes, in-process",
+    "deployed_e2e: end-to-end against the test-env deployment",
+]
+
 [tool.ruff]
 line-length = 100
 
