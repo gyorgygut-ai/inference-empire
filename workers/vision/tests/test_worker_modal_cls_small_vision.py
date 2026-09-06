@@ -23,9 +23,8 @@ CANNED = {
 }
 
 
-def test_generate_returns_canned_result(bucket):
+def test_generate_returns_canned_result():
     out = worker_mod.generate(
-        bucket,
         FakeVisionModel(CANNED),
         FakeVisionProcessor(CANNED),
         "fake-prompt",
@@ -35,8 +34,8 @@ def test_generate_returns_canned_result(bucket):
     assert out == CANNED
 
 
-def test_generate_rejects_missing_image(bucket):
+def test_generate_rejects_missing_image():
     with pytest.raises(ValidationError):
         worker_mod.generate(
-            bucket, FakeVisionModel(CANNED), FakeVisionProcessor(CANNED), "fake-prompt"
+            FakeVisionModel(CANNED), FakeVisionProcessor(CANNED), "fake-prompt"
         )

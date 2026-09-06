@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import modal
 
 from workers.vision._shared_small_vision import (
@@ -12,13 +10,10 @@ from workers.vision._shared_small_vision import (
     load_dependencies,
 )
 
-if TYPE_CHECKING:
-    from workers.services.storage.storage import Storage
-
 app = modal.App("small-vision-worker")
 
 
-def generate(storage: Storage, model, processor, analyze_prompt, **kwargs) -> dict:
+def generate(model, processor, analyze_prompt, **kwargs) -> dict:
     """Validate at boundary, delegate, return output contract."""
     req = SmallVisionInput(**kwargs)
     try:
@@ -68,10 +63,6 @@ image = (
     max_containers=1,
 )
 class SmallVisionWorker:
-    def __init__(self, storage: Storage):
-        # Vision returns JSON; storage is unused (kept for platform/proxy compat).
-        pass
-
     @modal.enter()
     def load(self):
         self.model, self.processor, self.analyze_prompt = load_dependencies()
@@ -79,7 +70,7 @@ class SmallVisionWorker:
     @modal.method()
     def analyze(self, **kwargs) -> dict:
         """Validate at boundary, delegate, return output contract."""
-        return generate(None, self.model, self.processor, self.analyze_prompt, **kwargs)
+        return generate(self.model, self.processor, self.analyze_prompt, **kwargs)
 
     @modal.fastapi_endpoint(method="POST")
     def analyze_web(self, item: SmallVisionInput) -> dict:
