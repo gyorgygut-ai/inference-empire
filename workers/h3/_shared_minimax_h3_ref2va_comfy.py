@@ -19,12 +19,6 @@ MODEL_FILES = {
 }
 FPS = 24
 
-
-def ensure_dotenv() -> None:
-    """Load sibling workers/.env once (local runs; remote uses secrets)."""
-    import os
-    from pathlib import Path
-
     path = Path(__file__).parent.parent / ".env"
     if not path.exists():
         return
@@ -40,7 +34,6 @@ _MAX_REF_IMAGES = 9
 _MAX_REF_VIDEOS = 3
 _MAX_REF_AUDIOS = 3
 _MAX_TOTAL_FILES = 12
-
 
 class MiniMaxH3Ref2VAComfyInput(BaseModel):
     model_config = ConfigDict(title="MiniMaxH3Ref2VAComfyInput")
@@ -81,7 +74,6 @@ class MiniMaxH3Ref2VAComfyInput(BaseModel):
                     "reference audio requires at least one reference image or video"
                 )
         return v
-
 
 class ValidatedRef2VAComfyInput(MiniMaxH3Ref2VAComfyInput):
     @field_validator("ref_images")
@@ -150,17 +142,14 @@ class ValidatedRef2VAComfyInput(MiniMaxH3Ref2VAComfyInput):
                 )
         return v
 
-
 class Artifact(BaseModel):
     model_config = ConfigDict(title="Artifact")
     presigned_url: str
-
 
 class MiniMaxH3Ref2VAComfyOutput(BaseModel):
     model_config = ConfigDict(title="MiniMaxH3Ref2VAComfyOutput")
     artifact: Artifact
     video: str
-
 
 def build_workflow(req: ValidatedRef2VAComfyInput) -> dict:
     workflow = {
@@ -216,7 +205,6 @@ def build_workflow(req: ValidatedRef2VAComfyInput) -> dict:
 
     return workflow
 
-
 def build_images(req: ValidatedRef2VAComfyInput) -> list[dict]:
     images = []
     for i, img in enumerate(req.ref_images):
@@ -237,14 +225,12 @@ def build_images(req: ValidatedRef2VAComfyInput) -> list[dict]:
         )
     return images
 
-
 def build_payload(req: ValidatedRef2VAComfyInput) -> dict:
     payload = {"workflow": build_workflow(req)}
     images = build_images(req)
     if images:
         payload["images"] = images
     return payload
-
 
 def parse_output(output) -> tuple:
     """Returns (video_bytes, data). Raises RuntimeError on malformed output."""
@@ -260,7 +246,6 @@ def parse_output(output) -> tuple:
         raise RuntimeError(f"no data in image result: {out_images[0]}")
     return base64.b64decode(data), data
 
-
 def upload_result(storage: Storage, video_bytes: bytes, data: str, prefix: str = "minimax_ref2va_comfy") -> MiniMaxH3Ref2VAComfyOutput:
     if storage is None:
         raise ValueError("storage is required")
@@ -268,7 +253,6 @@ def upload_result(storage: Storage, video_bytes: bytes, data: str, prefix: str =
     storage.put(key, video_bytes)
     presigned_url = storage.presigned_url(key)
     return MiniMaxH3Ref2VAComfyOutput(artifact=Artifact(presigned_url=presigned_url), video=data)
-
 
 def _run_beam(comfy_base_url: str, req: ValidatedRef2VAComfyInput) -> tuple:
     """Submit + 600s poll + fetch. Returns (video_bytes, data)."""
@@ -324,7 +308,6 @@ def _run_beam(comfy_base_url: str, req: ValidatedRef2VAComfyInput) -> tuple:
     print(f"[OK] submit/poll/fetch in {time.time() - t_req:.1f}s", flush=True)
     return video_bytes, data
 
-
 def _run_flash(endpoint, req: ValidatedRef2VAComfyInput) -> tuple:
     """Submit via flash endpoint. Returns (video_bytes, data)."""
     import time
@@ -352,7 +335,6 @@ def _run_flash(endpoint, req: ValidatedRef2VAComfyInput) -> tuple:
 
     print(f"[OK] submit/fetch in {time.time() - t_req:.1f}s", flush=True)
     return video_bytes, data
-
 
 def do_inference(backend, storage: Storage, req: ValidatedRef2VAComfyInput) -> MiniMaxH3Ref2VAComfyOutput:
     """Beam (base_url str) and flash (endpoint) paths converge here. Testable via DI."""

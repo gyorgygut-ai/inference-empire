@@ -7,16 +7,12 @@ from beam import Image, QueueDepthAutoscaler, Volume, task_queue
 from workers.krea2._shared_krea2_ref2img import (
     Krea2Ref2ImgInput,
     do_inference,
-    ensure_dotenv,
     load_dependencies,
 )
 from workers.services.storage.r2_storage import require_storage
-
 if TYPE_CHECKING:
     from workers.services.storage.storage import Storage
 
-
-ensure_dotenv()
 
 CACHE_PATH = "./hf-cache"
 

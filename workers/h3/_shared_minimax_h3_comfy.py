@@ -17,12 +17,6 @@ MODEL_FILES = {
 }
 FPS = 24
 
-
-def ensure_dotenv() -> None:
-    """Load sibling workers/.env once (local runs; remote uses secrets)."""
-    import os
-    from pathlib import Path
-
     path = Path(__file__).parent.parent / ".env"
     if not path.exists():
         return
@@ -35,7 +29,6 @@ def ensure_dotenv() -> None:
         if key and key not in os.environ:
             os.environ[key] = value
 
-
 class MiniMaxH3ComfyInput(BaseModel):
     model_config = ConfigDict(title="MiniMaxH3ComfyInput")
     prompt: str
@@ -47,17 +40,14 @@ class MiniMaxH3ComfyInput(BaseModel):
     first_frame: str | None = Field(default=None)
     last_frame: str | None = Field(default=None)
 
-
 class Artifact(BaseModel):
     model_config = ConfigDict(title="Artifact")
     presigned_url: str
-
 
 class MiniMaxH3ComfyOutput(BaseModel):
     model_config = ConfigDict(title="MiniMaxH3ComfyOutput")
     artifact: Artifact
     video: str
-
 
 def build_workflow(req: MiniMaxH3ComfyInput) -> dict:
     workflow = {
@@ -88,7 +78,6 @@ def build_workflow(req: MiniMaxH3ComfyInput) -> dict:
         workflow["cond"]["inputs"]["last_frame"] = ["load_last", 0]
     return workflow
 
-
 def build_images(req: MiniMaxH3ComfyInput) -> list[dict]:
     images = []
     if req.first_frame:
@@ -97,14 +86,12 @@ def build_images(req: MiniMaxH3ComfyInput) -> list[dict]:
         images.append({"name": "last_frame.png", "image": f"data:image/png;base64,{req.last_frame}"})
     return images
 
-
 def build_payload(req: MiniMaxH3ComfyInput) -> dict:
     payload = {"workflow": build_workflow(req)}
     images = build_images(req)
     if images:
         payload["images"] = images
     return payload
-
 
 def parse_output(output) -> tuple:
     """Returns (video_bytes, data). Raises RuntimeError on malformed output."""
@@ -120,7 +107,6 @@ def parse_output(output) -> tuple:
         raise RuntimeError(f"no data in image result: {out_images[0]}")
     return base64.b64decode(data), data
 
-
 def upload_result(storage: Storage, video_bytes: bytes, data: str, prefix: str = "minimax_comfy") -> MiniMaxH3ComfyOutput:
     if storage is None:
         raise ValueError("storage is required")
@@ -128,7 +114,6 @@ def upload_result(storage: Storage, video_bytes: bytes, data: str, prefix: str =
     storage.put(key, video_bytes)
     presigned_url = storage.presigned_url(key)
     return MiniMaxH3ComfyOutput(artifact=Artifact(presigned_url=presigned_url), video=data)
-
 
 def run_comfy_endpoint(endpoint, payload, timeout: int = 1800):
     """Submit payload to a ComfyUI flash endpoint, tolerating a running loop."""
@@ -143,7 +128,6 @@ def run_comfy_endpoint(endpoint, payload, timeout: int = 1800):
     except RuntimeError:
         with concurrent.futures.ThreadPoolExecutor() as pool:
             return pool.submit(lambda: asyncio.run(_run())).result()
-
 
 def do_inference(endpoint, storage: Storage, req: MiniMaxH3ComfyInput) -> MiniMaxH3ComfyOutput:
     """Flash path: submit via endpoint + upload_result. Testable via DI."""

@@ -10,12 +10,6 @@ from pydantic import BaseModel, ConfigDict
 REPO_ID = "Qwen/Qwen2-VL-2B-Instruct"
 MAX_NEW_TOKENS = 512
 
-
-def ensure_dotenv() -> None:
-    """Load sibling workers/.env once (local runs; remote uses secrets)."""
-    import os
-    from pathlib import Path
-
     path = Path(__file__).parent.parent / ".env"
     if not path.exists():
         return
@@ -28,11 +22,9 @@ def ensure_dotenv() -> None:
         if key and key not in os.environ:
             os.environ[key] = value
 
-
 class SmallVisionInput(BaseModel):
     model_config = ConfigDict(title="SmallVisionInput")
     image_base64: str
-
 
 class SmallVisionOutput(BaseModel):
     model_config = ConfigDict(title="SmallVisionOutput")
@@ -62,7 +54,6 @@ class SmallVisionOutput(BaseModel):
     subjects: list[str]
     description: str
 
-
 def build_analyze_prompt() -> str:
     classification = SmallVisionOutput.model_fields["classification"].annotation
     classification_values = ", ".join(f'"{v}"' for v in classification.__args__)
@@ -70,7 +61,6 @@ def build_analyze_prompt() -> str:
 - classification: one of [{classification_values}]
 - subjects: array of strings (describe each main subject including people, e.g., "woman in red dress", "golden retriever")
 - description: string (concise natural language description including any visible text)"""
-
 
 def load_models(cache_dir=None):
     """Production path: always boots the real model."""
@@ -100,7 +90,6 @@ def load_models(cache_dir=None):
 
     print(f"[INIT] model loaded in {time.time() - t0:.1f}s", flush=True)
     return model, processor, build_analyze_prompt()
-
 
 def do_inference(model, processor, analyze_prompt: str, req: SmallVisionInput):
     """Takes validated Input, returns Output. Testable via DI."""
@@ -142,7 +131,6 @@ def do_inference(model, processor, analyze_prompt: str, req: SmallVisionInput):
     if m:
         return SmallVisionOutput.model_validate_json(m.group())
     return {"raw": result}
-
 
 def load_dependencies(cache_dir=None):
     """Load all dependencies for small-vision worker."""

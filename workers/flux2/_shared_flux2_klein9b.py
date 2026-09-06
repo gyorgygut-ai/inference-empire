@@ -16,12 +16,6 @@ MODEL_ID = "Disty0/FLUX.2-klein-9B-SDNQ-4bit-dynamic-svd-r32"
 _MAX_WIDTH = 2560
 _MAX_HEIGHT = 2560
 
-
-def ensure_dotenv() -> None:
-    """Load sibling workers/.env once (local runs; remote uses secrets)."""
-    import os
-    from pathlib import Path
-
     path = Path(__file__).parent.parent / ".env"
     if not path.exists():
         return
@@ -34,7 +28,6 @@ def ensure_dotenv() -> None:
         if key and key not in os.environ:
             os.environ[key] = value
 
-
 class Flux2Klein9bInput(BaseModel):
     model_config = ConfigDict(title="Flux2Klein9bInput")
     prompt: str
@@ -46,16 +39,13 @@ class Flux2Klein9bInput(BaseModel):
     input_image: str | None = Field(default=None)
     reference_images: list[str] = Field(default=[])
 
-
 class Artifact(BaseModel):
     model_config = ConfigDict(title="Artifact")
     presigned_url: str
 
-
 class Flux2Klein9bOutput(BaseModel):
     model_config = ConfigDict(title="Flux2Klein9bOutput")
     artifact: Artifact
-
 
 def prepare_image(base64_str: str):
     import base64
@@ -70,7 +60,6 @@ def prepare_image(base64_str: str):
     if w != img.size[0] or h != img.size[1]:
         img = img.resize((w, h))
     return img
-
 
 def load_pipeline():
     """Production path: always boots the real model."""
@@ -116,7 +105,6 @@ def load_pipeline():
 
     print(f"[INIT] model loaded in {time.time() - t0:.1f}s", flush=True)
     return pipe, torch
-
 
 def do_inference(pipe, torch_module, storage: Storage, req: Flux2Klein9bInput) -> Flux2Klein9bOutput:
     """Takes validated Input, returns Output. Testable via DI."""
@@ -168,11 +156,9 @@ def do_inference(pipe, torch_module, storage: Storage, req: Flux2Klein9bInput) -
     print(f"[OK] completed in {time.time() - t_req:.1f}s", flush=True)
     return Flux2Klein9bOutput(artifact=Artifact(presigned_url=url))
 
-
 def pipe_factory() -> Flux2KleinPipeline:
     """Factory for the flux2 pipeline."""
     return load_pipeline()[0]
-
 
 def load_dependencies():
     """Load all dependencies for flux2-klein9b worker."""

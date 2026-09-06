@@ -7,16 +7,12 @@ from beam import Image, QueueDepthAutoscaler, Volume, task_queue
 from workers.h3._shared_minimax_h3_fl2va import (
     MiniMaxH3Fl2VAInput,
     do_inference,
-    ensure_dotenv,
     load_dependencies,
 )
 from workers.services.storage.r2_storage import require_storage
 
 if TYPE_CHECKING:
     from workers.services.storage.storage import Storage
-
-
-ensure_dotenv()
 
 
 CACHE_PATH = "./hf-cache"

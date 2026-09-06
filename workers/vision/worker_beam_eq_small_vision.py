@@ -6,11 +6,8 @@ from workers.vision._shared_small_vision import (
     SmallVisionInput,
     SmallVisionOutput,
     do_inference,
-    ensure_dotenv,
     load_dependencies,
 )
-
-ensure_dotenv()
 
 CACHE_PATH = "./hf-cache"
 

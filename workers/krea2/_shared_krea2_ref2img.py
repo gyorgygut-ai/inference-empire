@@ -30,12 +30,6 @@ EXTRA_SPECIAL_TOKENS = [    "<|im_start|>",
     "<|video_pad|>",
 ]
 
-
-def ensure_dotenv() -> None:
-    """Load sibling workers/.env once (local runs; remote uses secrets)."""
-    import os
-    from pathlib import Path
-
     path = Path(__file__).parent.parent / ".env"
     if not path.exists():
         return
@@ -47,7 +41,6 @@ def ensure_dotenv() -> None:
         key, value = key.strip(), value.strip().strip('"').strip("'")
         if key and key not in os.environ:
             os.environ[key] = value
-
 
 class Krea2Ref2ImgInput(BaseModel):
     model_config = ConfigDict(title="Krea2Ref2ImgInput")
@@ -61,16 +54,13 @@ class Krea2Ref2ImgInput(BaseModel):
     lora_scale: float = Field(default=1.0)
     face_crop: bool = Field(default=True)
 
-
 class Artifact(BaseModel):
     model_config = ConfigDict(title="Artifact")
     presigned_url: str
 
-
 class Krea2Ref2ImgOutput(BaseModel):
     model_config = ConfigDict(title="Krea2Ref2ImgOutput")
     artifact: Artifact
-
 
 def _apply_qwen3_vl_rope_patch():
     import transformers.models.qwen3_vl.modeling_qwen3_vl as _q3vl_modeling
@@ -86,7 +76,6 @@ def _apply_qwen3_vl_rope_patch():
         _orig(self, config, device)
 
     _q3vl_modeling.Qwen3VLTextRotaryEmbedding.__init__ = _safe_rope_init
-
 
 def load_pipeline(cache_dir=None):
     """Production path: always boots the real model."""
@@ -151,7 +140,6 @@ def load_pipeline(cache_dir=None):
     print(f"[INIT] model loaded in {time.time() - t0:.1f}s", flush=True)
     return pipe, runtime_dir, torch
 
-
 def decode_image(base64_str: str):
     import base64
     import io
@@ -160,7 +148,6 @@ def decode_image(base64_str: str):
 
     img = Image.open(io.BytesIO(base64.b64decode(base64_str)))
     return img.convert("RGB")
-
 
 def face_crop(img, runtime_dir: Path, margin: float = 0.4):
     import cv2
@@ -191,7 +178,6 @@ def face_crop(img, runtime_dir: Path, margin: float = 0.4):
     crop = bgr[y0:y1, x0:x1]
 
     return Image.fromarray(cv2.cvtColor(crop, cv2.COLOR_BGR2RGB))
-
 
 def do_inference(
     pipe,
@@ -260,15 +246,15 @@ def do_inference(
     print(f"[OK] completed in {time.time() - t_req:.1f}s", flush=True)
     return Krea2Ref2ImgOutput(artifact=Artifact(presigned_url=presigned_url))
 
-
 def pipe_factory() -> DiffusionPipeline:
     """Factory for the krea2 pipeline."""
     return load_pipeline()[0]
 
-
 def load_dependencies(cache_dir=None):
     """Load all dependencies for krea2-ref2img worker."""
+    from workers.services.storage.r2_storage import require_storage
     from workers.services.torch_module.torch_module_service import TorchModuleService
 
+    storage = require_storage(None)
     _, runtime_dir, _ = load_pipeline(cache_dir=cache_dir)
-    return pipe_factory(), runtime_dir, TorchModuleService()
+    return storage, pipe_factory(), runtime_dir, TorchModuleService()

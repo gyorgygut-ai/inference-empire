@@ -7,15 +7,11 @@ from beam import Image, QueueDepthAutoscaler, Volume, task_queue
 from workers.flux2._shared_flux2_klein9b import (
     Flux2Klein9bInput,
     do_inference,
-    ensure_dotenv,
     load_dependencies,
 )
 
 if TYPE_CHECKING:
     from workers.services.storage.storage import Storage
-
-
-ensure_dotenv()
 
 
 CACHE_PATH = "./hf-cache"

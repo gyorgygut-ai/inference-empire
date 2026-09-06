@@ -22,12 +22,6 @@ PROCESSOR_REPO = "MiniMaxAI/MiniMax-H3"
 PROCESSOR_PATTERN = "FL2VA/processor/"
 FPS = 24
 
-
-def ensure_dotenv() -> None:
-    """Load sibling workers/.env once (local runs; remote uses secrets)."""
-    import os
-    from pathlib import Path
-
     path = Path(__file__).parent.parent / ".env"
     if not path.exists():
         return
@@ -39,7 +33,6 @@ def ensure_dotenv() -> None:
         key, value = key.strip(), value.strip().strip('"').strip("'")
         if key and key not in os.environ:
             os.environ[key] = value
-
 
 def apply_torch_shims() -> None:
     """Patch torch runtime quirks once (remote containers)."""
@@ -62,7 +55,6 @@ def apply_torch_shims() -> None:
 
     torch.ops.load_library = _patched_load_library
 
-
 class MiniMaxH3Fl2VAInput(BaseModel):
     model_config = ConfigDict(title="MiniMaxH3Fl2VAInput")
     prompt: str
@@ -74,16 +66,13 @@ class MiniMaxH3Fl2VAInput(BaseModel):
     first_frame: str | None = Field(default=None)
     last_frame: str | None = Field(default=None)
 
-
 class Artifact(BaseModel):
     model_config = ConfigDict(title="Artifact")
     presigned_url: str
 
-
 class MiniMaxH3Fl2VAOutput(BaseModel):
     model_config = ConfigDict(title="MiniMaxH3Fl2VAOutput")
     artifact: Artifact
-
 
 def decode_image(base64_str: str):
     import base64
@@ -92,7 +81,6 @@ def decode_image(base64_str: str):
     from PIL import Image
 
     return Image.open(io.BytesIO(base64.b64decode(base64_str))).convert("RGB")
-
 
 def load_pipeline(vram_reserve_gb: float = 4.0):
     """Production path: always boots the real model."""
@@ -140,7 +128,6 @@ def load_pipeline(vram_reserve_gb: float = 4.0):
     )
     print(f"[INIT] model loaded in {time.time() - t0:.1f}s", flush=True)
     return pipe, write_video_audio
-
 
 def do_inference(
     pipe,
@@ -210,11 +197,9 @@ def do_inference(
     print(f"[OK] completed in {time.time() - t_req:.1f}s", flush=True)
     return MiniMaxH3Fl2VAOutput(artifact=Artifact(presigned_url=presigned_url))
 
-
 def pipe_factory() -> MiniMaxH3Pipeline:
     """Factory for the minimax-h3 pipeline."""
     return load_pipeline()[0]
-
 
 def load_dependencies(cache_dir=None):
     """Load all dependencies for minimax-h3-fl2va worker."""
