@@ -12,7 +12,7 @@ from workers.h3._shared_minimax_h3_ref2va_comfy import (
     parse_output,
     upload_result,
 )
-from workers.services.storage.real_r2 import require_storage
+from workers.services.storage.r2_storage import require_storage
 
 if TYPE_CHECKING:
     from workers.services.storage.storage import Storage

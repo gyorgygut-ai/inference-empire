@@ -1,4 +1,4 @@
-"""Fake runners: simulate provider behavior locally.
+"""Runner interface: the sync/async vocabulary every provider speaks.
 
 Sync = immediate, same path as async minus latency. Async = task id + poll
 loop + 10-500ms latency. Voice fakes use the same interface: the proxy hides
@@ -13,24 +13,33 @@ from random import uniform
 
 
 def check_failure(inputs: dict) -> None:
-    """Uniform failure rule: any str kwarg containing "failure" raises.
-
-    Replaces test-name magic permanently. Matches existing test inputs
-    ("invalid_input_that_causes_failure") and the `type="failure"` voice
-    sentinel.
-    """
+    """Uniform failure rule: any str kwarg containing "failure" raises."""
     for value in inputs.values():
         if isinstance(value, str) and "failure" in value:
             raise RuntimeError("inference failed: canned failure")
 
 
-class FakeSyncRunner:
+class Runner:
+    def run(self, worker, **inputs):
+        raise NotImplementedError
+
+    def submit(self, worker, **inputs):
+        raise NotImplementedError
+
+    def poll(self, task_id):
+        raise NotImplementedError
+
+    def result(self, task_id, timeout=30):
+        raise NotImplementedError
+
+
+class SyncRunner(Runner):
     def run(self, worker, **inputs):
         check_failure(inputs)
         return worker.generate(**inputs)
 
 
-class FakeAsyncRunner:
+class AsyncRunner(Runner):
     def __init__(self):
         self._tasks: dict = {}
 
@@ -55,27 +64,3 @@ class FakeAsyncRunner:
 
     def run(self, worker, **inputs):
         return self.result(self.submit(worker, **inputs))
-
-
-class FakeFlashSyncRunner(FakeSyncRunner):
-    """Named home for future Flash sync quirks — none today."""
-
-
-class FakeFlashAsyncRunner(FakeAsyncRunner):
-    """Named home for future Flash async quirks — none today."""
-
-
-class FakeBeamSyncRunner(FakeSyncRunner):
-    """Named home for future Beam sync quirks — none today."""
-
-
-class FakeBeamAsyncRunner(FakeAsyncRunner):
-    """Named home for future Beam async quirks — none today."""
-
-
-class FakeModalSyncRunner(FakeSyncRunner):
-    """Named home for future Modal sync quirks — none today."""
-
-
-class FakeModalAsyncRunner(FakeAsyncRunner):
-    """Named home for future Modal async quirks — none today."""

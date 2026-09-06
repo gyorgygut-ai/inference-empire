@@ -9,7 +9,7 @@ Bodies follow the provider mechanics verified against the pinned SDKs:
 - Beam (beam-client==0.2.207): decorated `wrapper.put(**payload)` -> Task;
   `task.status()` / `is_complete()` / `result()` (beta9/client/task.py:50).
   Task args cross as JSON, so storage is never shipped: remote workers
-  build RealR2Storage from env in enter()/generate.
+  build R2Storage from env in enter()/generate.
 
 Payload = spec `input_model(**inputs).model_dump()`. `worker` is the
 _LiveProxy carrying `_spec`. Flash/Modal SDKs are async: `asyncio.run` +
@@ -43,7 +43,7 @@ def _bridge(coro_factory, timeout=1800):
             return pool.submit(lambda: asyncio.run(coro_factory())).result(timeout)
 
 
-class _RealRunnerBase:
+class _RunnerServiceBase:
     def submit(self, worker, **inputs):
         raise NotImplementedError
 
@@ -57,7 +57,7 @@ class _RealRunnerBase:
         raise NotImplementedError
 
 
-class RealFlashSyncRunner(_RealRunnerBase):
+class FlashSyncRunner(_RunnerServiceBase):
     """Flash `ep.run()` -> `job.id` -> `job.status()` loop -> `job.output`."""
 
     def run(self, worker, **inputs):
@@ -80,7 +80,7 @@ class RealFlashSyncRunner(_RealRunnerBase):
         return _bridge(_run)
 
 
-class RealFlashAsyncRunner(_RealRunnerBase):
+class FlashAsyncRunner(_RunnerServiceBase):
     """Flash `ep.run()` -> `job.id` -> `job.status()` loop -> `job.output`."""
 
     def __init__(self):
@@ -122,7 +122,7 @@ class RealFlashAsyncRunner(_RealRunnerBase):
         return self.result(self.submit(worker, **inputs))
 
 
-class RealBeamSyncRunner(_RealRunnerBase):
+class BeamSyncRunner(_RunnerServiceBase):
     """Beam endpoint/asgi serving shapes: HTTP/WS against the deployed URL."""
 
     def run(self, worker, **inputs):
@@ -137,7 +137,7 @@ class RealBeamSyncRunner(_RealRunnerBase):
         return resp.json()
 
 
-class RealBeamAsyncRunner(_RealRunnerBase):
+class BeamAsyncRunner(_RunnerServiceBase):
     """Beam `wrapper.put()` -> `Task.id` -> `status()` -> `result()`."""
 
     def __init__(self):
@@ -165,7 +165,7 @@ class RealBeamAsyncRunner(_RealRunnerBase):
         return self.result(self.submit(worker, **inputs))
 
 
-class RealModalSyncRunner(_RealRunnerBase):
+class ModalSyncRunner(_RunnerServiceBase):
     """Modal `generate.spawn()` -> `function_call_id` -> `fc.get()`."""
 
     def run(self, worker, **inputs):
@@ -178,42 +178,42 @@ class RealModalSyncRunner(_RealRunnerBase):
 
         async def _run():
             cls = modal.Cls.from_name(spec.live_endpoint, spec.attr)
-            obj = cls()  # remote enter() builds RealR2Storage from env
+            obj = cls()  # remote enter() builds R2Storage from env
             fc = await obj.generate.spawn(**payload)
             return await fc.get()
 
         return _bridge(_run)
 
 
-class RealModalAsyncRunner(_RealRunnerBase):
+class ModalAsyncRunner(_RunnerServiceBase):
     """Modal `generate.spawn()` -> `function_call_id` -> `fc.get()`."""
 
     def __init__(self):
-        self._calls: dict = {}
+        self._jobs: dict = {}
 
     def submit(self, worker, **inputs):
         import modal
 
         async def _submit():
             cls = modal.Cls.from_name(worker._spec.live_endpoint, worker._spec.attr)
-            obj = cls()  # remote enter() builds RealR2Storage from env
+            obj = cls()  # remote enter() builds R2Storage from env
             return await obj.generate.spawn(**_payload(worker, inputs))
 
         task_id = f"task-{secrets.token_hex(4)}"
-        self._calls[task_id] = _bridge(_submit)
+        self._jobs[task_id] = _bridge(_submit)
         return task_id
 
     def poll(self, task_id):
-        return "IN_PROGRESS" if task_id in self._calls else "COMPLETED"
+        return "IN_PROGRESS" if task_id in self._jobs else "COMPLETED"
 
     def result(self, task_id, timeout=1800):
         async def _get():
-            return await self._calls[task_id].get()
+            return await self._jobs[task_id].get()
 
         try:
             return _bridge(_get, timeout)
         finally:
-            self._calls.pop(task_id, None)
+            self._jobs.pop(task_id, None)
 
     def run(self, worker, **inputs):
         return self.result(self.submit(worker, **inputs))

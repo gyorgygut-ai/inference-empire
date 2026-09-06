@@ -5,7 +5,7 @@ import subprocess
 from pathlib import Path
 
 
-class RealBeamPlatform:
+class BeamPlatform:
     def __init__(self, worker_factory=None):
         self._worker_factory = worker_factory
         self._spec = None

@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 import modal
 
-from workers.services.storage.real_r2 import require_storage
+from workers.services.storage.r2_storage import require_storage
 from workers.vision._shared_small_vision import (
     REPO_ID,
     SmallVisionInput,
