@@ -34,13 +34,12 @@ def test_generate_rejects_missing_prompt(bucket):
 
 def test_init_stores_storage_and_pipe(monkeypatch, bucket):
     canned = Image.new("RGB", (8, 8), (255, 0, 0))
-    monkeypatch.setattr(worker_mod, "require_storage", lambda _s: bucket)
     monkeypatch.setattr(
-        worker_mod, "load_dependencies", lambda: (FakeImagePipe(canned), FakeTorchModule())
+        worker_mod, "load_dependencies", lambda: (bucket, FakeImagePipe(canned), FakeTorchModule())
     )
 
-    # _class_type is the raw class; the decorator wraps it in a remote proxy.
-    worker = worker_mod.FluxKleinWorker()._class_type()
+    worker = worker_mod.FluxKleinWorker()
 
     assert worker.storage is bucket
     assert isinstance(worker.pipe, FakeImagePipe)
+    assert isinstance(worker.torch_module, FakeTorchModule)

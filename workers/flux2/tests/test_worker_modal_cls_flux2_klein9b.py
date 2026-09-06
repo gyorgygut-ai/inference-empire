@@ -33,8 +33,13 @@ def test_generate_rejects_missing_prompt(bucket):
 
 
 def test_init_stores_storage(monkeypatch, bucket):
-    monkeypatch.setattr(worker_mod, "require_storage", lambda _s: bucket)
+    monkeypatch.setattr(
+        worker_mod, "load_dependencies", lambda: (bucket, FakeImagePipe(Image.new("RGB", (8,8),(255,0,0))), FakeTorchModule())
+    )
 
     worker = worker_mod.FluxKleinWorker()
+    worker.load()
 
     assert worker.storage is bucket
+    assert isinstance(worker.pipe, FakeImagePipe)
+    assert isinstance(worker.torch_module, FakeTorchModule)

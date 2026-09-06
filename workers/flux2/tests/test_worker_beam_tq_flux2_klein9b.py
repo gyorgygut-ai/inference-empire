@@ -35,8 +35,7 @@ def test_generate_rejects_missing_prompt(bucket):
 
 def test_dispatch_returns_image_artifact(monkeypatch, bucket):
     canned = Image.new("RGB", (8, 8), (255, 0, 0))
-    monkeypatch.setattr(worker_mod, "require_storage", lambda _s: bucket)
-    ctx = SimpleNamespace(on_start_value=(FakeImagePipe(canned), FakeTorchModule()))
+    ctx = SimpleNamespace(on_start_value=(bucket, FakeImagePipe(canned), FakeTorchModule()))
 
     # .local runs the raw function; the decorator blocks direct calls.
     out = worker_mod.dispatch.local(ctx, prompt="a red square", seed=7)
