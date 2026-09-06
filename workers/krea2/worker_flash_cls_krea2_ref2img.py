@@ -58,9 +58,8 @@ def generate(storage: Storage, pipe, runtime_dir, torch_module, **kwargs) -> dic
 class Krea2Ref2ImgWorker:
     Input = Krea2Ref2ImgInput
 
-    def __init__(self, storage: Storage):
-        storage = require_storage(storage)
-        self.storage = storage
+    def __init__(self):
+        self.storage = require_storage(None)
         self.pipe, self.runtime_dir, self.torch_module = load_dependencies()
 
     def generate(self, **kwargs) -> dict:

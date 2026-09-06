@@ -15,7 +15,7 @@ def _png_bytes(img):
 
 
 @pytest.mark.local_e2e
-def test_e2e_modal_generate_serves_canned_image(e2e_target, bucket):
+def test_e2e_modal_generate_returns_image_artifact(e2e_target, bucket):
     canned = Image.new("RGB", (8, 8), (255, 0, 0))
     deps = (FakeImagePipe(canned), None, FakeTorchModule())
 
@@ -27,7 +27,7 @@ def test_e2e_modal_generate_serves_canned_image(e2e_target, bucket):
 
 
 @pytest.mark.deployed_e2e
-def test_e2e_modal_generate_serves_canned_image_deployed(e2e_target, bucket):
+def test_e2e_modal_generate_returns_image_artifact_deployed(e2e_target, bucket):
     canned = Image.new("RGB", (8, 8), (255, 0, 0))
     deps = (FakeImagePipe(canned), None, FakeTorchModule())
 
@@ -36,3 +36,12 @@ def test_e2e_modal_generate_serves_canned_image_deployed(e2e_target, bucket):
     )
 
     assert bucket.fetch(out["artifact"]["presigned_url"].rsplit("/", 1)[-1]) == _png_bytes(canned)
+
+
+@pytest.mark.deployed_e2e
+def test_e2e_modal_rejects_missing_prompt_deployed(e2e_target, bucket):
+    canned = Image.new("RGB", (8, 8), (255, 0, 0))
+    deps = (FakeImagePipe(canned), None, FakeTorchModule())
+
+    with pytest.raises(Exception, match="prompt"):
+        e2e_target.run_async(worker_mod, {}, deps, bucket)

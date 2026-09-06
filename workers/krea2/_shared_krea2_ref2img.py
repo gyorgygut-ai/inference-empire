@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import time
 import uuid
-from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -13,7 +12,6 @@ if TYPE_CHECKING:
     from diffusers import DiffusionPipeline
 
     from workers.services.storage.storage import Storage
-    from workers.services.torch_module.torch_module import TorchModule
 
 MODEL_REPO = "krea/Krea-2-Turbo"
 REID_REPO = "yijunwang2/krea2-reid"
@@ -154,15 +152,6 @@ def load_pipeline(cache_dir=None):
     return pipe, runtime_dir, torch
 
 
-def load_pipeline_as_needed(pipe=None, runtime_dir=None, cache_dir=None):
-    """DI entry: injected fake passes through, else real load."""
-    if pipe is not None:
-        import torch
-
-        return pipe, runtime_dir, torch
-    return load_pipeline(cache_dir=cache_dir)
-
-
 def decode_image(base64_str: str):
     import base64
     import io
@@ -270,13 +259,6 @@ def do_inference(
 
     print(f"[OK] completed in {time.time() - t_req:.1f}s", flush=True)
     return Krea2Ref2ImgOutput(artifact=Artifact(presigned_url=presigned_url))
-
-
-@dataclass
-class Krea2Ref2ImgDeps:
-    pipe: DiffusionPipeline
-    runtime_dir: Path
-    torch_module: TorchModule
 
 
 def pipe_factory() -> DiffusionPipeline:

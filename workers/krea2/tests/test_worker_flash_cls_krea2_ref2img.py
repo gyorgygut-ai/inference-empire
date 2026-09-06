@@ -15,7 +15,7 @@ def _png_bytes(img):
     return buffer.getvalue()
 
 
-def test_generate_serves_canned_image(bucket):
+def test_generate_returns_image_artifact(bucket):
     canned = Image.new("RGB", (8, 8), (255, 0, 0))
 
     out = worker_mod.generate(
@@ -30,3 +30,19 @@ def test_generate_rejects_missing_prompt(bucket):
 
     with pytest.raises(ValidationError):
         worker_mod.generate(bucket, FakeImagePipe(canned), None, FakeTorchModule())
+
+
+def test_init_stores_storage_and_pipe(monkeypatch, bucket):
+    canned = Image.new("RGB", (8, 8), (255, 0, 0))
+    monkeypatch.setattr(worker_mod, "require_storage", lambda _s: bucket)
+    monkeypatch.setattr(
+        worker_mod,
+        "load_dependencies",
+        lambda: (FakeImagePipe(canned), None, FakeTorchModule()),
+    )
+
+    # _class_type is the raw class; the decorator wraps it in a remote proxy.
+    worker = worker_mod.Krea2Ref2ImgWorker()._class_type()
+
+    assert worker.storage is bucket
+    assert isinstance(worker.pipe, FakeImagePipe)

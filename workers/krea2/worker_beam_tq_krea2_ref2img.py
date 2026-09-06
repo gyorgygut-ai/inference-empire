@@ -79,6 +79,6 @@ def generate(storage: Storage, pipe, runtime_dir, torch_module, **kwargs) -> dic
         "PYTORCH_NVML_BASED_CUDA_CHECK": "0",
     },
 )
-def dispatch(context, storage: Storage, **kwargs) -> dict:
-    storage = require_storage(storage)
+def dispatch(context, **kwargs) -> dict:
+    storage = require_storage(None)
     return generate(storage, *context.on_start_value, **kwargs)

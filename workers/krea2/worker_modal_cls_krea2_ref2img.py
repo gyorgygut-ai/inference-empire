@@ -73,9 +73,8 @@ image = (
     max_containers=1,
 )
 class Krea2Ref2ImgWorker:
-    def __init__(self, storage: Storage):
-        storage = require_storage(storage)
-        self.storage = storage
+    def __init__(self):
+        self.storage = require_storage(None)
 
     @modal.enter()
     def load(self):
