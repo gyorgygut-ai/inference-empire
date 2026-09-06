@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from beam import Image, QueueDepthAutoscaler, Volume, endpoint
 
 from workers.vision._shared_small_vision import (
@@ -11,10 +9,6 @@ from workers.vision._shared_small_vision import (
     ensure_dotenv,
     load_dependencies,
 )
-
-if TYPE_CHECKING:
-    from workers.services.storage.storage import Storage
-
 
 ensure_dotenv()
 
@@ -44,7 +38,7 @@ def load_deps():
     return load_dependencies(cache_dir=CACHE_PATH)
 
 
-def generate(storage: Storage, model, processor, analyze_prompt, **kwargs) -> dict:
+def generate(model, processor, analyze_prompt, **kwargs) -> dict:
     """Validate at boundary, delegate, return output contract."""
     req = SmallVisionInput(**kwargs)
     try:
@@ -67,7 +61,6 @@ def generate(storage: Storage, model, processor, analyze_prompt, **kwargs) -> di
     keep_warm_seconds=0,
     checkpoint_enabled=True,
 )
-def analyze(context, image_base64: str, storage: Storage):
-    # Vision returns JSON; storage is unused (kept for platform/proxy compat).
+def analyze(context, image_base64: str):
     model, processor, analyze_prompt = context.on_start_value
-    return generate(storage, model, processor, analyze_prompt, image_base64=image_base64)
+    return generate(model, processor, analyze_prompt, image_base64=image_base64)

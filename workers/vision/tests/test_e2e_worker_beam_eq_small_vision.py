@@ -38,3 +38,11 @@ def test_e2e_beam_returns_canned_result_deployed(e2e_target, bucket):
     out = e2e_target.run(worker_mod, {"image_base64": _image_b64()}, deps, bucket)
 
     assert out == CANNED
+
+
+@pytest.mark.deployed_e2e
+def test_e2e_beam_rejects_missing_image_deployed(e2e_target, bucket):
+    deps = (FakeVisionModel(CANNED), FakeVisionProcessor(CANNED), "fake-prompt")
+
+    with pytest.raises(Exception, match="image_base64"):
+        e2e_target.run(worker_mod, {}, deps, bucket)
