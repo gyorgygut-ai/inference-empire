@@ -18,6 +18,24 @@ MODEL_FILES = {
 FPS = 24
 
 
+def ensure_dotenv() -> None:
+    """Load sibling workers/.env once (local runs; remote uses secrets)."""
+    import os
+    from pathlib import Path
+
+    path = Path(__file__).parent.parent / ".env"
+    if not path.exists():
+        return
+    for line in path.read_text().splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, _, value = line.partition("=")
+        key, value = key.strip(), value.strip().strip('"').strip("'")
+        if key and key not in os.environ:
+            os.environ[key] = value
+
+
 class MiniMaxH3ComfyInput(BaseModel):
     model_config = ConfigDict(title="MiniMaxH3ComfyInput")
     prompt: str
@@ -110,3 +128,47 @@ def upload_result(storage: Storage, video_bytes: bytes, data: str, prefix: str =
     storage.put(key, video_bytes)
     presigned_url = storage.presigned_url(key)
     return MiniMaxH3ComfyOutput(artifact=Artifact(presigned_url=presigned_url), video=data)
+
+
+def run_comfy_endpoint(endpoint, payload, timeout: int = 1800):
+    """Submit payload to a ComfyUI flash endpoint, tolerating a running loop."""
+    import asyncio
+    import concurrent.futures
+
+    async def _run():
+        return await endpoint.runsync(payload, timeout=timeout)
+
+    try:
+        return asyncio.run(_run())
+    except RuntimeError:
+        with concurrent.futures.ThreadPoolExecutor() as pool:
+            return pool.submit(lambda: asyncio.run(_run())).result()
+
+
+def do_inference(endpoint, storage: Storage, req: MiniMaxH3ComfyInput) -> MiniMaxH3ComfyOutput:
+    """Flash path: submit via endpoint + upload_result. Testable via DI."""
+    import time
+
+    if storage is None:
+        raise ValueError("storage is required")
+
+    t_req = time.time()
+    print(f"[REQ] prompt={req.prompt[:40]}", flush=True)
+    payload = build_payload(req)
+
+    print(f"[GEN] starting ComfyUI job prompt={req.prompt[:40]}", flush=True)
+    t_gen = time.time()
+    job = run_comfy_endpoint(endpoint, payload)
+    print(f"[GEN] ComfyUI job done in {time.time() - t_gen:.1f}s", flush=True)
+
+    if getattr(job, "error", None):
+        raise RuntimeError(f"job failed: {job.error}")
+
+    output = getattr(job, "output", None) or job
+    video_bytes, data = parse_output(output)
+
+    result = upload_result(storage, video_bytes, data, prefix="minimax_comfy")
+    print(f"[R2] uploaded key={result.artifact.presigned_url[:60]}", flush=True)
+
+    print(f"[OK] completed in {time.time() - t_req:.1f}s", flush=True)
+    return result

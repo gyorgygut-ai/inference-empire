@@ -11,3 +11,6 @@ class FakeImagePipe:
 
     def __call__(self, **kwargs):
         return SimpleNamespace(images=[self._image])
+
+    def set_adapters(self, adapter_names, weights=None):
+        """No-op stub: mirrors the LoRA-adapter hook the real pipe exposes."""

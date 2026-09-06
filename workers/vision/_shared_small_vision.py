@@ -11,6 +11,24 @@ REPO_ID = "Qwen/Qwen2-VL-2B-Instruct"
 MAX_NEW_TOKENS = 512
 
 
+def ensure_dotenv() -> None:
+    """Load sibling workers/.env once (local runs; remote uses secrets)."""
+    import os
+    from pathlib import Path
+
+    path = Path(__file__).parent.parent / ".env"
+    if not path.exists():
+        return
+    for line in path.read_text().splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, _, value = line.partition("=")
+        key, value = key.strip(), value.strip().strip('"').strip("'")
+        if key and key not in os.environ:
+            os.environ[key] = value
+
+
 class SmallVisionInput(BaseModel):
     model_config = ConfigDict(title="SmallVisionInput")
     image_base64: str
@@ -91,7 +109,7 @@ def load_models_as_needed(model=None, processor=None, analyze_prompt=None, cache
     return load_models(cache_dir=cache_dir)
 
 
-def run_analyze(model, processor, analyze_prompt: str, req: SmallVisionInput):
+def do_inference(model, processor, analyze_prompt: str, req: SmallVisionInput):
     """Takes validated Input, returns Output. Testable via DI."""
     import base64
     import io

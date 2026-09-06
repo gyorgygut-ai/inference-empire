@@ -17,8 +17,7 @@ if TYPE_CHECKING:
 
 MODEL_REPO = "krea/Krea-2-Turbo"
 REID_REPO = "yijunwang2/krea2-reid"
-EXTRA_SPECIAL_TOKENS = [
-    "<|im_start|>",
+EXTRA_SPECIAL_TOKENS = [    "<|im_start|>",
     "<|im_end|>",
     "<|object_ref_start|>",
     "<|object_ref_end|>",
@@ -32,6 +31,24 @@ EXTRA_SPECIAL_TOKENS = [
     "<|image_pad|>",
     "<|video_pad|>",
 ]
+
+
+def ensure_dotenv() -> None:
+    """Load sibling workers/.env once (local runs; remote uses secrets)."""
+    import os
+    from pathlib import Path
+
+    path = Path(__file__).parent.parent / ".env"
+    if not path.exists():
+        return
+    for line in path.read_text().splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, _, value = line.partition("=")
+        key, value = key.strip(), value.strip().strip('"').strip("'")
+        if key and key not in os.environ:
+            os.environ[key] = value
 
 
 class Krea2Ref2ImgInput(BaseModel):
@@ -187,7 +204,7 @@ def face_crop(img, runtime_dir: Path, margin: float = 0.4):
     return Image.fromarray(cv2.cvtColor(crop, cv2.COLOR_BGR2RGB))
 
 
-def run_generate(
+def do_inference(
     pipe,
     runtime_dir,
     torch_module,

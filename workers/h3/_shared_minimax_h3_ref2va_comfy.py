@@ -6,6 +6,8 @@ from typing import TYPE_CHECKING, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from workers.h3._shared_minimax_h3_comfy import run_comfy_endpoint
+
 if TYPE_CHECKING:
     from workers.services.storage.storage import Storage
 
@@ -16,6 +18,24 @@ MODEL_FILES = {
     "vae_audio_name": "minimax_h3_audio_vae_fp32.safetensors",
 }
 FPS = 24
+
+
+def ensure_dotenv() -> None:
+    """Load sibling workers/.env once (local runs; remote uses secrets)."""
+    import os
+    from pathlib import Path
+
+    path = Path(__file__).parent.parent / ".env"
+    if not path.exists():
+        return
+    for line in path.read_text().splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, _, value = line.partition("=")
+        key, value = key.strip(), value.strip().strip('"').strip("'")
+        if key and key not in os.environ:
+            os.environ[key] = value
 _MAX_REF_IMAGES = 9
 _MAX_REF_VIDEOS = 3
 _MAX_REF_AUDIOS = 3
@@ -248,3 +268,102 @@ def upload_result(storage: Storage, video_bytes: bytes, data: str, prefix: str =
     storage.put(key, video_bytes)
     presigned_url = storage.presigned_url(key)
     return MiniMaxH3Ref2VAComfyOutput(artifact=Artifact(presigned_url=presigned_url), video=data)
+
+
+def _run_beam(comfy_base_url: str, req: ValidatedRef2VAComfyInput) -> tuple:
+    """Submit + 600s poll + fetch. Returns (video_bytes, data)."""
+    import base64
+    import time
+
+    import requests
+
+    t_req = time.time()
+    n_files = (
+        len(req.ref_images)
+        + len(req.ref_videos)
+        + len(req.ref_video_audios)
+        + len(req.ref_audios)
+    )
+    print(f"[REQ] prompt={req.prompt[:40]}  seed={req.seed}  files={n_files}", flush=True)
+
+    payload = build_payload(req)
+
+    print(f"[GEN] starting ComfyUI job prompt={req.prompt[:40]}", flush=True)
+    t_gen = time.time()
+    r = requests.post(f"{comfy_base_url}/prompt", json=payload, timeout=30)
+    r.raise_for_status()
+    prompt_id = r.json()["prompt_id"]
+
+    for attempt in range(600):
+        try:
+            r = requests.get(f"{comfy_base_url}/history/{prompt_id}", timeout=10)
+            history = r.json()
+            if prompt_id in history:
+                outputs = history[prompt_id]["outputs"]
+                save_node = outputs.get("save", {})
+                video_info = (save_node.get("videos") or save_node.get("gifs") or [None])[0]
+                if video_info:
+                    break
+        except (requests.ConnectionError, requests.Timeout, ValueError) as e:
+            print(
+                f"[COMFY] poll {attempt + 1}/600 transient error: {type(e).__name__}: {e}",
+                flush=True,
+            )
+        time.sleep(1)
+    else:
+        raise RuntimeError(f"ComfyUI job {prompt_id} did not complete within 600s")
+
+    print(f"[GEN] ComfyUI job done in {time.time() - t_gen:.1f}s", flush=True)
+    video_url = (
+        f"{comfy_base_url}/view?filename={video_info['filename']}"
+        f"&subfolder={video_info.get('subfolder', '')}&type={video_info.get('type', 'output')}"
+    )
+    video_bytes = requests.get(video_url, timeout=60).content
+    data = base64.b64encode(video_bytes).decode("ascii")
+
+    print(f"[OK] submit/poll/fetch in {time.time() - t_req:.1f}s", flush=True)
+    return video_bytes, data
+
+
+def _run_flash(endpoint, req: ValidatedRef2VAComfyInput) -> tuple:
+    """Submit via flash endpoint. Returns (video_bytes, data)."""
+    import time
+
+    t_req = time.time()
+    n_files = (
+        len(req.ref_images)
+        + len(req.ref_videos)
+        + len(req.ref_video_audios)
+        + len(req.ref_audios)
+    )
+    print(f"[REQ] prompt={req.prompt[:40]}  seed={req.seed}  files={n_files}", flush=True)
+    payload = build_payload(req)
+
+    print(f"[GEN] starting ComfyUI job prompt={req.prompt[:40]}", flush=True)
+    t_gen = time.time()
+    job = run_comfy_endpoint(endpoint, payload)
+    print(f"[GEN] ComfyUI job done in {time.time() - t_gen:.1f}s", flush=True)
+
+    if getattr(job, "error", None):
+        raise RuntimeError(f"job failed: {job.error}")
+
+    output = getattr(job, "output", None) or job
+    video_bytes, data = parse_output(output)
+
+    print(f"[OK] submit/fetch in {time.time() - t_req:.1f}s", flush=True)
+    return video_bytes, data
+
+
+def do_inference(backend, storage: Storage, req: ValidatedRef2VAComfyInput) -> MiniMaxH3Ref2VAComfyOutput:
+    """Beam (base_url str) and flash (endpoint) paths converge here. Testable via DI."""
+    if storage is None:
+        raise ValueError("storage is required")
+
+    if isinstance(backend, str):
+        video_bytes, data = _run_beam(backend, req)
+    else:
+        video_bytes, data = _run_flash(backend, req)
+
+    result = upload_result(storage, video_bytes, data)
+    print(f"[R2] uploaded key={result.artifact.presigned_url[:60]}", flush=True)
+    return result

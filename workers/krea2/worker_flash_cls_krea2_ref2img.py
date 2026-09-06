@@ -7,13 +7,23 @@ from runpod_flash import Endpoint, GpuGroup
 
 from workers.krea2._shared_krea2_ref2img import (
     Krea2Ref2ImgInput,
+    do_inference,
     load_dependencies,
-    run_generate,
 )
 from workers.services.storage.r2_storage import require_storage
 
 if TYPE_CHECKING:
     from workers.services.storage.storage import Storage
+
+
+def generate(storage: Storage, pipe, runtime_dir, torch_module, **kwargs) -> dict:
+    """Validate at boundary, delegate, return output contract."""
+    req = Krea2Ref2ImgInput(**kwargs)
+    try:
+        return do_inference(pipe, runtime_dir, torch_module, storage, req).model_dump()
+    except Exception as e:
+        print(f"[ERR] {type(e).__name__}: {e}", flush=True)
+        raise RuntimeError(f"inference failed: {e}") from e
 
 
 @Endpoint(
@@ -33,16 +43,16 @@ if TYPE_CHECKING:
     },
     dependencies=[
         "torch==2.9.1",
-        "diffusers",
+        "diffusers==0.39.0",
         "transformers>=4.57,<5",
-        "accelerate",
-        "safetensors",
+        "accelerate==1.14.0",
+        "safetensors==0.8.0",
         "huggingface_hub",
-        "pillow",
-        "protobuf",
-        "opencv-python-headless",
-        "peft",
-        "boto3",
+        "pillow==12.3.0",
+        "protobuf==6.33.6",
+        "opencv-python-headless==4.12.0.88",
+        "peft==0.17.0",
+        "boto3==1.43.83",
     ],
 )
 class Krea2Ref2ImgWorker:
@@ -55,11 +65,4 @@ class Krea2Ref2ImgWorker:
 
     def generate(self, **kwargs) -> dict:
         """Validate at boundary, delegate, return output contract."""
-        try:
-            req = self.Input(**kwargs)
-            return run_generate(
-                self.pipe, self.runtime_dir, self.torch_module, self.storage, req
-            ).model_dump()
-        except Exception as e:  # noqa: BLE001
-            print(f"[ERR] {type(e).__name__}: {e}", flush=True)
-            raise RuntimeError(f"inference failed: {e}")
+        return generate(self.storage, self.pipe, self.runtime_dir, self.torch_module, **kwargs)

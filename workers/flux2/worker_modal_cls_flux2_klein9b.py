@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import time
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -8,8 +7,8 @@ import modal
 
 from workers.flux2._shared_flux2_klein9b import (
     Flux2Klein9bInput,
+    do_inference,
     load_dependencies,
-    run_generate,
 )
 from workers.services.storage.r2_storage import require_storage
 
@@ -18,28 +17,15 @@ if TYPE_CHECKING:
 
 app = modal.App("flux2-klein9b-worker")
 
-START_TIME = time.time()
 
-
-@app.local_entrypoint()
-def main(
-    prompt: str = "a cat sitting on a rocket ship",
-    height: int = 512,
-    width: int = 512,
-    num_inference_steps: int = 4,
-    seed: int = -1,
-):
-    import json
-
-    worker = FluxKleinWorker()
-    result = worker.generate.remote(
-        prompt=prompt,
-        height=height,
-        width=width,
-        num_inference_steps=num_inference_steps,
-        seed=seed if seed >= 0 else None,
-    )
-    print(json.dumps(result, indent=2))
+def generate(storage: Storage, pipe, torch_module, **kwargs) -> dict:
+    """Validate at boundary, delegate, return output contract."""
+    req = Flux2Klein9bInput(**kwargs)
+    try:
+        return do_inference(pipe, torch_module, storage, req).model_dump()
+    except Exception as e:
+        print(f"[ERR] {type(e).__name__}: {e}", flush=True)
+        raise RuntimeError(f"inference failed: {e}") from e
 
 
 dotenv_secret = modal.Secret.from_dotenv(str(Path(__file__).parent.parent / ".env"))
@@ -92,17 +78,8 @@ class FluxKleinWorker:
     @modal.method()
     def generate(self, **kwargs) -> dict:
         """Validate at boundary, delegate, return output contract."""
-        try:
-            req = Flux2Klein9bInput(**kwargs)
-            return run_generate(self.pipe, self.torch_module, self.storage, req).model_dump()
-        except Exception as e:  # noqa: BLE001
-            print(f"[ERR] {type(e).__name__}: {e}", flush=True)
-            raise RuntimeError(f"inference failed: {e}")
+        return generate(self.storage, self.pipe, self.torch_module, **kwargs)
 
     @modal.fastapi_endpoint(method="POST")
     def generate_web(self, item: Flux2Klein9bInput) -> dict:
-        try:
-            return run_generate(self.pipe, self.torch_module, self.storage, item).model_dump()
-        except Exception as e:
-            print(f"[ERR] {type(e).__name__}: {e}", flush=True)
-            raise
+        return generate(self.storage, self.pipe, self.torch_module, **item.model_dump())

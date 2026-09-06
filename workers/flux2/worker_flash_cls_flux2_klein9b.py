@@ -7,13 +7,23 @@ from runpod_flash import Endpoint, GpuGroup
 
 from workers.flux2._shared_flux2_klein9b import (
     Flux2Klein9bInput,
+    do_inference,
     load_dependencies,
-    run_generate,
 )
 from workers.services.storage.r2_storage import require_storage
 
 if TYPE_CHECKING:
     from workers.services.storage.storage import Storage
+
+
+def generate(storage: Storage, pipe, torch_module, **kwargs) -> dict:
+    """Validate at boundary, delegate, return output contract."""
+    req = Flux2Klein9bInput(**kwargs)
+    try:
+        return do_inference(pipe, torch_module, storage, req).model_dump()
+    except Exception as e:
+        print(f"[ERR] {type(e).__name__}: {e}", flush=True)
+        raise RuntimeError(f"inference failed: {e}") from e
 
 
 @Endpoint(
@@ -35,14 +45,14 @@ if TYPE_CHECKING:
     },
     dependencies=[
         "torch==2.9.1",
-        "diffusers",
-        "transformers>=4.57,<5",
-        "accelerate",
+        "diffusers==0.40.0",
+        "transformers>=5.0,<6",
+        "accelerate==1.14.0",
+        "sdnq==0.2.6",
         "safetensors",
-        "sdnq",
         "huggingface_hub",
-        "pillow",
-        "boto3",
+        "pillow==12.3.0",
+        "boto3==1.43.83",
     ],
 )
 class FluxKleinWorker:
@@ -55,9 +65,4 @@ class FluxKleinWorker:
 
     def generate(self, **kwargs) -> dict:
         """Validate at boundary, delegate, return output contract."""
-        try:
-            req = self.Input(**kwargs)
-            return run_generate(self.pipe, self.torch_module, self.storage, req).model_dump()
-        except Exception as e:  # noqa: BLE001
-            print(f"[ERR] {type(e).__name__}: {e}", flush=True)
-            raise RuntimeError(f"inference failed: {e}")
+        return generate(self.storage, self.pipe, self.torch_module, **kwargs)

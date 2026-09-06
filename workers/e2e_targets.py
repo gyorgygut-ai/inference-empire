@@ -1,5 +1,11 @@
 """E2E rungs: identical run/run_async over in-process fakes or HTTP.
 
+Both rungs take (worker_mod, inputs, deps, storage). The local rung patches
+`load_dependencies` (proving the seam) then drives module-level
+`generate(storage, *deps, **inputs)` directly; `run_async` additionally
+exercises the submit/poll loop via `FakeAsyncRunner`. The deployed rung
+ignores deps/storage and uses `post_and_poll`.
+
 Test-env contract (owner honors at deploy time): POST
 {base_url}/{worker_stem} with {"inputs": {...}, "sync": bool}; a sync reply
 carries the output contract directly, an async reply carries
@@ -11,31 +17,43 @@ from __future__ import annotations
 
 import time
 
-from workers.services.runner.runner_fake import FakeAsyncRunner, FakeSyncRunner
+from workers.services.runner.runner_fake import FakeAsyncRunner
 
 
 class LocalTarget:
     def __init__(self, monkeypatch):
         self.monkeypatch = monkeypatch
 
-    def run(self, worker_mod, inputs, deps):
+    def _deps(self, worker_mod, deps):
         self.monkeypatch.setattr(worker_mod, "load_dependencies", lambda **k: deps)
-        return FakeSyncRunner().run(worker_mod, **inputs)
+        return worker_mod.load_dependencies()
 
-    def run_async(self, worker_mod, inputs, deps):
-        self.monkeypatch.setattr(worker_mod, "load_dependencies", lambda **k: deps)
+    def run(self, worker_mod, inputs, deps, storage):
+        return worker_mod.generate(storage, *self._deps(worker_mod, deps), **inputs)
+
+    def run_async(self, worker_mod, inputs, deps, storage):
+        pipe_deps = self._deps(worker_mod, deps)
+        call = lambda: worker_mod.generate(storage, *pipe_deps, **inputs)
         runner = FakeAsyncRunner()
-        return runner.result(runner.submit(worker_mod, **inputs))
+        return runner.result(runner.submit(_Fn(call), **inputs))
+
+
+class _Fn:
+    def __init__(self, call):
+        self._call = call
+
+    def generate(self, **inputs):
+        return self._call()
 
 
 class DeployedTarget:
     def __init__(self, base_url):
         self.base_url = base_url.rstrip("/")
 
-    def run(self, worker_mod, inputs, deps):
+    def run(self, worker_mod, inputs, deps, storage):
         return post_and_poll(self.base_url, worker_mod, inputs, sync=True)
 
-    def run_async(self, worker_mod, inputs, deps):
+    def run_async(self, worker_mod, inputs, deps, storage):
         return post_and_poll(self.base_url, worker_mod, inputs, sync=False)
 
 

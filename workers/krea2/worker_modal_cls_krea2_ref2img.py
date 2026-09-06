@@ -7,11 +7,9 @@ from typing import TYPE_CHECKING
 import modal
 
 from workers.krea2._shared_krea2_ref2img import (
-    MODEL_REPO,
-    REID_REPO,
     Krea2Ref2ImgInput,
+    do_inference,
     load_dependencies,
-    run_generate,
 )
 from workers.services.storage.r2_storage import require_storage
 
@@ -20,29 +18,19 @@ if TYPE_CHECKING:
 
 app = modal.App("krea2-ref2img-worker")
 
+
+def generate(storage: Storage, pipe, runtime_dir, torch_module, **kwargs) -> dict:
+    """Validate at boundary, delegate, return output contract."""
+    req = Krea2Ref2ImgInput(**kwargs)
+    try:
+        return do_inference(pipe, runtime_dir, torch_module, storage, req).model_dump()
+    except Exception as e:
+        print(f"[ERR] {type(e).__name__}: {e}", flush=True)
+        raise RuntimeError(f"inference failed: {e}") from e
+
+
 dotenv_secret = modal.Secret.from_dotenv(str(Path(__file__).parent.parent / ".env"))
 hf_cache_vol = modal.Volume.from_name("hf-cache", create_if_missing=True)
-
-
-def _download_models():
-    import os
-
-    from huggingface_hub import snapshot_download
-
-    token = os.environ.get("HF_TOKEN") or None
-
-    snapshot_download(
-        REID_REPO,
-        token=token,
-        allow_patterns=[
-            "pipeline.py",
-            "face_crop.py",
-            "models/*.onnx",
-            "krea2_reid_rank32.safetensors",
-        ],
-    )
-
-    snapshot_download(MODEL_REPO, token=token)
 
 
 image = (
@@ -99,21 +87,10 @@ class Krea2Ref2ImgWorker:
     @modal.method()
     def generate(self, **kwargs) -> dict:
         """Validate at boundary, delegate, return output contract."""
-        try:
-            req = Krea2Ref2ImgInput(**kwargs)
-            return run_generate(
-                self.pipe, self.runtime_dir, self.torch_module, self.storage, req
-            ).model_dump()
-        except Exception as e:  # noqa: BLE001
-            print(f"[ERR] {type(e).__name__}: {e}", flush=True)
-            raise RuntimeError(f"inference failed: {e}")
+        return generate(self.storage, self.pipe, self.runtime_dir, self.torch_module, **kwargs)
 
     @modal.fastapi_endpoint(method="POST")
     def generate_web(self, item: Krea2Ref2ImgInput) -> dict:
-        try:
-            return run_generate(
-                self.pipe, self.runtime_dir, self.torch_module, self.storage, item
-            ).model_dump()
-        except Exception as e:
-            print(f"[ERR] {type(e).__name__}: {e}", flush=True)
-            raise
+        return generate(
+            self.storage, self.pipe, self.runtime_dir, self.torch_module, **item.model_dump()
+        )

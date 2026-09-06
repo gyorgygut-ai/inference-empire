@@ -7,13 +7,23 @@ from runpod_flash import Endpoint, GpuGroup
 
 from workers.h3._shared_minimax_h3_fl2va import (
     MiniMaxH3Fl2VAInput,
+    do_inference,
     load_dependencies,
-    run_generate,
 )
 from workers.services.storage.r2_storage import require_storage
 
 if TYPE_CHECKING:
     from workers.services.storage.storage import Storage
+
+
+def generate(storage: Storage, pipe, write_video_audio, **kwargs) -> dict:
+    """Validate at boundary, delegate, return output contract."""
+    req = MiniMaxH3Fl2VAInput(**kwargs)
+    try:
+        return do_inference(pipe, write_video_audio, storage, req).model_dump()
+    except Exception as e:
+        print(f"[ERR] {type(e).__name__}: {e}", flush=True)
+        raise RuntimeError(f"inference failed: {e}") from e
 
 
 @Endpoint(
@@ -34,14 +44,17 @@ if TYPE_CHECKING:
     },
     dependencies=[
         "torch==2.9.1",
+        "diffusers==0.40.0",
+        "transformers>=5.0,<6",
+        "accelerate==1.14.0",
         "torchcodec==0.9.0",
         "diffsynth[audio]",
-        "transformers>=4.57,<5",
         "bitsandbytes",
         "pillow",
-        "imageio[ffmpeg]",
+        "imageio==2.37.2",
+        "imageio-ffmpeg==0.6.0",
         "torchaudio",
-        "boto3",
+        "boto3==1.43.83",
     ],
 )
 class MiniMaxH3Fl2VAWorker:
@@ -54,5 +67,4 @@ class MiniMaxH3Fl2VAWorker:
 
     def generate(self, **kwargs) -> dict:
         """Validate at boundary, delegate, return output contract."""
-        req = self.Input(**kwargs)
-        return run_generate(self.pipe, self.write_video_audio, self.storage, req).model_dump()
+        return generate(self.storage, self.pipe, self.write_video_audio, **kwargs)

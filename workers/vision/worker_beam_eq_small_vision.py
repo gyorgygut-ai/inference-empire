@@ -4,16 +4,19 @@ from typing import TYPE_CHECKING
 
 from beam import Image, QueueDepthAutoscaler, Volume, endpoint
 
-from workers.services.storage.r2_storage import require_storage
 from workers.vision._shared_small_vision import (
     SmallVisionInput,
     SmallVisionOutput,
+    do_inference,
+    ensure_dotenv,
     load_dependencies,
-    run_analyze,
 )
 
 if TYPE_CHECKING:
     from workers.services.storage.storage import Storage
+
+
+ensure_dotenv()
 
 CACHE_PATH = "./hf-cache"
 
@@ -22,10 +25,10 @@ image = (
     .add_python_packages(
         [
             "torch==2.9.1",
-            "transformers>=4.57,<5",
-            "torchvision",
-            "pillow",
-            "accelerate",
+            "transformers>=5.0,<6",
+            "torchvision==0.24.1",
+            "pillow==12.3.0",
+            "accelerate==1.14.0",
         ]
     )
     .with_envs(
@@ -41,6 +44,17 @@ def load_deps():
     return load_dependencies(cache_dir=CACHE_PATH)
 
 
+def generate(storage: Storage, model, processor, analyze_prompt, **kwargs) -> dict:
+    """Validate at boundary, delegate, return output contract."""
+    req = SmallVisionInput(**kwargs)
+    try:
+        result = do_inference(model, processor, analyze_prompt, req)
+        return result.model_dump() if isinstance(result, SmallVisionOutput) else result
+    except Exception as e:
+        print(f"[ERR] {type(e).__name__}: {e}", flush=True)
+        raise RuntimeError(f"inference failed: {e}") from e
+
+
 @endpoint(
     name="small-vision-worker",
     cpu=2,
@@ -54,11 +68,6 @@ def load_deps():
     checkpoint_enabled=True,
 )
 def analyze(context, image_base64: str, storage: Storage):
-    storage = require_storage(storage)
+    # Vision returns JSON; storage is unused (kept for platform/proxy compat).
     model, processor, analyze_prompt = context.on_start_value
-    try:
-        req = SmallVisionInput(image_base64=image_base64)
-        result = run_analyze(model, processor, analyze_prompt, req)
-        return result.model_dump() if isinstance(result, SmallVisionOutput) else result
-    except Exception as e:  # noqa: BLE001
-        raise RuntimeError(f"inference failed: {e}")
+    return generate(storage, model, processor, analyze_prompt, image_base64=image_base64)

@@ -1,18 +1,17 @@
 from __future__ import annotations
 
-import time
 from typing import TYPE_CHECKING
 
 import modal
 
 from workers.h3._shared_minimax_h3_ref2va import (
-    MiniMaxH3Ref2VAInput,
     ValidatedRef2VAInput,
+    apply_torch_shims,
+    do_inference,
     load_dependencies,
-    run_generate,
 )
+from workers.services.storage.r2_storage import require_storage
 
-from workers.services.storage.real_r2 import require_storage
 if TYPE_CHECKING:
     from workers.services.storage.storage import Storage
 
@@ -30,12 +29,15 @@ image = (
         "torch==2.9.1",
         "torchcodec==0.9.0",
         "diffsynth[audio]",
-        "transformers>=4.57,<5",
+        "diffusers==0.40.0",
+        "transformers>=5.0,<6",
+        "accelerate==1.14.0",
         "bitsandbytes",
         "pillow",
-        "imageio[ffmpeg]",
+        "imageio==2.37.2",
+        "imageio-ffmpeg==0.6.0",
         "torchaudio",
-        "boto3",
+        "boto3==1.43.83",
         "fastapi",
         "hf_transfer",
     )
@@ -49,6 +51,16 @@ image = (
     )
     .add_local_python_source("workers.services", "workers.h3")
 )
+
+
+def generate(storage: Storage, pipe, write_video_audio, **kwargs) -> dict:
+    """Validate at boundary, delegate, return output contract."""
+    req = ValidatedRef2VAInput(**kwargs)
+    try:
+        return do_inference(pipe, write_video_audio, storage, req).model_dump()
+    except Exception as e:
+        print(f"[ERR] {type(e).__name__}: {e}", flush=True)
+        raise RuntimeError(f"inference failed: {e}") from e
 
 
 @app.cls(
@@ -67,35 +79,14 @@ class MiniMaxH3Ref2VAWorker:
 
     @modal.enter()
     def load(self):
-        import torch.distributed as dist
-
-        dist.is_available = lambda: False
-
-        import torch
-        _orig_load_library = torch.ops.load_library
-        def _patched_load_library(path):
-            try:
-                return _orig_load_library(path)
-            except OSError:
-                pass
-        torch.ops.load_library = _patched_load_library
-
+        apply_torch_shims()
         self.pipe, self.write_video_audio = load_dependencies()
 
     @modal.method()
     def generate(self, **kwargs) -> dict:
-        try:
-            req = ValidatedRef2VAInput(**kwargs)
-            return run_generate(
-                self.pipe, self.write_video_audio, self.storage, req
-            ).model_dump()
-        except Exception as e:
-            print(f"[ERR] {type(e).__name__}: {e}", flush=True)
-            raise
+        """Validate at boundary, delegate, return output contract."""
+        return generate(self.storage, self.pipe, self.write_video_audio, **kwargs)
 
     @modal.fastapi_endpoint(method="POST")
-    def generate_web(self, item: MiniMaxH3Ref2VAInput) -> dict:
-        req = ValidatedRef2VAInput(**item.model_dump())
-        return run_generate(
-            self.pipe, self.write_video_audio, self.storage, req
-        ).model_dump()
+    def generate_web(self, item: ValidatedRef2VAInput) -> dict:
+        return generate(self.storage, self.pipe, self.write_video_audio, **item.model_dump())

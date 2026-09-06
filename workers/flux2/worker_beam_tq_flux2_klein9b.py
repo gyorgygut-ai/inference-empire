@@ -1,16 +1,14 @@
 from __future__ import annotations
 
-import os
-import time
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 from beam import Image, QueueDepthAutoscaler, Volume, task_queue
 
 from workers.flux2._shared_flux2_klein9b import (
     Flux2Klein9bInput,
+    do_inference,
+    ensure_dotenv,
     load_dependencies,
-    run_generate,
 )
 from workers.services.storage.r2_storage import require_storage
 
@@ -18,23 +16,7 @@ if TYPE_CHECKING:
     from workers.services.storage.storage import Storage
 
 
-START = time.time()
-
-
-def _load_dotenv(path: Path) -> None:
-    if not path.exists():
-        return
-    for line in path.read_text().splitlines():
-        line = line.strip()
-        if not line or line.startswith("#") or "=" not in line:
-            continue
-        key, _, value = line.partition("=")
-        key, value = key.strip(), value.strip().strip('"').strip("'")
-        if key and key not in os.environ:
-            os.environ[key] = value
-
-
-_load_dotenv(Path(__file__).parent.parent / ".env")
+ensure_dotenv()
 
 
 CACHE_PATH = "./hf-cache"
@@ -63,8 +45,14 @@ image = (
 )
 
 
-def load_deps():
-    return load_dependencies()
+def generate(storage: Storage, pipe, torch_module, **kwargs) -> dict:
+    """Validate at boundary, delegate, return output contract."""
+    req = Flux2Klein9bInput(**kwargs)
+    try:
+        return do_inference(pipe, torch_module, storage, req).model_dump()
+    except Exception as e:
+        print(f"[ERR] {type(e).__name__}: {e}", flush=True)
+        raise RuntimeError(f"inference failed: {e}") from e
 
 
 @task_queue(
@@ -73,7 +61,7 @@ def load_deps():
     memory="32Gi",
     gpu="RTX4090",
     image=image,
-    on_start=load_deps,
+    on_start=load_dependencies,
     volumes=[Volume(name="hf-cache", mount_path=CACHE_PATH)],
     autoscaler=QueueDepthAutoscaler(max_containers=1, tasks_per_container=1),
     keep_warm_seconds=1800,
@@ -81,12 +69,6 @@ def load_deps():
     timeout=3600,
     secrets=["HF_TOKEN", "R2_ACCESS_KEY", "R2_SECRET_KEY", "R2_ENDPOINT"],
 )
-def generate(context, storage: Storage, **kwargs) -> dict:
+def dispatch(context, storage: Storage, **kwargs) -> dict:
     storage = require_storage(storage)
-    pipe, torch_module = context.on_start_value
-    try:
-        req = Flux2Klein9bInput(**kwargs)
-        return run_generate(pipe, torch_module, storage, req).model_dump()
-    except Exception as e:  # noqa: BLE001
-        print(f"[ERR] {type(e).__name__}: {e}", flush=True)
-        raise RuntimeError(f"inference failed: {e}")
+    return generate(storage, *context.on_start_value, **kwargs)

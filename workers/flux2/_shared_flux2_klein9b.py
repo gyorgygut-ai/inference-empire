@@ -19,6 +19,24 @@ _MAX_WIDTH = 2560
 _MAX_HEIGHT = 2560
 
 
+def ensure_dotenv() -> None:
+    """Load sibling workers/.env once (local runs; remote uses secrets)."""
+    import os
+    from pathlib import Path
+
+    path = Path(__file__).parent.parent / ".env"
+    if not path.exists():
+        return
+    for line in path.read_text().splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, _, value = line.partition("=")
+        key, value = key.strip(), value.strip().strip('"').strip("'")
+        if key and key not in os.environ:
+            os.environ[key] = value
+
+
 class Flux2Klein9bInput(BaseModel):
     model_config = ConfigDict(title="Flux2Klein9bInput")
     prompt: str
@@ -111,7 +129,7 @@ def load_pipeline_as_needed(pipe=None):
     return load_pipeline()
 
 
-def run_generate(pipe, torch_module, storage: Storage, req: Flux2Klein9bInput) -> Flux2Klein9bOutput:
+def do_inference(pipe, torch_module, storage: Storage, req: Flux2Klein9bInput) -> Flux2Klein9bOutput:
     """Takes validated Input, returns Output. Testable via DI."""
     import io
 

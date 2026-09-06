@@ -1,15 +1,14 @@
 from __future__ import annotations
 
-import os
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 from beam import Image, QueueDepthAutoscaler, Volume, task_queue
 
 from workers.krea2._shared_krea2_ref2img import (
     Krea2Ref2ImgInput,
+    do_inference,
+    ensure_dotenv,
     load_dependencies,
-    run_generate,
 )
 from workers.services.storage.r2_storage import require_storage
 
@@ -17,20 +16,7 @@ if TYPE_CHECKING:
     from workers.services.storage.storage import Storage
 
 
-def _load_dotenv(path: Path) -> None:
-    if not path.exists():
-        return
-    for line in path.read_text().splitlines():
-        line = line.strip()
-        if not line or line.startswith("#") or "=" not in line:
-            continue
-        key, _, value = line.partition("=")
-        key, value = key.strip(), value.strip().strip('"').strip("'")
-        if key and key not in os.environ:
-            os.environ[key] = value
-
-
-_load_dotenv(Path(__file__).parent.parent / ".env")
+ensure_dotenv()
 
 CACHE_PATH = "./hf-cache"
 
@@ -66,6 +52,16 @@ def load_deps():
     return load_dependencies(cache_dir=CACHE_PATH)
 
 
+def generate(storage: Storage, pipe, runtime_dir, torch_module, **kwargs) -> dict:
+    """Validate at boundary, delegate, return output contract."""
+    req = Krea2Ref2ImgInput(**kwargs)
+    try:
+        return do_inference(pipe, runtime_dir, torch_module, storage, req).model_dump()
+    except Exception as e:
+        print(f"[ERR] {type(e).__name__}: {e}", flush=True)
+        raise RuntimeError(f"inference failed: {e}") from e
+
+
 @task_queue(
     name="krea2-ref2img-worker",
     cpu=8,
@@ -83,34 +79,6 @@ def load_deps():
         "PYTORCH_NVML_BASED_CUDA_CHECK": "0",
     },
 )
-def generate(
-    context,
-    prompt: str,
-    storage: Storage,
-    reference_image: str | None = None,
-    height: int = 768,
-    width: int = 768,
-    num_inference_steps: int = 8,
-    guidance_scale: float = 0.0,
-    seed: int | None = None,
-    lora_scale: float = 1.0,
-    face_crop: bool = True,
-):
+def dispatch(context, storage: Storage, **kwargs) -> dict:
     storage = require_storage(storage)
-    pipe, runtime_dir, torch_module = context.on_start_value
-    try:
-        req = Krea2Ref2ImgInput(
-            prompt=prompt,
-            reference_image=reference_image,
-            height=height,
-            width=width,
-            num_inference_steps=num_inference_steps,
-            guidance_scale=guidance_scale,
-            seed=seed,
-            lora_scale=lora_scale,
-            face_crop=face_crop,
-        )
-        return run_generate(pipe, runtime_dir, torch_module, storage, req).model_dump()
-    except Exception as e:  # noqa: BLE001
-        print(f"[ERR] {type(e).__name__}: {e}", flush=True)
-        raise RuntimeError(f"inference failed: {e}")
+    return generate(storage, *context.on_start_value, **kwargs)

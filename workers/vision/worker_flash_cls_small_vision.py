@@ -4,16 +4,26 @@ from typing import TYPE_CHECKING
 
 from runpod_flash import Endpoint, GpuGroup
 
-from workers.services.storage.r2_storage import require_storage
 from workers.vision._shared_small_vision import (
     SmallVisionInput,
     SmallVisionOutput,
+    do_inference,
     load_dependencies,
-    run_analyze,
 )
 
 if TYPE_CHECKING:
     from workers.services.storage.storage import Storage
+
+
+def generate(storage: Storage, model, processor, analyze_prompt, **kwargs) -> dict:
+    """Validate at boundary, delegate, return output contract."""
+    req = SmallVisionInput(**kwargs)
+    try:
+        result = do_inference(model, processor, analyze_prompt, req)
+        return result.model_dump() if isinstance(result, SmallVisionOutput) else result
+    except Exception as e:
+        print(f"[ERR] {type(e).__name__}: {e}", flush=True)
+        raise RuntimeError(f"inference failed: {e}") from e
 
 
 @Endpoint(
@@ -27,25 +37,20 @@ if TYPE_CHECKING:
     },
     dependencies=[
         "torch==2.9.1",
-        "transformers>=4.57,<5",
-        "torchvision",
-        "pillow",
-        "accelerate",
+        "transformers>=5.0,<6",
+        "torchvision==0.24.1",
+        "accelerate==1.14.0",
+        "pillow==12.3.0",
+        "boto3==1.43.83",
     ],
 )
 class Qwen2VLVisionWorker:
     Input = SmallVisionInput
 
     def __init__(self, storage: Storage):
-        storage = require_storage(storage)
-        self.storage = storage
+        # Vision returns JSON; storage is unused (kept for platform/proxy compat).
         self.model, self.processor, self.analyze_prompt = load_dependencies()
 
     def analyze(self, **kwargs) -> dict:
         """Validate at boundary, delegate, return output contract."""
-        try:
-            req = self.Input(**kwargs)
-            result = run_analyze(self.model, self.processor, self.analyze_prompt, req)
-            return result.model_dump() if isinstance(result, SmallVisionOutput) else result
-        except Exception as e:  # noqa: BLE001
-            raise RuntimeError(f"inference failed: {e}")
+        return generate(None, self.model, self.processor, self.analyze_prompt, **kwargs)

@@ -1,21 +1,22 @@
 from __future__ import annotations
 
-import time
 from typing import TYPE_CHECKING
 
 from beam import Image, QueueDepthAutoscaler, Volume, task_queue
 
 from workers.h3._shared_minimax_h3_ref2va import (
     ValidatedRef2VAInput,
+    do_inference,
+    ensure_dotenv,
     load_dependencies,
-    run_generate,
 )
+from workers.services.storage.r2_storage import require_storage
 
-from workers.services.storage.real_r2 import require_storage
 if TYPE_CHECKING:
     from workers.services.storage.storage import Storage
 
-START_TIME = time.time()
+
+ensure_dotenv()
 
 
 CACHE_PATH = "./hf-cache"
@@ -26,12 +27,15 @@ image = (
         "torch==2.9.1",
         "torchcodec==0.9.0",
         "diffsynth[audio]",
-        "transformers>=4.57,<5",
+        "diffusers==0.40.0",
+        "transformers>=5.0,<6",
+        "accelerate==1.14.0",
         "bitsandbytes",
         "pillow",
-        "imageio[ffmpeg]",
+        "imageio==2.37.2",
+        "imageio-ffmpeg==0.6.0",
         "torchaudio",
-        "boto3",
+        "boto3==1.43.83",
     ])
     .with_envs({
         "HF_HOME": CACHE_PATH,
@@ -44,6 +48,16 @@ image = (
 
 def load_deps():
     return load_dependencies(cache_dir=CACHE_PATH)
+
+
+def generate(storage: Storage, pipe, write_video_audio, **kwargs) -> dict:
+    """Validate at boundary, delegate, return output contract."""
+    req = ValidatedRef2VAInput(**kwargs)
+    try:
+        return do_inference(pipe, write_video_audio, storage, req).model_dump()
+    except Exception as e:
+        print(f"[ERR] {type(e).__name__}: {e}", flush=True)
+        raise RuntimeError(f"inference failed: {e}") from e
 
 
 @task_queue(
@@ -63,12 +77,6 @@ def load_deps():
         "R2_ENDPOINT": "https://29b2f092b2dbc0b63f48f491ddc177ee.r2.cloudflarestorage.com",
     },
 )
-def generate(context, storage: Storage, **kwargs) -> dict:
+def dispatch(context, storage: Storage, **kwargs) -> dict:
     storage = require_storage(storage)
-    try:
-        pipe, write_video_audio = context.on_start_value
-        req = ValidatedRef2VAInput(**kwargs)
-        return run_generate(pipe, write_video_audio, storage, req).model_dump()
-    except Exception as e:
-        print(f"[ERR] {type(e).__name__}: {e}", flush=True)
-        raise
+    return generate(storage, *context.on_start_value, **kwargs)

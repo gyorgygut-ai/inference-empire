@@ -4,19 +4,29 @@ from typing import TYPE_CHECKING
 
 import modal
 
-from workers.services.storage.r2_storage import require_storage
 from workers.vision._shared_small_vision import (
     REPO_ID,
     SmallVisionInput,
     SmallVisionOutput,
+    do_inference,
     load_dependencies,
-    run_analyze,
 )
 
 if TYPE_CHECKING:
     from workers.services.storage.storage import Storage
 
 app = modal.App("small-vision-worker")
+
+
+def generate(storage: Storage, model, processor, analyze_prompt, **kwargs) -> dict:
+    """Validate at boundary, delegate, return output contract."""
+    req = SmallVisionInput(**kwargs)
+    try:
+        result = do_inference(model, processor, analyze_prompt, req)
+        return result.model_dump() if isinstance(result, SmallVisionOutput) else result
+    except Exception as e:
+        print(f"[ERR] {type(e).__name__}: {e}", flush=True)
+        raise RuntimeError(f"inference failed: {e}") from e
 
 
 def _download_model():
@@ -31,12 +41,13 @@ image = (
     modal.Image.debian_slim(python_version="3.11")
     .pip_install(
         "torch==2.9.1",
-        "transformers",
-        "torchvision",
-        "pillow",
-        "accelerate",
-        "fastapi",
-        "hf_transfer",
+        "transformers>=5.0,<6",
+        "torchvision==0.24.1",
+        "pillow==12.3.0",
+        "accelerate==1.14.0",
+        "boto3==1.43.83",
+        "fastapi==0.141.1",
+        "hf_transfer==0.1.9",
     )
     .env(
         {
@@ -58,31 +69,18 @@ image = (
 )
 class SmallVisionWorker:
     def __init__(self, storage: Storage):
-        storage = require_storage(storage)
-        self.storage = storage
+        # Vision returns JSON; storage is unused (kept for platform/proxy compat).
+        pass
 
     @modal.enter()
     def load(self):
         self.model, self.processor, self.analyze_prompt = load_dependencies()
 
-    def _run_analyze(self, req: SmallVisionInput):
-        return run_analyze(self.model, self.processor, self.analyze_prompt, req)
-
     @modal.method()
     def analyze(self, **kwargs) -> dict:
-        try:
-            req = SmallVisionInput(**kwargs)
-            result = self._run_analyze(req)
-            return result.model_dump() if isinstance(result, SmallVisionOutput) else result
-        except Exception as e:  # noqa: BLE001
-            print(f"[ERR] {type(e).__name__}: {e}", flush=True)
-            raise RuntimeError(f"inference failed: {e}")
+        """Validate at boundary, delegate, return output contract."""
+        return generate(None, self.model, self.processor, self.analyze_prompt, **kwargs)
 
     @modal.fastapi_endpoint(method="POST")
     def analyze_web(self, item: SmallVisionInput) -> dict:
-        try:
-            result = self._run_analyze(item)
-            return result.model_dump() if isinstance(result, SmallVisionOutput) else result
-        except Exception as e:
-            print(f"[ERR] {type(e).__name__}: {e}", flush=True)
-            raise
+        return self.analyze(**item.model_dump())

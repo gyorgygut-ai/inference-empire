@@ -22,6 +22,46 @@ PROCESSOR_REPO = "MiniMaxAI/MiniMax-H3"
 PROCESSOR_PATTERN = "Ref2VA/processor/"
 FPS = 24
 
+
+def ensure_dotenv() -> None:
+    """Load sibling workers/.env once (local runs; remote uses secrets)."""
+    import os
+    from pathlib import Path
+
+    path = Path(__file__).parent.parent / ".env"
+    if not path.exists():
+        return
+    for line in path.read_text().splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, _, value = line.partition("=")
+        key, value = key.strip(), value.strip().strip('"').strip("'")
+        if key and key not in os.environ:
+            os.environ[key] = value
+
+
+def apply_torch_shims() -> None:
+    """Patch torch runtime quirks once (remote containers)."""
+    import torch.distributed as dist
+
+    try:
+        dist.is_available = lambda: False
+    except Exception:  # noqa: BLE001, S110
+        pass
+
+    import torch
+
+    _orig_load_library = torch.ops.load_library
+
+    def _patched_load_library(path):
+        try:
+            return _orig_load_library(path)
+        except OSError as e:
+            raise RuntimeError(f"torch native library failed to load: {path}: {e}") from e
+
+    torch.ops.load_library = _patched_load_library
+
 _MAX_REF_IMAGES = 9
 _MAX_REF_VIDEOS = 3
 _MAX_REF_AUDIOS = 3
@@ -273,7 +313,7 @@ def load_pipeline_as_needed(pipe=None, write_video_audio=None, vram_reserve_gb: 
     return load_pipeline(vram_reserve_gb=vram_reserve_gb)
 
 
-def run_generate(
+def do_inference(
     pipe,
     write_video_audio,
     storage: Storage,

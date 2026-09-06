@@ -1,14 +1,30 @@
+from __future__ import annotations
+
 import asyncio
 import base64
 import json
 import os
-import re
-import secrets
 import threading
 import time
+from typing import TYPE_CHECKING
 
 import modal
 import numpy as np
+
+from workers.services.storage.r2_storage import require_storage
+from workers.voice._shared_voice_chat import (
+    MAX_NEW_TOKENS,
+    SUPPORTED_LANGUAGES,
+    VoiceChatInput,
+    _patch_torch_load,
+    _rid,
+    find_sentence_end,
+    pcm_float_to_int16,
+    resample_int16,
+)
+
+if TYPE_CHECKING:
+    from workers.services.storage.storage import Storage
 
 # --------------------------------------------------------------------------
 # Configuration
@@ -17,74 +33,12 @@ APP_NAME = "voice-chat-worker"
 LLM_REPO = "Qwen/Qwen3-8B"
 VOICES_DIR = os.path.join(os.path.dirname(__file__), "voices", "reference_voices")
 DEFAULT_VOICE = "GutAI"
-SAMPLE_RATE_IN = 16000
-TTS_SR = 24000
-MAX_NEW_TOKENS = 384
-# Voice/language options advertised to the UI (source of truth = this worker).
-SUPPORTED_LANGUAGES = {"en": "English", "hu": "Hungarian"}
 
 app = modal.App(APP_NAME)
 
 # Persistent model cache — models download once, reused across all deploys/containers.
 volume = modal.Volume.from_name("model-cache", create_if_missing=True)
 MODEL_MOUNT = "/models"
-
-
-# --------------------------------------------------------------------------
-# Pure helpers (unit-testable, no GPU / heavy deps)
-# --------------------------------------------------------------------------
-_SENT_RE = re.compile(r"[.!?]+(?=\s|$)")
-
-
-def find_sentence_end(text: str) -> int:
-    """Return index just after the last sentence-ending punctuation in `text`."""
-    matches = list(_SENT_RE.finditer(text))
-    if not matches:
-        return -1
-    return matches[-1].end()
-
-
-def pcm_float_to_int16(wav: np.ndarray) -> bytes:
-    wav = np.asarray(wav, dtype=np.float32)
-    clipped = np.clip(wav, -1.0, 1.0) * 32767.0
-    return clipped.astype(np.int16).tobytes()
-
-
-def resample_int16(audio_int16: np.ndarray, from_sr: int, to_sr: int) -> np.ndarray:
-    """Resample int16 PCM using torch (no torchaudio dependency)."""
-    import torch
-    import torch.nn.functional as F
-
-    t = torch.tensor(audio_int16.astype(np.float32) / 32768.0).unsqueeze(0).unsqueeze(0)
-    out = F.interpolate(t, scale_factor=to_sr / from_sr, mode="linear", align_corners=False)
-    return out.squeeze().numpy().astype(np.float32)
-
-
-def _rid(prefix: str) -> str:
-    return f"{prefix}_{secrets.token_hex(6)}"
-
-
-def _patch_torch_load():
-    """Revert torch.load to pre-2.6 default (weights_only=False).
-
-    TTS 0.22.0 pickles custom config classes (XttsConfig, etc.) and calls
-    torch.load without overriding the default, which torch>=2.6 changed to
-    weights_only=True and rejects. Only TTS in this stack uses the pickle
-    path (transformers uses safetensors, whisper uses CTranslate2), so this
-    is scoped to the TTS load and avoids downgrading torch globally.
-    """
-    import torch
-
-    if getattr(torch.load, "_patched", False):
-        return
-    _orig = torch.load
-
-    def _load(*args, **kwargs):
-        kwargs.setdefault("weights_only", False)
-        return _orig(*args, **kwargs)
-
-    _load._patched = True
-    torch.load = _load
 
 
 # --------------------------------------------------------------------------
@@ -644,6 +598,44 @@ class RealtimeSession:
 # --------------------------------------------------------------------------
 # Modal worker (thin wrapper around the pipeline)
 # --------------------------------------------------------------------------
+def load_dependencies():
+    """Load all dependencies for modal voice worker."""
+    # Fast path: build the pipeline and load the voice manifest (JSON read
+    # only) so session.created is sent immediately. The heavy LLM/whisper/
+    # TTS models load lazily on the first utterance (_ensure_loaded).
+    pipeline = VoiceChatPipeline()
+    pipeline.voices = pipeline._load_voices()
+    return (pipeline,)
+
+
+def generate(storage: Storage, pipeline: VoiceChatPipeline, **kwargs) -> dict:
+    """Validate at boundary, delegate, return output contract.
+
+    Sync entry point for the realtime session lifecycle: applies a
+    `session.update` event to a fresh session and returns the emitted
+    `session.updated` event. Audio/utterance turns stay on the realtime
+    websocket path (they need the GPU pipeline); session state is pure
+    metadata, so `storage` is accepted for harness shape but not written.
+    """
+    req = VoiceChatInput(**kwargs)
+    try:
+        session = RealtimeSession(pipeline)
+        events: list = []
+
+        async def _send(event: dict) -> None:
+            events.append(event)
+
+        session.send = _send
+        asyncio.run(session.handle_event({"type": req.type, "session": req.session}))
+        for event in events:
+            if event.get("type") == "session.updated":
+                return event
+        raise RuntimeError("no session.updated event emitted")
+    except Exception as e:
+        print(f"[ERR] {type(e).__name__}: {e}", flush=True)
+        raise RuntimeError(f"inference failed: {e}") from e
+
+
 @app.cls(
     image=image,
     gpu="L4",
@@ -654,20 +646,29 @@ class RealtimeSession:
     volumes={MODEL_MOUNT: volume},
 )
 class VoiceChatWorker:
+    def __init__(self, storage: Storage):
+        storage = require_storage(storage)
+        self.storage = storage
+
     @modal.enter()
     def load(self):
-        # Fast path: build the pipeline and load the voice manifest (JSON read
-        # only) so session.created is sent immediately. The heavy LLM/whisper/
-        # TTS models load lazily on the first utterance (_ensure_loaded).
-        self.pipeline = VoiceChatPipeline()
-        self.pipeline.voices = self.pipeline._load_voices()
+        self.pipeline, = load_dependencies()
+
+    @modal.method()
+    def generate(self, **kwargs) -> dict:
+        """Validate at boundary, delegate, return output contract."""
+        return generate(self.storage, self.pipeline, **kwargs)
+
+    @modal.fastapi_endpoint(method="POST")
+    def generate_web(self, item: VoiceChatInput) -> dict:
+        return generate(self.storage, self.pipeline, **item.model_dump())
 
     @modal.asgi_app()
     def app(self):
         return build_web_app(self.pipeline)
 
 
-def build_web_app(pipeline: "VoiceChatPipeline"):
+def build_web_app(pipeline: VoiceChatPipeline):
     from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 
     web = FastAPI()
