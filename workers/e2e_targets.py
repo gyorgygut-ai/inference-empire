@@ -58,7 +58,41 @@ class LocalTarget:
     def __init__(self, monkeypatch):
         self.monkeypatch = monkeypatch
 
+    def _swap_fakes_for_tiny(self, deps):
+        # Auto-swap canned fakes for real tiny loaders so e2e tests need no changes
+        from workers.services.inference.image_pipe_fake import FakeImagePipe
+        from workers.services.inference.tiny_image import load_tiny_image_pipe
+        from workers.services.inference.vision_fake import FakeVisionModel, FakeVisionProcessor
+        from workers.services.inference.tiny_vision import TinyVisionModel, TinyVisionProcessor
+        from workers.services.inference.video_pipe_fake import FakeVideoPipe
+        from workers.services.inference.tiny_video import load_tiny_video_pipe
+        from workers.services.write_video_audio.write_video_audio_fake import FakeWriteVideoAudio
+        from workers.services.write_video_audio.write_video_audio import write_video_audio as real_write_video_audio
+
+        new_deps = list(deps)
+        # Image pipe fake -> tiny
+        for i, d in enumerate(new_deps):
+            if isinstance(d, FakeImagePipe):
+                new_deps[i] = load_tiny_image_pipe()
+        # Vision fakes -> tiny
+        for i, d in enumerate(new_deps):
+            if isinstance(d, FakeVisionModel):
+                new_deps[i] = TinyVisionModel()
+        for i, d in enumerate(new_deps):
+            if isinstance(d, FakeVisionProcessor):
+                new_deps[i] = TinyVisionProcessor()
+        # Video pipe fake -> tiny
+        for i, d in enumerate(new_deps):
+            if isinstance(d, FakeVideoPipe):
+                new_deps[i] = load_tiny_video_pipe()
+        # Write video audio fake -> real fallback writer
+        for i, d in enumerate(new_deps):
+            if isinstance(d, FakeWriteVideoAudio):
+                new_deps[i] = real_write_video_audio
+        return tuple(new_deps)
+
     def _call(self, worker_mod, deps, inputs):
+        deps = self._swap_fakes_for_tiny(deps)
         self.monkeypatch.setattr(worker_mod, "load_dependencies", lambda **k: deps)
         loaded = worker_mod.load_dependencies()
         return lambda: worker_mod.generate(*loaded, **inputs)

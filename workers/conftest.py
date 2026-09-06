@@ -3,6 +3,7 @@ from pathlib import Path
 import pytest
 
 from workers.e2e_targets import DeployedRunner, LocalTarget, deploy, undeploy
+from workers.services.deps.dep_check import check_worker
 from workers.services.platform.beam_platform_local import LocalBeamPlatform
 from workers.services.platform.flash_platform_local import LocalFlashPlatform
 from workers.services.platform.modal_platform_local import LocalModalPlatform
@@ -54,4 +55,7 @@ def e2e_target(monkeypatch, request):
         if request.config.getoption("target") != "live":
             pytest.skip("deployed-only; rerun with --target live")
         return request.getfixturevalue("deployed_worker")
+    # pre-flight dep parity for local e2e
+    worker_path = worker_path_for(request.node.fspath)
+    check_worker(worker_path)
     return LocalTarget(monkeypatch)
