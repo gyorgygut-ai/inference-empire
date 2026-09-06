@@ -142,15 +142,6 @@ def load_pipeline(vram_reserve_gb: float = 4.0):
     return pipe, write_video_audio
 
 
-def load_pipeline_as_needed(pipe=None, write_video_audio=None, vram_reserve_gb: float = 4.0):
-    """DI entry: injected fakes pass through, else real load."""
-    if pipe is not None:
-        if write_video_audio is None:
-            from diffsynth.utils.data.audio_video import write_video_audio
-        return pipe, write_video_audio
-    return load_pipeline(vram_reserve_gb=vram_reserve_gb)
-
-
 def do_inference(
     pipe,
     write_video_audio,

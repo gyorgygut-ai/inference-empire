@@ -17,7 +17,7 @@ def _pipe():
     return pipe
 
 
-def test_generate_serves_canned_video(bucket):
+def test_generate_returns_video_artifact(bucket):
     canned = b"fake-video-bytes"
 
     out = worker_mod.generate(bucket, _pipe(), FakeWriteVideoAudio(canned), prompt="clip")
@@ -28,3 +28,16 @@ def test_generate_serves_canned_video(bucket):
 def test_generate_rejects_missing_prompt(bucket):
     with pytest.raises(ValidationError):
         worker_mod.generate(bucket, _pipe(), FakeWriteVideoAudio(b"x"))
+
+
+def test_init_stores_storage_and_pipe(monkeypatch, bucket):
+    monkeypatch.setattr(worker_mod, "require_storage", lambda _s: bucket)
+    monkeypatch.setattr(
+        worker_mod, "load_dependencies", lambda: (_pipe(), FakeWriteVideoAudio(b"x"))
+    )
+
+    # _class_type is the raw class; the decorator wraps it in a remote proxy.
+    worker = worker_mod.MiniMaxH3Ref2VAWorker()._class_type()
+
+    assert worker.storage is bucket
+    assert isinstance(worker.pipe, FakeVideoPipe)

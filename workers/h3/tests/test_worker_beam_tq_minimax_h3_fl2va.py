@@ -17,7 +17,7 @@ def _pipe():
     return pipe
 
 
-def test_generate_serves_canned_video(bucket):
+def test_generate_returns_video_artifact(bucket):
     canned = b"fake-video-bytes"
 
     out = worker_mod.generate(bucket, _pipe(), FakeWriteVideoAudio(canned), prompt="clip")
@@ -28,3 +28,14 @@ def test_generate_serves_canned_video(bucket):
 def test_generate_rejects_missing_prompt(bucket):
     with pytest.raises(ValidationError):
         worker_mod.generate(bucket, _pipe(), FakeWriteVideoAudio(b"x"))
+
+
+def test_dispatch_returns_video_artifact(monkeypatch, bucket):
+    canned = b"fake-video-bytes"
+    monkeypatch.setattr(worker_mod, "require_storage", lambda _s: bucket)
+    ctx = SimpleNamespace(on_start_value=(_pipe(), FakeWriteVideoAudio(canned)))
+
+    # .local runs the raw function; the decorator blocks direct calls.
+    out = worker_mod.dispatch.local(ctx, prompt="clip")
+
+    assert bucket.fetch(out["artifact"]["presigned_url"].rsplit("/", 1)[-1]) == canned

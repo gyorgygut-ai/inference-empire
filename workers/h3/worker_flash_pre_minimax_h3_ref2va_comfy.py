@@ -55,9 +55,8 @@ def load_dependencies():
 class MiniMaxH3Ref2VAComfyWorker:
     Input = ValidatedRef2VAComfyInput
 
-    def __init__(self, storage: Storage):
-        storage = require_storage(storage)
-        self.storage = storage
+    def __init__(self):
+        self.storage = require_storage(None)
         apply_torch_shims()
         (self.endpoint,) = load_dependencies()
 

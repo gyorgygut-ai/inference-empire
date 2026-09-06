@@ -102,13 +102,6 @@ def load_models(cache_dir=None):
     return model, processor, build_analyze_prompt()
 
 
-def load_models_as_needed(model=None, processor=None, analyze_prompt=None, cache_dir=None):
-    """DI entry: injected fakes pass through, else real load."""
-    if model is not None:
-        return model, processor, analyze_prompt or build_analyze_prompt()
-    return load_models(cache_dir=cache_dir)
-
-
 def do_inference(model, processor, analyze_prompt: str, req: SmallVisionInput):
     """Takes validated Input, returns Output. Testable via DI."""
     import base64

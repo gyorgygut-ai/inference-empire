@@ -40,7 +40,7 @@ def _patch_requests(monkeypatch, canned):
 
 
 @pytest.mark.local_e2e
-def test_e2e_beam_generate_serves_canned_video(e2e_target, bucket, monkeypatch):
+def test_e2e_beam_generate_returns_video_artifact(e2e_target, bucket, monkeypatch):
     canned = b"fake-video-bytes"
     _patch_requests(monkeypatch, canned)
 
@@ -52,7 +52,7 @@ def test_e2e_beam_generate_serves_canned_video(e2e_target, bucket, monkeypatch):
 
 
 @pytest.mark.deployed_e2e
-def test_e2e_beam_generate_serves_canned_video_deployed(e2e_target, bucket, monkeypatch):
+def test_e2e_beam_generate_returns_video_artifact_deployed(e2e_target, bucket, monkeypatch):
     canned = b"fake-video-bytes"
     _patch_requests(monkeypatch, canned)
 
@@ -61,3 +61,9 @@ def test_e2e_beam_generate_serves_canned_video_deployed(e2e_target, bucket, monk
     )
 
     assert bucket.fetch(out["artifact"]["presigned_url"].rsplit("/", 1)[-1]) == canned
+
+
+@pytest.mark.deployed_e2e
+def test_e2e_beam_rejects_missing_prompt_deployed(e2e_target, bucket):
+    with pytest.raises(Exception, match="prompt"):
+        e2e_target.run_async(worker_mod, {}, ("http://fake-comfy:8188",), bucket)

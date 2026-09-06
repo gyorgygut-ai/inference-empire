@@ -77,6 +77,6 @@ def generate(storage: Storage, pipe, write_video_audio, **kwargs) -> dict:
         "R2_ENDPOINT": "https://29b2f092b2dbc0b63f48f491ddc177ee.r2.cloudflarestorage.com",
     },
 )
-def dispatch(context, storage: Storage, **kwargs) -> dict:
-    storage = require_storage(storage)
+def dispatch(context, **kwargs) -> dict:
+    storage = require_storage(None)
     return generate(storage, *context.on_start_value, **kwargs)

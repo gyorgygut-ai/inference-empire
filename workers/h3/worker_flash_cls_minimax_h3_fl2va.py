@@ -60,9 +60,8 @@ def generate(storage: Storage, pipe, write_video_audio, **kwargs) -> dict:
 class MiniMaxH3Fl2VAWorker:
     Input = MiniMaxH3Fl2VAInput
 
-    def __init__(self, storage: Storage):
-        storage = require_storage(storage)
-        self.storage = storage
+    def __init__(self):
+        self.storage = require_storage(None)
         self.pipe, self.write_video_audio = load_dependencies()
 
     def generate(self, **kwargs) -> dict:

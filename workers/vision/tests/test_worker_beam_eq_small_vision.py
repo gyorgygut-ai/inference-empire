@@ -23,7 +23,7 @@ CANNED = {
 }
 
 
-def test_generate_returns_canned_result():
+def test_generate_returns_classification():
     out = worker_mod.generate(
         FakeVisionModel(CANNED),
         FakeVisionProcessor(CANNED),

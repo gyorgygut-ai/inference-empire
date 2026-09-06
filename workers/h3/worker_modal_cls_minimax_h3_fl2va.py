@@ -73,9 +73,8 @@ def generate(storage: Storage, pipe, write_video_audio, **kwargs) -> dict:
     max_containers=1,
 )
 class MiniMaxH3Fl2VAWorker:
-    def __init__(self, storage: Storage):
-        storage = require_storage(storage)
-        self.storage = storage
+    def __init__(self):
+        self.storage = require_storage(None)
 
     @modal.enter()
     def load(self):
