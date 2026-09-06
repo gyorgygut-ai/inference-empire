@@ -5,7 +5,7 @@ import pytest
 from PIL import Image
 
 import workers.vision.worker_beam_eq_small_vision as worker_mod
-from workers.services.inference.vision_fake import FakeVisionModel, FakeVisionProcessor
+from workers.services.inference.tiny_vision import TinyVisionModel, TinyVisionProcessor
 
 
 def _image_b64():
@@ -15,20 +15,16 @@ def _image_b64():
     return base64.b64encode(buffer.getvalue()).decode()
 
 
-CANNED = {
-    "classification": "landscape_0p",
-    "subjects": ["green hill"],
-    "description": "An 8x8 green square.",
-}
-
-
 @pytest.mark.local_e2e
 def test_e2e_beam_returns_result(e2e_target):
-    deps = (FakeVisionModel(CANNED), FakeVisionProcessor(CANNED), "fake-prompt")
+    deps = (TinyVisionModel(), TinyVisionProcessor(), "fake-prompt")
 
     out = e2e_target.run(worker_mod, {"image_base64": _image_b64()}, deps)
 
-    assert out == CANNED
+    assert "classification" in out
+    assert "subjects" in out
+    assert "description" in out
+    assert isinstance(out["subjects"], list)
 
 
 @pytest.mark.deployed_e2e

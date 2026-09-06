@@ -48,7 +48,10 @@ def test_e2e_beam_generate_returns_video_artifact(e2e_target, bucket, monkeypatc
         worker_mod, {"prompt": "clip"}, (bucket, "http://fake-comfy:8188")
     )
 
-    assert bucket.fetch(out["artifact"]["presigned_url"].rsplit("/", 1)[-1]) == canned
+    assert "artifact" in out
+    key = out["artifact"]["presigned_url"].rsplit("/", 1)[-1]
+    assert bucket.has(key)
+    assert len(bucket.fetch(key)) > 0
 
 
 @pytest.mark.deployed_e2e

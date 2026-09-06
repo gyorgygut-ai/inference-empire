@@ -1,29 +1,22 @@
-import io
-
 import pytest
-from PIL import Image
 
 import workers.flux2.worker_modal_cls_flux2_klein9b as worker_mod
-from workers.services.inference.image_pipe_fake import FakeImagePipe
+from workers.services.inference.tiny_image import load_tiny_image_pipe
 from workers.services.torch_module.torch_module_fake import FakeTorchModule
-
-
-def _png_bytes(img):
-    buffer = io.BytesIO()
-    img.save(buffer, format="PNG")
-    return buffer.getvalue()
 
 
 @pytest.mark.local_e2e
 def test_e2e_modal_generate_returns_image_artifact(e2e_target, bucket):
-    canned = Image.new("RGB", (8, 8), (255, 0, 0))
-    deps = (bucket, FakeImagePipe(canned), FakeTorchModule())
+    deps = (bucket, load_tiny_image_pipe(), FakeTorchModule())
 
     out = e2e_target.run_async(
         worker_mod, {"prompt": "a red square", "seed": 7}, deps
     )
 
-    assert bucket.fetch(out["artifact"]["presigned_url"].rsplit("/", 1)[-1]) == _png_bytes(canned)
+    assert "artifact" in out
+    key = out["artifact"]["presigned_url"].rsplit("/", 1)[-1]
+    assert bucket.has(key)
+    assert len(bucket.fetch(key)) > 0
 
 
 @pytest.mark.deployed_e2e

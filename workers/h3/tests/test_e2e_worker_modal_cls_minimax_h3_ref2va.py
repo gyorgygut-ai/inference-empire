@@ -1,28 +1,22 @@
-from types import SimpleNamespace
-
-import numpy as np
 import pytest
 
 import workers.h3.worker_modal_cls_minimax_h3_ref2va as worker_mod
-from workers.services.inference.video_pipe_fake import FakeVideoPipe
-from workers.services.write_video_audio.write_video_audio_fake import (
-    FakeWriteVideoAudio,
-)
+from workers.services.inference.tiny_video import load_tiny_video_pipe
+from workers.services.write_video_audio.write_video_audio import write_video_audio
 
 
-def _deps(canned, bucket):
-    pipe = FakeVideoPipe(np.zeros((1, 4, 8, 8), dtype=np.uint8), None)
-    pipe.audio_vae = SimpleNamespace(sample_rate=24000)
-    return (bucket, pipe, FakeWriteVideoAudio(canned))
+def _deps(bucket):
+    return (bucket, load_tiny_video_pipe(), write_video_audio)
 
 
 @pytest.mark.local_e2e
 def test_e2e_modal_generate_returns_video_artifact(e2e_target, bucket):
-    canned = b"fake-video-bytes"
+    out = e2e_target.run_async(worker_mod, {"prompt": "clip"}, _deps(bucket))
 
-    out = e2e_target.run_async(worker_mod, {"prompt": "clip"}, _deps(canned, bucket))
-
-    assert bucket.fetch(out["artifact"]["presigned_url"].rsplit("/", 1)[-1]) == canned
+    assert "artifact" in out
+    key = out["artifact"]["presigned_url"].rsplit("/", 1)[-1]
+    assert bucket.has(key)
+    assert len(bucket.fetch(key)) > 0
 
 
 @pytest.mark.deployed_e2e
