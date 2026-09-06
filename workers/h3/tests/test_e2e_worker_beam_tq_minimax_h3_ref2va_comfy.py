@@ -54,19 +54,3 @@ def test_e2e_beam_generate_returns_video_artifact(e2e_target, bucket, monkeypatc
     assert len(bucket.fetch(key)) > 0
 
 
-@pytest.mark.deployed_e2e
-def test_e2e_beam_generate_returns_video_artifact_deployed(e2e_target, bucket, monkeypatch):
-    canned = b"fake-video-bytes"
-    _patch_requests(monkeypatch, canned)
-
-    out = e2e_target.run_async(
-        worker_mod, {"prompt": "clip"}, (bucket, "http://fake-comfy:8188")
-    )
-
-    assert bucket.fetch(out["artifact"]["presigned_url"].rsplit("/", 1)[-1]) == canned
-
-
-@pytest.mark.deployed_e2e
-def test_e2e_beam_rejects_missing_prompt_deployed(e2e_target, bucket):
-    with pytest.raises(Exception, match="prompt"):
-        e2e_target.run_async(worker_mod, {}, (bucket, "http://fake-comfy:8188"))

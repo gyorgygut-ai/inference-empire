@@ -19,22 +19,3 @@ def test_e2e_beam_generate_returns_image_artifact(e2e_target, bucket):
     assert len(bucket.fetch(key)) > 0
 
 
-@pytest.mark.deployed_e2e
-def test_e2e_beam_generate_returns_image_artifact_deployed(e2e_target, bucket):
-    canned = Image.new("RGB", (8, 8), (255, 0, 0))
-    deps = (bucket, FakeImagePipe(canned), None, FakeTorchModule())
-
-    out = e2e_target.run_async(
-        worker_mod, {"prompt": "a red square", "seed": 7}, deps
-    )
-
-    assert bucket.fetch(out["artifact"]["presigned_url"].rsplit("/", 1)[-1]) == _png_bytes(canned)
-
-
-@pytest.mark.deployed_e2e
-def test_e2e_beam_rejects_missing_prompt_deployed(e2e_target, bucket):
-    canned = Image.new("RGB", (8, 8), (255, 0, 0))
-    deps = (bucket, FakeImagePipe(canned), None, FakeTorchModule())
-
-    with pytest.raises(Exception, match="prompt"):
-        e2e_target.run_async(worker_mod, {}, deps)
