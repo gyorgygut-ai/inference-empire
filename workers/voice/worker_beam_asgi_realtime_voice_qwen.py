@@ -98,10 +98,10 @@ def load_models():
         whisper_dir = ensure_whisper(WHISPER_PATH)
         ensure_model(QWEN_PATH, "Qwen/Qwen2.5-3B-Instruct")
 
-        from handlers.chatterbox_tts import Chatterbox
-        from handlers.llm import QwenLLM
-        from handlers.stt import WhisperSTT
-        from realtime.vad import SileroVAD
+        from workers.voice.handlers.chatterbox_tts import Chatterbox
+        from workers.voice.handlers.llm import QwenLLM
+        from workers.voice.handlers.stt import WhisperSTT
+        from workers.voice.realtime.vad import SileroVAD
 
         models = {
             # Chatterbox is the primary (and currently only) TTS: it voices
@@ -124,7 +124,7 @@ def load_models():
 
 def build_app(models: dict, voices_config: dict | None, default_voice: str = "GutAI"):
     """Build the FastAPI app exposing ``/v1/realtime`` (see ``realtime/app.py``)."""
-    from realtime.app import build_app as _build
+    from workers.voice.realtime.app import build_app as _build
 
     return _build(models, voices_config, default_voice)
 
@@ -146,7 +146,7 @@ def build_app(models: dict, voices_config: dict | None, default_voice: str = "Gu
     autoscaler=QueueDepthAutoscaler(max_containers=1, min_containers=0),
 )
 def worker(context):
-    from handlers.voices_config import load_voices_config
+    from workers.voice.handlers.voices_config import load_voices_config
 
     models = context.on_start_value
     voices_config = load_voices_config(VOICES_JSON)

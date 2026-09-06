@@ -21,10 +21,9 @@ from beam import Image, QueueDepthAutoscaler, asgi
 from fastapi import FastAPI, Request
 from fastapi.responses import Response
 
-# NOTE: `handlers` model packages are owner-supplied at deploy time (Beam
-# ships the worker directory). Imports stay function-deferred so the module
-# imports cleanly locally and the fake harness can stub at the loader
-# boundary.
+# NOTE: `workers.voice.handlers` ships with the worker directory. Imports
+# stay function-deferred so the module imports cleanly locally and the
+# fake harness can stub at the loader boundary.
 
 image = (
     Image(python_version="python3.11")
@@ -42,7 +41,7 @@ image = (
 
 
 def load_model():
-    from handlers.chatterbox_tts import Chatterbox
+    from workers.voice.handlers.chatterbox_tts import Chatterbox
 
     t0 = time.time()
     tts = Chatterbox(device="cuda").load()
@@ -75,7 +74,7 @@ def _pcm_to_wav(pcm16: bytes, sr: int) -> bytes:
     autoscaler=QueueDepthAutoscaler(max_containers=1, min_containers=0),
 )
 def worker(context):
-    from handlers.chatterbox_tts import TARGET_SR
+    from workers.voice.handlers.chatterbox_tts import TARGET_SR
 
     tts = context.on_start_value
     app = FastAPI()

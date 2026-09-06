@@ -21,10 +21,10 @@ import uuid
 from beam import Image, QueueDepthAutoscaler, asgi
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 
-# NOTE: `handlers`/`realtime` model packages are owner-supplied at deploy
-# time (Beam ships the worker directory). Imports stay function-deferred
-# (same pattern as the qwen worker) so the module imports cleanly locally
-# and the fake harness can stub at the loader boundary.
+# NOTE: `workers.voice.handlers`/`workers.voice.realtime` ship with the
+# worker directory. Imports stay function-deferred (same pattern as the
+# qwen worker) so the module imports cleanly locally and the fake
+# harness can stub at the loader boundary.
 
 INPUT_SR = 24000
 VAD_SR = 16000
@@ -49,7 +49,7 @@ image = (
 
 
 def load_converter():
-    from handlers.voice_converter import VoiceConverter
+    from workers.voice.handlers.voice_converter import VoiceConverter
 
     t0 = time.time()
     converter = VoiceConverter(device="cpu", watermark=False).load()
@@ -62,14 +62,14 @@ def _new_id(prefix: str) -> str:
 
 
 def _default_voice() -> str:
-    from handlers.voice_converter import DEFAULT_VOICE
+    from workers.voice.handlers.voice_converter import DEFAULT_VOICE
 
     return DEFAULT_VOICE
 
 
 class OpenVoiceSession:
     def __init__(self, converter, send, default_voice: str | None = None) -> None:
-        from realtime.vad import SileroVAD
+        from workers.voice.realtime.vad import SileroVAD
 
         self._converter = converter
         self._send = send
@@ -81,7 +81,7 @@ class OpenVoiceSession:
         self._active_turn: asyncio.Task | None = None
 
     async def handle_message(self, raw: str) -> None:
-        from realtime.protocol import Event
+        from workers.voice.realtime.protocol import Event
 
         if self._loop is None:
             self._loop = asyncio.get_running_loop()
@@ -109,7 +109,7 @@ class OpenVoiceSession:
             self._active_turn.cancel()
 
     async def start(self) -> None:
-        from realtime.protocol import Event
+        from workers.voice.realtime.protocol import Event
 
         await self._emit(
             Event.session_created(
@@ -119,7 +119,7 @@ class OpenVoiceSession:
 
     # -- session config (voice selection) ---------------------------------
     async def _apply_session(self, session: dict) -> None:
-        from realtime.protocol import Event
+        from workers.voice.realtime.protocol import Event
         # OpenWebUI (gpt-realtime fork) sends the selected voice as
         # session.voice; tolerate a few layouts just in case.
         voice = (
@@ -135,8 +135,8 @@ class OpenVoiceSession:
 
     # -- inbound audio / VAD ----------------------------------------------
     async def _on_audio(self, audio_b64: str) -> None:
-        from realtime.audio import resample_pcm16
-        from realtime.protocol import Event
+        from workers.voice.realtime.audio import resample_pcm16
+        from workers.voice.realtime.protocol import Event
 
         if not audio_b64:
             return
@@ -161,7 +161,7 @@ class OpenVoiceSession:
 
     # -- convert + stream -------------------------------------------------
     async def _convert_turn(self, audio24k: bytes) -> None:
-        from realtime.protocol import Event
+        from workers.voice.realtime.protocol import Event
 
         response_id = _new_id("resp")
         item_id = _new_id("item")
@@ -193,7 +193,7 @@ class OpenVoiceSession:
 
 
 @asgi(
-    name="voice-openvvoice",
+    name="voice-openvoice",
     image=image,
     on_start=load_converter,
     gpu=None,
