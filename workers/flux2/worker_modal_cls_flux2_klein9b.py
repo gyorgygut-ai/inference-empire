@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+import threading
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -16,12 +18,15 @@ if TYPE_CHECKING:
 
 app = modal.App("flux2-klein9b-worker")
 
+_INFERENCE_LOCK = threading.Lock()
+
 
 def generate(storage: Storage, pipe, torch_module, **kwargs) -> dict:
     """Validate at boundary, delegate, return output contract."""
     req = Flux2Klein9bInput(**kwargs)
     try:
-        return do_inference(pipe, torch_module, storage, req).model_dump()
+        with _INFERENCE_LOCK:
+            return do_inference(pipe, torch_module, storage, req).model_dump()
     except Exception as e:
         print(f"[ERR] {type(e).__name__}: {e}", flush=True)
         raise RuntimeError(f"inference failed: {e}") from e
@@ -49,6 +54,11 @@ image = (
         {
             "HF_HOME": "/root/.cache/huggingface",
             "HF_HUB_ENABLE_HF_TRANSFER": "1",
+            "SDNQ_USE_TRITON_MM": "0",
+            "R2_ENDPOINT": os.environ.get("R2_ENDPOINT", ""),
+            "R2_BUCKET": os.environ.get("R2_BUCKET", "generated-media"),
+            "R2_ACCESS_KEY": os.environ.get("R2_ACCESS_KEY", ""),
+            "R2_SECRET_KEY": os.environ.get("R2_SECRET_KEY", ""),
         }
     )
     .add_local_python_source("workers.services", "workers.flux2")
@@ -60,7 +70,7 @@ image = (
     gpu="L4",
     secrets=[dotenv_secret],
     volumes={"/root/.cache/huggingface": hf_cache_vol},
-    timeout=600,
+    timeout=300,
     memory=32768,
     scaledown_window=150,
     max_containers=1,

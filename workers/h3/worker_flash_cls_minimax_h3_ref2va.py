@@ -10,7 +10,6 @@ from workers.h3._shared_minimax_h3_ref2va import (
     do_inference,
     load_dependencies,
 )
-from workers.services.storage.r2_storage import require_storage
 
 if TYPE_CHECKING:
     from workers.services.storage.storage import Storage
@@ -61,8 +60,7 @@ class MiniMaxH3Ref2VAWorker:
     Input = ValidatedRef2VAInput
 
     def __init__(self):
-        self.storage = require_storage(None)
-        self.pipe, self.write_video_audio = load_dependencies()
+        self.storage, self.pipe, self.write_video_audio = load_dependencies()
 
     def generate(self, **kwargs) -> dict:
         """Validate at boundary, delegate, return output contract."""

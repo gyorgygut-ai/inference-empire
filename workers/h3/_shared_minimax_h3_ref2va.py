@@ -4,6 +4,7 @@ from __future__ import annotations
 import os
 import time
 import uuid
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -22,6 +23,8 @@ PROCESSOR_REPO = "MiniMaxAI/MiniMax-H3"
 PROCESSOR_PATTERN = "Ref2VA/processor/"
 FPS = 24
 
+
+def _load_dotenv() -> None:
     path = Path(__file__).parent.parent / ".env"
     if not path.exists():
         return
@@ -33,6 +36,7 @@ FPS = 24
         key, value = key.strip(), value.strip().strip('"').strip("'")
         if key and key not in os.environ:
             os.environ[key] = value
+
 
 def apply_torch_shims() -> None:
     """Patch torch runtime quirks once (remote containers)."""
@@ -295,9 +299,6 @@ def do_inference(
 ) -> MiniMaxH3Ref2VAOutput:
     """Takes validated Input, returns Output. Testable via DI."""
 
-    if storage is None:
-        raise ValueError("storage is required")
-
     t_req = time.time()
     total = len(req.ref_images) + len(req.ref_videos) + len(req.ref_video_audios) + len(req.ref_audios)
     print(f"[REQ] prompt={req.prompt[:40]}  seed={req.seed}  files={total}", flush=True)
@@ -354,8 +355,10 @@ def pipe_factory() -> MiniMaxH3Pipeline:
 
 def load_dependencies(cache_dir=None):
     """Load all dependencies for minimax-h3-ref2va worker."""
+    from workers.services.storage.r2_storage import R2Storage
     from workers.services.write_video_audio.write_video_audio_service import (
         WriteVideoAudioService,
     )
 
-    return pipe_factory(), WriteVideoAudioService()
+    storage = R2Storage()
+    return storage, pipe_factory(), WriteVideoAudioService()

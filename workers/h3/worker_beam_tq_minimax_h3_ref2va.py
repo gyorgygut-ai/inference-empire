@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import threading
 from typing import TYPE_CHECKING
 
 from beam import Image, QueueDepthAutoscaler, Volume, task_queue
@@ -9,13 +10,15 @@ from workers.h3._shared_minimax_h3_ref2va import (
     do_inference,
     load_dependencies,
 )
-from workers.services.storage.r2_storage import require_storage
+from workers.services.storage.r2_storage import R2Storage
 
 if TYPE_CHECKING:
     from workers.services.storage.storage import Storage
 
 
 CACHE_PATH = "./hf-cache"
+
+_INFERENCE_LOCK = threading.Lock()
 
 image = (
     Image(python_version="python3.11")
@@ -50,7 +53,8 @@ def generate(storage: Storage, pipe, write_video_audio, **kwargs) -> dict:
     """Validate at boundary, delegate, return output contract."""
     req = ValidatedRef2VAInput(**kwargs)
     try:
-        return do_inference(pipe, write_video_audio, storage, req).model_dump()
+        with _INFERENCE_LOCK:
+            return do_inference(pipe, write_video_audio, storage, req).model_dump()
     except Exception as e:
         print(f"[ERR] {type(e).__name__}: {e}", flush=True)
         raise RuntimeError(f"inference failed: {e}") from e
@@ -66,13 +70,14 @@ def generate(storage: Storage, pipe, write_video_audio, **kwargs) -> dict:
     volumes=[Volume(name="hf-cache", mount_path=CACHE_PATH)],
     autoscaler=QueueDepthAutoscaler(max_containers=1, tasks_per_container=1),
     keep_warm_seconds=1800,
+    checkpoint_enabled=True,
     timeout=3600,
-    secrets=["HF_TOKEN", "R2_ACCESS_KEY", "R2_SECRET_KEY"],
+    secrets=["HF_TOKEN", "R2_ACCESS_KEY", "R2_SECRET_KEY", "R2_ENDPOINT"],
     env={
         "R2_BUCKET": "generated-media",
         "R2_ENDPOINT": "https://29b2f092b2dbc0b63f48f491ddc177ee.r2.cloudflarestorage.com",
     },
 )
 def dispatch(context, **kwargs) -> dict:
-    storage = require_storage(None)
-    return generate(storage, *context.on_start_value, **kwargs)
+    storage, pipe, write_video_audio = context.on_start_value
+    return generate(storage, pipe, write_video_audio, **kwargs)

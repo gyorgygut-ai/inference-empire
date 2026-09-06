@@ -4,7 +4,6 @@ from runpod_flash import Endpoint, GpuGroup
 
 from workers.vision._shared_small_vision import (
     SmallVisionInput,
-    SmallVisionOutput,
     do_inference,
     load_dependencies,
 )
@@ -15,7 +14,7 @@ def generate(model, processor, analyze_prompt, **kwargs) -> dict:
     req = SmallVisionInput(**kwargs)
     try:
         result = do_inference(model, processor, analyze_prompt, req)
-        return result.model_dump() if isinstance(result, SmallVisionOutput) else result
+        return result.model_dump()
     except Exception as e:
         print(f"[ERR] {type(e).__name__}: {e}", flush=True)
         raise RuntimeError(f"inference failed: {e}") from e

@@ -1,13 +1,30 @@
-"""Flash local platform: fresh dict session over its own fake."""
-
+"""Flash local platform: starts HTTP mock server for local E2E tests."""
 from __future__ import annotations
 
+import threading
+
+import uvicorn
+
 from workers.mock_server.flash import fake as _fake
+
+_SERVER = None
+_THREAD = None
+PORT = 9000
+
+
+def _run_server():
+    uvicorn.run(_fake.app, host="127.0.0.1", port=PORT, log_level="error")
 
 
 class LocalFlashPlatform:
     def deploy(self):
+        global _SERVER, _THREAD
         _fake.clear()
+        _THREAD = threading.Thread(target=_run_server, daemon=True)
+        _THREAD.start()
 
     def undeploy(self):
+        global _SERVER, _THREAD
+        _SERVER = None
+        _THREAD = None
         _fake.clear()

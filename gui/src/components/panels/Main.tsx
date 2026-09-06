@@ -114,19 +114,28 @@ export function Main({ onToggleLeft, onToggleRight }: MainProps) {
       ) : null}
 
       {group === "h3" ? (
-        <Boxes
-          fields={[
-            ["width", 1344],
-            ["height", 768],
-            ["length", 124],
-            ["steps", 50],
-            ["seed", ""],
-            ["first_frame", ""],
-            ["last_frame", ""],
-          ]}
-          boxes={boxes}
-          updateBox={updateBox}
-        />
+        <>
+          <Boxes
+            fields={[
+              ["width", 1344],
+              ["height", 768],
+              ["length", 124],
+              ["steps", 50],
+              ["seed", ""],
+              ["first_frame", ""],
+              ["last_frame", ""],
+            ]}
+            boxes={boxes}
+            updateBox={updateBox}
+          />
+          <div className="flex flex-wrap gap-2 border-b border-border p-2">
+            <label className="text-xs text-muted-foreground">variant</label>
+            <select value={String(boxes.h3_variant ?? "fl2va")} onChange={e=>updateBox("h3_variant", e.target.value)} className="text-xs rounded border px-1 py-0.5">
+              <option value="fl2va">fl2va</option>
+              <option value="comfy">comfy</option>
+            </select>
+          </div>
+        </>
       ) : null}
 
       {group === "h3-ref" ? (
@@ -145,6 +154,11 @@ export function Main({ onToggleLeft, onToggleRight }: MainProps) {
             updateBox={updateBox}
           />
           <div className="flex flex-wrap gap-2 border-b border-border p-2">
+            <label className="text-xs text-muted-foreground">variant</label>
+            <select value={String(boxes.h3ref_variant ?? "ref2va")} onChange={e=>updateBox("h3ref_variant", e.target.value)} className="text-xs rounded border px-1 py-0.5">
+              <option value="ref2va">ref2va</option>
+              <option value="comfy">comfy</option>
+            </select>
             <label className="text-xs text-muted-foreground">ref_images (≤9)</label>
             <input type="file" accept="image/*" multiple onChange={(e) => { const files = Array.from(e.target.files ?? []).slice(0,9); const dataUrls = files.map(f => URL.createObjectURL(f)); updateBox("ref_images", dataUrls) }} className="text-xs" />
             <label className="text-xs text-muted-foreground">ref_videos (≤3)</label>

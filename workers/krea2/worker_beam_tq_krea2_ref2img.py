@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import threading
 from typing import TYPE_CHECKING
 
 from beam import Image, QueueDepthAutoscaler, Volume, task_queue
@@ -14,6 +15,8 @@ if TYPE_CHECKING:
 
 
 CACHE_PATH = "./hf-cache"
+
+_INFERENCE_LOCK = threading.Lock()
 
 image = (
     Image(python_version="python3.11")
@@ -51,7 +54,8 @@ def generate(storage: Storage, pipe, runtime_dir, torch_module, **kwargs) -> dic
     """Validate at boundary, delegate, return output contract."""
     req = Krea2Ref2ImgInput(**kwargs)
     try:
-        return do_inference(pipe, runtime_dir, torch_module, storage, req).model_dump()
+        with _INFERENCE_LOCK:
+            return do_inference(pipe, runtime_dir, torch_module, storage, req).model_dump()
     except Exception as e:
         print(f"[ERR] {type(e).__name__}: {e}", flush=True)
         raise RuntimeError(f"inference failed: {e}") from e
@@ -68,7 +72,7 @@ def generate(storage: Storage, pipe, runtime_dir, torch_module, **kwargs) -> dic
     autoscaler=QueueDepthAutoscaler(max_containers=1, tasks_per_container=1),
     keep_warm_seconds=1800,
     checkpoint_enabled=True,
-    timeout=3600,
+    timeout=300,
     secrets=["HF_TOKEN", "R2_ACCESS_KEY", "R2_SECRET_KEY", "R2_ENDPOINT"],
     env={
         "PYTORCH_NVML_BASED_CUDA_CHECK": "0",

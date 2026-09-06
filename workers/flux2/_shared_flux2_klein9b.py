@@ -16,18 +16,6 @@ MODEL_ID = "Disty0/FLUX.2-klein-9B-SDNQ-4bit-dynamic-svd-r32"
 _MAX_WIDTH = 2560
 _MAX_HEIGHT = 2560
 
-    path = Path(__file__).parent.parent / ".env"
-    if not path.exists():
-        return
-    for line in path.read_text().splitlines():
-        line = line.strip()
-        if not line or line.startswith("#") or "=" not in line:
-            continue
-        key, _, value = line.partition("=")
-        key, value = key.strip(), value.strip().strip('"').strip("'")
-        if key and key not in os.environ:
-            os.environ[key] = value
-
 class Flux2Klein9bInput(BaseModel):
     model_config = ConfigDict(title="Flux2Klein9bInput")
     prompt: str
@@ -110,9 +98,6 @@ def do_inference(pipe, torch_module, storage: Storage, req: Flux2Klein9bInput) -
     """Takes validated Input, returns Output. Testable via DI."""
     import io
 
-    if storage is None:
-        raise ValueError("storage is required")
-
     t_req = time.time()
     n_refs = (1 if req.input_image else 0) + len(req.reference_images or [])
     print(f"[REQ] prompt={req.prompt[:40]}  seed={req.seed}  files={n_refs}", flush=True)
@@ -162,8 +147,8 @@ def pipe_factory() -> Flux2KleinPipeline:
 
 def load_dependencies():
     """Load all dependencies for flux2-klein9b worker."""
-    from workers.services.storage.r2_storage import require_storage
+    from workers.services.storage.r2_storage import R2Storage
     from workers.services.torch_module.torch_module_service import TorchModuleService
 
-    storage = require_storage(None)
+    storage = R2Storage()
     return storage, pipe_factory(), TorchModuleService()

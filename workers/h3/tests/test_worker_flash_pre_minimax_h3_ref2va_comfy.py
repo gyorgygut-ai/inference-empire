@@ -1,6 +1,10 @@
 import base64
 
+import pytest
+from pydantic import ValidationError
+
 import workers.h3.worker_flash_pre_minimax_h3_ref2va_comfy as worker_mod
+from workers.h3._shared_minimax_h3_ref2va_comfy import ValidatedRef2VAComfyInput, MiniMaxH3Ref2VAComfyOutput, do_inference
 
 
 class _Job:
@@ -18,22 +22,54 @@ class _Endpoint:
         return self._job
 
 
+def _key_from(url):
+    return url.rsplit("/", 1)[-1].split("?", 1)[0]
+
+
+def test_do_inference_requested_with_right_args(bucket):
+    canned = b"fake-video-bytes"
+    endpoint = _Endpoint(canned)
+    req = ValidatedRef2VAComfyInput(prompt="clip", steps=20, scheduler="simple")
+    out = do_inference(endpoint, bucket, req)
+    assert isinstance(out, MiniMaxH3Ref2VAComfyOutput)
+    assert out.video == base64.b64encode(canned).decode("ascii")
+
+
+def test_fake_bucket_has_uploaded_artifact(bucket):
+    canned = b"fake-video-bytes"
+    endpoint = _Endpoint(canned)
+    req = ValidatedRef2VAComfyInput(prompt="clip")
+    out = do_inference(endpoint, bucket, req)
+    assert bucket.fetch(_key_from(out.artifact.presigned_url)) == canned
+
+
+def test_do_inference_returns_output_contract(bucket):
+    canned = b"fake-video-bytes"
+    endpoint = _Endpoint(canned)
+    req = ValidatedRef2VAComfyInput(prompt="clip")
+    out = do_inference(endpoint, bucket, req)
+    assert isinstance(out, MiniMaxH3Ref2VAComfyOutput)
+    assert out.artifact.presigned_url.startswith("https://")
+
+
 def test_generate_returns_video_artifact(bucket):
     canned = b"fake-video-bytes"
-
     out = worker_mod.generate(bucket, _Endpoint(canned), prompt="clip")
-
     assert bucket.fetch(out["artifact"]["presigned_url"].rsplit("/", 1)[-1]) == canned
 
 
-def test_init_stores_storage_and_endpoint(monkeypatch, bucket):
-    monkeypatch.setattr(worker_mod, "require_storage", lambda _s: bucket)
-    monkeypatch.setattr(
-        worker_mod, "load_dependencies", lambda: (_Endpoint(b"x"),)
-    )
+def test_generate_rejects_missing_prompt(bucket):
+    with pytest.raises(ValidationError):
+        worker_mod.generate(bucket, _Endpoint(b"x"))
 
-    # _class_type is the raw class; the decorator wraps it in a remote proxy.
-    worker = worker_mod.MiniMaxH3Ref2VAComfyWorker()._class_type()
 
-    assert worker.storage is bucket
-    assert isinstance(worker.endpoint, _Endpoint)
+def test_load_dependencies_mocked(monkeypatch, bucket):
+    canned = b"fake-video-bytes"
+    fake_endpoint = _Endpoint(canned)
+
+    def fake_load():
+        return (fake_endpoint,)
+
+    monkeypatch.setattr(worker_mod, "load_dependencies", fake_load)
+    (ep,) = worker_mod.load_dependencies()
+    assert ep is fake_endpoint

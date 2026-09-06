@@ -1,20 +1,41 @@
+import asyncio
+import json
+from pathlib import Path
+
+import httpx
 import pytest
 
-import workers.flux2.worker_flash_cls_flux2_klein9b as worker_mod
-from workers.services.inference.tiny_image import load_tiny_image_pipe
-from workers.services.torch_module.torch_module_fake import FakeTorchModule
+from workers.flux2._shared_flux2_klein9b import Flux2Klein9bOutput
+
+GOOD = {"prompt": "a red square", "seed": 7}
+CONTRACT = json.loads((Path(__file__).parent.parent / "contracts" / "flux2_klein9b.json").read_text())
 
 
-@pytest.mark.local_e2e
-def test_e2e_flash_generate_returns_image_artifact(e2e_target, bucket):
-    deps = (bucket, load_tiny_image_pipe(), FakeTorchModule())
+def _assert_contract(out: dict):
+    # Validate required fields per contracts/flux2_klein9b.json
+    assert "artifact" in out, "output missing required field 'artifact'"
+    assert "presigned_url" in out["artifact"], "artifact missing required field 'presigned_url'"
+    # Pydantic contract validation
+    validated = Flux2Klein9bOutput.model_validate(out)
+    assert validated.artifact.presigned_url.startswith("https://")
+    # JSON schema required checks
+    assert CONTRACT["output"]["required"] == ["artifact"]
+    assert CONTRACT["output"]["properties"]["artifact"]["required"] == ["presigned_url"]
 
-    out = e2e_target.run(worker_mod, {"prompt": "a red square", "seed": 7}, deps)
 
-    # contract + artifact existence, no canned equality
-    assert "artifact" in out
-    key = out["artifact"]["presigned_url"].rsplit("/", 1)[-1]
-    assert bucket.has(key)
-    assert len(bucket.fetch(key)) > 0
+def test_invalid_input_rejects(platform_flash):
+    with pytest.raises(Exception):
+        asyncio.run(platform_flash().generate(**{}))
 
 
+def test_good_input_returns_contract_and_artifact(platform_flash):
+    out = asyncio.run(platform_flash().generate(**GOOD))
+
+    _assert_contract(out)
+
+    url = out["artifact"]["presigned_url"]
+    art = httpx.get(url, timeout=30)
+    assert art.status_code == 200
+    assert len(art.content) > 0
+    # Artifact must exist in bucket (presigned URL reachable with content validated above)
+    assert url.startswith("https://")

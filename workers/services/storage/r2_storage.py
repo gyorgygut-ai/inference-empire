@@ -36,19 +36,4 @@ class R2Storage(Storage):
         return resp["Body"].read()
 
     def __reduce__(self):
-        # Remote task args must stay JSON/pickle-safe (boto3 clients don't
-        # serialize). Rebuild from the REMOTE env on unpickle — no secrets
-        # cross the wire; the remote container carries them as secrets.
         return (R2Storage, ())
-
-
-def require_storage(storage):
-    """Live path: build R2Storage from the remote env when the caller
-    passes None (remote task args must stay serializable, so live runners
-    never ship a storage object). Local path: R2 env is absent, so the
-    original ValueError stands — fake behavior unchanged."""
-    if storage is not None:
-        return storage
-    if "R2_ENDPOINT" in os.environ:
-        return R2Storage()
-    raise ValueError("storage is required")

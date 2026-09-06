@@ -1,21 +1,41 @@
+import json
+from pathlib import Path
+
+import httpx
+import modal
 import pytest
 
-import workers.flux2.worker_modal_cls_flux2_klein9b as worker_mod
-from workers.services.inference.tiny_image import load_tiny_image_pipe
-from workers.services.torch_module.torch_module_fake import FakeTorchModule
+from workers.flux2._shared_flux2_klein9b import Flux2Klein9bOutput
+
+GOOD = {"prompt": "a red square", "seed": 7}
+CONTRACT = json.loads((Path(__file__).parent.parent / "contracts" / "flux2_klein9b.json").read_text())
 
 
-@pytest.mark.local_e2e
-def test_e2e_modal_generate_returns_image_artifact(e2e_target, bucket):
-    deps = (bucket, load_tiny_image_pipe(), FakeTorchModule())
-
-    out = e2e_target.run_async(
-        worker_mod, {"prompt": "a red square", "seed": 7}, deps
-    )
-
-    assert "artifact" in out
-    key = out["artifact"]["presigned_url"].rsplit("/", 1)[-1]
-    assert bucket.has(key)
-    assert len(bucket.fetch(key)) > 0
+def _assert_contract(out: dict):
+    assert "artifact" in out, "output missing required field 'artifact'"
+    assert "presigned_url" in out["artifact"], "artifact missing required field 'presigned_url'"
+    validated = Flux2Klein9bOutput.model_validate(out)
+    assert validated.artifact.presigned_url.startswith("https://")
+    assert CONTRACT["output"]["required"] == ["artifact"]
+    assert CONTRACT["output"]["properties"]["artifact"]["required"] == ["presigned_url"]
 
 
+def test_invalid_input_rejects(platform_modal):
+    print("[modal] test_invalid_input_rejects: start", flush=True)
+    handle = modal.Cls.from_name("flux2-klein9b-worker", "FluxKleinWorker")().generate
+    with pytest.raises(Exception):
+        handle.spawn(**{}).get()
+
+
+def test_good_input_returns_contract_and_artifact(platform_modal):
+    print("[modal] test_good_input_returns_contract_and_artifact: start", flush=True)
+    handle = modal.Cls.from_name("flux2-klein9b-worker", "FluxKleinWorker")().generate
+    out = handle.spawn(**GOOD).get()
+
+    _assert_contract(out)
+
+    url = out["artifact"]["presigned_url"]
+    art = httpx.get(url, timeout=30)
+    assert art.status_code == 200
+    assert len(art.content) > 0
+    assert url.startswith("https://")

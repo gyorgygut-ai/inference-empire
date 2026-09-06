@@ -1,49 +1,73 @@
-"""Local runners: thin submit/poll/result/run over each provider's own fake dict."""
-
+"""Local runners: HTTP calls to each platform's mock server for queue simulation."""
 from __future__ import annotations
 
-from workers.mock_server.beam import fake as beam_fake
-from workers.mock_server.flash import fake as flash_fake
-from workers.mock_server.modal import fake as modal_fake
+import time
+
+import requests
+
+FLASH_URL = "http://127.0.0.1:9000"
+BEAM_URL = "http://127.0.0.1:9001"
+MODAL_URL = "http://127.0.0.1:9002"
 
 
 class LocalFlashRunner:
     def submit(self, call):
-        return flash_fake.submit(call)
+        resp = requests.post(f"{FLASH_URL}/run", json={"input": {}}, timeout=5)
+        resp.raise_for_status()
+        return resp.json()["id"]
 
     def poll(self, task_id):
-        return flash_fake.poll(task_id)
+        resp = requests.get(f"{FLASH_URL}/status/{task_id}", timeout=5)
+        resp.raise_for_status()
+        return resp.json().get("status", "UNKNOWN")
 
-    def result(self, task_id, timeout=30):
-        return flash_fake.result(task_id)
+    def complete(self, task_id, output):
+        requests.post(f"{FLASH_URL}/status/{task_id}/complete", json=output, timeout=5)
 
     def run(self, call):
-        return self.result(self.submit(call))
+        task_id = self.submit(call)
+        result = call()
+        self.complete(task_id, result)
+        return result
 
 
 class LocalBeamRunner:
     def submit(self, call):
-        return beam_fake.submit(call)
+        resp = requests.post(f"{BEAM_URL}/v1/tasks", json={"input": {}}, timeout=5)
+        resp.raise_for_status()
+        return resp.json()["task_id"]
 
     def poll(self, task_id):
-        return beam_fake.poll(task_id)
+        resp = requests.get(f"{BEAM_URL}/v1/tasks/{task_id}", timeout=5)
+        resp.raise_for_status()
+        return resp.json().get("status", "UNKNOWN")
 
-    def result(self, task_id, timeout=30):
-        return beam_fake.result(task_id)
+    def complete(self, task_id, output):
+        requests.post(f"{BEAM_URL}/v1/tasks/{task_id}/complete", json=output, timeout=5)
 
     def run(self, call):
-        return self.result(self.submit(call))
+        task_id = self.submit(call)
+        result = call()
+        self.complete(task_id, result)
+        return result
 
 
 class LocalModalRunner:
     def submit(self, call):
-        return modal_fake.submit(call)
+        resp = requests.post(f"{MODAL_URL}/v1/calls", json={"input": {}}, timeout=5)
+        resp.raise_for_status()
+        return resp.json()["call_id"]
 
     def poll(self, task_id):
-        return modal_fake.poll(task_id)
+        resp = requests.get(f"{MODAL_URL}/v1/calls/{task_id}", timeout=5)
+        resp.raise_for_status()
+        return resp.json().get("status", "UNKNOWN")
 
-    def result(self, task_id, timeout=30):
-        return modal_fake.result(task_id)
+    def complete(self, task_id, output):
+        requests.post(f"{MODAL_URL}/v1/calls/{task_id}/complete", json=output, timeout=5)
 
     def run(self, call):
-        return self.result(self.submit(call))
+        task_id = self.submit(call)
+        result = call()
+        self.complete(task_id, result)
+        return result

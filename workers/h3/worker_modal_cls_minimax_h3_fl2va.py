@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import threading
 from typing import TYPE_CHECKING
 
 import modal
@@ -10,12 +11,13 @@ from workers.h3._shared_minimax_h3_fl2va import (
     do_inference,
     load_dependencies,
 )
-from workers.services.storage.r2_storage import require_storage
 
 if TYPE_CHECKING:
     from workers.services.storage.storage import Storage
 
 app = modal.App("minimax-h3-fl2va-worker")
+
+_INFERENCE_LOCK = threading.Lock()
 
 r2_secret = modal.Secret.from_name(
     "r2-creds", required_keys=["R2_BUCKET", "R2_ENDPOINT", "R2_ACCESS_KEY", "R2_SECRET_KEY"]
@@ -57,7 +59,8 @@ def generate(storage: Storage, pipe, write_video_audio, **kwargs) -> dict:
     """Validate at boundary, delegate, return output contract."""
     req = MiniMaxH3Fl2VAInput(**kwargs)
     try:
-        return do_inference(pipe, write_video_audio, storage, req).model_dump()
+        with _INFERENCE_LOCK:
+            return do_inference(pipe, write_video_audio, storage, req).model_dump()
     except Exception as e:
         print(f"[ERR] {type(e).__name__}: {e}", flush=True)
         raise RuntimeError(f"inference failed: {e}") from e
@@ -67,19 +70,19 @@ def generate(storage: Storage, pipe, write_video_audio, **kwargs) -> dict:
     image=image,
     gpu="L4",
     secrets=[r2_secret],
-    timeout=900,
+    timeout=3600,
     memory=32768,
     scaledown_window=150,
     max_containers=1,
 )
 class MiniMaxH3Fl2VAWorker:
     def __init__(self):
-        self.storage = require_storage(None)
+        pass
 
     @modal.enter()
     def load(self):
         apply_torch_shims()
-        self.pipe, self.write_video_audio = load_dependencies()
+        self.storage, self.pipe, self.write_video_audio = load_dependencies()
 
     @modal.method()
     def generate(self, **kwargs) -> dict:

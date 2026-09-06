@@ -5,10 +5,9 @@ import pytest
 from pydantic import ValidationError
 
 import workers.h3.worker_flash_cls_minimax_h3_fl2va as worker_mod
+from workers.h3._shared_minimax_h3_fl2va import MiniMaxH3Fl2VAInput, MiniMaxH3Fl2VAOutput, do_inference
 from workers.services.inference.video_pipe_fake import FakeVideoPipe
-from workers.services.write_video_audio.write_video_audio_fake import (
-    FakeWriteVideoAudio,
-)
+from workers.services.write_video_audio.write_video_audio_fake import FakeWriteVideoAudio
 
 
 def _pipe():
@@ -17,12 +16,46 @@ def _pipe():
     return pipe
 
 
+class SpyPipe(FakeVideoPipe):
+    def __init__(self, frames, audio):
+        super().__init__(frames, audio)
+        self.kwargs = None
+        self.audio_vae = SimpleNamespace(sample_rate=24000)
+
+    def __call__(self, **kwargs):
+        self.kwargs = kwargs
+        return super().__call__(**kwargs)
+
+
+def _key_from(url):
+    return url.rsplit("/", 1)[-1].split("?", 1)[0]
+
+
+def test_do_inference_requested_with_right_args(bucket):
+    spy = SpyPipe(np.zeros((1, 4, 8, 8), dtype=np.uint8), None)
+    req = MiniMaxH3Fl2VAInput(prompt="clip", length=124, height=768, width=1344, steps=50)
+    do_inference(spy, FakeWriteVideoAudio(b"fake-video-bytes"), bucket, req)
+    assert spy.kwargs["prompt"] == "clip"
+    assert spy.kwargs["num_frames"] == 124
+    assert spy.kwargs["num_inference_steps"] == 50
+
+
+def test_fake_bucket_has_uploaded_artifact(bucket):
+    canned = b"fake-video-bytes"
+    out = do_inference(_pipe(), FakeWriteVideoAudio(canned), bucket, MiniMaxH3Fl2VAInput(prompt="clip"))
+    assert bucket.fetch(_key_from(out.artifact.presigned_url)) == canned
+
+
+def test_do_inference_returns_output_contract(bucket):
+    canned = b"fake-video-bytes"
+    out = do_inference(_pipe(), FakeWriteVideoAudio(canned), bucket, MiniMaxH3Fl2VAInput(prompt="clip"))
+    assert isinstance(out, MiniMaxH3Fl2VAOutput)
+
+
 def test_generate_returns_video_artifact(bucket):
     canned = b"fake-video-bytes"
-
     out = worker_mod.generate(bucket, _pipe(), FakeWriteVideoAudio(canned), prompt="clip")
-
-    assert bucket.fetch(out["artifact"]["presigned_url"].rsplit("/", 1)[-1]) == canned
+    assert bucket.fetch(_key_from(out["artifact"]["presigned_url"])) == canned
 
 
 def test_generate_rejects_missing_prompt(bucket):
@@ -30,14 +63,13 @@ def test_generate_rejects_missing_prompt(bucket):
         worker_mod.generate(bucket, _pipe(), FakeWriteVideoAudio(b"x"))
 
 
-def test_init_stores_storage_and_pipe(monkeypatch, bucket):
-    monkeypatch.setattr(worker_mod, "require_storage", lambda _s: bucket)
-    monkeypatch.setattr(
-        worker_mod, "load_dependencies", lambda: (_pipe(), FakeWriteVideoAudio(b"x"))
-    )
+def test_load_dependencies_mocked(monkeypatch, bucket):
+    fake_pipe = _pipe()
+    fake_write = FakeWriteVideoAudio(b"x")
 
-    # _class_type is the raw class; the decorator wraps it in a remote proxy.
-    worker = worker_mod.MiniMaxH3Fl2VAWorker()._class_type()
+    def fake_load():
+        return bucket, fake_pipe, fake_write
 
-    assert worker.storage is bucket
-    assert isinstance(worker.pipe, FakeVideoPipe)
+    monkeypatch.setattr(worker_mod, "load_dependencies", fake_load)
+    storage, pipe, write = worker_mod.load_dependencies()
+    assert storage is bucket

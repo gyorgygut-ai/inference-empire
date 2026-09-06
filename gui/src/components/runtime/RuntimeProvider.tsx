@@ -1,7 +1,7 @@
 "use client"
 
-import { createContext, useContext, useState } from "react"
-import { AssistantRuntimeProvider } from "@assistant-ui/react"
+import { createContext, useContext, useState, useEffect, useRef } from "react"
+import { AssistantRuntimeProvider, useAui } from "@assistant-ui/react"
 import { useLocalRuntime } from "@assistant-ui/react"
 import { buildInputs, type ModelGroup } from "@/lib/chat/directHandlers"
 import { chatTools } from "@/lib/chat/tools"
@@ -30,6 +30,18 @@ export function RuntimeProvider({ children }: { children: React.ReactNode }) {
 
   void chatTools
 
+  const ctxRef = useRef({ group, boxes, imageBase64 })
+  useEffect(() => { ctxRef.current = { group, boxes, imageBase64 } }, [group, boxes, imageBase64])
+
+  const aui = useAui()
+  // modelContext sync is best-effort; API may vary by version
+  useEffect(() => {
+    try {
+      // @ts-ignore
+      aui.modelContext?.set?.({ group, boxes, imageBase64 })
+    } catch {}
+  }, [aui, group, boxes, imageBase64])
+
   const runtime = useLocalRuntime({
     async run({ messages, abortSignal }) {
       const last = messages[messages.length - 1] as unknown as { content: unknown }
@@ -39,7 +51,8 @@ export function RuntimeProvider({ children }: { children: React.ReactNode }) {
       else if (Array.isArray(content)) prompt = (content as { text?: string }[]).map((p) => p.text ?? "").join("")
       else prompt = String(content ?? "")
 
-      const { model, inputs } = buildInputs(group, String(prompt), boxes, imageBase64 ?? undefined)
+      const { group: g, boxes: b, imageBase64: ib } = ctxRef.current
+      const { model, inputs } = buildInputs(g, String(prompt), b, ib ?? undefined)
 
       const res = await fetch("/api/chat", {
         method: "POST",
@@ -57,9 +70,9 @@ export function RuntimeProvider({ children }: { children: React.ReactNode }) {
         const isVideo = model.startsWith("minimax_h3")
         const url = data.presigned_url as string
         if (isVideo) {
-          return { content: [{ type: "file", data: url, mimeType: "video/mp4" } as unknown as { type: "text", text: string }] }
+          return { content: [{ type: "file", data: url, mimeType: "video/mp4" }] }
         }
-        return { content: [{ type: "image", image: url } as unknown as { type: "text", text: string }] }
+        return { content: [{ type: "image", image: url }] }
       }
 
       return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] }

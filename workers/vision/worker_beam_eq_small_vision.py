@@ -1,15 +1,18 @@
 from __future__ import annotations
 
+import threading
+
 from beam import Image, QueueDepthAutoscaler, Volume, endpoint
 
 from workers.vision._shared_small_vision import (
     SmallVisionInput,
-    SmallVisionOutput,
     do_inference,
     load_dependencies,
 )
 
 CACHE_PATH = "./hf-cache"
+
+_INFERENCE_LOCK = threading.Lock()
 
 image = (
     Image(python_version="python3.11")
@@ -39,8 +42,9 @@ def generate(model, processor, analyze_prompt, **kwargs) -> dict:
     """Validate at boundary, delegate, return output contract."""
     req = SmallVisionInput(**kwargs)
     try:
-        result = do_inference(model, processor, analyze_prompt, req)
-        return result.model_dump() if isinstance(result, SmallVisionOutput) else result
+        with _INFERENCE_LOCK:
+            result = do_inference(model, processor, analyze_prompt, req)
+            return result.model_dump()
     except Exception as e:
         print(f"[ERR] {type(e).__name__}: {e}", flush=True)
         raise RuntimeError(f"inference failed: {e}") from e
@@ -48,16 +52,16 @@ def generate(model, processor, analyze_prompt, **kwargs) -> dict:
 
 @endpoint(
     name="small-vision-worker",
-    cpu=2,
-    memory="16Gi",
-    gpu="A10G",
+    cpu=4,
+    memory="32Gi",
+    gpu="RTX4090",
     image=image,
     on_start=load_deps,
     volumes=[Volume(name="hf-cache", mount_path=CACHE_PATH)],
     autoscaler=QueueDepthAutoscaler(max_containers=1, tasks_per_container=1),
     keep_warm_seconds=0,
-    checkpoint_enabled=True,
+    timeout=300,
 )
-def analyze(context, image_base64: str):
+def analyze(context, **kwargs):
     model, processor, analyze_prompt = context.on_start_value
-    return generate(model, processor, analyze_prompt, image_base64=image_base64)
+    return generate(model, processor, analyze_prompt, **kwargs)

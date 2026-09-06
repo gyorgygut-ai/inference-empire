@@ -30,18 +30,6 @@ EXTRA_SPECIAL_TOKENS = [    "<|im_start|>",
     "<|video_pad|>",
 ]
 
-    path = Path(__file__).parent.parent / ".env"
-    if not path.exists():
-        return
-    for line in path.read_text().splitlines():
-        line = line.strip()
-        if not line or line.startswith("#") or "=" not in line:
-            continue
-        key, _, value = line.partition("=")
-        key, value = key.strip(), value.strip().strip('"').strip("'")
-        if key and key not in os.environ:
-            os.environ[key] = value
-
 class Krea2Ref2ImgInput(BaseModel):
     model_config = ConfigDict(title="Krea2Ref2ImgInput")
     prompt: str
@@ -189,9 +177,6 @@ def do_inference(
     """Takes validated Input, returns Output. Testable via DI."""
     import io
 
-    if storage is None:
-        raise ValueError("storage is required")
-
     t_req = time.time()
     print(
         f"[REQ] prompt={req.prompt[:40]}  seed={req.seed}  files={1 if req.reference_image else 0}",
@@ -246,15 +231,15 @@ def do_inference(
     print(f"[OK] completed in {time.time() - t_req:.1f}s", flush=True)
     return Krea2Ref2ImgOutput(artifact=Artifact(presigned_url=presigned_url))
 
-def pipe_factory() -> DiffusionPipeline:
+def pipe_factory(cache_dir=None) -> DiffusionPipeline:
     """Factory for the krea2 pipeline."""
-    return load_pipeline()[0]
+    return load_pipeline(cache_dir=cache_dir)[0]
 
 def load_dependencies(cache_dir=None):
     """Load all dependencies for krea2-ref2img worker."""
-    from workers.services.storage.r2_storage import require_storage
+    from workers.services.storage.r2_storage import R2Storage
     from workers.services.torch_module.torch_module_service import TorchModuleService
 
-    storage = require_storage(None)
-    _, runtime_dir, _ = load_pipeline(cache_dir=cache_dir)
-    return storage, pipe_factory(), runtime_dir, TorchModuleService()
+    storage = R2Storage()
+    pipe, runtime_dir, _ = load_pipeline(cache_dir=cache_dir)
+    return storage, pipe, runtime_dir, TorchModuleService()

@@ -1,24 +1,28 @@
 from __future__ import annotations
 
+import threading
+
 import modal
 
 from workers.vision._shared_small_vision import (
     REPO_ID,
     SmallVisionInput,
-    SmallVisionOutput,
     do_inference,
     load_dependencies,
 )
 
 app = modal.App("small-vision-worker")
 
+_INFERENCE_LOCK = threading.Lock()
+
 
 def generate(model, processor, analyze_prompt, **kwargs) -> dict:
     """Validate at boundary, delegate, return output contract."""
     req = SmallVisionInput(**kwargs)
     try:
-        result = do_inference(model, processor, analyze_prompt, req)
-        return result.model_dump() if isinstance(result, SmallVisionOutput) else result
+        with _INFERENCE_LOCK:
+            result = do_inference(model, processor, analyze_prompt, req)
+            return result.model_dump()
     except Exception as e:
         print(f"[ERR] {type(e).__name__}: {e}", flush=True)
         raise RuntimeError(f"inference failed: {e}") from e
@@ -58,7 +62,7 @@ image = (
 @app.cls(
     image=image,
     gpu="L4",
-    timeout=600,
+    timeout=300,
     scaledown_window=150,
     max_containers=1,
 )

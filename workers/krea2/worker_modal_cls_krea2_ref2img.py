@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import threading
 import time
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -17,12 +18,15 @@ if TYPE_CHECKING:
 
 app = modal.App("krea2-ref2img-worker")
 
+_INFERENCE_LOCK = threading.Lock()
+
 
 def generate(storage: Storage, pipe, runtime_dir, torch_module, **kwargs) -> dict:
     """Validate at boundary, delegate, return output contract."""
     req = Krea2Ref2ImgInput(**kwargs)
     try:
-        return do_inference(pipe, runtime_dir, torch_module, storage, req).model_dump()
+        with _INFERENCE_LOCK:
+            return do_inference(pipe, runtime_dir, torch_module, storage, req).model_dump()
     except Exception as e:
         print(f"[ERR] {type(e).__name__}: {e}", flush=True)
         raise RuntimeError(f"inference failed: {e}") from e
@@ -66,7 +70,7 @@ image = (
     gpu=["L40S", "A100-40GB"],
     secrets=[dotenv_secret],
     volumes={"/root/.cache/huggingface": hf_cache_vol},
-    timeout=900,
+    timeout=300,
     memory=65536,
     scaledown_window=150,
     max_containers=1,

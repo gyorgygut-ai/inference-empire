@@ -1,7 +1,9 @@
 """Shared business logic for minimax-h3-ref2va-comfy (ComfyUI backend). No platform imports."""
 from __future__ import annotations
 
+import os
 import uuid
+from pathlib import Path
 from typing import TYPE_CHECKING, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -19,6 +21,8 @@ MODEL_FILES = {
 }
 FPS = 24
 
+
+def _load_dotenv() -> None:
     path = Path(__file__).parent.parent / ".env"
     if not path.exists():
         return
@@ -30,6 +34,8 @@ FPS = 24
         key, value = key.strip(), value.strip().strip('"').strip("'")
         if key and key not in os.environ:
             os.environ[key] = value
+
+
 _MAX_REF_IMAGES = 9
 _MAX_REF_VIDEOS = 3
 _MAX_REF_AUDIOS = 3
@@ -247,8 +253,6 @@ def parse_output(output) -> tuple:
     return base64.b64decode(data), data
 
 def upload_result(storage: Storage, video_bytes: bytes, data: str, prefix: str = "minimax_ref2va_comfy") -> MiniMaxH3Ref2VAComfyOutput:
-    if storage is None:
-        raise ValueError("storage is required")
     key = f"{prefix}_{uuid.uuid4()}.mp4"
     storage.put(key, video_bytes)
     presigned_url = storage.presigned_url(key)
@@ -261,7 +265,6 @@ def _run_beam(comfy_base_url: str, req: ValidatedRef2VAComfyInput) -> tuple:
 
     import requests
 
-    t_req = time.time()
     n_files = (
         len(req.ref_images)
         + len(req.ref_videos)
@@ -305,14 +308,12 @@ def _run_beam(comfy_base_url: str, req: ValidatedRef2VAComfyInput) -> tuple:
     video_bytes = requests.get(video_url, timeout=60).content
     data = base64.b64encode(video_bytes).decode("ascii")
 
-    print(f"[OK] submit/poll/fetch in {time.time() - t_req:.1f}s", flush=True)
     return video_bytes, data
 
 def _run_flash(endpoint, req: ValidatedRef2VAComfyInput) -> tuple:
     """Submit via flash endpoint. Returns (video_bytes, data)."""
     import time
 
-    t_req = time.time()
     n_files = (
         len(req.ref_images)
         + len(req.ref_videos)
@@ -333,14 +334,13 @@ def _run_flash(endpoint, req: ValidatedRef2VAComfyInput) -> tuple:
     output = getattr(job, "output", None) or job
     video_bytes, data = parse_output(output)
 
-    print(f"[OK] submit/fetch in {time.time() - t_req:.1f}s", flush=True)
     return video_bytes, data
 
 def do_inference(backend, storage: Storage, req: ValidatedRef2VAComfyInput) -> MiniMaxH3Ref2VAComfyOutput:
     """Beam (base_url str) and flash (endpoint) paths converge here. Testable via DI."""
-    if storage is None:
-        raise ValueError("storage is required")
+    import time
 
+    t_req = time.time()
     if isinstance(backend, str):
         video_bytes, data = _run_beam(backend, req)
     else:
@@ -348,4 +348,5 @@ def do_inference(backend, storage: Storage, req: ValidatedRef2VAComfyInput) -> M
 
     result = upload_result(storage, video_bytes, data)
     print(f"[R2] uploaded key={result.artifact.presigned_url[:60]}", flush=True)
+    print(f"[OK] completed in {time.time() - t_req:.1f}s", flush=True)
     return result

@@ -1,75 +1,73 @@
-from pathlib import Path
+import subprocess
+import threading
 
+import modal
 import pytest
 
-from workers.e2e_targets import DeployedRunner, LocalTarget, deploy, undeploy
-from workers.services.deps.dep_check import check_worker
-from workers.services.mock_server.beam.fake import clear as beam_clear
-from workers.services.mock_server.flash.fake import clear as flash_clear
-from workers.services.mock_server.modal.fake import clear as modal_clear
-from workers.services.platform.beam_platform_local import LocalBeamPlatform
-from workers.services.platform.flash_platform_local import LocalFlashPlatform
-from workers.services.platform.modal_platform_local import LocalModalPlatform
-from workers.services.storage.r2_storage_fake import FakeR2Storage
 
-
-def pytest_addoption(parser):
-    parser.addoption("--target", action="store", default="fake", choices=("fake", "live"))
-
-
-@pytest.fixture
-def bucket():
-    return FakeR2Storage()
-
-
-def worker_path_for(test_path):
-    test_file = Path(str(test_path))
-    worker_file = test_file.parent.parent / test_file.name.replace("test_e2e_", "", 1)
-    if not worker_file.exists():
-        raise LookupError(f"no worker file for {test_file}")
-    return str(worker_file)
-
-
-@pytest.fixture(scope="session", autouse=True)
-def local_fake_session():
-    platforms = (LocalFlashPlatform(), LocalBeamPlatform(), LocalModalPlatform())
-    for platform in platforms:
-        platform.deploy()
-    try:
-        yield
-    finally:
-        for platform in platforms:
-            platform.undeploy()
-
-
-@pytest.fixture(scope="module", autouse=True)
-def clear_fakes():
-    flash_clear()
-    beam_clear()
-    modal_clear()
-    yield
-    flash_clear()
-    beam_clear()
-    modal_clear()
+def _stream_modal_logs(app_name):
+    app = modal.App.lookup(app_name)
+    for entry in app.logs.stream(timeout=None):
+        print(entry.message, end="", flush=True)
 
 
 @pytest.fixture(scope="module")
-def deployed_worker(request):
-    path = worker_path_for(request.node.fspath)
-    name, output = deploy(path)
-    try:
-        yield DeployedRunner(path, output)
-    finally:
-        undeploy(path, name)
+def platform_flash():
+    from workers.flux2.worker_flash_cls_flux2_klein9b import FluxKleinWorker
+
+    print("[flash] setup: yielding FluxKleinWorker", flush=True)
+    print("[flash] note: no CLI log streaming available for Flash endpoints", flush=True)
+    yield FluxKleinWorker
+    print("[flash] teardown: flash undeploy --name flux2-klein9b-worker", flush=True)
+    subprocess.run(
+        ["flash", "undeploy", "--name", "flux2-klein9b-worker"],
+        check=False,
+    )
 
 
-@pytest.fixture
-def e2e_target(monkeypatch, request):
-    if request.node.get_closest_marker("deployed_e2e"):
-        if request.config.getoption("target") != "live":
-            pytest.skip("deployed-only; rerun with --target live")
-        return request.getfixturevalue("deployed_worker")
-    # pre-flight dep parity for local e2e
-    worker_path = worker_path_for(request.node.fspath)
-    check_worker(worker_path)
-    return LocalTarget(monkeypatch)
+@pytest.fixture(scope="module")
+def platform_beam():
+    from workers.flux2.worker_beam_tq_flux2_klein9b import dispatch
+
+    print("[beam] setup: deploying ...", flush=True)
+    subprocess.run(
+        ["beam", "deploy", "workers/flux2/worker_beam_tq_flux2_klein9b.py"],
+        check=True,
+    )
+    print("[beam] setup: yielding dispatch", flush=True)
+    print("[beam] note: beam logs has no follow/stream mode", flush=True)
+    yield dispatch
+    print("[beam] teardown: beam worker stop --name flux2-klein9b-worker", flush=True)
+    subprocess.run(
+        ["beam", "worker", "stop", "--name", "flux2-klein9b-worker"],
+        check=False,
+    )
+
+
+@pytest.fixture(scope="module")
+def platform_modal():
+    print("[modal] setup: deploying ...", flush=True)
+    subprocess.run(
+        ["modal", "deploy", "workers/flux2/worker_modal_cls_flux2_klein9b.py"],
+        check=True,
+    )
+    print("[modal] setup: starting log stream ...", flush=True)
+    t = threading.Thread(
+        target=_stream_modal_logs,
+        args=("flux2-klein9b-worker",),
+        daemon=True,
+    )
+    t.start()
+    yield
+    print("[modal] teardown: stopping app ...", flush=True)
+    subprocess.run(
+        ["modal", "app", "stop", "flux2-klein9b-worker", "--yes"],
+        check=False,
+    )
+
+
+@pytest.fixture(scope="module")
+def bucket():
+    from workers.services.storage.r2_storage_fake import FakeR2Storage
+
+    return FakeR2Storage()

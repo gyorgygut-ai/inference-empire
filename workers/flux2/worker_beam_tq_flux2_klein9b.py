@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import threading
 from typing import TYPE_CHECKING
 
 from beam import Image, QueueDepthAutoscaler, Volume, task_queue
@@ -15,6 +16,8 @@ if TYPE_CHECKING:
 
 
 CACHE_PATH = "./hf-cache"
+
+_INFERENCE_LOCK = threading.Lock()
 
 image = (
     Image(python_version="python3.11")
@@ -33,6 +36,7 @@ image = (
         {
             "HF_HOME": CACHE_PATH,
             "HF_HUB_ENABLE_HF_TRANSFER": "1",
+            "SDNQ_USE_TRITON_MM": "0",
             "R2_ENDPOINT": "https://29b2f092b2dbc0b63f48f491ddc177ee.r2.cloudflarestorage.com",
             "R2_BUCKET": "generated-media",
         }
@@ -44,7 +48,8 @@ def generate(storage: Storage, pipe, torch_module, **kwargs) -> dict:
     """Validate at boundary, delegate, return output contract."""
     req = Flux2Klein9bInput(**kwargs)
     try:
-        return do_inference(pipe, torch_module, storage, req).model_dump()
+        with _INFERENCE_LOCK:
+            return do_inference(pipe, torch_module, storage, req).model_dump()
     except Exception as e:
         print(f"[ERR] {type(e).__name__}: {e}", flush=True)
         raise RuntimeError(f"inference failed: {e}") from e
@@ -61,7 +66,7 @@ def generate(storage: Storage, pipe, torch_module, **kwargs) -> dict:
     autoscaler=QueueDepthAutoscaler(max_containers=1, tasks_per_container=1),
     keep_warm_seconds=1800,
     checkpoint_enabled=True,
-    timeout=3600,
+    timeout=300,
     secrets=["HF_TOKEN", "R2_ACCESS_KEY", "R2_SECRET_KEY", "R2_ENDPOINT"],
 )
 def dispatch(context, **kwargs) -> dict:

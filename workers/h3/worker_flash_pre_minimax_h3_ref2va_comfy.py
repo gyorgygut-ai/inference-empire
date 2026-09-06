@@ -10,7 +10,7 @@ from workers.h3._shared_minimax_h3_ref2va_comfy import (
     ValidatedRef2VAComfyInput,
     do_inference,
 )
-from workers.services.storage.r2_storage import require_storage
+from workers.services.storage.r2_storage import R2Storage
 
 if TYPE_CHECKING:
     from workers.services.storage.storage import Storage
@@ -56,7 +56,7 @@ class MiniMaxH3Ref2VAComfyWorker:
     Input = ValidatedRef2VAComfyInput
 
     def __init__(self):
-        self.storage = require_storage(None)
+        self.storage = R2Storage()
         apply_torch_shims()
         (self.endpoint,) = load_dependencies()
 

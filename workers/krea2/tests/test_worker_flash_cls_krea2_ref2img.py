@@ -5,6 +5,7 @@ from PIL import Image
 from pydantic import ValidationError
 
 import workers.krea2.worker_flash_cls_krea2_ref2img as worker_mod
+from workers.krea2._shared_krea2_ref2img import Krea2Ref2ImgInput, Krea2Ref2ImgOutput, do_inference
 from workers.services.inference.image_pipe_fake import FakeImagePipe
 from workers.services.torch_module.torch_module_fake import FakeTorchModule
 
@@ -15,34 +16,64 @@ def _png_bytes(img):
     return buffer.getvalue()
 
 
+class SpyPipe(FakeImagePipe):
+    def __init__(self, image):
+        super().__init__(image)
+        self.kwargs = None
+
+    def __call__(self, **kwargs):
+        self.kwargs = kwargs
+        return super().__call__(**kwargs)
+
+
+def test_do_inference_requested_with_right_args(bucket):
+    canned = Image.new("RGB", (8, 8), (255, 0, 0))
+    spy = SpyPipe(canned)
+    req = Krea2Ref2ImgInput(prompt="a red square", seed=7)
+    do_inference(spy, "/tmp/runtime", FakeTorchModule(), bucket, req)
+    assert spy.kwargs["prompt"] == "a red square"
+    assert spy.kwargs["num_inference_steps"] == 8
+    assert spy.kwargs["guidance_scale"] == 0.0
+    assert "generator" in spy.kwargs
+
+
+def test_fake_bucket_has_uploaded_artifact(bucket):
+    canned = Image.new("RGB", (8, 8), (255, 0, 0))
+    spy = SpyPipe(canned)
+    req = Krea2Ref2ImgInput(prompt="a red square", seed=7)
+    out = do_inference(spy, "/tmp/runtime", FakeTorchModule(), bucket, req)
+    key = out.artifact.presigned_url.rsplit("/", 1)[-1].split("?", 1)[0]
+    assert bucket.fetch(key) == _png_bytes(canned)
+
+
+def test_do_inference_returns_output_contract(bucket):
+    canned = Image.new("RGB", (8, 8), (255, 0, 0))
+    spy = SpyPipe(canned)
+    req = Krea2Ref2ImgInput(prompt="a red square", seed=7)
+    out = do_inference(spy, "/tmp/runtime", FakeTorchModule(), bucket, req)
+    assert isinstance(out, Krea2Ref2ImgOutput)
+
+
 def test_generate_returns_image_artifact(bucket):
     canned = Image.new("RGB", (8, 8), (255, 0, 0))
-
-    out = worker_mod.generate(
-        bucket, FakeImagePipe(canned), None, FakeTorchModule(), prompt="a red square", seed=7
-    )
-
+    out = worker_mod.generate(bucket, FakeImagePipe(canned), None, FakeTorchModule(), prompt="a red square", seed=7)
     assert bucket.fetch(out["artifact"]["presigned_url"].rsplit("/", 1)[-1]) == _png_bytes(canned)
 
 
 def test_generate_rejects_missing_prompt(bucket):
     canned = Image.new("RGB", (8, 8), (255, 0, 0))
-
     with pytest.raises(ValidationError):
         worker_mod.generate(bucket, FakeImagePipe(canned), None, FakeTorchModule())
 
 
-def test_init_stores_storage_and_pipe(monkeypatch, bucket):
+def test_load_dependencies_mocked(monkeypatch, bucket):
     canned = Image.new("RGB", (8, 8), (255, 0, 0))
-    monkeypatch.setattr(worker_mod, "require_storage", lambda _s: bucket)
-    monkeypatch.setattr(
-        worker_mod,
-        "load_dependencies",
-        lambda: (FakeImagePipe(canned), None, FakeTorchModule()),
-    )
+    fake_pipe = FakeImagePipe(canned)
+    fake_torch = FakeTorchModule()
 
-    # _class_type is the raw class; the decorator wraps it in a remote proxy.
-    worker = worker_mod.Krea2Ref2ImgWorker()._class_type()
+    def fake_load(cache_dir=None):
+        return bucket, fake_pipe, "/tmp/runtime", fake_torch
 
-    assert worker.storage is bucket
-    assert isinstance(worker.pipe, FakeImagePipe)
+    monkeypatch.setattr(worker_mod, "load_dependencies", fake_load)
+    storage, pipe, runtime_dir, torch_mod = worker_mod.load_dependencies()
+    assert storage is bucket

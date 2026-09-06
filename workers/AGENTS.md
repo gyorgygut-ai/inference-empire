@@ -18,6 +18,7 @@ Every worker type must be implemented for all 3 providers (Flash, Beam, Modal).
 - H3-REF2VA: async, 50 steps, produces artifact
 - H3-REF2VA-COMFY: async, 20 steps, scheduler=simple, produces artifact
 - Krea2: sync, 8 steps, cfg 0.0, produces artifact
+- tiny-sd: sync, 20 steps, cfg 7.5, produces artifact
 - Vision: sync, produces JSON
 - Voice: async, realtime streaming
 
@@ -32,6 +33,7 @@ worker_{platform}_{pattern}_{model}.py
 **Platform:** `flash`, `beam`, `modal`
 
 **Patterns:**
+
 - Flash: `qb` (queue), `lb` (routes), `cls` (class), `pre` (pre-built)
 - Beam: `fn` (function), `eq` (endpoint), `tq` (task queue), `asgi`, `pod`
 - Modal: `fn` (function), `cls` (class), `fe` (fastapi endpoint), `asgi`
@@ -106,44 +108,42 @@ worker_{platform}_{pattern}_{model}.py
 
 ---
 
-## Gotchas
-
-- Flash: `flash dev` bundles ALL `@Endpoint` files in current directory. Each Flash folder is isolated.
-- Modal/Beam: target specific files, no per-folder constraint.
-- Testing for status `200` only means the platform fired up the worker.
-
----
-
 ## Commands
 
 ### Flash
+
 - Local dev: `flash dev`
 - Deploy: `flash deploy` (or `flash deploy --name <name>`)
 - Preview: `flash deploy --preview`
 - Tear down: `flash undeploy` (or `flash undeploy --name <name>`)
 
 ### Beam
+
 - Local dev: `beam serve`
 - Deploy: `beam deploy <file>` (or `beam deploy` for all)
 - Logs: `beam logs`
 
 ### Modal
+
 - Deploy: `modal deploy <file>` (or `modal deploy`)
 - Invoke: `modal.Function.from_name("app","method").spawn(...)` (do not use `modal run`)
 
 ---
 
 ### Undeploy
+
 - Flash: `flash undeploy`
 - Beam: `beam worker stop --name <name>` (or `beam worker stop --all`)
 - Modal: `modal app stop <app-name>` (use `stop`, never `destroy`)
 
 ### Task Cancellation
+
 - Beam: `beam task list` → `beam task stop <task-id>`
 - Beam (all pending): `beam task list | grep PENDING | awk '{print $1}' | xargs beam task stop`
 - Modal: N/A (`spawn()` + `.result()` tasks are not independently cancellable)
 
 ### Logging & Polling
+
 - Beam single task: `beam logs --task-id <id>`
 - Beam worker tasks: `beam logs --stub-id <name>`
 - Beam poll async task (owner live runs): `beam logs --task-id <id> --timeout 3600 --follow` (wait for `[OK]` or `[ERR]`)
@@ -157,14 +157,16 @@ Log tag order: `[INIT]` → `[REQ]` → `[GEN]` → `[R2]` → `[OK]` (or `[ERR]
 ## Test Strategy
 
 ### Run All Tests
-- Fake (mocked inference, local): `python -m pytest workers/ --target fake`
-- Per model: `python -m pytest workers/<model>/tests/ --target fake`
-- `--target live` runs are owner-operated only, never part of this repo's execution.
+
+- Fake (mocked inference, local): `python -m pytest workers/`
+- Per model: `python -m pytest workers/<model>/tests/`
 
 ### Run Per-Worker Tests
-- Single worker: `python -m pytest workers/<model>/tests/test_<worker-name>.py --target fake -k "<test>"`
+
+- Single worker: `python -m pytest workers/<model>/tests/test_<worker-name>.py -k "<test>"`
 
 ### Test + Code Rules
+
 - Use `pytest` + `tests` folder
 - One test file per worker
 - Each worker file must have e2e tests
@@ -177,11 +179,13 @@ Log tag order: `[INIT]` → `[REQ]` → `[GEN]` → `[R2]` → `[OK]` (or `[ERR]
 ## Unit Tests
 
 **Rules:**
+
 - Tests-first worker architecture with `_shared_*` file in worker folder
 - `load_dependencies` and `do_inference` always used from shared
 - `load_dependencies` mocked with fakes to avoid side effects
 
 **Cases:**
+
 - [ ] Inference requested with right args
 - [ ] Fake bucket has "uploaded" artifact
 - [ ] `do_inference` returns output contract
@@ -190,13 +194,8 @@ Log tag order: `[INIT]` → `[REQ]` → `[GEN]` → `[R2]` → `[OK]` (or `[ERR]
 
 ## E2E Tests
 
-**Rules:**
-- E2E tests kept minimal, because they are slow
-- With a distinct pytest fixture per type
-- Sync (Flash `cls`, `pre`, Beam `eq`) direct response
-- Async (Beam `tq`, Beam `asgi`, Modal `cls` with `spawn()`) task_id polling
-
 **Tests:**
-- [ ] Worker deployed to test env in before ALL, undeployed after tests
+
+- [ ] Iterate via local dev commands
 - [ ] Invalid input: should reject
 - [ ] Good input: should return contract + artifact must exist in bucket (if applicable)

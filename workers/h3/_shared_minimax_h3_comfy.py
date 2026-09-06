@@ -1,7 +1,9 @@
 """Shared business logic for minimax-h3-comfy (ComfyUI backend). No platform imports."""
 from __future__ import annotations
 
+import os
 import uuid
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -17,6 +19,18 @@ MODEL_FILES = {
 }
 FPS = 24
 
+
+def apply_torch_shims() -> None:
+    """Patch torch runtime quirks once (remote containers)."""
+    import torch.distributed as dist
+
+    try:
+        dist.is_available = lambda: False
+    except Exception:  # noqa: BLE001, S110
+        pass
+
+
+def _load_dotenv() -> None:
     path = Path(__file__).parent.parent / ".env"
     if not path.exists():
         return
@@ -28,6 +42,7 @@ FPS = 24
         key, value = key.strip(), value.strip().strip('"').strip("'")
         if key and key not in os.environ:
             os.environ[key] = value
+
 
 class MiniMaxH3ComfyInput(BaseModel):
     model_config = ConfigDict(title="MiniMaxH3ComfyInput")
@@ -108,8 +123,6 @@ def parse_output(output) -> tuple:
     return base64.b64decode(data), data
 
 def upload_result(storage: Storage, video_bytes: bytes, data: str, prefix: str = "minimax_comfy") -> MiniMaxH3ComfyOutput:
-    if storage is None:
-        raise ValueError("storage is required")
     key = f"{prefix}_{uuid.uuid4()}.mp4"
     storage.put(key, video_bytes)
     presigned_url = storage.presigned_url(key)
@@ -132,9 +145,6 @@ def run_comfy_endpoint(endpoint, payload, timeout: int = 1800):
 def do_inference(endpoint, storage: Storage, req: MiniMaxH3ComfyInput) -> MiniMaxH3ComfyOutput:
     """Flash path: submit via endpoint + upload_result. Testable via DI."""
     import time
-
-    if storage is None:
-        raise ValueError("storage is required")
 
     t_req = time.time()
     print(f"[REQ] prompt={req.prompt[:40]}", flush=True)

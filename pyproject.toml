@@ -32,6 +32,8 @@ test = [
     "modal==1.5.5",
     "beam-client==0.2.207",
     "runpod-flash==1.7.0",
+    "fastapi",
+    "uvicorn",
 ]
 
 [tool.setuptools.packages.find]

@@ -1,23 +1,27 @@
 from __future__ import annotations
 
 import subprocess
+import threading
 import time
 from typing import TYPE_CHECKING
 
 import requests
 from beam import Image, QueueDepthAutoscaler, Volume, task_queue
 
+from workers.h3._shared_minimax_h3_comfy import apply_torch_shims
 from workers.h3._shared_minimax_h3_ref2va_comfy import (
     ValidatedRef2VAComfyInput,
     do_inference,
 )
-from workers.services.storage.r2_storage import require_storage
+from workers.services.storage.r2_storage import R2Storage
 
 if TYPE_CHECKING:
     from workers.services.storage.storage import Storage
 
 
 CACHE_PATH = "./hf-cache"
+
+_INFERENCE_LOCK = threading.Lock()
 
 image = Image.from_registry(
     "ghcr.io/vincezh2000/minimax-h3-comfyui-serverless:cu130",
@@ -60,14 +64,16 @@ def _start_comfy():
 
 
 def load_dependencies():
-    return (_start_comfy(),)
+    apply_torch_shims()
+    return (R2Storage(), _start_comfy())
 
 
 def generate(storage: Storage, comfy_base_url, **kwargs) -> dict:
     """Validate at boundary, delegate, return output contract."""
     req = ValidatedRef2VAComfyInput(**kwargs)
     try:
-        return do_inference(comfy_base_url, storage, req).model_dump()
+        with _INFERENCE_LOCK:
+            return do_inference(comfy_base_url, storage, req).model_dump()
     except Exception as e:
         print(f"[ERR] {type(e).__name__}: {e}", flush=True)
         raise RuntimeError(f"inference failed: {e}") from e
@@ -85,12 +91,12 @@ def generate(storage: Storage, comfy_base_url, **kwargs) -> dict:
     keep_warm_seconds=0,
     checkpoint_enabled=True,
     timeout=3600,
-    secrets=["HF_TOKEN", "R2_ACCESS_KEY", "R2_SECRET_KEY"],
+    secrets=["HF_TOKEN", "R2_ACCESS_KEY", "R2_SECRET_KEY", "R2_ENDPOINT"],
     env={
         "R2_BUCKET": "generated-media",
         "R2_ENDPOINT": "https://29b2f092b2dbc0b63f48f491ddc177ee.r2.cloudflarestorage.com",
     },
 )
 def dispatch(context, **kwargs) -> dict:
-    storage = require_storage(None)
-    return generate(storage, *context.on_start_value, **kwargs)
+    storage, comfy_base_url = context.on_start_value
+    return generate(storage, comfy_base_url, **kwargs)

@@ -4,6 +4,7 @@ import {
   ThreadPrimitive,
   ComposerPrimitive,
   MessagePrimitive,
+  AttachmentPrimitive,
 } from "@assistant-ui/react"
 import type { FC } from "react"
 
@@ -65,6 +66,9 @@ const AssistantMessage: FC = () => {
 const Composer: FC = () => {
   return (
     <ComposerPrimitive.Root className="flex items-end gap-2 rounded-lg border border-input bg-background p-2">
+      <AttachmentPrimitive.Root>
+        {/* Attachment UI is provided by assistant-ui primitives; custom trigger omitted for compatibility */}
+      </AttachmentPrimitive.Root>
       <ComposerPrimitive.Input
         autoFocus
         placeholder="Type a message..."

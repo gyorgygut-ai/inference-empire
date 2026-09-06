@@ -1,8 +1,10 @@
 """Shared business logic for small-vision. No platform imports."""
 from __future__ import annotations
 
+import os
 import re
 import time
+from pathlib import Path
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict
@@ -10,6 +12,8 @@ from pydantic import BaseModel, ConfigDict
 REPO_ID = "Qwen/Qwen2-VL-2B-Instruct"
 MAX_NEW_TOKENS = 512
 
+
+def _load_dotenv() -> None:
     path = Path(__file__).parent.parent / ".env"
     if not path.exists():
         return
@@ -21,6 +25,7 @@ MAX_NEW_TOKENS = 512
         key, value = key.strip(), value.strip().strip('"').strip("'")
         if key and key not in os.environ:
             os.environ[key] = value
+
 
 class SmallVisionInput(BaseModel):
     model_config = ConfigDict(title="SmallVisionInput")
@@ -128,9 +133,9 @@ def do_inference(model, processor, analyze_prompt: str, req: SmallVisionInput):
 
     m = re.search(r"\{.*\}", result, re.DOTALL)
     print(f"[OK] completed in {time.time() - t_req:.1f}s", flush=True)
-    if m:
-        return SmallVisionOutput.model_validate_json(m.group())
-    return {"raw": result}
+    if not m:
+        raise RuntimeError(f"vision model returned non-JSON: {result[:200]!r}")
+    return SmallVisionOutput.model_validate_json(m.group())
 
 def load_dependencies(cache_dir=None):
     """Load all dependencies for small-vision worker."""
