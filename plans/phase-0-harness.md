@@ -35,7 +35,7 @@ pythonpath = ["."]
 testpaths = ["workers"]
 markers = [
     "local_e2e: end-to-end against canned fakes, in-process",
-    "deployed_e2e: end-to-end against the test-env deployment",
+    "deployed_e2e: end-to-end against the deployed worker",
 ]
 ```
 
@@ -43,14 +43,12 @@ markers = [
 
 ### P0.2 — New minimal `workers/conftest.py` + `workers/e2e_targets.py`
 
-Conftest (ONLY this — 2 fixtures, ≤5 lines each):
+Conftest — `bucket` + `e2e_target` + module-scoped `deployed_worker`:
 
 ```python
-import os
-
 import pytest
 
-from workers.e2e_targets import DeployedTarget, LocalTarget
+from workers.e2e_targets import LocalTarget
 from workers.services.storage.r2_storage_fake import FakeR2Storage
 
 
@@ -59,10 +57,18 @@ def bucket():
     return FakeR2Storage()
 
 
+@pytest.fixture(scope="module")
+def deployed_worker(request):
+    worker_file = request.fspath  # test file maps 1:1 to worker file
+    deploy(worker_file)  # beam deploy / modal deploy / flash deploy
+    yield make_invoker(worker_file)  # native: beam tq submit+poll, modal spawn, flash/eq direct
+    undeploy(worker_file)  # beam worker stop / modal app stop / flash undeploy
+
+
 @pytest.fixture
-def e2e_target(monkeypatch, request):
+def e2e_target(monkeypatch, request, deployed_worker):
     if request.node.get_closest_marker("deployed_e2e"):
-        return DeployedTarget(os.environ["TEST_ENV_URL"])
+        return deployed_worker
     return LocalTarget(monkeypatch)
 ```
 
@@ -100,20 +106,17 @@ class _Fn:
         return self._call()
 
 
-class DeployedTarget:
-    def __init__(self, base_url):
-        self.base_url = base_url.rstrip("/")
-
-    def run(self, worker_mod, inputs, deps, storage):
-        return post_and_poll(self.base_url, worker_mod, inputs, sync=True)
-
-    def run_async(self, worker_mod, inputs, deps, storage):
-        return post_and_poll(self.base_url, worker_mod, inputs, sync=False)
 ```
 
 No hooks. No `pytest_addoption`. No `--target` flag. No AST/magic of any kind.
-The marker is the rung switch (`-m local_e2e` / `-m deployed_e2e`); the only
-env var is `TEST_ENV_URL` (an address, not a switch).
+The marker is the rung switch (`-m local_e2e` / `-m deployed_e2e`).
+`deployed_worker` is module-scoped: setup deploys that file's worker
+(`beam deploy <file>` / `modal deploy <file>` / `flash deploy`), yields a
+native invoker, teardown undeploys (`beam worker stop` / `modal app stop` /
+`flash undeploy`). Invokers are provider-native: beam `tq` submits to the
+named queue and polls task-id to `[OK]`/`[ERR]`; modal
+`Cls.from_name(...).spawn()` + `.result()`; flash `cls`/`pre` and beam `eq`
+direct response. No `TEST_ENV_URL`, no `post_and_poll`.
 
 ### P0.3 — Service/interface/fake hardening (3 files per service)
 

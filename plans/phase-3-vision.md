@@ -28,6 +28,9 @@ PNG as the request image — that is request setup, not fake prep).
 - `workers/vision/tests/test_e2e_worker_modal_cls_small_vision.py` (`run_async`)
 
 Marked `@pytest.mark.local_e2e` / `@pytest.mark.deployed_e2e`. One assert each.
+Deployed twins consume `deployed_worker` (module-scoped: deploy in setup,
+native invoke, undeploy in teardown) and each deployed file gains an
+invalid-input reject case.
 
 ## 2. Shared cleanup (`_shared_small_vision.py`)
 
@@ -43,7 +46,9 @@ Vision returns JSON; storage is never used. Yet all 3 workers call
 without R2 configured is broken today.
 
 - All 3 workers: drop the `require_storage` call + `self.storage`
-  attribute. Keep signatures unchanged (platform/proxy compat).
+  attribute. Keep signatures unchanged (platform/proxy compat). Pin the new
+  shape with an assert (no `storage` attribute survives) before 3.5/3.9, or
+  restore the attribute.
 - `worker_modal_cls_small_vision.py`: `_run_analyze` (L68) →
   `_do_inference`; `analyze_web` (L81–88) → delegate to `analyze`.
   Pin modal deps (L32–40: `transformers/torchvision/pillow/accelerate/fastapi/hf_transfer`
@@ -55,8 +60,8 @@ without R2 configured is broken today.
 ## 4. Verify
 
 - `pytest workers/vision -v` green, unmodified tests.
-- `-m local_e2e workers/vision` green; then deploy test env, `-m deployed_e2e
-  workers/vision` green, undeploy.
+- `-m local_e2e workers/vision` green; `-m deployed_e2e workers/vision` green via
+  `deployed_worker` (setup deploys per file, teardown undeploys).
 - Negative check + output-model keys ⊆ `contracts/*.json`.
 - `rg "run_analyze|require_storage" workers/vision` → zero hits.
 - `ruff check` clean. No test over ~25 lines.

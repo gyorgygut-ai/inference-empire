@@ -27,7 +27,9 @@ Same stupid-simple shape everywhere: setup / blank / act / blank / assert.
 
 9 files mirroring the unit files (`test_e2e_*`), `run` for flash/modal sync
 paths, `run_async` for `tq`. Marked `@pytest.mark.local_e2e` /
-`@pytest.mark.deployed_e2e`. One assert each.
+`@pytest.mark.deployed_e2e`. One assert each. Deployed twins consume
+`deployed_worker` (module-scoped: deploy in setup, native invoke, undeploy in
+teardown) and each deployed file gains an invalid-input reject case.
 
 ## 2. Shared cleanup
 
@@ -69,8 +71,8 @@ paths, `run_async` for `tq`. Marked `@pytest.mark.local_e2e` /
 
 - `pytest workers/h3 -v` green. Negative check + output-model keys ⊆
   `contracts/*.json`.
-- `-m local_e2e workers/h3` green; then deploy test env, `-m deployed_e2e
-  workers/h3` green, undeploy.
+- `-m local_e2e workers/h3` green; `-m deployed_e2e workers/h3` green via
+  `deployed_worker` (setup deploys per file, teardown undeploys).
 - `rg "run_generate" workers/h3` → zero hits.
 - `ruff check` clean. No test over ~25 lines.
 

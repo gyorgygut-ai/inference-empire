@@ -64,7 +64,9 @@ FakeTorchModule())`; act is one target call —
 `e2e_target.run(worker_mod, inputs, deps, bucket)` /
 `e2e_target.run_async(worker_mod, inputs, deps, bucket)`; assert identical
 to unit. Each marked `@pytest.mark.local_e2e` / `@pytest.mark.deployed_e2e`
-(same body, marker picks the rung). One assert each.
+(same body, marker picks the rung). One assert each. Deployed twins consume
+`deployed_worker` (module-scoped: deploy in setup, native invoke, undeploy in
+teardown) and each deployed file gains an invalid-input reject case.
 
 ## 2. Shared cleanup (`_shared_flux2_klein9b.py`)
 
@@ -120,10 +122,9 @@ decorated entry delegates one line.
 ## 4. Verify
 
 - `pytest workers/flux2 -m "not deployed_e2e" -v` green — pilot tests pass
-  **unmodified**, proving the seam. (Plain `pytest` would also select the
-  `deployed_e2e` twins, which rightly fail loud without `TEST_ENV_URL`.)
-- `-m local_e2e workers/flux2` green; then deploy test env, `-m deployed_e2e
-  workers/flux2` green, undeploy.
+  **unmodified**, proving the seam.
+- `-m local_e2e workers/flux2` green; `-m deployed_e2e workers/flux2` green via
+  `deployed_worker` (setup deploys `worker_{beam_tq,flash_cls,modal_cls}_flux2_klein9b.py` per file, teardown undeploys).
 - Negative check: break an output-contract key → test fails (proves
   "change → failing test"). Output-model keys ⊆ `contracts/*.json`.
 - `rg "run_generate|run_analyze" workers/flux2` → zero hits.

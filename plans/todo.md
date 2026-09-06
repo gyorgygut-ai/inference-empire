@@ -11,14 +11,15 @@ one line to module `generate`. Test shape is setup / blank / act / blank /
 assert, one assert per test (`bucket.fetch(key) == canned_bytes` — a missing
 key raises, so presence + exactness in a single shot). Unit tests take
 `(bucket)` and call module `generate` directly with fakes — no mocks at all.
-Invalid-input tests expect `pydantic.ValidationError`. E2E tests take
-`(e2e_target, bucket)`; the target receives
+Invalid-input tests expect `pydantic.ValidationError` (unit + deployed twin
+each). E2E tests take `(e2e_target, bucket)`; the target receives
 `(worker_mod, inputs, deps, storage)` — local rung patches
 `load_dependencies` (proving the seam) then drives module `generate`
-(`run_async` additionally polls via `FakeAsyncRunner`); deployed rung ignores
-deps/storage and uses `post_and_poll`. Markers: `-m local_e2e` /
-`-m deployed_e2e`. Gates per group: conftest stays 2 fixtures ≤5 lines each,
-every test ≤~25 lines, `ruff` clean.
+(`run_async` additionally polls via `FakeAsyncRunner`); deployed rung is
+module-scoped `deployed_worker` (setup deploys that file's worker, native
+invoke per provider, teardown undeploys; ignores deps/storage). Markers:
+`-m local_e2e` / `-m deployed_e2e`. Gates per group: every test ≤~25 lines,
+`ruff` clean.
 
 ## Group 0 — Harness + services
 
@@ -38,11 +39,11 @@ every test ≤~25 lines, `ruff` clean.
 - [x] 1.2 cleanup: dead `START`/`START_TIME`, broken modal `main()`, beam `load_deps` wrapper, `generate_web` delegates, flash dep pins
 - [x] 1.3 unit tests: 3 files, one assert each
 - [x] 1.4 local e2e tests: 3 files, `-m local_e2e`
-- [ ] 1.5 deployed e2e tests: deploy test env, `-m deployed_e2e`, undeploy
+- [ ] 1.5 deployed e2e tests: `deployed_worker` (setup deploys per file, native invoke, teardown undeploys), `-m deployed_e2e`, incl. invalid-reject case
 - [x] 1.6 clean up 2: contract parity, negative check, nits
 - [x] 1.7 verify: `pytest workers/flux2 -m "not deployed_e2e"` green
 - [x] 1.8 verify: `-m local_e2e workers/flux2` green
-- [ ] 1.9 verify: `-m deployed_e2e workers/flux2` green
+- [ ] 1.9 verify: `-m deployed_e2e workers/flux2` green (via `deployed_worker`)
 
 ## Group 2 — Krea2
 
@@ -50,11 +51,11 @@ every test ≤~25 lines, `ruff` clean.
 - [x] 2.2 cleanup: dotenv helper, modal delegate, `_download_models` delete-if-unwired, flash dep pins
 - [x] 2.3 unit tests: 3 files, one assert each
 - [x] 2.4 local e2e tests: 3 files, `-m local_e2e` (`run`/`run_async`)
-- [ ] 2.5 deployed e2e tests: deploy test env, `-m deployed_e2e`, undeploy
+- [ ] 2.5 deployed e2e tests: `deployed_worker` (setup deploys per file, native invoke, teardown undeploys), `-m deployed_e2e`, incl. invalid-reject case
 - [x] 2.6 clean up 2: contract parity, negative check, nits
 - [x] 2.7 verify: `pytest workers/krea2 -v` green
 - [x] 2.8 verify: `-m local_e2e workers/krea2` green
-- [ ] 2.9 verify: `-m deployed_e2e workers/krea2` green
+- [ ] 2.9 verify: `-m deployed_e2e workers/krea2` green (via `deployed_worker`)
 
 ## Group 3 — Vision
 
@@ -62,11 +63,11 @@ every test ≤~25 lines, `ruff` clean.
 - [x] 3.2 cleanup: drop `require_storage` + `self.storage` ×3, modal `_do_inference`, delegate, dep pins
 - [x] 3.3 unit tests: 3 files, assert output equals canned (artifact N/A, commented)
 - [x] 3.4 local e2e tests: 3 files, `-m local_e2e`
-- [ ] 3.5 deployed e2e tests: deploy test env, `-m deployed_e2e`, undeploy
+- [ ] 3.5 deployed e2e tests: `deployed_worker` (setup deploys per file, native invoke, teardown undeploys), `-m deployed_e2e`, incl. invalid-reject case (+ storage-shape pin)
 - [x] 3.6 clean up 2: contract parity, negative check, nits
 - [x] 3.7 verify: `pytest workers/vision -v` green
 - [x] 3.8 verify: `-m local_e2e workers/vision` green
-- [ ] 3.9 verify: `-m deployed_e2e workers/vision` green
+- [ ] 3.9 verify: `-m deployed_e2e workers/vision` green (via `deployed_worker`)
 
 ## Group 4 — H3 (3 commits)
 
@@ -74,11 +75,11 @@ every test ≤~25 lines, `ruff` clean.
 - [x] 4.2 cleanup: dead `START_TIME` ×2, flash try/except, modal delegates, ref2va input-type reconcile, ruff nits
 - [x] 4.3 unit tests: 6 non-comfy + 3 comfy files, one assert each
 - [x] 4.4 local e2e tests: 9 files, `-m local_e2e`
-- [ ] 4.5 deployed e2e tests: deploy test env, `-m deployed_e2e`, undeploy
+- [ ] 4.5 deployed e2e tests: `deployed_worker` (setup deploys per file, native invoke, teardown undeploys), `-m deployed_e2e`, incl. invalid-reject case
 - [x] 4.6 clean up 2: contract parity, negative check, nits
 - [x] 4.7 verify: `pytest workers/h3 -v` green
 - [x] 4.8 verify: `-m local_e2e workers/h3` green
-- [ ] 4.9 verify: `-m deployed_e2e workers/h3` green
+- [ ] 4.9 verify: `-m deployed_e2e workers/h3` green (via `deployed_worker`)
 
 ## Group 5 — Voice
 
@@ -86,11 +87,11 @@ every test ≤~25 lines, `ruff` clean.
 - [x] 5.2 cleanup: worker imports from shared, no duplicates
 - [x] 5.3 unit tests: pure-helper tests, mock-free, one assert each
 - [x] 5.4 local e2e tests: modal voice only, `-m local_e2e` (beam parked)
-- [ ] 5.5 deployed e2e tests: modal voice only (beam parked until vendor-vs-delete)
+- [ ] 5.5 deployed e2e tests: modal voice only via `deployed_worker` (modal `spawn` + `.result()`, undeploy in teardown), incl. invalid-reject case (beam parked until vendor-vs-delete)
 - [x] 5.6 clean up 2: nits, `ruff`
 - [x] 5.7 verify: `pytest workers/voice -v` green
 - [x] 5.8 verify: `-m local_e2e workers/voice` green
-- [ ] 5.9 verify: `-m deployed_e2e workers/voice` green
+- [ ] 5.9 verify: `-m deployed_e2e workers/voice` green (via `deployed_worker`)
 
 ## Error handling hardening (done, all groups)
 

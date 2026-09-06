@@ -26,6 +26,9 @@ assert `bucket.fetch(key_of(out)) == png_bytes_of(canned)`; invalid input →
 - `workers/krea2/tests/test_e2e_worker_modal_cls_krea2_ref2img.py` (`run_async`)
 
 Marked `@pytest.mark.local_e2e` / `@pytest.mark.deployed_e2e`. One assert each.
+Deployed twins consume `deployed_worker` (module-scoped: deploy in setup,
+native invoke, undeploy in teardown) and each deployed file gains an
+invalid-input reject case.
 
 ## 2. Shared cleanup (`_shared_krea2_ref2img.py`)
 
@@ -64,8 +67,8 @@ Marked `@pytest.mark.local_e2e` / `@pytest.mark.deployed_e2e`. One assert each.
 ## 4. Verify
 
 - `pytest workers/krea2 -v` green, unmodified tests.
-- `-m local_e2e workers/krea2` green; then deploy test env, `-m deployed_e2e
-  workers/krea2` green, undeploy.
+- `-m local_e2e workers/krea2` green; `-m deployed_e2e workers/krea2` green via
+  `deployed_worker` (setup deploys per file, teardown undeploys).
 - Negative check + output-model keys ⊆ `contracts/*.json`.
 - `rg "run_generate" workers/krea2` → zero hits. `ruff check` clean.
 - No test over ~25 lines.
