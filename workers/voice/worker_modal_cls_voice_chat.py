@@ -6,12 +6,10 @@ import json
 import os
 import threading
 import time
-from typing import TYPE_CHECKING
 
 import modal
 import numpy as np
 
-from workers.services.storage.r2_storage import require_storage
 from workers.voice._shared_voice_chat import (
     MAX_NEW_TOKENS,
     SUPPORTED_LANGUAGES,
@@ -22,9 +20,6 @@ from workers.voice._shared_voice_chat import (
     pcm_float_to_int16,
     resample_int16,
 )
-
-if TYPE_CHECKING:
-    from workers.services.storage.storage import Storage
 
 # --------------------------------------------------------------------------
 # Configuration
@@ -608,14 +603,14 @@ def load_dependencies():
     return (pipeline,)
 
 
-def generate(storage: Storage, pipeline: VoiceChatPipeline, **kwargs) -> dict:
+def generate(pipeline: VoiceChatPipeline, **kwargs) -> dict:
     """Validate at boundary, delegate, return output contract.
 
     Sync entry point for the realtime session lifecycle: applies a
     `session.update` event to a fresh session and returns the emitted
     `session.updated` event. Audio/utterance turns stay on the realtime
     websocket path (they need the GPU pipeline); session state is pure
-    metadata, so `storage` is accepted for harness shape but not written.
+    metadata, nothing is written to storage.
     """
     req = VoiceChatInput(**kwargs)
     try:
@@ -646,10 +641,6 @@ def generate(storage: Storage, pipeline: VoiceChatPipeline, **kwargs) -> dict:
     volumes={MODEL_MOUNT: volume},
 )
 class VoiceChatWorker:
-    def __init__(self, storage: Storage):
-        storage = require_storage(storage)
-        self.storage = storage
-
     @modal.enter()
     def load(self):
         self.pipeline, = load_dependencies()
@@ -657,11 +648,11 @@ class VoiceChatWorker:
     @modal.method()
     def generate(self, **kwargs) -> dict:
         """Validate at boundary, delegate, return output contract."""
-        return generate(self.storage, self.pipeline, **kwargs)
+        return generate(self.pipeline, **kwargs)
 
     @modal.fastapi_endpoint(method="POST")
     def generate_web(self, item: VoiceChatInput) -> dict:
-        return generate(self.storage, self.pipeline, **item.model_dump())
+        return generate(self.pipeline, **item.model_dump())
 
     @modal.asgi_app()
     def app(self):
