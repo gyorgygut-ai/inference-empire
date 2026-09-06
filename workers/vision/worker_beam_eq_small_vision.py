@@ -19,7 +19,7 @@ image = (
     .add_python_packages(
         [
             "torch==2.9.1",
-            "transformers>=5.0,<6",
+            "transformers==5.16.1",
             "torchvision==0.24.1",
             "pillow==12.3.0",
             "accelerate==1.14.0",

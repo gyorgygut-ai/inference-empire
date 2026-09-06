@@ -1,11 +1,13 @@
 """E2E rungs: identical run/run_async over in-process fakes or native provider handles.
 
-Both rungs take (worker_mod, inputs, deps, storage). The local rung patches
+Both rungs take (worker_mod, inputs, deps). The local rung patches
 `load_dependencies` (proving the seam) then drives module-level `generate`
-directly; storage is passed only when the worker's `generate` takes it
-(artifact workers take it, JSON workers don't) — the harness fits each
-worker. `run_async` additionally exercises the submit/poll loop via
-`FakeAsyncRunner`. The deployed rung is
+through the worker's own provider fake (`workers/mock_server/*/fake.py`):
+`submit` stashes a zero-arg call, `result` pops and runs it. The call is
+`generate(*load_dependencies(), **inputs)` — the loaded tuple passes through
+blind; the harness never inspects it. `run`
+wraps submit/result; `run_async` additionally exercises the submit/poll loop.
+The deployed rung is
 built by the module-scoped `deployed_worker` fixture: setup deploys the
 worker file, teardown undeploys it. Invokers are provider-native — beam
 submits to the task queue and polls the task, modal spawns the class method,
@@ -19,7 +21,11 @@ import subprocess
 import time
 from pathlib import Path
 
-from workers.services.runner.runner_fake import FakeAsyncRunner
+from workers.services.runner.runner_local import (
+    LocalBeamRunner,
+    LocalFlashRunner,
+    LocalModalRunner,
+)
 
 DEPLOY_TIMEOUT = 1800
 TASK_TIMEOUT = 3600
@@ -33,35 +39,45 @@ _APP_NAME_REF = re.compile(r"modal\.App\(APP_NAME\)")
 _APP_NAME_DEF = re.compile(r"APP_NAME\s*=\s*\"([^\"]+)\"")
 
 
+_LOCAL_RUNNERS = {
+    "flash": LocalFlashRunner,
+    "beam": LocalBeamRunner,
+    "modal": LocalModalRunner,
+}
+
+
+def local_platform(worker_mod):
+    name = getattr(worker_mod, "__name__", "")
+    for platform in ("beam", "modal", "flash"):
+        if f"worker_{platform}_" in name:
+            return platform
+    raise ValueError(f"cannot infer provider from {name}")
+
+
 class LocalTarget:
     def __init__(self, monkeypatch):
         self.monkeypatch = monkeypatch
 
-    def _deps(self, worker_mod, deps):
+    def _call(self, worker_mod, deps, inputs):
         self.monkeypatch.setattr(worker_mod, "load_dependencies", lambda **k: deps)
-        return worker_mod.load_dependencies()
+        loaded = worker_mod.load_dependencies()
+        return lambda: worker_mod.generate(*loaded, **inputs)
 
-    def _call(self, worker_mod, deps, inputs, storage):
-        pipe_deps = self._deps(worker_mod, deps)
-        if worker_mod.generate.__code__.co_varnames[0] == "storage":
-            return lambda: worker_mod.generate(storage, *pipe_deps, **inputs)
-        return lambda: worker_mod.generate(*pipe_deps, **inputs)
+    def _runner(self, worker_mod):
+        return _LOCAL_RUNNERS[local_platform(worker_mod)]()
 
-    def run(self, worker_mod, inputs, deps, storage):
-        return self._call(worker_mod, deps, inputs, storage)()
+    def run(self, worker_mod, inputs, deps):
+        return self._runner(worker_mod).run(self._call(worker_mod, deps, inputs))
 
-    def run_async(self, worker_mod, inputs, deps, storage):
-        call = self._call(worker_mod, deps, inputs, storage)
-        runner = FakeAsyncRunner()
-        return runner.result(runner.submit(_Fn(call), **inputs))
-
-
-class _Fn:
-    def __init__(self, call):
-        self._call = call
-
-    def generate(self, **inputs):
-        return self._call()
+    def run_async(self, worker_mod, inputs, deps):
+        runner = self._runner(worker_mod)
+        task_id = runner.submit(self._call(worker_mod, deps, inputs))
+        deadline = time.monotonic() + 30
+        while runner.poll(task_id) != "COMPLETED":
+            if time.monotonic() > deadline:
+                raise TimeoutError(f"task {task_id} timed out")
+            time.sleep(0.01)
+        return runner.result(task_id)
 
 
 def worker_platform(worker_path):
@@ -239,9 +255,9 @@ class DeployedRunner:
                 worker_mod, self.worker_path, self.deploy_output)
         return self._target
 
-    def run(self, worker_mod, inputs, deps, storage):
+    def run(self, worker_mod, inputs, deps, storage=None):
         return self._target_for(worker_mod).run(worker_mod, inputs, deps, storage)
 
-    def run_async(self, worker_mod, inputs, deps, storage):
+    def run_async(self, worker_mod, inputs, deps, storage=None):
         return self._target_for(worker_mod).run_async(
             worker_mod, inputs, deps, storage)

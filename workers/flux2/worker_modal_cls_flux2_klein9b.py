@@ -37,7 +37,7 @@ image = (
     .apt_install("git", "ffmpeg", "libgl1", "libglib2.0-0")
     .pip_install(
         "torch==2.9.1",
-        "transformers>=5.0,<6",
+        "transformers==5.16.1",
         "accelerate==1.14.0",
         "diffusers==0.40.0",
         "sdnq==0.2.6",

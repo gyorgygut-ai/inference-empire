@@ -39,10 +39,10 @@ image = (
     .pip_install(
         "torch==2.9.1",
         "diffusers==0.39.0",
-        "transformers>=4.57,<5",
+        "transformers==4.57.6",
         "accelerate==1.14.0",
         "safetensors==0.8.0",
-        "huggingface-hub>=0.34,<2.0",
+        "huggingface-hub==1.29.0",
         "pillow==12.3.0",
         "protobuf==6.33.6",
         "opencv-python-headless==4.12.0.88",

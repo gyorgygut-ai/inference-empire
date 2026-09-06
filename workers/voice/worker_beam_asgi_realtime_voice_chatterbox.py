@@ -29,12 +29,12 @@ image = (
     Image(python_version="python3.11")
     .add_python_packages(
         [
-            "fastapi",
-            "uvicorn[standard]",
-            "numpy",
-            "soundfile",
-            "chatterbox-tts",
-            "librosa>=0.10",
+            "fastapi==0.141.1",
+            "uvicorn[standard]==0.52.4",
+            "numpy==2.5.2",
+            "soundfile==0.14.0",
+            "chatterbox-tts==0.1.7",
+            "librosa==0.10.2.post1",
         ]
     )
 )

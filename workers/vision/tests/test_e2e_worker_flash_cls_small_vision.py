@@ -23,26 +23,26 @@ CANNED = {
 
 
 @pytest.mark.local_e2e
-def test_e2e_flash_returns_result(e2e_target, bucket):
+def test_e2e_flash_returns_result(e2e_target):
     deps = (FakeVisionModel(CANNED), FakeVisionProcessor(CANNED), "fake-prompt")
 
-    out = e2e_target.run(worker_mod, {"image_base64": _image_b64()}, deps, bucket)
+    out = e2e_target.run(worker_mod, {"image_base64": _image_b64()}, deps)
 
     assert out == CANNED
 
 
 @pytest.mark.deployed_e2e
-def test_e2e_flash_returns_result_deployed(e2e_target, bucket):
+def test_e2e_flash_returns_result_deployed(e2e_target):
     deps = (FakeVisionModel(CANNED), FakeVisionProcessor(CANNED), "fake-prompt")
 
-    out = e2e_target.run(worker_mod, {"image_base64": _image_b64()}, deps, bucket)
+    out = e2e_target.run(worker_mod, {"image_base64": _image_b64()}, deps)
 
     assert out == CANNED
 
 
 @pytest.mark.deployed_e2e
-def test_e2e_flash_rejects_missing_image_deployed(e2e_target, bucket):
+def test_e2e_flash_rejects_missing_image_deployed(e2e_target):
     deps = (FakeVisionModel(CANNED), FakeVisionProcessor(CANNED), "fake-prompt")
 
     with pytest.raises(Exception, match="image_base64"):
-        e2e_target.run(worker_mod, {}, deps, bucket)
+        e2e_target.run(worker_mod, {}, deps)

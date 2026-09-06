@@ -10,7 +10,7 @@ class StubPipeline:
 
 
 @pytest.mark.local_e2e
-def test_e2e_modal_session_update_returns_updated_session(e2e_target, bucket):
+def test_e2e_modal_session_update_returns_updated_session(e2e_target):
     deps = (StubPipeline(),)
 
     out = e2e_target.run_async(
@@ -20,22 +20,21 @@ def test_e2e_modal_session_update_returns_updated_session(e2e_target, bucket):
             "session": {"instructions": "Speak briefly.", "language": "hu"},
         },
         deps,
-        bucket,
     )
 
     assert out["type"] == "session.updated" and out["session"]["instructions"] == "Speak briefly."
 
 
 @pytest.mark.local_e2e
-def test_e2e_modal_session_update_rejects_bad_type(e2e_target, bucket):
+def test_e2e_modal_session_update_rejects_bad_type(e2e_target):
     deps = (StubPipeline(),)
 
     with pytest.raises(ValidationError):
-        e2e_target.run(worker_mod, {"type": "bogus"}, deps, bucket)
+        e2e_target.run(worker_mod, {"type": "bogus"}, deps)
 
 
 @pytest.mark.deployed_e2e
-def test_e2e_modal_session_update_returns_updated_session_deployed(e2e_target, bucket):
+def test_e2e_modal_session_update_returns_updated_session_deployed(e2e_target):
     deps = (StubPipeline(),)
 
     out = e2e_target.run_async(
@@ -45,15 +44,14 @@ def test_e2e_modal_session_update_returns_updated_session_deployed(e2e_target, b
             "session": {"instructions": "Speak briefly.", "language": "hu"},
         },
         deps,
-        bucket,
     )
 
     assert out["type"] == "session.updated" and out["session"]["instructions"] == "Speak briefly."
 
 
 @pytest.mark.deployed_e2e
-def test_e2e_modal_session_update_rejects_bad_type_deployed(e2e_target, bucket):
+def test_e2e_modal_session_update_rejects_bad_type_deployed(e2e_target):
     deps = (StubPipeline(),)
 
     with pytest.raises(Exception, match="type"):
-        e2e_target.run(worker_mod, {"type": "bogus"}, deps, bucket)
+        e2e_target.run(worker_mod, {"type": "bogus"}, deps)

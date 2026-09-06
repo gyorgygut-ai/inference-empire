@@ -44,10 +44,10 @@ def generate(storage: Storage, pipe, runtime_dir, torch_module, **kwargs) -> dic
     dependencies=[
         "torch==2.9.1",
         "diffusers==0.39.0",
-        "transformers>=4.57,<5",
+        "transformers==4.57.6",
         "accelerate==1.14.0",
         "safetensors==0.8.0",
-        "huggingface_hub",
+        "huggingface_hub==1.29.0",
         "pillow==12.3.0",
         "protobuf==6.33.6",
         "opencv-python-headless==4.12.0.88",

@@ -34,15 +34,15 @@ image = (
     Image(python_version="python3.11")
     .add_python_packages(
         [
-            "fastapi",
-            "uvicorn[standard]",
-            "numpy",
-            "soundfile",
-            "openvoice-cli",
+            "fastapi==0.141.1",
+            "uvicorn[standard]==0.52.4",
+            "numpy==2.5.2",
+            "soundfile==0.14.0",
+            "openvoice-cli==0.0.5",
             "librosa==0.9.1",
-            "setuptools==80.9.0",
-            "torch",
-            "torchaudio",
+            "setuptools==84.0.0",
+            "torch==2.9.1",
+            "torchaudio==2.9.1",
         ]
     )
 )

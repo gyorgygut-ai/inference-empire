@@ -61,16 +61,16 @@ image = (
     .pip_install(
         "torch==2.9.1",
         "torchaudio==2.9.1",
-        "transformers>=4.57,<5",
-        "accelerate",
-        "bitsandbytes",
-        "faster-whisper",
-        "TTS",
-        "soundfile",
-        "numpy",
-        "fastapi",
-        "uvicorn",
-        "hf_transfer",
+        "transformers==4.57.6",
+        "accelerate==1.14.0",
+        "bitsandbytes==0.50.2",
+        "faster-whisper==1.2.1",
+        "coqui-tts==0.27.5",
+        "soundfile==0.14.0",
+        "numpy==2.5.2",
+        "fastapi==0.141.1",
+        "uvicorn==0.52.4",
+        "hf_transfer==0.1.9",
     )
     .env(
         {

@@ -28,18 +28,18 @@ image = (
     .pip_install(
         "torch==2.9.1",
         "torchcodec==0.9.0",
-        "diffsynth[audio]",
+        "diffsynth[audio]==2.1.6",
         "diffusers==0.40.0",
-        "transformers>=5.0,<6",
+        "transformers==5.16.1",
         "accelerate==1.14.0",
-        "bitsandbytes",
-        "pillow",
+        "bitsandbytes==0.50.2",
+        "pillow==12.3.0",
         "imageio==2.37.2",
         "imageio-ffmpeg==0.6.0",
-        "torchaudio",
+        "torchaudio==2.9.1",
         "boto3==1.43.83",
-        "fastapi",
-        "hf_transfer",
+        "fastapi==0.141.1",
+        "hf_transfer==0.1.9",
     )
     .env(
         {

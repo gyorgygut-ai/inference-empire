@@ -5,6 +5,7 @@ import { Workers } from "@/components/panels/Workers";
 import { Artifacts } from "@/components/panels/Artifacts";
 
 import { Main } from "@/components/panels/Main";
+import { RuntimeProvider } from "@/components/runtime/RuntimeProvider";
 
 type State = { opened: "left" | "right" | null };
 type Action =
@@ -29,21 +30,23 @@ export function AppShell() {
   const rightOpen = state.opened === "right";
 
   return (
-    <div className="flex h-dvh">
-      <Workers
-        open={leftOpen}
-        onOpenChange={() => dispatch({ type: "TOGGLE_LEFT" })}
-      />
-      <div className="min-w-0 flex-1">
-        <Main
-          onToggleLeft={() => dispatch({ type: "TOGGLE_LEFT" })}
-          onToggleRight={() => dispatch({ type: "TOGGLE_RIGHT" })}
+    <RuntimeProvider>
+      <div className="flex h-dvh">
+        <Workers
+          open={leftOpen}
+          onOpenChange={() => dispatch({ type: "TOGGLE_LEFT" })}
+        />
+        <div className="min-w-0 flex-1">
+          <Main
+            onToggleLeft={() => dispatch({ type: "TOGGLE_LEFT" })}
+            onToggleRight={() => dispatch({ type: "TOGGLE_RIGHT" })}
+          />
+        </div>
+        <Artifacts
+          open={rightOpen}
+          onOpenChange={() => dispatch({ type: "TOGGLE_RIGHT" })}
         />
       </div>
-      <Artifacts
-        open={rightOpen}
-        onOpenChange={() => dispatch({ type: "TOGGLE_RIGHT" })}
-      />
-    </div>
+    </RuntimeProvider>
   );
 }

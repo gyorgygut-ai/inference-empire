@@ -26,7 +26,7 @@ image = (
         [
             "torch==2.9.1",
             "diffusers==0.39.0",
-            "transformers>=4.57,<5",
+            "transformers==4.57.6",
             "accelerate==1.14.0",
             "safetensors==0.8.0",
             "hf_transfer==0.1.9",
