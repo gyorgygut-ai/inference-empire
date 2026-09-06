@@ -9,7 +9,6 @@ from workers.krea2._shared_krea2_ref2img import (
     do_inference,
     load_dependencies,
 )
-from workers.services.storage.r2_storage import require_storage
 if TYPE_CHECKING:
     from workers.services.storage.storage import Storage
 
@@ -76,5 +75,5 @@ def generate(storage: Storage, pipe, runtime_dir, torch_module, **kwargs) -> dic
     },
 )
 def dispatch(context, **kwargs) -> dict:
-    storage = require_storage(None)
-    return generate(storage, *context.on_start_value, **kwargs)
+    storage, pipe, runtime_dir, torch_module = context.on_start_value
+    return generate(storage, pipe, runtime_dir, torch_module, **kwargs)

@@ -11,7 +11,6 @@ from workers.krea2._shared_krea2_ref2img import (
     do_inference,
     load_dependencies,
 )
-from workers.services.storage.r2_storage import require_storage
 
 if TYPE_CHECKING:
     from workers.services.storage.storage import Storage
@@ -74,13 +73,13 @@ image = (
 )
 class Krea2Ref2ImgWorker:
     def __init__(self):
-        self.storage = require_storage(None)
+        pass
 
     @modal.enter()
     def load(self):
         print("[INIT] loading model krea/Krea-2-Turbo", flush=True)
         t0 = time.time()
-        self.pipe, self.runtime_dir, self.torch_module = load_dependencies()
+        self.storage, self.pipe, self.runtime_dir, self.torch_module = load_dependencies()
         print(f"[INIT] model loaded in {time.time() - t0:.1f}s", flush=True)
 
     @modal.method()
