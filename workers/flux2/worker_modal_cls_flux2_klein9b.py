@@ -10,7 +10,6 @@ from workers.flux2._shared_flux2_klein9b import (
     do_inference,
     load_dependencies,
 )
-from workers.services.storage.r2_storage import require_storage
 
 if TYPE_CHECKING:
     from workers.services.storage.storage import Storage
@@ -68,11 +67,11 @@ image = (
 )
 class FluxKleinWorker:
     def __init__(self):
-        self.storage = require_storage(None)
+        pass
 
     @modal.enter()
     def load(self):
-        self.pipe, self.torch_module = load_dependencies()
+        self.storage, self.pipe, self.torch_module = load_dependencies()
 
     @modal.method()
     def generate(self, **kwargs) -> dict:

@@ -10,7 +10,6 @@ from workers.flux2._shared_flux2_klein9b import (
     ensure_dotenv,
     load_dependencies,
 )
-from workers.services.storage.r2_storage import require_storage
 
 if TYPE_CHECKING:
     from workers.services.storage.storage import Storage
@@ -70,5 +69,5 @@ def generate(storage: Storage, pipe, torch_module, **kwargs) -> dict:
     secrets=["HF_TOKEN", "R2_ACCESS_KEY", "R2_SECRET_KEY", "R2_ENDPOINT"],
 )
 def dispatch(context, **kwargs) -> dict:
-    storage = require_storage(None)
-    return generate(storage, *context.on_start_value, **kwargs)
+    storage, pipe, torch_module = context.on_start_value
+    return generate(storage, pipe, torch_module, **kwargs)
