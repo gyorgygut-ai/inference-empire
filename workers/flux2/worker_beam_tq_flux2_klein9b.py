@@ -69,6 +69,6 @@ def generate(storage: Storage, pipe, torch_module, **kwargs) -> dict:
     timeout=3600,
     secrets=["HF_TOKEN", "R2_ACCESS_KEY", "R2_SECRET_KEY", "R2_ENDPOINT"],
 )
-def dispatch(context, storage: Storage, **kwargs) -> dict:
-    storage = require_storage(storage)
+def dispatch(context, **kwargs) -> dict:
+    storage = require_storage(None)
     return generate(storage, *context.on_start_value, **kwargs)

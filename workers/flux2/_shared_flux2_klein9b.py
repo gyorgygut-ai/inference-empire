@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import time
 import uuid
-from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -12,7 +11,6 @@ if TYPE_CHECKING:
     from diffusers import Flux2KleinPipeline
 
     from workers.services.storage.storage import Storage
-    from workers.services.torch_module.torch_module import TorchModule
 
 MODEL_ID = "Disty0/FLUX.2-klein-9B-SDNQ-4bit-dynamic-svd-r32"
 _MAX_WIDTH = 2560
@@ -120,15 +118,6 @@ def load_pipeline():
     return pipe, torch
 
 
-def load_pipeline_as_needed(pipe=None):
-    """DI entry: injected fake passes through, else real load."""
-    if pipe is not None:
-        import torch
-
-        return pipe, torch
-    return load_pipeline()
-
-
 def do_inference(pipe, torch_module, storage: Storage, req: Flux2Klein9bInput) -> Flux2Klein9bOutput:
     """Takes validated Input, returns Output. Testable via DI."""
     import io
@@ -178,12 +167,6 @@ def do_inference(pipe, torch_module, storage: Storage, req: Flux2Klein9bInput) -
 
     print(f"[OK] completed in {time.time() - t_req:.1f}s", flush=True)
     return Flux2Klein9bOutput(artifact=Artifact(presigned_url=url))
-
-
-@dataclass
-class Flux2Klein9bDeps:
-    pipe: Flux2KleinPipeline
-    torch_module: TorchModule
 
 
 def pipe_factory() -> Flux2KleinPipeline:

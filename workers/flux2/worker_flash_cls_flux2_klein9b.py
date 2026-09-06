@@ -58,9 +58,8 @@ def generate(storage: Storage, pipe, torch_module, **kwargs) -> dict:
 class FluxKleinWorker:
     Input = Flux2Klein9bInput
 
-    def __init__(self, storage: Storage):
-        storage = require_storage(storage)
-        self.storage = storage
+    def __init__(self):
+        self.storage = require_storage(None)
         self.pipe, self.torch_module = load_dependencies()
 
     def generate(self, **kwargs) -> dict:
