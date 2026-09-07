@@ -7,6 +7,7 @@ from runpod_flash import Endpoint, GpuGroup
 
 from workers.h3._shared_minimax_h3_fl2va import (
     MiniMaxH3Fl2VAInput,
+    apply_torch_shims,
     do_inference,
     load_dependencies,
 )
@@ -60,6 +61,7 @@ class MiniMaxH3Fl2VAWorker:
     Input = MiniMaxH3Fl2VAInput
 
     def __init__(self):
+        apply_torch_shims()
         self.storage, self.pipe, self.write_video_audio = load_dependencies()
 
     def generate(self, **kwargs) -> dict:

@@ -91,8 +91,9 @@ def test_load_dependencies_mocked(monkeypatch, bucket):
         return "http://fake-comfy:8188"
 
     monkeypatch.setattr(worker_mod, "_start_comfy", fake_start)
+    monkeypatch.setattr(worker_mod, "R2Storage", lambda: bucket)
     storage, url = worker_mod.load_dependencies()
-    assert storage is not None
+    assert storage is bucket
     assert url == "http://fake-comfy:8188"
 
 
@@ -102,3 +103,53 @@ def test_dispatch_returns_video_artifact(bucket, monkeypatch):
     ctx = SimpleNamespace(on_start_value=(bucket, "http://fake-comfy:8188"))
     out = worker_mod.dispatch.local(ctx, prompt="clip")
     assert bucket.fetch(_key_from(out["artifact"]["presigned_url"])) == canned
+
+
+def test_rejects_too_many_ref_images():
+    with pytest.raises(ValidationError):
+        ValidatedRef2VAComfyInput(prompt="clip", ref_images=["x"] * 10)
+
+
+def test_rejects_too_many_ref_videos():
+    with pytest.raises(ValidationError):
+        ValidatedRef2VAComfyInput(prompt="clip", ref_videos=["x"] * 4)
+
+
+def test_rejects_too_many_ref_video_audios():
+    with pytest.raises(ValidationError):
+        ValidatedRef2VAComfyInput(
+            prompt="clip", ref_videos=["x"] * 3, ref_video_audios=["x"] * 4
+        )
+
+
+def test_rejects_too_many_ref_audios():
+    with pytest.raises(ValidationError):
+        ValidatedRef2VAComfyInput(prompt="clip", ref_images=["img"], ref_audios=["x"] * 4)
+
+
+def test_rejects_video_audio_without_video():
+    with pytest.raises(ValidationError):
+        ValidatedRef2VAComfyInput(prompt="clip", ref_video_audios=["x"])
+
+
+def test_rejects_audio_alone_without_visual():
+    with pytest.raises(ValidationError):
+        ValidatedRef2VAComfyInput(prompt="clip", ref_audios=["x"])
+
+
+def test_rejects_total_over_12():
+    with pytest.raises(ValidationError):
+        ValidatedRef2VAComfyInput(
+            prompt="clip",
+            ref_images=["x"] * 9,
+            ref_videos=["x"] * 3,
+            ref_audios=["x"],
+        )
+
+
+def test_accepts_valid_boundary_and_defaults():
+    req = ValidatedRef2VAComfyInput(prompt="clip", ref_images=["x"] * 9, ref_videos=["x"] * 3)
+    assert len(req.ref_images) == 9
+    assert req.steps == 20
+    assert req.scheduler == "simple"
+    assert req.ref_image_size == "match"

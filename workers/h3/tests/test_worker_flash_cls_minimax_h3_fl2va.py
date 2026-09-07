@@ -73,3 +73,42 @@ def test_load_dependencies_mocked(monkeypatch, bucket):
     monkeypatch.setattr(worker_mod, "load_dependencies", fake_load)
     storage, pipe, write = worker_mod.load_dependencies()
     assert storage is bucket
+
+
+_TINY_PNG_B64 = (
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
+)
+
+
+def test_seed_passthrough(bucket):
+    spy = SpyPipe(np.zeros((1, 4, 8, 8), dtype=np.uint8), None)
+    do_inference(
+        spy, FakeWriteVideoAudio(b"x"), bucket, MiniMaxH3Fl2VAInput(prompt="clip", seed=7)
+    )
+    assert spy.kwargs["seed"] == 7
+
+
+def test_seed_none_omitted(bucket):
+    spy = SpyPipe(np.zeros((1, 4, 8, 8), dtype=np.uint8), None)
+    do_inference(
+        spy, FakeWriteVideoAudio(b"x"), bucket, MiniMaxH3Fl2VAInput(prompt="clip")
+    )
+    assert "seed" not in spy.kwargs
+
+
+def test_first_last_frame_passthrough(bucket):
+    spy = SpyPipe(np.zeros((1, 4, 8, 8), dtype=np.uint8), None)
+    req = MiniMaxH3Fl2VAInput(
+        prompt="clip", first_frame=_TINY_PNG_B64, last_frame=_TINY_PNG_B64
+    )
+    do_inference(spy, FakeWriteVideoAudio(b"x"), bucket, req)
+    assert len(spy.kwargs["keyframes"]) == 2
+    assert spy.kwargs["keyframe_indices"] == [0, -1]
+
+
+def test_defaults_match_contract(bucket):
+    req = MiniMaxH3Fl2VAInput(prompt="clip")
+    assert req.steps == 50
+    assert req.width == 1344
+    assert req.height == 768
+    assert req.length == 124

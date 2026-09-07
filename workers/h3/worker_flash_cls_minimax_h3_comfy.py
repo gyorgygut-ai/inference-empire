@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING
 from runpod_flash import Endpoint, GpuGroup, PodTemplate
 
 from workers.h3._shared_minimax_h3_comfy import MiniMaxH3ComfyInput, do_inference
-from workers.h3._shared_minimax_h3_fl2va import apply_torch_shims
 from workers.services.storage.r2_storage import R2Storage
 
 if TYPE_CHECKING:
@@ -58,7 +57,6 @@ class MiniMaxH3ComfyWorker:
 
     def __init__(self):
         self.storage = R2Storage()
-        apply_torch_shims()
         (self.endpoint,) = load_dependencies()
 
     def generate(self, **kwargs) -> dict:

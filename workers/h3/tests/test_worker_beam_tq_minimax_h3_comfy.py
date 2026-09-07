@@ -91,8 +91,9 @@ def test_load_dependencies_mocked(monkeypatch, bucket):
         return "http://fake-comfy:8188"
 
     monkeypatch.setattr(worker_mod, "_start_comfy", fake_start)
+    monkeypatch.setattr(worker_mod, "R2Storage", lambda: bucket)
     storage, url = worker_mod.load_dependencies()
-    assert storage is not None
+    assert storage is bucket
     assert url == "http://fake-comfy:8188"
 
 
@@ -102,3 +103,38 @@ def test_dispatch_returns_video_artifact(bucket, monkeypatch):
     ctx = SimpleNamespace(on_start_value=(bucket, "http://fake-comfy:8188"))
     out = worker_mod.dispatch.local(ctx, prompt="clip")
     assert bucket.fetch(_key_from(out["artifact"]["presigned_url"])) == canned
+
+
+def test_workflow_scheduler_simple_and_steps():
+    from workers.h3._shared_minimax_h3_comfy import build_workflow
+
+    req = MiniMaxH3ComfyInput(prompt="clip")
+    wf = build_workflow(req)
+    assert wf["sigmas"]["inputs"]["scheduler"] == "simple"
+    assert wf["sigmas"]["inputs"]["steps"] == 20
+    assert wf["sampler_select"]["inputs"]["sampler_name"] == "res_multistep"
+
+
+def test_workflow_seed_default_and_set():
+    from workers.h3._shared_minimax_h3_comfy import build_workflow
+
+    assert build_workflow(MiniMaxH3ComfyInput(prompt="clip"))["noise"]["inputs"]["noise_seed"] == 42
+    assert build_workflow(MiniMaxH3ComfyInput(prompt="clip", seed=7))["noise"]["inputs"]["noise_seed"] == 7
+
+
+def test_first_last_frame_workflow_and_images():
+    from workers.h3._shared_minimax_h3_comfy import build_images, build_workflow
+
+    req = MiniMaxH3ComfyInput(prompt="clip", first_frame="abc", last_frame="def")
+    wf = build_workflow(req)
+    assert "load_first" in wf
+    assert "load_last" in wf
+    assert len(build_images(req)) == 2
+
+
+def test_output_video_is_base64(bucket, monkeypatch):
+    canned = b"fake-video-bytes"
+    _mock_comfy(monkeypatch, canned)
+    req = MiniMaxH3ComfyInput(prompt="clip")
+    out = do_inference("http://fake-comfy:8188", bucket, req)
+    assert out.video == base64.b64encode(canned).decode("ascii")

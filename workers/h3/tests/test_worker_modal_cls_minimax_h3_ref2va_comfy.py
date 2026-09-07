@@ -67,12 +67,62 @@ def test_generate_rejects_missing_prompt(bucket, monkeypatch):
         worker_mod.generate(bucket, _Endpoint(canned))
 
 
-def test_load_dependencies_mocked(monkeypatch):
+def test_load_dependencies_mocked(monkeypatch, bucket):
+    # Modal Cls objects can't be instantiated unit-side; verify the load
+    # path's collaborators are the mockable module attrs.
     def fake_start():
         return "http://fake-comfy:8188"
 
     monkeypatch.setattr(worker_mod, "_start_comfy", fake_start)
-    # load is via storage + url, test directly
-    storage = worker_mod.R2Storage() if hasattr(worker_mod, "R2Storage") else None
-    # Just ensure _start_comfy is mockable
-    assert fake_start() == "http://fake-comfy:8188"
+    monkeypatch.setattr(worker_mod, "R2Storage", lambda: bucket)
+    assert worker_mod._start_comfy() == "http://fake-comfy:8188"
+    assert worker_mod.R2Storage() is bucket
+
+
+def test_rejects_too_many_ref_images():
+    with pytest.raises(ValidationError):
+        ValidatedRef2VAComfyInput(prompt="clip", ref_images=["x"] * 10)
+
+
+def test_rejects_too_many_ref_videos():
+    with pytest.raises(ValidationError):
+        ValidatedRef2VAComfyInput(prompt="clip", ref_videos=["x"] * 4)
+
+
+def test_rejects_too_many_ref_video_audios():
+    with pytest.raises(ValidationError):
+        ValidatedRef2VAComfyInput(
+            prompt="clip", ref_videos=["x"] * 3, ref_video_audios=["x"] * 4
+        )
+
+
+def test_rejects_too_many_ref_audios():
+    with pytest.raises(ValidationError):
+        ValidatedRef2VAComfyInput(prompt="clip", ref_images=["img"], ref_audios=["x"] * 4)
+
+
+def test_rejects_video_audio_without_video():
+    with pytest.raises(ValidationError):
+        ValidatedRef2VAComfyInput(prompt="clip", ref_video_audios=["x"])
+
+
+def test_rejects_audio_alone_without_visual():
+    with pytest.raises(ValidationError):
+        ValidatedRef2VAComfyInput(prompt="clip", ref_audios=["x"])
+
+
+def test_rejects_total_over_12():
+    with pytest.raises(ValidationError):
+        ValidatedRef2VAComfyInput(
+            prompt="clip",
+            ref_images=["x"] * 9,
+            ref_videos=["x"] * 3,
+            ref_audios=["x"],
+        )
+
+
+def test_accepts_valid_boundary_and_defaults():
+    req = ValidatedRef2VAComfyInput(prompt="clip", ref_images=["x"] * 9, ref_videos=["x"] * 3)
+    assert len(req.ref_images) == 9
+    assert req.steps == 20
+    assert req.scheduler == "simple"

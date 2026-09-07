@@ -67,12 +67,40 @@ def test_generate_rejects_missing_prompt(bucket, monkeypatch):
         worker_mod.generate(bucket, _Endpoint(canned))
 
 
-def test_load_dependencies_mocked(monkeypatch):
+def test_load_dependencies_mocked(monkeypatch, bucket):
+    # Modal Cls objects can't be instantiated unit-side; verify the load
+    # path's collaborators are the mockable module attrs.
     def fake_start():
         return "http://fake-comfy:8188"
 
     monkeypatch.setattr(worker_mod, "_start_comfy", fake_start)
-    # load is via storage + url, test directly
-    storage = worker_mod.R2Storage() if hasattr(worker_mod, "R2Storage") else None
-    # Just ensure _start_comfy is mockable
-    assert fake_start() == "http://fake-comfy:8188"
+    monkeypatch.setattr(worker_mod, "R2Storage", lambda: bucket)
+    assert worker_mod._start_comfy() == "http://fake-comfy:8188"
+    assert worker_mod.R2Storage() is bucket
+
+
+def test_workflow_scheduler_simple_and_steps():
+    from workers.h3._shared_minimax_h3_comfy import build_workflow
+
+    req = MiniMaxH3ComfyInput(prompt="clip")
+    wf = build_workflow(req)
+    assert wf["sigmas"]["inputs"]["scheduler"] == "simple"
+    assert wf["sigmas"]["inputs"]["steps"] == 20
+
+
+def test_first_last_frame_workflow_and_images():
+    from workers.h3._shared_minimax_h3_comfy import build_images, build_workflow
+
+    req = MiniMaxH3ComfyInput(prompt="clip", first_frame="abc", last_frame="def")
+    wf = build_workflow(req)
+    assert "load_first" in wf
+    assert "load_last" in wf
+    assert len(build_images(req)) == 2
+
+
+def test_output_video_is_base64(bucket, monkeypatch):
+    canned = b"fake-video-bytes"
+    monkeypatch.setattr("workers.h3._shared_minimax_h3_comfy.run_comfy_endpoint", lambda ep, payload, timeout=1800: _Job({"images": [{"data": base64.b64encode(canned).decode("ascii")}]}))
+    req = MiniMaxH3ComfyInput(prompt="clip")
+    out = do_inference(_Endpoint(canned), bucket, req)
+    assert out.video == base64.b64encode(canned).decode("ascii")

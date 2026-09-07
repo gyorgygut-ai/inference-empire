@@ -84,3 +84,49 @@ def test_dispatch_returns_video_artifact(monkeypatch, bucket):
     ctx = SimpleNamespace(on_start_value=(bucket, _pipe(), FakeWriteVideoAudio(canned)))
     out = worker_mod.dispatch.local(ctx, prompt="clip")
     assert bucket.fetch(_key_from(out["artifact"]["presigned_url"])) == canned
+
+
+_TINY_PNG_B64 = (
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
+)
+
+
+def test_seed_passthrough(bucket):
+    spy = SpyPipe(np.zeros((1, 4, 8, 8), dtype=np.uint8), None)
+    do_inference(
+        spy, FakeWriteVideoAudio(b"x"), bucket, MiniMaxH3Fl2VAInput(prompt="clip", seed=7)
+    )
+    assert spy.kwargs["seed"] == 7
+
+
+def test_seed_none_omitted(bucket):
+    spy = SpyPipe(np.zeros((1, 4, 8, 8), dtype=np.uint8), None)
+    do_inference(
+        spy, FakeWriteVideoAudio(b"x"), bucket, MiniMaxH3Fl2VAInput(prompt="clip")
+    )
+    assert "seed" not in spy.kwargs
+
+
+def test_first_last_frame_passthrough(bucket):
+    spy = SpyPipe(np.zeros((1, 4, 8, 8), dtype=np.uint8), None)
+    req = MiniMaxH3Fl2VAInput(
+        prompt="clip", first_frame=_TINY_PNG_B64, last_frame=_TINY_PNG_B64
+    )
+    do_inference(spy, FakeWriteVideoAudio(b"x"), bucket, req)
+    assert len(spy.kwargs["keyframes"]) == 2
+    assert spy.kwargs["keyframe_indices"] == [0, -1]
+
+
+def test_defaults_match_contract(bucket):
+    req = MiniMaxH3Fl2VAInput(prompt="clip")
+    assert req.steps == 50
+    assert req.width == 1344
+    assert req.height == 768
+    assert req.length == 124
+
+
+def test_output_presigned_url_https(bucket):
+    out = do_inference(
+        _pipe(), FakeWriteVideoAudio(b"x"), bucket, MiniMaxH3Fl2VAInput(prompt="clip")
+    )
+    assert out.artifact.presigned_url.startswith("https://")
