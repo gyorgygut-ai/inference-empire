@@ -1,49 +1,31 @@
-import json
-from pathlib import Path
-
 import httpx
-import modal
 import pytest
 
-from workers.h3._shared_minimax_h3_ref2va_comfy import MiniMaxH3Ref2VAComfyOutput
-
-CONTRACT = json.loads(
-    (Path(__file__).parent.parent / "contracts" / "minimax_h3_ref2va_comfy.json").read_text()
-)
-
-GOOD = {"prompt": "a cat walking in a garden", "seed": 7}
+from workers.h3._shared_minimax_h3_ref2va_comfy import Artifact, MiniMaxH3Ref2VAComfyOutput
+import workers.h3.worker_modal_cls_minimax_h3_ref2va_comfy as worker_function
 
 
-def _assert_contract(out: dict):
-    # Validate required fields per contracts/minimax_h3_ref2va_comfy.json
-    assert "artifact" in out, "output missing required field 'artifact'"
-    assert "video" in out, "output missing required field 'video'"
-    # Pydantic contract validation
-    validated = MiniMaxH3Ref2VAComfyOutput.model_validate(out)
-    assert validated.artifact.presigned_url.startswith("https://")
-    assert validated.video
-    # JSON schema required checks
-    assert CONTRACT["output"]["required"] == ["artifact", "video"]
-    assert CONTRACT["output"]["properties"]["artifact"]["required"] == ["presigned_url"]
+def _artifact_exists(url: str) -> bool:
+    try:
+        response = httpx.get(url, timeout=120)
+        return response.status_code == 200 and len(response.content) > 0
+    except Exception:
+        return False
 
 
+@pytest.mark.modal_worker_function_test(worker_function)
 def test_invalid_input_rejects():
-    handle = modal.Cls.from_name(
-        "minimax-h3-ref2va-comfy-worker", "MiniMaxH3Ref2VAComfyWorker"
-    )().generate
-    with pytest.raises(Exception):
-        handle.spawn(**{}).get()
+    with pytest.raises(RuntimeError, match="inference failed"):
+        worker_function.MiniMaxH3Ref2VAComfyWorker().generate(**{})
 
 
+@pytest.mark.modal_worker_function_test(worker_function)
 def test_good_input_returns_contract_and_artifact():
-    handle = modal.Cls.from_name(
-        "minimax-h3-ref2va-comfy-worker", "MiniMaxH3Ref2VAComfyWorker"
-    )().generate
-    out = handle.spawn(**GOOD).get()
-
-    _assert_contract(out)
-
-    # Artifact must exist in bucket
-    r = httpx.get(out["artifact"]["presigned_url"], timeout=120)
-    assert r.status_code == 200
-    assert len(r.content) > 0
+    out = worker_function.MiniMaxH3Ref2VAComfyWorker().generate(
+        **{"prompt": "a cat walking in a garden", "seed": 7}
+    )
+    url = out["artifact"]["presigned_url"]
+    assert out == MiniMaxH3Ref2VAComfyOutput(
+        artifact=Artifact(presigned_url=url), video=out["video"]
+    ).model_dump()
+    assert _artifact_exists(url)

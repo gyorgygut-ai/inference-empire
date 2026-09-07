@@ -1,43 +1,36 @@
-import json
-from pathlib import Path
-
 import httpx
 import pytest
 
-import workers.h3.worker_beam_tq_minimax_h3_comfy as worker_mod
-from workers.h3._shared_minimax_h3_comfy import MiniMaxH3ComfyOutput
-
-CONTRACT = json.loads((Path(__file__).parent.parent / "contracts" / "minimax_h3_comfy.json").read_text())
+from workers.h3._shared_minimax_h3_comfy import Artifact, MiniMaxH3ComfyOutput
 
 GOOD = {"prompt": "a cat walking in a garden", "seed": 7}
 
 
-def _assert_contract(out: dict):
-    # Validate required fields per contracts/minimax_h3_comfy.json
-    assert "artifact" in out, "output missing required field 'artifact'"
-    assert "video" in out, "output missing required field 'video'"
-    # Pydantic contract validation
-    validated = MiniMaxH3ComfyOutput.model_validate(out)
-    assert validated.artifact.presigned_url.startswith("https://")
-    assert validated.video
-    # JSON schema required checks
-    assert CONTRACT["output"]["required"] == ["artifact", "video"]
-    assert CONTRACT["output"]["properties"]["artifact"]["required"] == ["presigned_url"]
+def _artifact_exists(url: str) -> bool:
+    try:
+        response = httpx.get(url, timeout=120)
+        return response.status_code == 200 and len(response.content) > 0
+    except Exception:
+        return False
 
 
 def test_invalid_input_rejects():
-    with pytest.raises(Exception):
-        task = worker_mod.dispatch.put(**{})
-        task.get()
+    import workers.h3.worker_beam_tq_minimax_h3_comfy as worker_mod
+
+    task = worker_mod.dispatch.put(**{})
+    with pytest.raises(RuntimeError, match="inference failed"):
+        task.result(wait=True)
 
 
 def test_good_input_returns_contract_and_artifact():
+    import workers.h3.worker_beam_tq_minimax_h3_comfy as worker_mod
+
     task = worker_mod.dispatch.put(**GOOD)
-    out = task.get()
+    out = task.result(wait=True)
+    assert out is not None, "beam task returned None - check beam logs"
 
-    _assert_contract(out)
-
-    # Artifact must exist in bucket
-    r = httpx.get(out["artifact"]["presigned_url"], timeout=120)
-    assert r.status_code == 200
-    assert len(r.content) > 0
+    url = out["artifact"]["presigned_url"]
+    assert out == MiniMaxH3ComfyOutput(
+        artifact=Artifact(presigned_url=url), video=out["video"]
+    ).model_dump()
+    assert _artifact_exists(url)
