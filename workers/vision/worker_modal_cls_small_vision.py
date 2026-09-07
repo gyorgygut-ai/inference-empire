@@ -30,6 +30,10 @@ def generate(model, processor, analyze_prompt, **kwargs) -> dict:
 
 def _download_model():
     import torch
+    import torch.distributed as dist
+
+    dist.is_available = lambda: False
+
     from transformers import AutoProcessor, Qwen2VLForConditionalGeneration
 
     Qwen2VLForConditionalGeneration.from_pretrained(REPO_ID, torch_dtype=torch.bfloat16)
@@ -75,7 +79,3 @@ class SmallVisionWorker:
     def analyze(self, **kwargs) -> dict:
         """Validate at boundary, delegate, return output contract."""
         return generate(self.model, self.processor, self.analyze_prompt, **kwargs)
-
-    @modal.fastapi_endpoint(method="POST")
-    def analyze_web(self, item: SmallVisionInput) -> dict:
-        return self.analyze(**item.model_dump())

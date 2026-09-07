@@ -81,7 +81,3 @@ class TinySDWorker:
     def generate(self, **kwargs) -> dict:
         """Validate at boundary, delegate, return output contract."""
         return generate(self.storage, self.pipe, self.torch_module, **kwargs)
-
-    @modal.fastapi_endpoint(method="POST")
-    def generate_web(self, item: TinySDInput) -> dict:
-        return generate(self.storage, self.pipe, self.torch_module, **item.model_dump())

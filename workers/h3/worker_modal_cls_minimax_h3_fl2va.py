@@ -88,7 +88,3 @@ class MiniMaxH3Fl2VAWorker:
     def generate(self, **kwargs) -> dict:
         """Validate at boundary, delegate, return output contract."""
         return generate(self.storage, self.pipe, self.write_video_audio, **kwargs)
-
-    @modal.fastapi_endpoint(method="POST")
-    def generate_web(self, item: MiniMaxH3Fl2VAInput) -> dict:
-        return generate(self.storage, self.pipe, self.write_video_audio, **item.model_dump())

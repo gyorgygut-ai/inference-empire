@@ -142,11 +142,55 @@ def run_comfy_endpoint(endpoint, payload, timeout: int = 1800):
         with concurrent.futures.ThreadPoolExecutor() as pool:
             return pool.submit(lambda: asyncio.run(_run())).result()
 
-def do_inference(endpoint, storage: Storage, req: MiniMaxH3ComfyInput) -> MiniMaxH3ComfyOutput:
-    """Flash path: submit via endpoint + upload_result. Testable via DI."""
+def _run_local(comfy_base_url: str, req: MiniMaxH3ComfyInput) -> tuple:
+    """Submit + 600s poll + fetch. Returns (video_bytes, data)."""
+    import base64
     import time
 
-    t_req = time.time()
+    import requests
+
+    print(f"[REQ] prompt={req.prompt[:40]}", flush=True)
+    payload = build_payload(req)
+
+    print(f"[GEN] starting ComfyUI job prompt={req.prompt[:40]}", flush=True)
+    t_gen = time.time()
+    r = requests.post(f"{comfy_base_url}/prompt", json=payload, timeout=30)
+    r.raise_for_status()
+    prompt_id = r.json()["prompt_id"]
+
+    for attempt in range(600):
+        try:
+            r = requests.get(f"{comfy_base_url}/history/{prompt_id}", timeout=10)
+            history = r.json()
+            if prompt_id in history:
+                outputs = history[prompt_id]["outputs"]
+                save_node = outputs.get("save", {})
+                video_info = (save_node.get("videos") or save_node.get("gifs") or [None])[0]
+                if video_info:
+                    break
+        except (requests.ConnectionError, requests.Timeout, ValueError) as e:
+            print(
+                f"[COMFY] poll {attempt + 1}/600 transient error: {type(e).__name__}: {e}",
+                flush=True,
+            )
+        time.sleep(1)
+    else:
+        raise RuntimeError(f"ComfyUI job {prompt_id} did not complete within 600s")
+
+    print(f"[GEN] ComfyUI job done in {time.time() - t_gen:.1f}s", flush=True)
+    video_url = (
+        f"{comfy_base_url}/view?filename={video_info['filename']}"
+        f"&subfolder={video_info.get('subfolder', '')}&type={video_info.get('type', 'output')}"
+    )
+    video_bytes = requests.get(video_url, timeout=60).content
+    data = base64.b64encode(video_bytes).decode("ascii")
+
+    return video_bytes, data
+
+def _run_flash(endpoint, req: MiniMaxH3ComfyInput) -> tuple:
+    """Submit via flash endpoint. Returns (video_bytes, data)."""
+    import time
+
     print(f"[REQ] prompt={req.prompt[:40]}", flush=True)
     payload = build_payload(req)
 
@@ -159,7 +203,17 @@ def do_inference(endpoint, storage: Storage, req: MiniMaxH3ComfyInput) -> MiniMa
         raise RuntimeError(f"job failed: {job.error}")
 
     output = getattr(job, "output", None) or job
-    video_bytes, data = parse_output(output)
+    return parse_output(output)
+
+def do_inference(backend, storage: Storage, req: MiniMaxH3ComfyInput) -> MiniMaxH3ComfyOutput:
+    """Local (base_url str) and flash (endpoint) paths converge here. Testable via DI."""
+    import time
+
+    t_req = time.time()
+    if isinstance(backend, str):
+        video_bytes, data = _run_local(backend, req)
+    else:
+        video_bytes, data = _run_flash(backend, req)
 
     result = upload_result(storage, video_bytes, data, prefix="minimax_comfy")
     print(f"[R2] uploaded key={result.artifact.presigned_url[:60]}", flush=True)

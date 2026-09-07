@@ -72,7 +72,7 @@ def generate(storage: Storage, pipe, write_video_audio, **kwargs) -> dict:
     keep_warm_seconds=1800,
     checkpoint_enabled=True,
     timeout=3600,
-    secrets=["HF_TOKEN", "R2_ACCESS_KEY", "R2_SECRET_KEY"],
+    secrets=["HF_TOKEN", "R2_ACCESS_KEY", "R2_SECRET_KEY", "R2_ENDPOINT"],
     env={
         "R2_BUCKET": "generated-media",
         "R2_ENDPOINT": "https://29b2f092b2dbc0b63f48f491ddc177ee.r2.cloudflarestorage.com",

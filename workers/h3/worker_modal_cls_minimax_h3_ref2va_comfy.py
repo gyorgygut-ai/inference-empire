@@ -108,7 +108,3 @@ class MiniMaxH3Ref2VAComfyWorker:
     def generate(self, **kwargs) -> dict:
         """Validate at boundary, delegate, return output contract."""
         return generate(self.storage, self.comfy_base_url, **kwargs)
-
-    @modal.fastapi_endpoint(method="POST")
-    def generate_web(self, item: ValidatedRef2VAComfyInput) -> dict:
-        return generate(self.storage, self.comfy_base_url, **item.model_dump())

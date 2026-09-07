@@ -41,6 +41,10 @@ def load_dependencies():
     flashboot=True,
     execution_timeout_ms=3600_000,
     template=PodTemplate(containerDiskInGb=150),
+    dependencies=[
+        "boto3==1.43.83",
+        "pydantic==2.13.5",
+    ],
     env={
         "HF_HOME": "/runpod-volume/huggingface-cache",
         "R2_BUCKET": os.environ.get("R2_BUCKET", "generated-media"),
