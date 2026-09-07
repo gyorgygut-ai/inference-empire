@@ -1,10 +1,10 @@
+import inspect
+import re
 import subprocess
 import threading
 import time
-import inspect
-import re
-
 from pathlib import Path
+from types import SimpleNamespace
 
 import modal
 import pytest
@@ -26,6 +26,52 @@ def _stream_beam_logs(stub_id):
         if proc.stdout:
             print(proc.stdout, end="", flush=True)
         time.sleep(5)
+
+
+# =============================================================================
+# NEW: Worker function test fixtures
+# =============================================================================
+
+
+@pytest.fixture
+def beam_worker_function_test(request):
+    t = threading.Thread(target=_stream_beam_logs, args=("flux2-klein9b-worker",), daemon=True)
+    t.start()
+    yield
+
+
+@pytest.fixture
+def modal_worker_function_test(request):
+    marker = request.node.get_closest_marker("modal_worker_function_test")
+    worker_function = marker.args[0]
+
+    subprocess.run(
+        ["modal", "deploy", "workers/flux2/worker_modal_cls_flux2_klein9b.py"], check=True
+    )
+
+    t = threading.Thread(target=_stream_modal_logs, args=("flux2-klein9b-worker",), daemon=True)
+    t.start()
+
+    yield
+
+    subprocess.run(["modal", "app", "stop", "flux2-klein9b-worker", "--yes"], check=False)
+
+
+@pytest.fixture
+def flash_worker_function_test(request):
+    marker = request.node.get_closest_marker("flash_worker_function_test")
+    worker_function = marker.args[0]
+
+    subprocess.run(["flash", "deploy", "--name", "flux2-klein9b-worker"], check=True)
+
+    yield
+
+    subprocess.run(["flash", "undeploy", "--name", "flux2-klein9b-worker"], check=False)
+
+
+# =============================================================================
+# This is shit: drop
+# =============================================================================
 
 
 def _get_test_module_path() -> Path:
