@@ -1,45 +1,28 @@
-import asyncio
-import json
-from pathlib import Path
-
-import httpx
 import pytest
 
-from workers.tiny_sd._shared_tiny_sd import TinySDOutput
-from workers.tiny_sd.worker_flash_cls_tiny_sd import TinySDWorker
+import httpx
 
-pytestmark = pytest.mark.skip(reason="flash e2e written but skipped")
-
-GOOD = {"prompt": "a red square", "seed": 7}
-CONTRACT = json.loads((Path(__file__).parent.parent / "contracts" / "tiny_sd.json").read_text())
+from workers.tiny_sd._shared_tiny_sd import Artifact, TinySDOutput
+import workers.tiny_sd.worker_flash_cls_tiny_sd as worker_function
 
 
-def _assert_contract(out: dict):
-    # Validate required fields per contracts/tiny_sd.json
-    assert "artifact" in out, "output missing required field 'artifact'"
-    assert "presigned_url" in out["artifact"], "artifact missing required field 'presigned_url'"
-    # Pydantic contract validation
-    validated = TinySDOutput.model_validate(out)
-    assert validated.artifact.presigned_url.startswith("https://")
-    # JSON schema required checks
-    assert CONTRACT["output"]["required"] == ["artifact"]
-    assert CONTRACT["output"]["properties"]["artifact"]["required"] == ["presigned_url"]
+def _artifact_exists(url: str) -> bool:
+    try:
+        response = httpx.get(url, timeout=30)
+        return response.status_code == 200 and len(response.content) > 0
+    except Exception:
+        return False
 
 
+@pytest.mark.flash_worker_function_test(worker_function)
 def test_invalid_input_rejects():
-    with pytest.raises(Exception):
-        asyncio.run(TinySDWorker().generate(**{}))
+    with pytest.raises(RuntimeError, match="inference failed"):
+        worker_function.TinySDWorker().generate(**{})
 
 
-@pytest.mark.skip(reason="flash dev not available")
+@pytest.mark.flash_worker_function_test(worker_function)
 def test_good_input_returns_contract_and_artifact():
-    out = asyncio.run(TinySDWorker().generate(**GOOD))
-
-    _assert_contract(out)
-
+    out = worker_function.TinySDWorker().generate(**{"prompt": "a red square", "seed": 7})
     url = out["artifact"]["presigned_url"]
-    art = httpx.get(url, timeout=30)
-    assert art.status_code == 200
-    assert len(art.content) > 0
-    # Artifact must exist in bucket (presigned URL reachable with content validated above)
-    assert url.startswith("https://")
+    assert out == TinySDOutput(artifact=Artifact(presigned_url=url)).model_dump()
+    assert _artifact_exists(url)

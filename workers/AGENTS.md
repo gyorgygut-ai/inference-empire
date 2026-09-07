@@ -95,6 +95,13 @@ worker_{platform}_{pattern}_{model}.py
 - Concurrency: `max_containers=1` for GPU workers, no concurrent execution for model inference (serialize with `threading.Lock`)
 - Secrets: create before deploy (`beam secret create`)
 
+### Beam task_queue E2E test invocation
+
+- Use `dispatch.put(**kwargs).result(wait=True)` — enqueues task, blocks until completion, returns output
+- Do NOT use `.local()` — it is not the documented beam pattern
+- Invalid input test: `dispatch.put(**{}).result(wait=True)` should raise
+- Good input test: `dispatch.put(**GOOD).result(wait=True)` returns contract + artifact
+
 ---
 
 ## Modal Rules
@@ -141,6 +148,8 @@ worker_{platform}_{pattern}_{model}.py
 - Beam: `beam task list` → `beam task stop <task-id>`
 - Beam (all pending): `beam task list | grep PENDING | awk '{print $1}' | xargs beam task stop`
 - Modal: N/A (`spawn()` + `.result()` tasks are not independently cancellable)
+
+
 
 ### Logging & Polling
 

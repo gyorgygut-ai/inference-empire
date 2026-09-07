@@ -8,66 +8,66 @@ Legend: `[x]` done, `[ ]` not done.
 - **E2E written**: test file exists in Flux pattern (invalid-reject + good-contract-and-artifact, no mocking) and collects cleanly.
 - **E2E run**: passed against a real deployment. Live runs are owner-operated. `skipped` = flash e2e written but skipped (flash dev not available).
 
-## flux2
+## vision
 
-| Worker | Unit tests | E2E written | E2E run |
-|---|---|---|---|
-| `worker_beam_tq_flux2_klein9b.py` | [x] | [x] | [ ] |
-| `worker_flash_cls_flux2_klein9b.py` | [x] | [ ] | skipped |
-| `worker_modal_cls_flux2_klein9b.py` | [x] | [ ] | [ ] |
+| Worker                             | Unit tests | E2E written | E2E run |
+| ---------------------------------- | ---------- | ----------- | ------- |
+| `worker_beam_eq_small_vision.py`   | [x]        | [x]         | [ ]     |
+| `worker_flash_cls_small_vision.py` | [x]        | [x]         | skipped |
+| `worker_modal_cls_small_vision.py` | [x]        | [x]         | [ ]     |
 
 ## tiny_sd
 
-| Worker | Unit tests | E2E written | E2E run |
-|---|---|---|---|
-| `worker_beam_tq_tiny_sd.py` | [x] | [ ] | [ ] |
-| `worker_flash_cls_tiny_sd.py` | [x] | [x] | skipped |
-| `worker_modal_cls_tiny_sd.py` | [x] | [ ] | [ ] |
+| Worker                        | Unit tests | E2E written | E2E run |
+| ----------------------------- | ---------- | ----------- | ------- |
+| `worker_beam_tq_tiny_sd.py`   | [x]        | [x]         | [ ]     |
+| `worker_flash_cls_tiny_sd.py` | [x]        | [x]         | skipped |
+| `worker_modal_cls_tiny_sd.py` | [x]        | [x]         | [ ]     |
+
+## flux2
+
+| Worker                              | Unit tests | E2E written | E2E run |
+| ----------------------------------- | ---------- | ----------- | ------- |
+| `worker_beam_tq_flux2_klein9b.py`   | [x]        | [x]         | [ ]     |
+| `worker_flash_cls_flux2_klein9b.py` | [x]        | [x]         | skipped |
+| `worker_modal_cls_flux2_klein9b.py` | [x]        | [x]         | [ ]     |
 
 ## krea2
 
-| Worker | Unit tests | E2E written | E2E run |
-|---|---|---|---|
-| `worker_beam_tq_krea2_ref2img.py` | [x] | [ ] | [ ] |
-| `worker_flash_cls_krea2_ref2img.py` | [x] | [x] | skipped |
-| `worker_modal_cls_krea2_ref2img.py` | [x] | [ ] | [ ] |
-
-## vision
-
-| Worker | Unit tests | E2E written | E2E run |
-|---|---|---|---|
-| `worker_beam_eq_small_vision.py` | [x] | [ ] | [ ] |
-| `worker_flash_cls_small_vision.py` | [x] | [x] | skipped |
-| `worker_modal_cls_small_vision.py` | [x] | [ ] | [ ] |
+| Worker                              | Unit tests | E2E written | E2E run |
+| ----------------------------------- | ---------- | ----------- | ------- |
+| `worker_beam_tq_krea2_ref2img.py`   | [x]        | [x]         | [ ]     |
+| `worker_flash_cls_krea2_ref2img.py` | [x]        | [x]         | skipped |
+| `worker_modal_cls_krea2_ref2img.py` | [x]        | [x]         | [ ]     |
 
 ## h3
 
-| Worker | Unit tests | E2E written | E2E run |
-|---|---|---|---|
-| `worker_beam_tq_minimax_h3_comfy.py` | [x] | [ ] | [ ] |
-| `worker_flash_cls_minimax_h3_comfy.py` | [x] | [x] | skipped |
-| `worker_modal_cls_minimax_h3_comfy.py` | [x] | [ ] | [ ] |
-| `worker_beam_tq_minimax_h3_fl2va.py` | [x] | [ ] | [ ] |
-| `worker_flash_cls_minimax_h3_fl2va.py` | [x] | [x] | skipped |
-| `worker_modal_cls_minimax_h3_fl2va.py` | [x] | [ ] | [ ] |
-| `worker_beam_tq_minimax_h3_ref2va.py` | [x] | [ ] | [ ] |
-| `worker_flash_cls_minimax_h3_ref2va.py` | [x] | [x] | skipped |
-| `worker_modal_cls_minimax_h3_ref2va.py` | [x] | [ ] | [ ] |
-| `worker_beam_tq_minimax_h3_ref2va_comfy.py` | [x] | [ ] | [ ] |
-| `worker_flash_pre_minimax_h3_ref2va_comfy.py` | [x] | [x] | skipped |
-| `worker_modal_cls_minimax_h3_ref2va_comfy.py` | [x] | [ ] | [ ] |
+| Worker                                        | Unit tests | E2E written | E2E run |
+| --------------------------------------------- | ---------- | ----------- | ------- |
+| `worker_beam_tq_minimax_h3_comfy.py`          | [x]        | [ ]         | [ ]     |
+| `worker_flash_cls_minimax_h3_comfy.py`        | [x]        | [x]         | skipped |
+| `worker_modal_cls_minimax_h3_comfy.py`        | [x]        | [ ]         | [ ]     |
+| `worker_beam_tq_minimax_h3_fl2va.py`          | [x]        | [ ]         | [ ]     |
+| `worker_flash_cls_minimax_h3_fl2va.py`        | [x]        | [x]         | skipped |
+| `worker_modal_cls_minimax_h3_fl2va.py`        | [x]        | [ ]         | [ ]     |
+| `worker_beam_tq_minimax_h3_ref2va.py`         | [x]        | [ ]         | [ ]     |
+| `worker_flash_cls_minimax_h3_ref2va.py`       | [x]        | [x]         | skipped |
+| `worker_modal_cls_minimax_h3_ref2va.py`       | [x]        | [ ]         | [ ]     |
+| `worker_beam_tq_minimax_h3_ref2va_comfy.py`   | [x]        | [ ]         | [ ]     |
+| `worker_flash_pre_minimax_h3_ref2va_comfy.py` | [x]        | [x]         | skipped |
+| `worker_modal_cls_minimax_h3_ref2va_comfy.py` | [x]        | [ ]         | [ ]     |
 
 ## voice
 
-| Worker | Unit tests | E2E written | E2E run |
-|---|---|---|---|
-| `worker_modal_cls_voice_chat.py` | [x] | [ ] | [ ] |
-| `worker_beam_asgi_realtime_voice_chatterbox.py` | [ ] | [ ] | [ ] |
-| `worker_beam_asgi_realtime_voice_qwen.py` | [ ] | [ ] | [ ] |
-| `worker_beam_asgi_realtime_voice_openvoice.py` | [ ] | [ ] | [ ] |
-| `worker_flash_cls_realtime_voice_chatterbox.py` | [ ] | [ ] | [ ] |
-| `worker_flash_cls_realtime_voice_qwen.py` | [ ] | [ ] | [ ] |
-| `worker_flash_cls_realtime_voice_openvoice.py` | [ ] | [ ] | [ ] |
+| Worker                                          | Unit tests | E2E written | E2E run |
+| ----------------------------------------------- | ---------- | ----------- | ------- |
+| `worker_modal_cls_voice_chat.py`                | [x]        | [ ]         | [ ]     |
+| `worker_beam_asgi_realtime_voice_chatterbox.py` | [ ]        | [ ]         | [ ]     |
+| `worker_beam_asgi_realtime_voice_qwen.py`       | [ ]        | [ ]         | [ ]     |
+| `worker_beam_asgi_realtime_voice_openvoice.py`  | [ ]        | [ ]         | [ ]     |
+| `worker_flash_cls_realtime_voice_chatterbox.py` | [ ]        | [ ]         | [ ]     |
+| `worker_flash_cls_realtime_voice_qwen.py`       | [ ]        | [ ]         | [ ]     |
+| `worker_flash_cls_realtime_voice_openvoice.py`  | [ ]        | [ ]         | [ ]     |
 
 ## Totals
 
