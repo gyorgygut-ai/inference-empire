@@ -1,15 +1,11 @@
 import base64
 import io
-import json
-from pathlib import Path
 
-import modal
 import pytest
 from PIL import Image
 
 from workers.vision._shared_small_vision import SmallVisionOutput
-
-CONTRACT = json.loads((Path(__file__).parent.parent / "contracts" / "small_vision.json").read_text())
+import workers.vision.worker_modal_cls_small_vision as worker_function
 
 
 def _image_b64():
@@ -22,28 +18,13 @@ def _image_b64():
 GOOD = {"image_base64": _image_b64()}
 
 
-def _assert_contract(out: dict):
-    # Validate required fields per contracts/small_vision.json (JSON-only, no artifact)
-    assert "classification" in out, "output missing required field 'classification'"
-    assert "subjects" in out, "output missing required field 'subjects'"
-    assert "description" in out, "output missing required field 'description'"
-    # Pydantic contract validation
-    validated = SmallVisionOutput.model_validate(out)
-    assert validated.classification
-    assert isinstance(validated.subjects, list)
-    assert validated.description
-    # JSON schema required checks
-    assert CONTRACT["output"]["required"] == ["classification", "subjects", "description"]
-
-
+@pytest.mark.modal_worker_function_test(worker_function)
 def test_invalid_input_rejects():
-    handle = modal.Cls.from_name("small-vision-worker", "SmallVisionWorker")().analyze
-    with pytest.raises(Exception):
-        handle.spawn(**{}).get()
+    with pytest.raises(RuntimeError, match="inference failed"):
+        worker_function.SmallVisionWorker().analyze(**{})
 
 
+@pytest.mark.modal_worker_function_test(worker_function)
 def test_good_input_returns_contract():
-    handle = modal.Cls.from_name("small-vision-worker", "SmallVisionWorker")().analyze
-    out = handle.spawn(**GOOD).get()
-
-    _assert_contract(out)
+    out = worker_function.SmallVisionWorker().analyze(**GOOD)
+    assert SmallVisionOutput.model_validate(out).model_dump() == out

@@ -56,9 +56,9 @@
       }
     },
     {
-      "stem": "worker_beam_eq_small_vision",
+      "stem": "worker_beam_tq_small_vision",
       "platform": "beam",
-      "pattern": "eq",
+      "pattern": "tq",
       "model": "small_vision",
       "inputs": {
         "required": ["image_base64"],

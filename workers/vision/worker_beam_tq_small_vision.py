@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import threading
 
-from beam import Image, QueueDepthAutoscaler, Volume, endpoint
+from beam import Image, QueueDepthAutoscaler, Volume, task_queue
 
 from workers.vision._shared_small_vision import (
     SmallVisionInput,
@@ -50,7 +50,7 @@ def generate(model, processor, analyze_prompt, **kwargs) -> dict:
         raise RuntimeError(f"inference failed: {e}") from e
 
 
-@endpoint(
+@task_queue(
     name="small-vision-worker",
     cpu=4,
     memory="32Gi",
@@ -59,9 +59,11 @@ def generate(model, processor, analyze_prompt, **kwargs) -> dict:
     on_start=load_deps,
     volumes=[Volume(name="hf-cache", mount_path=CACHE_PATH)],
     autoscaler=QueueDepthAutoscaler(max_containers=1, tasks_per_container=1),
-    keep_warm_seconds=0,
+    keep_warm_seconds=1800,
+    checkpoint_enabled=True,
     timeout=300,
+    secrets=["HF_TOKEN"],
 )
-def analyze(context, **kwargs):
+def dispatch(context, **kwargs) -> dict:
     model, processor, analyze_prompt = context.on_start_value
     return generate(model, processor, analyze_prompt, **kwargs)

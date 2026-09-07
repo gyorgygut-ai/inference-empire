@@ -15,7 +15,7 @@ def _artifact_exists(url: str) -> bool:
 
 @pytest.mark.flash_worker_function_test(worker_function)
 def test_invalid_input_rejects():
-    with pytest.raises(Exception):
+    with pytest.raises(RuntimeError, match="inference failed"):
         worker_function.FluxKleinWorker().generate(**{})
 
 

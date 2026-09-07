@@ -12,7 +12,7 @@ Legend: `[x]` done, `[ ]` not done.
 
 | Worker                             | Unit tests | E2E written | E2E run |
 | ---------------------------------- | ---------- | ----------- | ------- |
-| `worker_beam_eq_small_vision.py`   | [x]        | [x]         | [ ]     |
+| `worker_beam_tq_small_vision.py`   | [x]        | [x]         | [ ]     |
 | `worker_flash_cls_small_vision.py` | [x]        | [x]         | skipped |
 | `worker_modal_cls_small_vision.py` | [x]        | [x]         | [ ]     |
 

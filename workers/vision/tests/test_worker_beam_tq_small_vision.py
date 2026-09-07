@@ -5,7 +5,7 @@ import pytest
 from PIL import Image
 from pydantic import ValidationError
 
-import workers.vision.worker_beam_eq_small_vision as worker_mod
+import workers.vision.worker_beam_tq_small_vision as worker_mod
 from workers.vision._shared_small_vision import SmallVisionInput, SmallVisionOutput, build_analyze_prompt, do_inference
 from workers.services.inference.vision_fake import FakeVisionModel, FakeVisionProcessor
 
