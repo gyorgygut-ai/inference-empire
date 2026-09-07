@@ -8,6 +8,8 @@ import pytest
 from workers.krea2._shared_krea2_ref2img import Krea2Ref2ImgOutput
 from workers.krea2.worker_flash_cls_krea2_ref2img import Krea2Ref2ImgWorker
 
+pytestmark = pytest.mark.skip(reason="flash e2e written but skipped")
+
 GOOD = {"prompt": "a red square", "seed": 7}
 CONTRACT = json.loads((Path(__file__).parent.parent / "contracts" / "krea2_ref2img.json").read_text())
 

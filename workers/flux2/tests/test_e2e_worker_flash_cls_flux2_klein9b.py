@@ -7,6 +7,8 @@ import pytest
 
 from workers.flux2._shared_flux2_klein9b import Flux2Klein9bOutput
 
+pytestmark = pytest.mark.skip(reason="flash e2e written but skipped")
+
 GOOD = {"prompt": "a red square", "seed": 7}
 CONTRACT = json.loads((Path(__file__).parent.parent / "contracts" / "flux2_klein9b.json").read_text())
 

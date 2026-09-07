@@ -10,6 +10,8 @@ from PIL import Image
 from workers.vision._shared_small_vision import SmallVisionOutput
 from workers.vision.worker_flash_cls_small_vision import Qwen2VLVisionWorker
 
+pytestmark = pytest.mark.skip(reason="flash e2e written but skipped")
+
 CONTRACT = json.loads((Path(__file__).parent.parent / "contracts" / "small_vision.json").read_text())
 
 

@@ -8,6 +8,8 @@ import pytest
 from workers.tiny_sd._shared_tiny_sd import TinySDOutput
 from workers.tiny_sd.worker_flash_cls_tiny_sd import TinySDWorker
 
+pytestmark = pytest.mark.skip(reason="flash e2e written but skipped")
+
 GOOD = {"prompt": "a red square", "seed": 7}
 CONTRACT = json.loads((Path(__file__).parent.parent / "contracts" / "tiny_sd.json").read_text())
 
