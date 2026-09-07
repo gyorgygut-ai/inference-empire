@@ -33,14 +33,14 @@ def _stream_beam_logs(stub_id):
 # =============================================================================
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def beam_worker_function_test(request):
     t = threading.Thread(target=_stream_beam_logs, args=("flux2-klein9b-worker",), daemon=True)
     t.start()
     yield
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def modal_worker_function_test(request):
     marker = request.node.get_closest_marker("modal_worker_function_test")
     worker_function = marker.args[0]
@@ -57,7 +57,7 @@ def modal_worker_function_test(request):
     subprocess.run(["modal", "app", "stop", "flux2-klein9b-worker", "--yes"], check=False)
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def flash_worker_function_test(request):
     marker = request.node.get_closest_marker("flash_worker_function_test")
     worker_function = marker.args[0]
