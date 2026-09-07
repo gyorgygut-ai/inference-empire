@@ -1,0 +1,41 @@
+import json
+from pathlib import Path
+
+import httpx
+import pytest
+
+import workers.h3.worker_beam_tq_minimax_h3_ref2va as worker_mod
+from workers.h3._shared_minimax_h3_ref2va import MiniMaxH3Ref2VAOutput
+
+CONTRACT = json.loads((Path(__file__).parent.parent / "contracts" / "minimax_h3_ref2va.json").read_text())
+
+GOOD = {"prompt": "a cat walking in a garden", "seed": 7}
+
+
+def _assert_contract(out: dict):
+    # Validate required fields per contracts/minimax_h3_ref2va.json
+    assert "artifact" in out, "output missing required field 'artifact'"
+    # Pydantic contract validation
+    validated = MiniMaxH3Ref2VAOutput.model_validate(out)
+    assert validated.artifact.presigned_url.startswith("https://")
+    # JSON schema required checks
+    assert CONTRACT["output"]["required"] == ["artifact"]
+    assert CONTRACT["output"]["properties"]["artifact"]["required"] == ["presigned_url"]
+
+
+def test_invalid_input_rejects():
+    with pytest.raises(Exception):
+        task = worker_mod.dispatch.put(**{})
+        task.get()
+
+
+def test_good_input_returns_contract_and_artifact():
+    task = worker_mod.dispatch.put(**GOOD)
+    out = task.get()
+
+    _assert_contract(out)
+
+    # Artifact must exist in bucket
+    r = httpx.get(out["artifact"]["presigned_url"], timeout=120)
+    assert r.status_code == 200
+    assert len(r.content) > 0
