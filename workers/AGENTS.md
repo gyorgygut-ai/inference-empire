@@ -158,12 +158,12 @@ Log tag order: `[INIT]` → `[REQ]` → `[GEN]` → `[R2]` → `[OK]` (or `[ERR]
 
 ### Run All Tests
 
-- Fake (mocked inference, local): `python -m pytest workers/`
-- Per model: `python -m pytest workers/<model>/tests/`
+- Fake (mocked inference, local): `uv run --locked pytest workers/`
+- Per model: `uv run --locked pytest workers/<model>/tests/`
 
 ### Run Per-Worker Tests
 
-- Single worker: `python -m pytest workers/<model>/tests/test_<worker-name>.py -k "<test>"`
+- Single worker: `uv run --locked pytest workers/<model>/tests/test_<worker-name>.py -k "<test>"`
 
 ### Test + Code Rules
 

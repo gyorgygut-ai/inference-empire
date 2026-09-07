@@ -19,19 +19,14 @@ def _assert_contract(out: dict):
     assert CONTRACT["output"]["properties"]["artifact"]["required"] == ["presigned_url"]
 
 
-def test_invalid_input_rejects():
-    import workers.tiny_sd.worker_beam_tq_tiny_sd as worker_mod
-
-    task = worker_mod.dispatch.put(**{})
+def test_invalid_input_rejects(platform_beam):
+    task = platform_beam.put(**{})
     with pytest.raises(Exception):
         task.result(wait=True)
 
 
-def test_good_input_returns_contract_and_artifact():
-    import workers.tiny_sd.worker_beam_tq_tiny_sd as worker_mod
-
-    task = worker_mod.dispatch.put(**GOOD)
-    out = task.result(wait=True)
+def test_good_input_returns_contract_and_artifact(platform_beam):
+    out = platform_beam.put(**GOOD).result(wait=True)
     assert out is not None, "beam task returned None - check beam logs"
 
     _assert_contract(out)

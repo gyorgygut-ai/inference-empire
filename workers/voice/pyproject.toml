@@ -22,5 +22,5 @@ dependencies = [
 dev = [
     "pytest",
     "ruff",
-    "mypy",
+    "ty",
 ]

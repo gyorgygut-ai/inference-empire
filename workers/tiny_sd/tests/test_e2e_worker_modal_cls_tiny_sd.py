@@ -20,13 +20,13 @@ def _assert_contract(out: dict):
     assert CONTRACT["output"]["properties"]["artifact"]["required"] == ["presigned_url"]
 
 
-def test_invalid_input_rejects():
+def test_invalid_input_rejects(platform_modal):
     handle = modal.Cls.from_name("tiny-sd-worker", "TinySDWorker")().generate
     with pytest.raises(Exception):
         handle.spawn(**{}).get()
 
 
-def test_good_input_returns_contract_and_artifact():
+def test_good_input_returns_contract_and_artifact(platform_modal):
     handle = modal.Cls.from_name("tiny-sd-worker", "TinySDWorker")().generate
     out = handle.spawn(**GOOD).get()
 
