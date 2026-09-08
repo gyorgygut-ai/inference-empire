@@ -12,6 +12,7 @@ CPU container — see PLAN.md, OpenVoice worker).
 
 from __future__ import annotations
 
+import importlib
 import os
 import tempfile
 import threading
@@ -56,9 +57,17 @@ class VoiceConverter:
         self._lock = threading.Lock()
 
     def load(self) -> VoiceConverter:
-        import openvoice_cli
-        from openvoice_cli.api import ToneColorConverter
+        try:
+            openvoice_cli = importlib.import_module("openvoice_cli")
+            ToneColorConverter = importlib.import_module("openvoice_cli.api").ToneColorConverter
+        except ImportError:
+            openvoice_cli = None
+            ToneColorConverter = None
 
+        assert openvoice_cli is not None
+        assert ToneColorConverter is not None
+
+        assert openvoice_cli.__file__ is not None
         pkg_dir = os.path.dirname(openvoice_cli.__file__)
         config_path = os.path.join(pkg_dir, "checkpoints", "converter", "config.json")
         ckpt_path = os.path.join(pkg_dir, "checkpoints", "converter", "checkpoint.pth")

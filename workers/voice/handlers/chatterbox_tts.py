@@ -9,6 +9,7 @@ Runs on a GPU container (RTX4090) — Chatterbox is far too slow on CPU.
 
 from __future__ import annotations
 
+import importlib
 import os
 import threading
 
@@ -36,16 +37,26 @@ class Chatterbox:
         self._lock = threading.Lock()
 
     def load(self) -> Chatterbox:
-        import perth
+        try:
+            perth = importlib.import_module("perth")
+        except ImportError:
+            perth = None
+
+        assert perth is not None
 
         # setuptools >=81 / Python 3.14 dropped pkg_resources, so perth_net's
         # `from pkg_resources import resource_filename` makes
         # PerthImplicitWatermarker resolve to None and from_pretrained() crashes.
         # Fall back to the bundled dummy watermarker (audio is just unwatermarked).
         if getattr(perth, "PerthImplicitWatermarker", None) is None:
-            perth.PerthImplicitWatermarker = perth.DummyWatermarker
+            setattr(perth, "PerthImplicitWatermarker", perth.DummyWatermarker)
 
-        from chatterbox.tts import ChatterboxTTS
+        try:
+            ChatterboxTTS = importlib.import_module("chatterbox.tts").ChatterboxTTS
+        except ImportError:
+            ChatterboxTTS = None
+
+        assert ChatterboxTTS is not None
 
         # chatterbox-tts loads its weights from the Hugging Face hub cache and
         # its from_pretrained() takes only ``device`` (no custom local path),

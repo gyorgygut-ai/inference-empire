@@ -1,6 +1,7 @@
 """Shared business logic for flux2-klein9b. No platform imports."""
 from __future__ import annotations
 
+import importlib
 import time
 import uuid
 from typing import TYPE_CHECKING
@@ -83,8 +84,17 @@ def load_pipeline():
         )
     pipe.to("cuda")
 
-    from sdnq.common import use_torch_compile
-    from sdnq.loader import apply_sdnq_options_to_model
+    try:
+        sdnq_common = importlib.import_module("sdnq.common")
+        sdnq_loader = importlib.import_module("sdnq.loader")
+        use_torch_compile = sdnq_common.use_torch_compile
+        apply_sdnq_options_to_model = sdnq_loader.apply_sdnq_options_to_model
+    except ImportError:
+        use_torch_compile = None
+        apply_sdnq_options_to_model = None
+
+    assert use_torch_compile is not None
+    assert apply_sdnq_options_to_model is not None
 
     if use_torch_compile and torch.cuda.is_available():
         pipe.transformer = apply_sdnq_options_to_model(

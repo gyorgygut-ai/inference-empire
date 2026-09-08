@@ -1,6 +1,7 @@
 """Shared business logic for krea2-ref2img. No platform imports."""
 from __future__ import annotations
 
+import importlib
 import time
 import uuid
 from pathlib import Path
@@ -141,9 +142,14 @@ def decode_image(base64_str: str):
     return img.convert("RGB")
 
 def face_crop(img, runtime_dir: Path, margin: float = 0.4):
-    import cv2
+    try:
+        cv2 = importlib.import_module("cv2")
+    except ImportError:
+        cv2 = None
     import numpy as np
     from PIL import Image
+
+    assert cv2 is not None
 
     onnx = any(runtime_dir.glob("models/*face*.onnx"))
     if not onnx:

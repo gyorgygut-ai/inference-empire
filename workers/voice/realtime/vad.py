@@ -8,6 +8,7 @@ hold against real network audio (PLAN.md §9).
 
 from __future__ import annotations
 
+import importlib
 import threading
 
 import numpy as np
@@ -33,8 +34,12 @@ class SileroVAD:
         self._reset()
 
     def load(self) -> SileroVAD:
-        from silero_vad import load_silero_vad
+        try:
+            load_silero_vad = importlib.import_module("silero_vad").load_silero_vad
+        except ImportError:
+            load_silero_vad = None
 
+        assert load_silero_vad is not None
         self._model = load_silero_vad()
         return self
 

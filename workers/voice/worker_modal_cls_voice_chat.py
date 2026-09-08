@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import importlib
 import json
 import os
 import threading
@@ -52,8 +53,12 @@ def _bake_models():
 
     WhisperModel("small", device="cpu", compute_type="int8")
 
-    from TTS.api import TTS
+    try:
+        TTS = importlib.import_module("TTS.api").TTS
+    except ImportError:
+        TTS = None
 
+    assert TTS is not None
     TTS("tts_models/multilingual/multi-dataset/xtts_v2", gpu=False)
 
 
@@ -162,8 +167,12 @@ class VoiceChatPipeline:
 
         self.asr = WhisperModel("small", device="cuda", compute_type="float16")
 
-        from TTS.api import TTS
+        try:
+            TTS = importlib.import_module("TTS.api").TTS
+        except ImportError:
+            TTS = None
 
+        assert TTS is not None
         self.tts = TTS("tts_models/multilingual/multi-dataset/xtts_v2", gpu=True)
 
         self.gpu_lock = threading.Lock()
