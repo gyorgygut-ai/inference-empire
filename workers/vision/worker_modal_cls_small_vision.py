@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import threading
+from pathlib import Path
 
 import modal
 
 from workers.vision._shared_small_vision import (
-    REPO_ID,
     SmallVisionInput,
     do_inference,
     load_dependencies,
@@ -28,19 +28,8 @@ def generate(model, processor, analyze_prompt, **kwargs) -> dict:
         raise RuntimeError(f"inference failed: {e}") from e
 
 
-def _download_model():
-    import torch
-    import torch.distributed as dist
-
-    def _dist_unavailable() -> bool:
-        return False
-
-    setattr(dist, "is_available", _dist_unavailable)
-
-    from transformers import AutoProcessor, Qwen2VLForConditionalGeneration
-
-    Qwen2VLForConditionalGeneration.from_pretrained(REPO_ID, torch_dtype=torch.bfloat16)
-    AutoProcessor.from_pretrained(REPO_ID)
+dotenv_secret = modal.Secret.from_dotenv(str(Path(__file__).parent.parent / ".env"))
+hf_cache_vol = modal.Volume.from_name("hf-cache", create_if_missing=True)
 
 
 image = (
@@ -61,7 +50,6 @@ image = (
             "HF_HUB_ENABLE_HF_TRANSFER": "1",
         }
     )
-    .run_function(_download_model)
     .add_local_python_source("workers.services", "workers.vision")
 )
 
@@ -69,7 +57,10 @@ image = (
 @app.cls(
     image=image,
     gpu="L4",
+    secrets=[dotenv_secret],
+    volumes={"/root/.cache/huggingface": hf_cache_vol},
     timeout=300,
+    memory=32768,
     scaledown_window=150,
     max_containers=1,
 )

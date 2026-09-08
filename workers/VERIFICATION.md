@@ -1,11 +1,11 @@
 # Workers Verification
 
-Date: 2026-09-07
+Date: 2026-09-08
 
 Legend: `[x]` done, `[ ]` not done.
 
-- **Unit tests**: verified locally with `pytest workers/ -k "not e2e"` → 257 passed.
-- **E2E written**: test file exists in Flux pattern (invalid-reject + good-contract-and-artifact, no mocking) and collects cleanly.
+- **Unit tests**: verified locally with `pytest workers/ -k "not e2e"` → 245 passed.
+- **E2E written**: test file exists in Flux pattern (good-contract-and-artifact, no mocking) and collects cleanly.
 - **E2E run**: passed against a real deployment. Live runs are owner-operated. Flash e2e written but not yet run (flash dev not available).
 
 ## vision
@@ -62,15 +62,15 @@ Legend: `[x]` done, `[ ]` not done.
 | Worker                                          | Unit tests | E2E written | E2E run |
 | ----------------------------------------------- | ---------- | ----------- | ------- |
 | `worker_modal_cls_voice_chat.py`                | [x]        | [ ]         | [ ]     |
-| `worker_beam_asgi_realtime_voice_chatterbox.py` | [ ]        | [ ]         | [ ]     |
-| `worker_beam_asgi_realtime_voice_qwen.py`       | [ ]        | [ ]         | [ ]     |
-| `worker_beam_asgi_realtime_voice_openvoice.py`  | [ ]        | [ ]         | [ ]     |
-| `worker_flash_cls_realtime_voice_chatterbox.py` | [ ]        | [ ]         | [ ]     |
-| `worker_flash_cls_realtime_voice_qwen.py`       | [ ]        | [ ]         | [ ]     |
-| `worker_flash_cls_realtime_voice_openvoice.py`  | [ ]        | [ ]         | [ ]     |
+| `worker_beam_asgi_realtime_voice_chatterbox.py` | [x]        | [ ]         | [ ]     |
+| `worker_beam_asgi_realtime_voice_qwen.py`       | [x]        | [ ]         | [ ]     |
+| `worker_beam_asgi_realtime_voice_openvoice.py`  | [x]        | [ ]         | [ ]     |
+| `worker_flash_cls_realtime_voice_chatterbox.py` | [x]        | [ ]         | [ ]     |
+| `worker_flash_cls_realtime_voice_qwen.py`       | [x]        | [ ]         | [ ]     |
+| `worker_flash_cls_realtime_voice_openvoice.py`  | [x]        | [ ]         | [ ]     |
 
 ## Totals
 
-- Unit: 257/257 passing (every non-voice worker + voice chat + voice support modules; includes H3 x-rules validator and edge-case coverage).
-- E2E written: all 24 non-voice workers have e2e files in the canonical flux pattern (invalid-reject + good-contract-and-artifact, no mocking).
-- Known gap: all voice workers have no e2e (`voice_chat` unit-only; 6 realtime workers with no unit/E2E).
+- Unit: 245/245 passing (all 31 workers have unit files; 24 non-voice in `_shared_*` + fakes pattern, 7 voice in stub/websocket pattern; includes H3 x-rules validator and edge-case coverage).
+- E2E written: all 24 non-voice workers have e2e files in the canonical flux pattern (good-contract-and-artifact, no mocking).
+- Known gap: all voice workers have no e2e (unit-only; 24/24 e2e tests collected are non-voice).

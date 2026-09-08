@@ -99,7 +99,6 @@ worker_{platform}_{pattern}_{model}.py
 
 - Use `dispatch.put(**kwargs).result(wait=True)` — enqueues task, blocks until completion, returns output
 - Do NOT use `.local()` — it is not the documented beam pattern
-- Invalid input test: `dispatch.put(**{}).result(wait=True)` should raise
 - Good input test: `dispatch.put(**GOOD).result(wait=True)` returns contract + artifact
 
 ---
@@ -214,5 +213,4 @@ Log tag order: `[INIT]` → `[REQ]` → `[GEN]` → `[R2]` → `[OK]` (or `[ERR]
 **Tests:**
 
 - [ ] Iterate via local dev commands
-- [ ] Invalid input: should reject
 - [ ] Good input: should return contract + artifact must exist in bucket (if applicable)

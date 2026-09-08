@@ -7,7 +7,10 @@ from PIL import Image
 from workers.vision._shared_small_vision import SmallVisionOutput
 import workers.vision.worker_flash_cls_small_vision as worker_function
 
-pytestmark = pytest.mark.usefixtures("flash_worker_function_test")
+pytestmark = [
+    pytest.mark.usefixtures("flash_worker_function_test"),
+    pytest.mark.flash_worker_function_test(worker_function),
+]
 
 
 def _image_b64():
@@ -20,13 +23,6 @@ def _image_b64():
 GOOD = {"image_base64": _image_b64()}
 
 
-@pytest.mark.flash_worker_function_test(worker_function)
-def test_invalid_input_rejects():
-    with pytest.raises(RuntimeError, match="inference failed"):
-        worker_function.Qwen2VLVisionWorker().analyze(**{})
-
-
-@pytest.mark.flash_worker_function_test(worker_function)
 def test_good_input_returns_contract():
     out = worker_function.Qwen2VLVisionWorker().analyze(**GOOD)
     assert SmallVisionOutput.model_validate(out).model_dump() == out

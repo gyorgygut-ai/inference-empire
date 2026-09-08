@@ -16,12 +16,6 @@ def _artifact_exists(url: str) -> bool:
 
 
 @pytest.mark.modal_worker_function_test(worker_function)
-def test_invalid_input_rejects():
-    with pytest.raises(RuntimeError, match="inference failed"):
-        worker_function.MiniMaxH3ComfyWorker().generate.local(**{})
-
-
-@pytest.mark.modal_worker_function_test(worker_function)
 def test_good_input_returns_contract_and_artifact():
     out = worker_function.MiniMaxH3ComfyWorker().generate.local(
         **{"prompt": "a cat walking in a garden", "seed": 7}

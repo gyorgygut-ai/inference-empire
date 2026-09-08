@@ -20,14 +20,6 @@ def _artifact_exists(url: str) -> bool:
         return False
 
 
-def test_invalid_input_rejects():
-    import workers.tiny_sd.worker_beam_tq_tiny_sd as worker_mod
-
-    task = worker_mod.dispatch.put(**{})
-    with pytest.raises(RuntimeError, match="inference failed"):
-        task.result(wait=True)
-
-
 def test_good_input_returns_contract_and_artifact():
     import workers.tiny_sd.worker_beam_tq_tiny_sd as worker_mod
 

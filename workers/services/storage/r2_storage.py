@@ -1,6 +1,7 @@
 import os
 
 import boto3
+from botocore.config import Config
 
 from workers.services.storage.storage import Storage
 
@@ -11,8 +12,10 @@ class R2Storage(Storage):
         self.s3 = boto3.client(
             "s3",
             endpoint_url=endpoint,
+            region_name="auto",
             aws_access_key_id=os.environ["R2_ACCESS_KEY"],
             aws_secret_access_key=os.environ["R2_SECRET_KEY"],
+            config=Config(signature_version="s3v4"),
         )
         self.bucket = os.environ.get("R2_BUCKET", "generated-media")
 

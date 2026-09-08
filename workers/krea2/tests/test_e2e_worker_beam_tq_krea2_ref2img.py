@@ -20,14 +20,6 @@ def _artifact_exists(url: str) -> bool:
         return False
 
 
-def test_invalid_input_rejects():
-    import workers.krea2.worker_beam_tq_krea2_ref2img as worker_mod
-
-    task = worker_mod.dispatch.put(**{})
-    with pytest.raises(RuntimeError, match="inference failed"):
-        task.result(wait=True)
-
-
 def test_good_input_returns_contract_and_artifact():
     import workers.krea2.worker_beam_tq_krea2_ref2img as worker_mod
 

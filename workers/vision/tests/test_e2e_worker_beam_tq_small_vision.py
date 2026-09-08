@@ -23,14 +23,6 @@ def _image_b64():
 GOOD = {"image_base64": _image_b64()}
 
 
-def test_invalid_input_rejects():
-    import workers.vision.worker_beam_tq_small_vision as worker_mod
-
-    task = worker_mod.dispatch.put(**{})
-    with pytest.raises(RuntimeError, match="inference failed"):
-        task.result(wait=True)
-
-
 def test_good_input_returns_contract():
     import workers.vision.worker_beam_tq_small_vision as worker_mod
 

@@ -27,9 +27,28 @@ def _stream_beam_logs(stub_id):
         time.sleep(5)
 
 
+def _marker_arg(request, name):
+    marker = request.node.get_closest_marker(name)
+    if marker is not None:
+        return marker.args[0]
+    # Fallback for module-scoped fixture when marker is on test functions:
+    # scan module members for the first matching marker.
+    module = getattr(request.node, "module", None)
+    if module is not None:
+        for obj in vars(module).values():
+            m = getattr(obj, "pytestmark", None)
+            if m:
+                marks = m if isinstance(m, list) else [m]
+                for mm in marks:
+                    if getattr(mm, "name", None) == name and getattr(mm, "args", None):
+                        return mm.args[0]
+    return None
+
+
 @pytest.fixture(scope="module")
 def beam_worker_function_test(request):
-    worker_function = request.node.get_closest_marker("beam_worker_function_test").args[0]
+    worker_function = _marker_arg(request, "beam_worker_function_test")
+    assert worker_function is not None, "missing @pytest.mark.beam_worker_function_test(worker_function)"
     source = open(worker_function.__file__).read()
     match = re.search(r'@(task_queue|endpoint|asgi)\(\s*name="([^"]+)"', source, re.DOTALL)
     assert match is not None
@@ -41,7 +60,8 @@ def beam_worker_function_test(request):
 
 @pytest.fixture(scope="module")
 def modal_worker_function_test(request):
-    worker_function = request.node.get_closest_marker("modal_worker_function_test").args[0]
+    worker_function = _marker_arg(request, "modal_worker_function_test")
+    assert worker_function is not None, "missing @pytest.mark.modal_worker_function_test(worker_function)"
     worker_file = worker_function.__file__
     source = open(worker_file).read()
     match = re.search(r'modal\.App\("([^"]+)"\)', source)
@@ -56,7 +76,9 @@ def modal_worker_function_test(request):
 
 @pytest.fixture(scope="module")
 def flash_worker_function_test(request):
-    worker_function = request.node.get_closest_marker("flash_worker_function_test").args[0]
+    worker_function = _marker_arg(request, "flash_worker_function_test")
+    assert worker_function is not None, "missing @pytest.mark.flash_worker_function_test(worker_function)"
+    pytest.skip("flash dev not available per workers/VERIFICATION.md")
     source = open(worker_function.__file__).read()
     match = re.search(r'@Endpoint\(\s*name="([^"]+)"', source, re.DOTALL)
     assert match is not None
