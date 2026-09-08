@@ -4,6 +4,8 @@ import pytest
 from workers.h3._shared_minimax_h3_fl2va import Artifact, MiniMaxH3Fl2VAOutput
 import workers.h3.worker_flash_cls_minimax_h3_fl2va as worker_function
 
+pytestmark = pytest.mark.usefixtures("flash_worker_function_test")
+
 
 def _artifact_exists(url: str) -> bool:
     try:

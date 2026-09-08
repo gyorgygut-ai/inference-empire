@@ -2,6 +2,12 @@ import httpx
 import pytest
 
 from workers.tiny_sd._shared_tiny_sd import Artifact, TinySDOutput
+import workers.tiny_sd.worker_beam_tq_tiny_sd as worker_function
+
+pytestmark = [
+    pytest.mark.usefixtures("beam_worker_function_test"),
+    pytest.mark.beam_worker_function_test(worker_function),
+]
 
 GOOD = {"prompt": "a red square", "seed": 7}
 

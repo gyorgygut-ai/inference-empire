@@ -5,7 +5,7 @@ import os
 import time
 import uuid
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -43,7 +43,10 @@ def apply_torch_shims() -> None:
     import torch.distributed as dist
 
     try:
-        dist.is_available = lambda: False
+        def _dist_unavailable() -> bool:
+            return False
+
+        setattr(dist, "is_available", _dist_unavailable)
     except Exception:  # noqa: BLE001, S110
         pass
 
@@ -51,13 +54,13 @@ def apply_torch_shims() -> None:
 
     _orig_load_library = torch.ops.load_library
 
-    def _patched_load_library(path):
+    def _patched_load_library(path: str) -> None:
         try:
-            return _orig_load_library(path)
+            _orig_load_library(path)
         except OSError as e:
             raise RuntimeError(f"torch native library failed to load: {path}: {e}") from e
 
-    torch.ops.load_library = _patched_load_library
+    setattr(torch.ops, "load_library", _patched_load_library)
 
 class MiniMaxH3Fl2VAInput(BaseModel):
     model_config = ConfigDict(title="MiniMaxH3Fl2VAInput")
@@ -92,7 +95,10 @@ def load_pipeline(vram_reserve_gb: float = 4.0):
     import torch.distributed as dist
 
     try:
-        dist.is_available = lambda: False
+        def _dist_unavailable() -> bool:
+            return False
+
+        setattr(dist, "is_available", _dist_unavailable)
     except Exception:  # noqa: BLE001, S110
         pass
 
@@ -102,7 +108,7 @@ def load_pipeline(vram_reserve_gb: float = 4.0):
     )
     from diffsynth.utils.data.audio_video import write_video_audio
 
-    vram_config = {
+    vram_config: dict[str, Any] = {
         "offload_dtype": "disk",
         "offload_device": "disk",
         "onload_dtype": torch.bfloat16,

@@ -6,6 +6,8 @@ import json
 import os
 import threading
 import time
+from types import SimpleNamespace
+from typing import Any
 
 import modal
 import numpy as np
@@ -125,7 +127,10 @@ class VoiceChatPipeline:
         import torch
         import torch.distributed as dist
 
-        dist.is_available = lambda: False
+        def _dist_unavailable() -> bool:
+            return False
+
+        setattr(dist, "is_available", _dist_unavailable)
 
         print("[INIT] loading model Qwen/Qwen3-8B + Whisper + XTTS", flush=True)
         t0 = time.time()
@@ -232,7 +237,7 @@ class VoiceChatPipeline:
 # OpenAI Realtime API (beta) session handler — transport-agnostic
 # --------------------------------------------------------------------------
 class RealtimeSession:
-    def __init__(self, pipeline: VoiceChatPipeline):
+    def __init__(self, pipeline: VoiceChatPipeline | SimpleNamespace):
         self.pipeline = pipeline
         self.send = None  # async callable(event_dict); wired by the transport
         self.session = self._default_session()
@@ -477,7 +482,7 @@ class RealtimeSession:
         streamer = self.pipeline.streamer_cls(
             self.pipeline.tokenizer, skip_prompt=True, skip_special_tokens=True
         )
-        gen_kwargs = {
+        gen_kwargs: dict[str, Any] = {
             "inputs": inputs,
             "max_new_tokens": MAX_NEW_TOKENS,
             "do_sample": True,
@@ -603,7 +608,7 @@ def load_dependencies():
     return (pipeline,)
 
 
-def generate(pipeline: VoiceChatPipeline, **kwargs) -> dict:
+def generate(pipeline: VoiceChatPipeline | SimpleNamespace, **kwargs) -> dict:
     """Validate at boundary, delegate, return output contract.
 
     Sync entry point for the realtime session lifecycle: applies a

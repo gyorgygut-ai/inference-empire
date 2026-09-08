@@ -143,7 +143,8 @@ class OpenVoiceSession:
         pcm24 = base64.b64decode(audio_b64)
         pcm16_16k = resample_pcm16(pcm24, INPUT_SR, VAD_SR)
 
-        status = await self._loop.run_in_executor(  # type: ignore[union-attr]
+        assert self._loop is not None
+        status = await self._loop.run_in_executor(
             None, self._vad.feed, pcm16_16k
         )
         if status["speech_started"]:
@@ -169,7 +170,8 @@ class OpenVoiceSession:
             Event.response_created({"id": response_id, "status": "in_progress"})
         )
         try:
-            out_pcm = await self._loop.run_in_executor(  # type: ignore[union-attr]
+            assert self._loop is not None
+            out_pcm = await self._loop.run_in_executor(
                 None, self._converter.convert, audio24k, self._voice
             )
         except Exception as exc:  # noqa: BLE001
@@ -196,7 +198,6 @@ class OpenVoiceSession:
     name="voice-openvoice",
     image=image,
     on_start=load_converter,
-    gpu=None,
     cpu=2,
     memory="4Gi",
     concurrent_requests=4,

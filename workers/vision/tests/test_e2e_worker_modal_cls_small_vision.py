@@ -7,6 +7,8 @@ from PIL import Image
 from workers.vision._shared_small_vision import SmallVisionOutput
 import workers.vision.worker_modal_cls_small_vision as worker_function
 
+pytestmark = pytest.mark.usefixtures("modal_worker_function_test")
+
 
 def _image_b64():
     img = Image.new("RGB", (8, 8), (0, 255, 0))
@@ -21,10 +23,10 @@ GOOD = {"image_base64": _image_b64()}
 @pytest.mark.modal_worker_function_test(worker_function)
 def test_invalid_input_rejects():
     with pytest.raises(RuntimeError, match="inference failed"):
-        worker_function.SmallVisionWorker().analyze(**{})
+        worker_function.SmallVisionWorker().analyze.local(**{})
 
 
 @pytest.mark.modal_worker_function_test(worker_function)
 def test_good_input_returns_contract():
-    out = worker_function.SmallVisionWorker().analyze(**GOOD)
+    out = worker_function.SmallVisionWorker().analyze.local(**GOOD)
     assert SmallVisionOutput.model_validate(out).model_dump() == out

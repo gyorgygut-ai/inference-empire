@@ -74,7 +74,10 @@ def load_models(cache_dir=None):
     import torch
     import torch.distributed as dist
 
-    dist.is_available = lambda: False
+    def _dist_unavailable() -> bool:
+        return False
+
+    setattr(dist, "is_available", _dist_unavailable)
 
     import torch._higher_order_ops.utils as _hoop
 

@@ -4,6 +4,8 @@ import pytest
 from workers.krea2._shared_krea2_ref2img import Artifact, Krea2Ref2ImgOutput
 import workers.krea2.worker_flash_cls_krea2_ref2img as worker_function
 
+pytestmark = pytest.mark.usefixtures("flash_worker_function_test")
+
 
 def _artifact_exists(url: str) -> bool:
     try:

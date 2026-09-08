@@ -4,6 +4,8 @@ import pytest
 from workers.flux2._shared_flux2_klein9b import Artifact, Flux2Klein9bOutput
 import workers.flux2.worker_flash_cls_flux2_klein9b as worker_function
 
+pytestmark = pytest.mark.usefixtures("flash_worker_function_test")
+
 
 def _artifact_exists(url: str) -> bool:
     try:

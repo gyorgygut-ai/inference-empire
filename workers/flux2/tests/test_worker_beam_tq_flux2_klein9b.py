@@ -21,7 +21,7 @@ def _png_bytes(img):
 class SpyPipe(FakeImagePipe):
     def __init__(self, image):
         super().__init__(image)
-        self.kwargs = None
+        self.kwargs: dict = {}
 
     def __call__(self, **kwargs):
         self.kwargs = kwargs

@@ -38,9 +38,9 @@ def generate(storage: Storage, pipe, torch_module, **kwargs) -> dict:
         "HF_TOKEN": os.environ.get("HF_TOKEN", ""),
         "HF_HOME": "/runpod-volume/huggingface-cache",
         "R2_BUCKET": os.environ.get("R2_BUCKET", "generated-media"),
-        "R2_ENDPOINT": os.environ.get("R2_ENDPOINT"),
-        "R2_ACCESS_KEY": os.environ.get("R2_ACCESS_KEY"),
-        "R2_SECRET_KEY": os.environ.get("R2_SECRET_KEY"),
+        "R2_ENDPOINT": os.environ.get("R2_ENDPOINT", ""),
+        "R2_ACCESS_KEY": os.environ.get("R2_ACCESS_KEY", ""),
+        "R2_SECRET_KEY": os.environ.get("R2_SECRET_KEY", ""),
     },
     dependencies=[
         "torch==2.9.1",

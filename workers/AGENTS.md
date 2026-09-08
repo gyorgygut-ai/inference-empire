@@ -149,8 +149,6 @@ worker_{platform}_{pattern}_{model}.py
 - Beam (all pending): `beam task list | grep PENDING | awk '{print $1}' | xargs beam task stop`
 - Modal: N/A (`spawn()` + `.result()` tasks are not independently cancellable)
 
-
-
 ### Logging & Polling
 
 - Beam single task: `beam logs --task-id <id>`
@@ -167,8 +165,18 @@ Log tag order: `[INIT]` → `[REQ]` → `[GEN]` → `[R2]` → `[OK]` (or `[ERR]
 
 ### Run All Tests
 
-- Fake (mocked inference, local): `uv run --locked pytest workers/`
+- All: `uv run --locked pytest workers/`
 - Per model: `uv run --locked pytest workers/<model>/tests/`
+
+### Run Unit Tests
+
+- All: `uv run --locked pytest workers/ -k "not e2e"`
+- Per model: `uv run --locked pytest workers/<model>/tests/ -k "not e2e"`
+
+### Run E2E Tests
+
+- All: `uv run --locked pytest workers/ -k "e2e"`
+- Per model: `uv run --locked pytest workers/<model>/tests/ -k "e2e"`
 
 ### Run Per-Worker Tests
 
@@ -196,7 +204,7 @@ Log tag order: `[INIT]` → `[REQ]` → `[GEN]` → `[R2]` → `[OK]` (or `[ERR]
 **Cases:**
 
 - [ ] Inference requested with right args
-- [ ] Fake bucket has "uploaded" artifact
+- [ ] Mock bucket has "uploaded" artifact
 - [ ] `do_inference` returns output contract
 
 ---

@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import re
 import secrets
-from typing import Literal
+from typing import Any, Literal, cast
 
 import numpy as np
 from pydantic import BaseModel, ConfigDict, Field
@@ -60,15 +60,101 @@ def _patch_torch_load():
         return
     _orig = torch.load
 
-    def _load(*args, **kwargs):
+    def _load(*args: Any, **kwargs: Any) -> Any:
         kwargs.setdefault("weights_only", False)
         return _orig(*args, **kwargs)
 
-    _load._patched = True
-    torch.load = _load
+    setattr(_load, "_patched", True)
+    torch.load = cast(Any, _load)
 
 
 class VoiceChatInput(BaseModel):
     model_config = ConfigDict(title="VoiceChatInput")
     type: Literal["session.update"]
     session: dict = Field(default_factory=dict)
+
+
+class RealtimeVoiceInput(BaseModel):
+    model_config = ConfigDict(title="RealtimeVoiceInput")
+    type: Literal[
+        "session.update",
+        "input_audio_buffer.append",
+        "input_audio_buffer.commit",
+        "input_audio_buffer.clear",
+    ]
+    session: dict | None = Field(default=None)
+    audio: str | None = Field(default=None)
+
+
+class RealtimeVoiceOutput(BaseModel):
+    model_config = ConfigDict(title="RealtimeVoiceOutput")
+    type: Literal[
+        "session.created",
+        "session.updated",
+        "error",
+        "response.audio.delta",
+        "response.audio.done",
+        "response.text.delta",
+        "response.text.done",
+        "conversation.item.created",
+    ]
+    session: dict | None = Field(default=None)
+    error: dict | None = Field(default=None)
+    delta: str | None = Field(default=None)
+
+
+def _default_session() -> dict:
+    return {
+        "id": _rid("sess"),
+        "model": "realtime-voice-worker",
+        "modalities": ["text", "audio"],
+        "instructions": "You are a helpful, concise voice assistant. Respond naturally and briefly.",
+        "voice": "GutAI",
+        "language": "en",
+        "input_audio_format": "pcm16",
+        "output_audio_format": "pcm16",
+        "input_audio_transcription": {"model": "whisper-1"},
+        "turn_detection": {
+            "type": "server_vad",
+            "threshold": 0.5,
+            "silence_duration_ms": 500,
+            "prefix_padding_ms": 200,
+        },
+        "tools": [],
+        "tool_choice": "none",
+        "temperature": 0.7,
+    }
+
+
+def do_inference(storage, req: RealtimeVoiceInput) -> RealtimeVoiceOutput:
+    """Validate at boundary, delegate, return output contract.
+
+    Sync entry point for the realtime session lifecycle: applies a
+    `session.update` event to a fresh session and returns the emitted
+    `session.updated` event. Audio/utterance turns stay on the realtime
+    websocket path (they need the GPU pipeline); session state is pure
+    metadata, nothing is written to storage.
+    """
+    try:
+        if req.type != "session.update":
+            return RealtimeVoiceOutput(
+                type="error",
+                error={
+                    "message": f"unsupported event type for sync path: {req.type}",
+                    "type": "invalid_request_error",
+                },
+            )
+        session = _default_session()
+        if req.session:
+            session.update(req.session)
+        return RealtimeVoiceOutput(type="session.updated", session=session)
+    except Exception as e:
+        print(f"[ERR] {type(e).__name__}: {e}", flush=True)
+        raise RuntimeError(f"inference failed: {e}") from e
+
+
+def load_dependencies():
+    """Load all dependencies for realtime voice workers."""
+    from workers.services.storage.r2_storage import R2Storage
+
+    return (R2Storage(),)

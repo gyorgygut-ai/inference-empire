@@ -2,6 +2,12 @@ import httpx
 import pytest
 
 from workers.h3._shared_minimax_h3_comfy import Artifact, MiniMaxH3ComfyOutput
+import workers.h3.worker_beam_tq_minimax_h3_comfy as worker_function
+
+pytestmark = [
+    pytest.mark.usefixtures("beam_worker_function_test"),
+    pytest.mark.beam_worker_function_test(worker_function),
+]
 
 GOOD = {"prompt": "a cat walking in a garden", "seed": 7}
 

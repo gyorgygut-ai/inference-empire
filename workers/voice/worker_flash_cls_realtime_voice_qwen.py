@@ -11,9 +11,14 @@ if TYPE_CHECKING:
     from workers.services.storage.storage import Storage
 
 
-def generate(storage: Storage, **kwargs) -> dict:
+def generate(storage: Storage | None, **kwargs) -> dict:
+    """Validate at boundary, delegate, return output contract."""
     req = RealtimeVoiceInput(**kwargs)
-    return do_inference(storage, req).model_dump()
+    try:
+        return do_inference(storage, req).model_dump()
+    except Exception as e:
+        print(f"[ERR] {type(e).__name__}: {e}", flush=True)
+        raise RuntimeError(f"inference failed: {e}") from e
 
 
 @Endpoint(

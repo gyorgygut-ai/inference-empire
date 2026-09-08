@@ -10,7 +10,10 @@ class TorchModuleService:
     def __init__(self):
         import torch.distributed as dist
 
-        dist.is_available = lambda: False
+        def _dist_unavailable() -> bool:
+            return False
+
+        setattr(dist, "is_available", _dist_unavailable)
 
     def __getattr__(self, name: str):
         return getattr(torch, name)

@@ -46,7 +46,7 @@ image = (
             "hf_xet==1.6.0",
         ]
     )
-    .with_envs("HF_HUB_ENABLE_HF_TRANSFER=1", "HF_HOME=/volumes/models/.hf_cache")
+    .with_envs({"HF_HUB_ENABLE_HF_TRANSFER": "1", "HF_HOME": "/volumes/models/.hf_cache"})
 )
 
 volume = Volume(name=VOLUME_NAME, mount_path=MOUNT_PATH)

@@ -4,6 +4,8 @@ import pytest
 from workers.h3._shared_minimax_h3_comfy import Artifact, MiniMaxH3ComfyOutput
 import workers.h3.worker_modal_cls_minimax_h3_comfy as worker_function
 
+pytestmark = pytest.mark.usefixtures("modal_worker_function_test")
+
 
 def _artifact_exists(url: str) -> bool:
     try:
@@ -16,12 +18,12 @@ def _artifact_exists(url: str) -> bool:
 @pytest.mark.modal_worker_function_test(worker_function)
 def test_invalid_input_rejects():
     with pytest.raises(RuntimeError, match="inference failed"):
-        worker_function.MiniMaxH3ComfyWorker().generate(**{})
+        worker_function.MiniMaxH3ComfyWorker().generate.local(**{})
 
 
 @pytest.mark.modal_worker_function_test(worker_function)
 def test_good_input_returns_contract_and_artifact():
-    out = worker_function.MiniMaxH3ComfyWorker().generate(
+    out = worker_function.MiniMaxH3ComfyWorker().generate.local(
         **{"prompt": "a cat walking in a garden", "seed": 7}
     )
     url = out["artifact"]["presigned_url"]

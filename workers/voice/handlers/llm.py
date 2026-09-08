@@ -8,6 +8,7 @@ event for barge-in. A lock serializes GPU access across concurrent sessions.
 from __future__ import annotations
 
 import threading
+from typing import Any, cast
 
 
 class QwenLLM:
@@ -22,7 +23,7 @@ class QwenLLM:
         self.device = device
         self.quantize = quantize
         self.max_new_tokens = max_new_tokens
-        self.model = None
+        self.model: Any = None
         self.tokenizer = None
         self._lock = threading.Lock()
 
@@ -45,9 +46,13 @@ class QwenLLM:
                 torch_dtype=torch.bfloat16,
             )
         else:
-            self.model = AutoModelForCausalLM.from_pretrained(
-                self.model_path, torch_dtype=torch.float16
-            ).to(self.device)
+            model = cast(
+                Any,
+                AutoModelForCausalLM.from_pretrained(
+                    self.model_path, torch_dtype=torch.float16
+                ),
+            )
+            self.model = model.to(self.device)
         return self
 
     def stream(self, messages: list[dict], cancel=None, max_new_tokens: int | None = None):
@@ -71,7 +76,7 @@ class QwenLLM:
         streamer = TextIteratorStreamer(
             self.tokenizer, skip_prompt=True, skip_special_tokens=True
         )
-        gen_kwargs = {"inputs": inputs, "streamer": streamer, "max_new_tokens": max_tokens}
+        gen_kwargs: dict[str, Any] = {"inputs": inputs, "streamer": streamer, "max_new_tokens": max_tokens}
 
         def generate():
             with self._lock:

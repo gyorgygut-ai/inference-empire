@@ -25,7 +25,10 @@ def apply_torch_shims() -> None:
     import torch.distributed as dist
 
     try:
-        dist.is_available = lambda: False
+        def _dist_unavailable() -> bool:
+            return False
+
+        setattr(dist, "is_available", _dist_unavailable)
     except Exception:  # noqa: BLE001, S110
         pass
 

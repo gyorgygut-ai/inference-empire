@@ -32,7 +32,10 @@ def _download_model():
     import torch
     import torch.distributed as dist
 
-    dist.is_available = lambda: False
+    def _dist_unavailable() -> bool:
+        return False
+
+    setattr(dist, "is_available", _dist_unavailable)
 
     from transformers import AutoProcessor, Qwen2VLForConditionalGeneration
 

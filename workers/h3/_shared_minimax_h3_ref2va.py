@@ -5,7 +5,7 @@ import os
 import time
 import uuid
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -43,7 +43,10 @@ def apply_torch_shims() -> None:
     import torch.distributed as dist
 
     try:
-        dist.is_available = lambda: False
+        def _dist_unavailable() -> bool:
+            return False
+
+        setattr(dist, "is_available", _dist_unavailable)
     except Exception:  # noqa: BLE001, S110
         pass
 
@@ -51,13 +54,13 @@ def apply_torch_shims() -> None:
 
     _orig_load_library = torch.ops.load_library
 
-    def _patched_load_library(path):
+    def _patched_load_library(path: str) -> None:
         try:
-            return _orig_load_library(path)
+            _orig_load_library(path)
         except OSError as e:
             raise RuntimeError(f"torch native library failed to load: {path}: {e}") from e
 
-    torch.ops.load_library = _patched_load_library
+    setattr(torch.ops, "load_library", _patched_load_library)
 
 _MAX_REF_IMAGES = 9
 _MAX_REF_VIDEOS = 3
@@ -209,7 +212,7 @@ def read_audio(base64_str: str, sample_rate: int, duration: float | None = None)
     with tempfile.NamedTemporaryFile(suffix=".mp3") as fh:
         fh.write(base64.b64decode(base64_str))
         fh.flush()
-        kwargs = {"resample": True, "resample_rate": sample_rate}
+        kwargs: dict[str, Any] = {"resample": True, "resample_rate": sample_rate}
         if duration is not None:
             kwargs["duration"] = duration
         waveform, out_rate = _read_audio(fh.name, **kwargs)
@@ -250,7 +253,10 @@ def load_pipeline(vram_reserve_gb: float = 5.0):
     import torch.distributed as dist
 
     try:
-        dist.is_available = lambda: False
+        def _dist_unavailable() -> bool:
+            return False
+
+        setattr(dist, "is_available", _dist_unavailable)
     except Exception:  # noqa: BLE001, S110
         pass
 
@@ -260,7 +266,7 @@ def load_pipeline(vram_reserve_gb: float = 5.0):
     )
     from diffsynth.utils.data.audio_video import write_video_audio
 
-    vram_config = {
+    vram_config: dict[str, Any] = {
         "offload_dtype": "disk",
         "offload_device": "disk",
         "onload_dtype": torch.bfloat16,

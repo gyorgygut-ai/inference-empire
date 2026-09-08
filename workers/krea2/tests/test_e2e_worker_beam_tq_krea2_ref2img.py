@@ -2,6 +2,12 @@ import httpx
 import pytest
 
 from workers.krea2._shared_krea2_ref2img import Artifact, Krea2Ref2ImgOutput
+import workers.krea2.worker_beam_tq_krea2_ref2img as worker_function
+
+pytestmark = [
+    pytest.mark.usefixtures("beam_worker_function_test"),
+    pytest.mark.beam_worker_function_test(worker_function),
+]
 
 GOOD = {"prompt": "a red square", "seed": 7}
 

@@ -4,7 +4,7 @@ from __future__ import annotations
 import time
 import uuid
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -69,7 +69,10 @@ def load_pipeline(cache_dir=None):
     """Production path: always boots the real model."""
     import torch.distributed as dist
 
-    dist.is_available = lambda: False
+    def _dist_unavailable() -> bool:
+        return False
+
+    setattr(dist, "is_available", _dist_unavailable)
 
     print("[INIT] loading model krea/Krea-2-Turbo", flush=True)
     t0 = time.time()
@@ -83,7 +86,7 @@ def load_pipeline(cache_dir=None):
     from huggingface_hub import snapshot_download
     from transformers import AutoTokenizer
 
-    snapshot_kwargs = {
+    snapshot_kwargs: dict[str, Any] = {
         "allow_patterns": [
             "pipeline.py",
             "face_crop.py",

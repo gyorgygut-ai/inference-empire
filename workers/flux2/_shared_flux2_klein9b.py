@@ -53,7 +53,10 @@ def load_pipeline():
     """Production path: always boots the real model."""
     import torch.distributed as dist
 
-    dist.is_available = lambda: False
+    def _dist_unavailable() -> bool:
+        return False
+
+    setattr(dist, "is_available", _dist_unavailable)
 
     import os
 

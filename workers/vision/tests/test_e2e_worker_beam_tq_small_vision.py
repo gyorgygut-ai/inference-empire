@@ -5,6 +5,12 @@ import pytest
 from PIL import Image
 
 from workers.vision._shared_small_vision import SmallVisionOutput
+import workers.vision.worker_beam_tq_small_vision as worker_function
+
+pytestmark = [
+    pytest.mark.usefixtures("beam_worker_function_test"),
+    pytest.mark.beam_worker_function_test(worker_function),
+]
 
 
 def _image_b64():

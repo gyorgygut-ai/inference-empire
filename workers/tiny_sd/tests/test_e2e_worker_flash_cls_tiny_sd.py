@@ -5,6 +5,8 @@ import httpx
 from workers.tiny_sd._shared_tiny_sd import Artifact, TinySDOutput
 import workers.tiny_sd.worker_flash_cls_tiny_sd as worker_function
 
+pytestmark = pytest.mark.usefixtures("flash_worker_function_test")
+
 
 def _artifact_exists(url: str) -> bool:
     try:

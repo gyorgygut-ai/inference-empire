@@ -3,13 +3,16 @@
 import subprocess
 from pathlib import Path
 
+from workers.services.platform.spec import WorkerSpec
+
 
 class FlashPlatform:
     def __init__(self, worker_factory=None):
         self._worker_factory = worker_factory
-        self._spec = None
+        self._spec: WorkerSpec | None = None
 
     def _worker_dir(self):
+        assert self._spec is not None
         # spec.module = "workers.<model>.worker_..." -> workers/<model>/
         return Path(*self._spec.module.split(".")[:2])
 
@@ -18,6 +21,7 @@ class FlashPlatform:
         subprocess.run(["flash", "deploy"], cwd=self._worker_dir(), check=True)
 
     def undeploy(self):
+        assert self._spec is not None
         subprocess.run(
             ["flash", "undeploy", self._spec.live_endpoint],
             cwd=self._worker_dir(),

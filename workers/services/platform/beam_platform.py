@@ -4,13 +4,16 @@ import json
 import subprocess
 from pathlib import Path
 
+from workers.services.platform.spec import WorkerSpec
+
 
 class BeamPlatform:
     def __init__(self, worker_factory=None):
         self._worker_factory = worker_factory
-        self._spec = None
+        self._spec: WorkerSpec | None = None
 
     def _handler(self):
+        assert self._spec is not None
         # "file:function" — beam deploys the decorated attr from the module.
         path = Path(*self._spec.module.split(".")).with_suffix(".py")
         return f"{path}:{self._spec.attr}"
@@ -19,6 +22,7 @@ class BeamPlatform:
         subprocess.run(["beam", "deploy", self._handler()], check=True)
 
     def undeploy(self):
+        assert self._spec is not None
         # Delete takes a DEPLOYMENT_ID, not a name: resolve via list.
         out = subprocess.run(
             ["beam", "deployment", "list", "--format", "json"],

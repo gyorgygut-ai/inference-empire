@@ -52,7 +52,7 @@ class Session:
 
         self._in_turn = False
         self._turn_audio = bytearray()
-        self._active_turn: asyncio.Task | None = None
+        self._active_turn: asyncio.Task | asyncio.Future | None = None
         self._cancel_event: asyncio.Event | None = None
 
     # -- public API -------------------------------------------------------
@@ -140,7 +140,8 @@ class Session:
         pcm24 = base64.b64decode(audio_b64)
         pcm16_16k = resample_pcm16(pcm24, INPUT_SR, VAD_SR)
 
-        status = await self._loop.run_in_executor(  # type: ignore[union-attr]
+        assert self._loop is not None
+        status = await self._loop.run_in_executor(
             None, self._models["vad"].feed, pcm16_16k
         )
 
@@ -186,7 +187,8 @@ class Session:
     # -- turn pipelines ---------------------------------------------------
     async def _audio_turn(self, audio24k: bytes) -> None:
         try:
-            text = await self._loop.run_in_executor(  # type: ignore[union-attr]
+            assert self._loop is not None
+            text = await self._loop.run_in_executor(
                 None, self._models["stt"].transcribe, audio24k
             )
             self._last_language = getattr(
@@ -219,17 +221,18 @@ class Session:
         queue: asyncio.Queue = asyncio.Queue()
         cancel = self._cancel_event
         loop = self._loop
+        assert loop is not None
 
         def worker() -> None:
             try:
                 full: list[str] = []
                 for token in self._models["llm"].stream(messages, cancel=cancel):
                     full.append(token)
-                    loop.call_soon_threadsafe(  # type: ignore[union-attr]
+                    loop.call_soon_threadsafe(
                         queue.put_nowait, ("transcript", "".join(full))
                     )
                 transcript = "".join(full)
-                loop.call_soon_threadsafe(  # type: ignore[union-attr]
+                loop.call_soon_threadsafe(
                     queue.put_nowait, ("transcript_done", transcript)
                 )
                 # Language-aware TTS routing: Chatterbox (reference timbre)
@@ -246,19 +249,19 @@ class Session:
                     tts = self._models["tts"]
                     chunks = tts.stream(transcript, self._voice, cancel=cancel)
                 for audio_pcm16 in chunks:
-                    loop.call_soon_threadsafe(  # type: ignore[union-attr]
+                    loop.call_soon_threadsafe(
                         queue.put_nowait,
                         ("audio", base64.b64encode(audio_pcm16).decode("ascii")),
                     )
                 if cancel is not None and cancel.is_set():
-                    loop.call_soon_threadsafe(queue.put_nowait, ("cancelled", None))  # type: ignore[union-attr]
+                    loop.call_soon_threadsafe(queue.put_nowait, ("cancelled", None))
                 else:
-                    loop.call_soon_threadsafe(queue.put_nowait, ("done", None))  # type: ignore[union-attr]
+                    loop.call_soon_threadsafe(queue.put_nowait, ("done", None))
             except Exception as exc:  # noqa: BLE001
-                loop.call_soon_threadsafe(queue.put_nowait, ("error", exc))  # type: ignore[union-attr]
+                loop.call_soon_threadsafe(queue.put_nowait, ("error", exc))
 
-        task = loop.run_in_executor(None, worker)  # type: ignore[union-attr]
-        self._active_turn = asyncio.ensure_future(task)  # track for cancel
+        task = loop.run_in_executor(None, worker)
+        self._active_turn = asyncio.wrap_future(task)  # track for cancel
         try:
             while True:
                 kind, payload = await queue.get()

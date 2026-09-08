@@ -19,7 +19,7 @@ def _pipe():
 class SpyPipe(FakeVideoPipe):
     def __init__(self, frames, audio):
         super().__init__(frames, audio)
-        self.kwargs = None
+        self.kwargs: dict = {}
         self.audio_vae = SimpleNamespace(sample_rate=24000)
 
     def __call__(self, **kwargs):

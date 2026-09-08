@@ -7,6 +7,8 @@ from PIL import Image
 from workers.vision._shared_small_vision import SmallVisionOutput
 import workers.vision.worker_flash_cls_small_vision as worker_function
 
+pytestmark = pytest.mark.usefixtures("flash_worker_function_test")
+
 
 def _image_b64():
     img = Image.new("RGB", (8, 8), (0, 255, 0))

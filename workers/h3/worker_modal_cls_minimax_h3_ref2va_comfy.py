@@ -74,7 +74,7 @@ def _start_comfy():
     return "http://127.0.0.1:8188"
 
 
-def generate(storage: Storage, comfy_base_url: str, **kwargs) -> dict:
+def generate(storage: Storage, comfy_base_url, **kwargs) -> dict:
     """Validate at boundary, delegate, return output contract."""
     req = ValidatedRef2VAComfyInput(**kwargs)
     try:
