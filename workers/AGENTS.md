@@ -130,8 +130,8 @@ Log tag order for all providers: `[INIT]` → `[REQ]` → `[GEN]` → `[R2]` →
 
 ### Modal — deploy / run / logs (verified live)
 
-Each Modal e2e file carries its own module-scoped `deployed_app` fixture
-(`modal deploy` on setup, `modal app stop` on teardown). No shared fixtures.
+Each Modal e2e file deploys in-test (`modal deploy` on the imported
+worker module, `modal app stop` in a `finally` block). No shared fixtures.
 
 Deploy:
 

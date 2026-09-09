@@ -1,26 +1,19 @@
 import subprocess
 
 import modal
-import pytest
 
 import workers.tiny_sd.worker_modal_cls_tiny_sd as worker_module
 from workers.artifact_check import artifact_exists
 from workers.tiny_sd._shared_tiny_sd import Artifact, TinySDOutput
 
-APP_NAME = "tiny-sd-worker"
-GOOD = {"prompt": "a red square", "seed": 7}
 
-
-@pytest.fixture(scope="module")
-def deployed_app():
+def test_good_input_returns_contract_and_artifact():
     subprocess.run(["modal", "deploy", worker_module.__file__], check=True)
-    yield
-    subprocess.run(["modal", "app", "stop", APP_NAME, "--yes"], check=False)
-
-
-def test_good_input_returns_contract_and_artifact(deployed_app):
-    Cls = modal.Cls.from_name(APP_NAME, "TinySDWorker")
-    out = Cls().generate.remote(**GOOD)
-    url = out["artifact"]["presigned_url"]
-    assert out == TinySDOutput(artifact=Artifact(presigned_url=url)).model_dump()
-    assert artifact_exists(url)
+    try:
+        Cls = modal.Cls.from_name("tiny-sd-worker", "TinySDWorker")
+        out = Cls().generate.remote(prompt="a red square", seed=7)
+        url = out["artifact"]["presigned_url"]
+        assert out == TinySDOutput(artifact=Artifact(presigned_url=url)).model_dump()
+        assert artifact_exists(url)
+    finally:
+        subprocess.run(["modal", "app", "stop", "tiny-sd-worker", "--yes"], check=False)

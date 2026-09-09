@@ -13,13 +13,10 @@ def _image_b64():
     return base64.b64encode(buffer.getvalue()).decode()
 
 
-GOOD = {"image_base64": _image_b64()}
-
-
 def test_good_input_returns_contract():
     import workers.vision.worker_beam_tq_small_vision as worker_mod
 
-    task = worker_mod.dispatch.put(**GOOD)
+    task = worker_mod.dispatch.put(image_base64=_image_b64())
     out = task.result(wait=True)
     assert out is not None, "beam task returned None - check beam logs"
 

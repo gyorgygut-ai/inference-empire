@@ -3,13 +3,10 @@ import io
 import subprocess
 
 import modal
-import pytest
 from PIL import Image
 
 import workers.vision.worker_modal_cls_small_vision as worker_module
 from workers.vision._shared_small_vision import SmallVisionOutput
-
-APP_NAME = "small-vision-worker"
 
 
 def _image_b64():
@@ -19,17 +16,11 @@ def _image_b64():
     return base64.b64encode(buffer.getvalue()).decode()
 
 
-GOOD = {"image_base64": _image_b64()}
-
-
-@pytest.fixture(scope="module")
-def deployed_app():
+def test_good_input_returns_contract():
     subprocess.run(["modal", "deploy", worker_module.__file__], check=True)
-    yield
-    subprocess.run(["modal", "app", "stop", APP_NAME, "--yes"], check=False)
-
-
-def test_good_input_returns_contract(deployed_app):
-    Cls = modal.Cls.from_name(APP_NAME, "SmallVisionWorker")
-    out = Cls().analyze.remote(**GOOD)
-    assert SmallVisionOutput.model_validate(out).model_dump() == out
+    try:
+        Cls = modal.Cls.from_name("small-vision-worker", "SmallVisionWorker")
+        out = Cls().analyze.remote(image_base64=_image_b64())
+        assert SmallVisionOutput.model_validate(out).model_dump() == out
+    finally:
+        subprocess.run(["modal", "app", "stop", "small-vision-worker", "--yes"], check=False)

@@ -4,8 +4,8 @@ import io
 import pytest
 from PIL import Image
 
-from workers.vision._shared_small_vision import SmallVisionOutput
 import workers.vision.worker_flash_cls_small_vision as worker_function
+from workers.vision._shared_small_vision import SmallVisionOutput
 
 pytestmark = pytest.mark.skip(reason="flash dev not available")
 
@@ -17,9 +17,6 @@ def _image_b64():
     return base64.b64encode(buffer.getvalue()).decode()
 
 
-GOOD = {"image_base64": _image_b64()}
-
-
 def test_good_input_returns_contract():
-    out = worker_function.Qwen2VLVisionWorker().analyze(**GOOD)
+    out = worker_function.Qwen2VLVisionWorker().analyze(image_base64=_image_b64())
     assert SmallVisionOutput.model_validate(out).model_dump() == out
