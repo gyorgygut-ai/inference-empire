@@ -1,23 +1,7 @@
-import httpx
-import pytest
-
+from workers.artifact_check import artifact_exists
 from workers.h3._shared_minimax_h3_ref2va_comfy import Artifact, MiniMaxH3Ref2VAComfyOutput
-import workers.h3.worker_beam_tq_minimax_h3_ref2va_comfy as worker_function
-
-pytestmark = [
-    pytest.mark.usefixtures("beam_worker_function_test"),
-    pytest.mark.beam_worker_function_test(worker_function),
-]
 
 GOOD = {"prompt": "a cat walking in a garden", "seed": 7}
-
-
-def _artifact_exists(url: str) -> bool:
-    try:
-        response = httpx.get(url, timeout=120)
-        return response.status_code == 200 and len(response.content) > 0
-    except Exception:
-        return False
 
 
 def test_good_input_returns_contract_and_artifact():
@@ -31,4 +15,4 @@ def test_good_input_returns_contract_and_artifact():
     assert out == MiniMaxH3Ref2VAComfyOutput(
         artifact=Artifact(presigned_url=url), video=out["video"]
     ).model_dump()
-    assert _artifact_exists(url)
+    assert artifact_exists(url, timeout=120)

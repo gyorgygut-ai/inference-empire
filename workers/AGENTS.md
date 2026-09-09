@@ -130,6 +130,9 @@ Log tag order for all providers: `[INIT]` → `[REQ]` → `[GEN]` → `[R2]` →
 
 ### Modal — deploy / run / logs (verified live)
 
+Each Modal e2e file carries its own module-scoped `deployed_app` fixture
+(`modal deploy` on setup, `modal app stop` on teardown). No shared fixtures.
+
 Deploy:
 
 ```bash
@@ -154,6 +157,8 @@ When something fails: `[ERR]` in logs + `call.get()` raises → re-check logs wi
 
 ### Beam — run / logs
 
+No deploy step and no fixtures: `.put()` deploys on demand directly in Python.
+
 Run:
 
 ```python
@@ -167,11 +172,12 @@ Logs — poll while waiting:
 beam logs --stub-id <name>
 ```
 
-When something fails: `out is None` or `[ERR]` in logs → inspect `on_start` / `dispatch` body, fix, redeploy. Deploy is owner-operated (fixture assumes a deployed worker).
+When something fails: `out is None` or `[ERR]` in logs → inspect `on_start` / `dispatch` body, fix, re-run.
 
-### Flash — deploy / run (owner-operated, dev unavailable)
+### Flash — deploy / run (dev unavailable)
 
-`flash dev` is not available. E2E is written but not run live.
+`flash dev` is not available. E2E files skip at file level
+(`pytestmark = pytest.mark.skip(reason="flash dev not available")`).
 
 ```bash
 flash deploy --name <name>

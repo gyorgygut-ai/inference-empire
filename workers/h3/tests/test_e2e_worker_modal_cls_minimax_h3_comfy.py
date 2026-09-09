@@ -1,27 +1,29 @@
-import httpx
+import subprocess
+
+import modal
 import pytest
 
+from workers.artifact_check import artifact_exists
 from workers.h3._shared_minimax_h3_comfy import Artifact, MiniMaxH3ComfyOutput
-import workers.h3.worker_modal_cls_minimax_h3_comfy as worker_function
 
-pytestmark = pytest.mark.usefixtures("modal_worker_function_test")
-
-
-def _artifact_exists(url: str) -> bool:
-    try:
-        response = httpx.get(url, timeout=120)
-        return response.status_code == 200 and len(response.content) > 0
-    except Exception:
-        return False
+WORKER_FILE = "workers/h3/worker_modal_cls_minimax_h3_comfy.py"
+APP_NAME = "minimax-h3-comfy-worker"
+GOOD = {"prompt": "a cat walking in a garden", "seed": 7}
 
 
-@pytest.mark.modal_worker_function_test(worker_function)
-def test_good_input_returns_contract_and_artifact():
-    out = worker_function.MiniMaxH3ComfyWorker().generate.local(
-        **{"prompt": "a cat walking in a garden", "seed": 7}
-    )
+@pytest.fixture(scope="module")
+def deployed_app():
+    subprocess.run(["modal", "deploy", WORKER_FILE], check=True)
+    yield
+    subprocess.run(["modal", "app", "stop", APP_NAME, "--yes"], check=False)
+
+
+def test_good_input_returns_contract_and_artifact(deployed_app):
+    Cls = modal.Cls.from_name(APP_NAME, "MiniMaxH3ComfyWorker")
+    call = Cls().generate.spawn(**GOOD)
+    out = call.get(timeout=3600)
     url = out["artifact"]["presigned_url"]
     assert out == MiniMaxH3ComfyOutput(
         artifact=Artifact(presigned_url=url), video=out["video"]
     ).model_dump()
-    assert _artifact_exists(url)
+    assert artifact_exists(url, timeout=120)
