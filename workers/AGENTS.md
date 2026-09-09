@@ -14,8 +14,6 @@
 Every worker type must be implemented for all 3 providers (Flash, Beam, Modal).
 
 - Flux2: async, 4 steps, cfg 1, produces artifact
-- H3-FL2VA: async, 50 steps, produces artifact
-- H3-REF2VA: async, 50 steps, produces artifact
 - H3-REF2VA-COMFY: async, 20 steps, scheduler=simple, produces artifact
 - Krea2: sync, 8 steps, cfg 0.0, produces artifact
 - tiny-sd: sync, 20 steps, cfg 7.5, produces artifact
@@ -173,6 +171,29 @@ beam logs --stub-id <name>
 ```
 
 When something fails: `out is None` or `[ERR]` in logs → inspect `on_start` / `dispatch` body, fix, re-run.
+
+### Beam — shell reproduction (when `beam logs` is down)
+
+`beam logs` streams via `wss://rt.beam.cloud`; if that endpoint is
+unreachable, reproduce the failure in a fresh shell container instead:
+
+```bash
+beam shell workers/<model>/worker_beam_tq_*.py:dispatch   # new container, cold start
+```
+
+In-shell, re-run the real worker path and watch tags live:
+
+```python
+storage, pipe, tm = load_dependencies()
+generate(storage, pipe, tm, **GOOD)        # expect [INIT]→[REQ]→[GEN]→[R2]→[OK]
+```
+
+Notes: interactive only (no `--command`, piped stdin is lost —
+a TTY is required); `dispatch.put()` enqueues remotely and
+`dispatch()` needs a worker context, so neither works in-shell;
+krea unpacks 4 values (`s,p,r,t`), vision 3 (`m,p,a`).
+Bad input must surface `[ERR]` + raised exception. This reproduces
+failures for diagnosis — it does not recover past log history.
 
 ### Flash — deploy / run (dev unavailable)
 

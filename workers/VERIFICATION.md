@@ -47,12 +47,6 @@ Legend: `[x]` done, `[ ]` not done.
 | `worker_beam_tq_minimax_h3_comfy.py`          | [x]        | [x]         | [ ]     |
 | `worker_flash_cls_minimax_h3_comfy.py`        | [x]        | [x]         | [ ]     |
 | `worker_modal_cls_minimax_h3_comfy.py`        | [x]        | [x]         | [ ]     |
-| `worker_beam_tq_minimax_h3_fl2va.py`          | [x]        | [x]         | [ ]     |
-| `worker_flash_cls_minimax_h3_fl2va.py`        | [x]        | [x]         | [ ]     |
-| `worker_modal_cls_minimax_h3_fl2va.py`        | [x]        | [x]         | [ ]     |
-| `worker_beam_tq_minimax_h3_ref2va.py`         | [x]        | [x]         | [ ]     |
-| `worker_flash_cls_minimax_h3_ref2va.py`       | [x]        | [x]         | [ ]     |
-| `worker_modal_cls_minimax_h3_ref2va.py`       | [x]        | [x]         | [ ]     |
 | `worker_beam_tq_minimax_h3_ref2va_comfy.py`   | [x]        | [x]         | [ ]     |
 | `worker_flash_pre_minimax_h3_ref2va_comfy.py` | [x]        | [x]         | [ ]     |
 | `worker_modal_cls_minimax_h3_ref2va_comfy.py` | [x]        | [x]         | [ ]     |

@@ -18,14 +18,6 @@ uv run --locked pytest workers/h3/tests/test_e2e_worker_beam_tq_minimax_h3_comfy
 uv run --locked pytest workers/h3/tests/test_e2e_worker_flash_cls_minimax_h3_comfy.py -v &&
 uv run --locked pytest workers/h3/tests/test_e2e_worker_modal_cls_minimax_h3_comfy.py -v &&
 
-uv run --locked pytest workers/h3/tests/test_e2e_worker_beam_tq_minimax_h3_fl2va.py -v &&
-uv run --locked pytest workers/h3/tests/test_e2e_worker_flash_cls_minimax_h3_fl2va.py -v &&
-uv run --locked pytest workers/h3/tests/test_e2e_worker_modal_cls_minimax_h3_fl2va.py -v &&
-
-uv run --locked pytest workers/h3/tests/test_e2e_worker_beam_tq_minimax_h3_ref2va.py -v &&
-uv run --locked pytest workers/h3/tests/test_e2e_worker_flash_cls_minimax_h3_ref2va.py -v &&
-uv run --locked pytest workers/h3/tests/test_e2e_worker_modal_cls_minimax_h3_ref2va.py -v &&
-
 uv run --locked pytest workers/h3/tests/test_e2e_worker_beam_tq_minimax_h3_ref2va_comfy.py -v &&
 uv run --locked pytest workers/h3/tests/test_e2e_worker_flash_pre_minimax_h3_ref2va_comfy.py -v &&
 uv run --locked pytest workers/h3/tests/test_e2e_worker_modal_cls_minimax_h3_ref2va_comfy.py -v &&

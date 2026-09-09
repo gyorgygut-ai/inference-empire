@@ -1,0 +1,5 @@
+{
+  "artifact": {
+    "presigned_url": "https://29b2f092b2dbc0b63f48f491ddc177ee.r2.cloudflarestorage.com/generated-media/flux2_d46a1bc1-6873-45fe-b47a-721fa1da5dea.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=2193ad0806cb12e04e9ce93520e2d7fd%2F20260909%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260909T043242Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=df751f0e62f9caae7cc7be6c371c677b13b87d63aef456f853449e524174fad7"
+  }
+}
