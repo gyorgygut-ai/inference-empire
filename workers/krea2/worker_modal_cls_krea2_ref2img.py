@@ -63,9 +63,6 @@ image = (
     max_containers=1,
 )
 class Krea2Ref2ImgWorker:
-    def __init__(self):
-        pass
-
     @modal.enter()
     def load(self):
         print("[INIT] loading model krea/Krea-2-Turbo", flush=True)

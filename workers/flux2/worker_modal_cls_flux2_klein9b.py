@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 import threading
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -46,10 +45,6 @@ image = (
             "HF_HOME": "/root/.cache/huggingface",
             "HF_HUB_ENABLE_HF_TRANSFER": "1",
             "SDNQ_USE_TRITON_MM": "0",
-            "R2_ENDPOINT": os.environ.get("R2_ENDPOINT", ""),
-            "R2_BUCKET": os.environ.get("R2_BUCKET", "generated-media"),
-            "R2_ACCESS_KEY": os.environ.get("R2_ACCESS_KEY", ""),
-            "R2_SECRET_KEY": os.environ.get("R2_SECRET_KEY", ""),
         }
     )
     .add_local_python_source("workers.services", "workers.flux2")
@@ -67,9 +62,6 @@ image = (
     max_containers=1,
 )
 class FluxKleinWorker:
-    def __init__(self):
-        pass
-
     @modal.enter()
     def load(self):
         self.storage, self.pipe, self.torch_module = load_dependencies()

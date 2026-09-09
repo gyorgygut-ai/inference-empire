@@ -27,8 +27,6 @@ image = (
         {
             "HF_HOME": CACHE_PATH,
             "HF_HUB_ENABLE_HF_TRANSFER": "1",
-            "R2_ENDPOINT": "https://29b2f092b2dbc0b63f48f491ddc177ee.r2.cloudflarestorage.com",
-            "R2_BUCKET": "generated-media",
         }
     )
 )

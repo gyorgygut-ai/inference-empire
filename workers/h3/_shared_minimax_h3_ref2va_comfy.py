@@ -164,7 +164,6 @@ class Artifact(BaseModel):
 class MiniMaxH3Ref2VAComfyOutput(BaseModel):
     model_config = ConfigDict(title="MiniMaxH3Ref2VAComfyOutput")
     artifact: Artifact
-    video: str
 
 def build_workflow(req: ValidatedRef2VAComfyInput) -> dict:
     workflow = {
@@ -247,8 +246,8 @@ def build_payload(req: ValidatedRef2VAComfyInput) -> dict:
         payload["images"] = images
     return payload
 
-def parse_output(output) -> tuple:
-    """Returns (video_bytes, data). Raises RuntimeError on malformed output."""
+def parse_output(output) -> bytes:
+    """Returns video_bytes. Raises RuntimeError on malformed output."""
     import base64
 
     if not isinstance(output, dict):
@@ -259,17 +258,16 @@ def parse_output(output) -> tuple:
     data = out_images[0].get("data")
     if not data:
         raise RuntimeError(f"no data in image result: {out_images[0]}")
-    return base64.b64decode(data), data
+    return base64.b64decode(data)
 
-def upload_result(storage: Storage, video_bytes: bytes, data: str, prefix: str = "minimax_ref2va_comfy") -> MiniMaxH3Ref2VAComfyOutput:
+def upload_result(storage: Storage, video_bytes: bytes, prefix: str = "minimax_ref2va_comfy") -> MiniMaxH3Ref2VAComfyOutput:
     key = f"{prefix}_{uuid.uuid4()}.mp4"
     storage.put(key, video_bytes)
     presigned_url = storage.presigned_url(key)
-    return MiniMaxH3Ref2VAComfyOutput(artifact=Artifact(presigned_url=presigned_url), video=data)
+    return MiniMaxH3Ref2VAComfyOutput(artifact=Artifact(presigned_url=presigned_url))
 
-def _run_beam(comfy_base_url: str, req: ValidatedRef2VAComfyInput) -> tuple:
-    """Submit + 600s poll + fetch. Returns (video_bytes, data)."""
-    import base64
+def _run_beam(comfy_base_url: str, req: ValidatedRef2VAComfyInput) -> bytes:
+    """Submit + 600s poll + fetch. Returns video_bytes."""
     import time
 
     import requests
@@ -282,11 +280,11 @@ def _run_beam(comfy_base_url: str, req: ValidatedRef2VAComfyInput) -> tuple:
     )
     print(f"[REQ] prompt={req.prompt[:40]}  seed={req.seed}  files={n_files}", flush=True)
 
-    payload = build_payload(req)
+    workflow = build_workflow(req)
 
     print(f"[GEN] starting ComfyUI job prompt={req.prompt[:40]}", flush=True)
     t_gen = time.time()
-    r = requests.post(f"{comfy_base_url}/prompt", json=payload, timeout=30)
+    r = requests.post(f"{comfy_base_url}/prompt", json={"prompt": workflow}, timeout=30)
     r.raise_for_status()
     prompt_id = r.json()["prompt_id"]
 
@@ -315,12 +313,11 @@ def _run_beam(comfy_base_url: str, req: ValidatedRef2VAComfyInput) -> tuple:
         f"&subfolder={video_info.get('subfolder', '')}&type={video_info.get('type', 'output')}"
     )
     video_bytes = requests.get(video_url, timeout=60).content
-    data = base64.b64encode(video_bytes).decode("ascii")
 
-    return video_bytes, data
+    return video_bytes
 
-def _run_flash(endpoint, req: ValidatedRef2VAComfyInput) -> tuple:
-    """Submit via flash endpoint. Returns (video_bytes, data)."""
+def _run_flash(endpoint, req: ValidatedRef2VAComfyInput) -> bytes:
+    """Submit via flash endpoint. Returns video_bytes."""
     import time
 
     n_files = (
@@ -341,9 +338,9 @@ def _run_flash(endpoint, req: ValidatedRef2VAComfyInput) -> tuple:
         raise RuntimeError(f"job failed: {job.error}")
 
     output = getattr(job, "output", None) or job
-    video_bytes, data = parse_output(output)
+    video_bytes = parse_output(output)
 
-    return video_bytes, data
+    return video_bytes
 
 def do_inference(backend, storage: Storage, req: ValidatedRef2VAComfyInput) -> MiniMaxH3Ref2VAComfyOutput:
     """Beam (base_url str) and flash (endpoint) paths converge here. Testable via DI."""
@@ -351,11 +348,11 @@ def do_inference(backend, storage: Storage, req: ValidatedRef2VAComfyInput) -> M
 
     t_req = time.time()
     if isinstance(backend, str):
-        video_bytes, data = _run_beam(backend, req)
+        video_bytes = _run_beam(backend, req)
     else:
-        video_bytes, data = _run_flash(backend, req)
+        video_bytes = _run_flash(backend, req)
 
-    result = upload_result(storage, video_bytes, data)
+    result = upload_result(storage, video_bytes)
     print(f"[R2] uploaded key={result.artifact.presigned_url[:60]}", flush=True)
     print(f"[OK] completed in {time.time() - t_req:.1f}s", flush=True)
     return result

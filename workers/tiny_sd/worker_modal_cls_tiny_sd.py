@@ -62,9 +62,6 @@ image = (
     max_containers=1,
 )
 class TinySDWorker:
-    def __init__(self):
-        pass
-
     @modal.enter()
     def load(self):
         self.storage, self.pipe, self.torch_module = load_dependencies()

@@ -52,7 +52,7 @@ def test_do_inference_requested_with_right_args(bucket, monkeypatch):
     req = MiniMaxH3ComfyInput(prompt="clip", steps=20)
     out = do_inference("http://fake-comfy:8188", bucket, req)
     assert isinstance(out, MiniMaxH3ComfyOutput)
-    assert out.video == base64.b64encode(canned).decode("ascii")
+    assert bucket.fetch(_key_from(out.artifact.presigned_url)) == canned
 
 
 def test_fake_bucket_has_uploaded_artifact(bucket, monkeypatch):
@@ -132,9 +132,9 @@ def test_first_last_frame_workflow_and_images():
     assert len(build_images(req)) == 2
 
 
-def test_output_video_is_base64(bucket, monkeypatch):
+def test_output_uploaded_to_bucket(bucket, monkeypatch):
     canned = b"fake-video-bytes"
     _mock_comfy(monkeypatch, canned)
     req = MiniMaxH3ComfyInput(prompt="clip")
     out = do_inference("http://fake-comfy:8188", bucket, req)
-    assert out.video == base64.b64encode(canned).decode("ascii")
+    assert bucket.fetch(_key_from(out.artifact.presigned_url)) == canned

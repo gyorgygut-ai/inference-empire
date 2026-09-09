@@ -92,12 +92,14 @@ def load_pipeline():
             torch_dtype=torch.bfloat16,
             token=token,
             local_files_only=True,
+            ignore_mismatched_sizes=True,
         )
     except OSError:
         pipe = diffusers.Flux2KleinPipeline.from_pretrained(
             MODEL_ID,
             torch_dtype=torch.bfloat16,
             token=token,
+            ignore_mismatched_sizes=True,
         )
     pipe.to("cuda")
 

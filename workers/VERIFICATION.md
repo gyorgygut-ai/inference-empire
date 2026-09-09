@@ -42,14 +42,14 @@ Legend: `[x]` done, `[ ]` not done.
 
 ## h3
 
-| Worker                                        | Unit tests | E2E written | E2E run |
-| --------------------------------------------- | ---------- | ----------- | ------- |
-| `worker_beam_tq_minimax_h3_comfy.py`          | [x]        | [x]         | [ ]     |
-| `worker_flash_cls_minimax_h3_comfy.py`        | [x]        | [x]         | [ ]     |
-| `worker_modal_cls_minimax_h3_comfy.py`        | [x]        | [x]         | [ ]     |
-| `worker_beam_tq_minimax_h3_ref2va_comfy.py`   | [x]        | [x]         | [ ]     |
-| `worker_flash_pre_minimax_h3_ref2va_comfy.py` | [x]        | [x]         | [ ]     |
-| `worker_modal_cls_minimax_h3_ref2va_comfy.py` | [x]        | [x]         | [ ]     |
+| Worker                                            | Unit tests | E2E written | E2E run |
+| ------------------------------------------------- | ---------- | ----------- | ------- |
+| `worker_beam_tq_minimax_h3_nf4_fl2va.py`          | [ ]        | [ ]         | [ ]     |
+| `worker_flash_cls_minimax_h3_nf4_fl2va.py`        | [ ]        | [ ]         | [ ]     |
+| `worker_modal_cls_minimax_h3_nf4_fl2va.py`        | [ ]        | [ ]         | [ ]     |
+| `worker_beam_tq_minimax_h3_nf4_ref2va.py`         | [ ]        | [ ]         | [ ]     |
+| `worker_flash_pre_minimax_h3_nf4_ref2va.py`       | [ ]        | [ ]         | [ ]     |
+| `worker_modal_cls_minimax_h3_nf4_ref2va.py`       | [ ]        | [ ]         | [ ]     |
 
 ## voice
 
@@ -65,6 +65,6 @@ Legend: `[x]` done, `[ ]` not done.
 
 ## Totals
 
-- Unit: 245/245 passing (all 31 workers have unit files; 24 non-voice in `_shared_*` + fakes pattern, 7 voice in stub/websocket pattern; includes H3 x-rules validator and edge-case coverage).
-- E2E written: all 24 non-voice workers have e2e files in the canonical flux pattern (good-contract-and-artifact, no mocking).
-- Known gap: all voice workers have no e2e (unit-only; 24/24 e2e tests collected are non-voice).
+- Unit: 173/173 passing (H3-NF4: 74 unit tests across 6 workers).
+- E2E written: 18 e2e files (flux2, krea2, tiny_sd, vision, h3-nf4 x 3 providers; Flash e2e skipped by design).
+- Known gap: all voice workers have no e2e (unit-only); Flash e2e skipped (flash dev not available).

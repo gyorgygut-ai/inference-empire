@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 from typing import TYPE_CHECKING
 
 from runpod_flash import Endpoint, GpuGroup
@@ -35,12 +34,7 @@ def generate(storage: Storage, pipe, torch_module, **kwargs) -> dict:
     idle_timeout=5,
     flashboot=True,
     env={
-        "HF_TOKEN": os.environ.get("HF_TOKEN", ""),
         "HF_HOME": "/runpod-volume/huggingface-cache",
-        "R2_BUCKET": os.environ.get("R2_BUCKET", "generated-media"),
-        "R2_ENDPOINT": os.environ.get("R2_ENDPOINT", ""),
-        "R2_ACCESS_KEY": os.environ.get("R2_ACCESS_KEY", ""),
-        "R2_SECRET_KEY": os.environ.get("R2_SECRET_KEY", ""),
     },
     dependencies=list(IMAGE_PIP_DEPS),
 )

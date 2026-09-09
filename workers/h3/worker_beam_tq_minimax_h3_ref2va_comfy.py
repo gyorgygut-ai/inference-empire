@@ -23,8 +23,8 @@ CACHE_PATH = "./hf-cache"
 
 _INFERENCE_LOCK = threading.Lock()
 
-image = Image.from_registry(
-    "ghcr.io/vincezh2000/minimax-h3-comfyui-serverless:cu130",
+image =     Image.from_registry(
+    "ls250824/run-comfyui-minimax:08092026",
 ).with_envs({
     "HF_HOME": CACHE_PATH,
     "DIFFSYNTH_DOWNLOAD_SOURCE": "huggingface",

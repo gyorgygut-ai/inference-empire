@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 from typing import TYPE_CHECKING
 
 from runpod_flash import Endpoint, GpuGroup
@@ -34,12 +33,7 @@ def generate(storage: Storage, pipe, runtime_dir, torch_module, **kwargs) -> dic
     flashboot=True,
     env={
         "HF_HOME": "/runpod-volume/huggingface-cache",
-        "HF_TOKEN": os.environ.get("HF_TOKEN", ""),
         "PYTORCH_NVML_BASED_CUDA_CHECK": "0",
-        "R2_BUCKET": os.environ.get("R2_BUCKET", "generated-media"),
-        "R2_ENDPOINT": os.environ.get("R2_ENDPOINT", ""),
-        "R2_ACCESS_KEY": os.environ.get("R2_ACCESS_KEY", ""),
-        "R2_SECRET_KEY": os.environ.get("R2_SECRET_KEY", ""),
     },
     dependencies=list(IMAGE_PIP_DEPS),
 )

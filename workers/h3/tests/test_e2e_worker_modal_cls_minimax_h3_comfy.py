@@ -14,10 +14,7 @@ def test_good_input_returns_contract_and_artifact():
         call = Cls().generate.spawn(prompt="a cat walking in a garden", seed=7)
         out = call.get(timeout=3600)
         url = out["artifact"]["presigned_url"]
-        assert isinstance(out["video"], str) and len(out["video"]) > 0
-        assert out == MiniMaxH3ComfyOutput(
-            artifact=Artifact(presigned_url=url), video=out["video"]
-        ).model_dump()
-        assert artifact_exists(url, timeout=120)
+        assert out == MiniMaxH3ComfyOutput(artifact=Artifact(presigned_url=url)).model_dump()
+        assert artifact_exists(url)
     finally:
         subprocess.run(["modal", "app", "stop", "minimax-h3-comfy-worker", "--yes"], check=False)

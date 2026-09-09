@@ -14,7 +14,12 @@
 Every worker type must be implemented for all 3 providers (Flash, Beam, Modal).
 
 - Flux2: async, 4 steps, cfg 1, produces artifact
-- H3-REF2VA-COMFY: async, 20 steps, scheduler=simple, produces artifact
+- H3-FL2VA-NF4: async, 50 steps, 1344x768, produces artifact
+- H3-REF2VA-NF4: async, 50 steps, 1344x768, produces artifact
+- H3-FL2VA-COMFY: async, 20 steps, 1344x768, produces artifact
+- H3-REF2VA-COMFY: async, 20 steps, 1344x768, produces artifact
+- H3-REF2VA-TURBO: async, 4 steps, 960x544, produces artifact
+- H3-FL2VA-TURBO: async, 4 steps, 1344x768, produces artifact
 - Krea2: sync, 8 steps, cfg 0.0, produces artifact
 - tiny-sd: sync, 20 steps, cfg 7.5, produces artifact
 - Vision: sync, produces JSON
@@ -30,7 +35,7 @@ worker_{platform}_{pattern}_{model}.py
 
 Only these patterns exist in the repo — do not invent others:
 
-- Flash: `cls` (plus one `pre` exception for h3-ref2va-comfy)
+- Flash: `cls` (plus one `pre` exception for h3-nf4-ref2va)
 - Beam: `tq` (plus `asgi` for realtime voice only)
 - Modal: `cls`
 
@@ -60,8 +65,8 @@ Only these patterns exist in the repo — do not invent others:
 - **Single source of pins**: each model family's image pip deps live in exactly
   one place — `IMAGE_PIP_DEPS` in its `_shared_*` module. Modal uses
   `.pip_install(*IMAGE_PIP_DEPS)`, Beam uses `.add_python_packages(list(IMAGE_PIP_DEPS))`,
-  Flash uses `dependencies=list(IMAGE_PIP_DEPS)`. Comfy families use a pinned
-  registry image on Modal/Beam; only their Flash worker uses `IMAGE_PIP_DEPS`.
+   Flash uses `dependencies=list(IMAGE_PIP_DEPS)`. All families including
+   H3-NF4 use `IMAGE_PIP_DEPS` on every provider.
 - **Pre-deploy gate (mandatory)**: resolve the family's pin set in isolation
   before any deploy. One line per family, e.g. Krea2:
   ```bash
@@ -88,7 +93,7 @@ Only these patterns exist in the repo — do not invent others:
 
 - Never `import torch` at module level in worker files
 - Declare deps in `@Endpoint(dependencies=[...])`, not pyproject.toml
-- Class workers: model loading in `__init__`, request handling in instance methods
+- Class workers: model loading lazy on first request, cached after; request handling in instance methods
 - `workers=(0, 1)` and `flashboot=True` for all stateful workers
 
 ---
@@ -96,7 +101,7 @@ Only these patterns exist in the repo — do not invent others:
 ## Beam Rules
 
 - One worker per file
-- Decorated function with `on_start` for pipeline loading
+- Decorated function for pipeline loading, lazy on first request, cached after
 - Pydantic `BaseModel` inputs/outputs use `ConfigDict(title=...)`
 - Volumes: use `Volume` for caching models across cold starts (`./hf-cache`)
 - `checkpoint_enabled=True` for task queues
@@ -113,9 +118,9 @@ out = task.result(wait=True)
 
 ## Modal Rules
 
-- App with `@app.cls` and `@modal.enter()`-loaded pipeline
+- App with `@app.cls`; model loading lazy on first request, cached after
 - Pydantic `BaseModel` inputs/outputs use `ConfigDict(title=...)`
-- Image: `modal.Image.debian_slim(python_version="3.11")`, pin deps, set `HF_HOME` and `HF_HUB_ENABLE_HF_TRANSFER=1`, use `modal.Volume` + `@modal.enter()` for model caching
+- Image: `modal.Image.debian_slim(python_version="3.11")`, pin deps, set `HF_HOME` and `HF_HUB_ENABLE_HF_TRANSFER=1`, use `modal.Volume` for model caching
 - Compute: smallest GPU that fits (`L4` default), `scaledown_window` 60–150s, `max_containers=1`, timeout 300s (3600s for voice/video)
 - Concurrency: no `@modal.concurrent` for inference, serialize with `threading.Lock`
 - Endpoints: `@app.cls` workers invoked via `modal.Cls.from_name().().method.remote()` or `.spawn()`
@@ -211,7 +216,7 @@ Run in-process: `TinySDWorker().generate(**GOOD)`. When something fails: `[ERR]`
 
 ## Test Strategy
 
-Verified commands (see `workers/VERIFICATION.md` — 245 unit passed):
+Verified commands (see `workers/VERIFICATION.md` — 99 unit passed):
 
 - All unit: `uv run --locked pytest workers/ -k "not e2e"`
 - Per model unit: `uv run --locked pytest workers/<model>/tests/ -k "not e2e"`

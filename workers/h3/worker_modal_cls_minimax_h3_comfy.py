@@ -40,13 +40,11 @@ def _start_comfy():
     proc = subprocess.Popen(
         [
             "python",
-            "-m",
-            "comfyui",
+            "/comfyui/main.py",
             "--listen",
             "127.0.0.1",
             "--port",
             "8188",
-            "--disable-auto-update",
             "--dont-print-server",
         ],
         stdout=subprocess.DEVNULL,

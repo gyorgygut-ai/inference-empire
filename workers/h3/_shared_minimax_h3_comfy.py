@@ -74,7 +74,6 @@ class Artifact(BaseModel):
 class MiniMaxH3ComfyOutput(BaseModel):
     model_config = ConfigDict(title="MiniMaxH3ComfyOutput")
     artifact: Artifact
-    video: str
 
 def build_workflow(req: MiniMaxH3ComfyInput) -> dict:
     workflow = {
@@ -120,8 +119,8 @@ def build_payload(req: MiniMaxH3ComfyInput) -> dict:
         payload["images"] = images
     return payload
 
-def parse_output(output) -> tuple:
-    """Returns (video_bytes, data). Raises RuntimeError on malformed output."""
+def parse_output(output) -> bytes:
+    """Returns video_bytes. Raises RuntimeError on malformed output."""
     import base64
 
     if not isinstance(output, dict):
@@ -132,13 +131,15 @@ def parse_output(output) -> tuple:
     data = out_images[0].get("data")
     if not data:
         raise RuntimeError(f"no data in image result: {out_images[0]}")
-    return base64.b64decode(data), data
+    return base64.b64decode(data)
 
-def upload_result(storage: Storage, video_bytes: bytes, data: str, prefix: str = "minimax_comfy") -> MiniMaxH3ComfyOutput:
+def upload_result(storage: Storage, video_bytes: bytes, prefix: str = "minimax_comfy") -> MiniMaxH3ComfyOutput:
     key = f"{prefix}_{uuid.uuid4()}.mp4"
     storage.put(key, video_bytes)
     presigned_url = storage.presigned_url(key)
-    return MiniMaxH3ComfyOutput(artifact=Artifact(presigned_url=presigned_url), video=data)
+    print(f"[R2] uploaded key={presigned_url[:60]}", flush=True)
+
+    return MiniMaxH3ComfyOutput(artifact=Artifact(presigned_url=presigned_url))
 
 def run_comfy_endpoint(endpoint, payload, timeout: int = 1800):
     """Submit payload to a ComfyUI flash endpoint, tolerating a running loop."""
@@ -162,11 +163,11 @@ def _run_local(comfy_base_url: str, req: MiniMaxH3ComfyInput) -> tuple:
     import requests
 
     print(f"[REQ] prompt={req.prompt[:40]}", flush=True)
-    payload = build_payload(req)
+    workflow = build_workflow(req)
 
     print(f"[GEN] starting ComfyUI job prompt={req.prompt[:40]}", flush=True)
     t_gen = time.time()
-    r = requests.post(f"{comfy_base_url}/prompt", json=payload, timeout=30)
+    r = requests.post(f"{comfy_base_url}/prompt", json={"prompt": workflow}, timeout=30)
     r.raise_for_status()
     prompt_id = r.json()["prompt_id"]
 
@@ -195,12 +196,11 @@ def _run_local(comfy_base_url: str, req: MiniMaxH3ComfyInput) -> tuple:
         f"&subfolder={video_info.get('subfolder', '')}&type={video_info.get('type', 'output')}"
     )
     video_bytes = requests.get(video_url, timeout=60).content
-    data = base64.b64encode(video_bytes).decode("ascii")
 
-    return video_bytes, data
+    return video_bytes
 
-def _run_flash(endpoint, req: MiniMaxH3ComfyInput) -> tuple:
-    """Submit via flash endpoint. Returns (video_bytes, data)."""
+def _run_flash(endpoint, req: MiniMaxH3ComfyInput) -> bytes:
+    """Submit via flash endpoint. Returns video_bytes."""
     import time
 
     print(f"[REQ] prompt={req.prompt[:40]}", flush=True)
@@ -215,7 +215,9 @@ def _run_flash(endpoint, req: MiniMaxH3ComfyInput) -> tuple:
         raise RuntimeError(f"job failed: {job.error}")
 
     output = getattr(job, "output", None) or job
-    return parse_output(output)
+    video_bytes = parse_output(output)
+
+    return video_bytes
 
 def do_inference(backend, storage: Storage, req: MiniMaxH3ComfyInput) -> MiniMaxH3ComfyOutput:
     """Local (base_url str) and flash (endpoint) paths converge here. Testable via DI."""
@@ -223,11 +225,11 @@ def do_inference(backend, storage: Storage, req: MiniMaxH3ComfyInput) -> MiniMax
 
     t_req = time.time()
     if isinstance(backend, str):
-        video_bytes, data = _run_local(backend, req)
+        video_bytes = _run_local(backend, req)
     else:
-        video_bytes, data = _run_flash(backend, req)
+        video_bytes = _run_flash(backend, req)
 
-    result = upload_result(storage, video_bytes, data, prefix="minimax_comfy")
+    result = upload_result(storage, video_bytes, prefix="minimax_comfy")
     print(f"[R2] uploaded key={result.artifact.presigned_url[:60]}", flush=True)
 
     print(f"[OK] completed in {time.time() - t_req:.1f}s", flush=True)

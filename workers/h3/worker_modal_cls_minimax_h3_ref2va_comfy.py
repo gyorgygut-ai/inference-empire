@@ -10,6 +10,7 @@ import requests
 
 from workers.h3._shared_minimax_h3_comfy import apply_torch_shims
 from workers.h3._shared_minimax_h3_ref2va_comfy import (
+    IMAGE_PIP_DEPS,
     ValidatedRef2VAComfyInput,
     do_inference,
 )
@@ -27,7 +28,8 @@ r2_secret = modal.Secret.from_name(
 )
 
 image = (
-    modal.Image.from_registry("ghcr.io/vincezh2000/minimax-h3-comfyui-serverless:cu130")
+    modal.Image.from_registry("ls250824/run-comfyui-minimax:08092026")
+    .pip_install(*IMAGE_PIP_DEPS)
     .env(
         {
             "HF_HOME": "/root/.cache/huggingface",
@@ -44,13 +46,11 @@ def _start_comfy():
     proc = subprocess.Popen(
         [
             "python",
-            "-m",
-            "comfyui",
+            "/ComfyUI/main.py",
             "--listen",
             "127.0.0.1",
             "--port",
             "8188",
-            "--disable-auto-update",
             "--dont-print-server",
         ],
         stdout=subprocess.DEVNULL,

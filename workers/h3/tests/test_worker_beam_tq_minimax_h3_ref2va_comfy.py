@@ -52,7 +52,7 @@ def test_do_inference_requested_with_right_args(bucket, monkeypatch):
     req = ValidatedRef2VAComfyInput(prompt="clip", steps=20, scheduler="simple")
     out = do_inference("http://fake-comfy:8188", bucket, req)
     assert isinstance(out, MiniMaxH3Ref2VAComfyOutput)
-    assert out.video == base64.b64encode(canned).decode("ascii")
+    assert bucket.fetch(_key_from(out.artifact.presigned_url)) == canned
 
 
 def test_fake_bucket_has_uploaded_artifact(bucket, monkeypatch):
@@ -153,3 +153,11 @@ def test_accepts_valid_boundary_and_defaults():
     assert req.steps == 20
     assert req.scheduler == "simple"
     assert req.ref_image_size == "match"
+
+
+def test_output_uploaded_to_bucket(bucket, monkeypatch):
+    canned = b"fake-video-bytes"
+    _mock_comfy(monkeypatch, canned)
+    req = ValidatedRef2VAComfyInput(prompt="clip")
+    out = do_inference("http://fake-comfy:8188", bucket, req)
+    assert bucket.fetch(_key_from(out.artifact.presigned_url)) == canned
