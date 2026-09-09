@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 import modal
 
 from workers.flux2._shared_flux2_klein9b import (
+    IMAGE_PIP_DEPS,
     Flux2Klein9bInput,
     do_inference,
     load_dependencies,
@@ -39,17 +40,7 @@ hf_cache_vol = modal.Volume.from_name("hf-cache", create_if_missing=True)
 image = (
     modal.Image.debian_slim(python_version="3.11")
     .apt_install("git", "ffmpeg", "libgl1", "libglib2.0-0")
-    .pip_install(
-        "torch==2.9.1",
-        "transformers==5.16.1",
-        "accelerate==1.14.0",
-        "diffusers==0.40.0",
-        "sdnq==0.2.6",
-        "boto3==1.43.83",
-        "pillow==12.3.0",
-        "fastapi[standard]==0.141.1",
-        "hf_transfer==0.1.9",
-    )
+    .pip_install(*IMAGE_PIP_DEPS)
     .env(
         {
             "HF_HOME": "/root/.cache/huggingface",

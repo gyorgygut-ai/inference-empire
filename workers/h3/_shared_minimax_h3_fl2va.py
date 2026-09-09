@@ -18,6 +18,26 @@ MODEL_ID = "DiffSynth-Studio/MiniMax-H3-NF4"
 FL2VA_WEIGHTS = "minimax-h3-fl2va-nf4.safetensors"
 TEXT_ENCODER = "minimax-h3-text-encoder-nf4.safetensors"
 VIDEO_VAE = "video_vae_nf4.safetensors"
+
+# Single source of truth for ALL provider image pip deps (modal/beam/flash).
+# Worker files must reference this list, never inline their own pins.
+# Pre-deploy gate: uv run python -c "from workers.h3._shared_minimax_h3_fl2va import IMAGE_PIP_DEPS; print('\n'.join(IMAGE_PIP_DEPS))" | uv pip compile --python-version 3.11 -
+IMAGE_PIP_DEPS: list[str] = [
+    "torch==2.9.1",
+    "torchcodec==0.9.0",
+    "diffsynth[audio]==2.1.6",
+    "diffusers==0.40.0",
+    "transformers==5.16.1",
+    "accelerate==1.14.0",
+    "bitsandbytes==0.50.2",
+    "pillow==12.3.0",
+    "imageio==2.37.2",
+    "imageio-ffmpeg==0.6.0",
+    "torchaudio==2.9.1",
+    "boto3==1.43.83",
+    "fastapi==0.141.1",
+    "hf_transfer==0.1.9",
+]
 AUDIO_VAE = "audio_vae_nf4.safetensors"
 PROCESSOR_REPO = "MiniMaxAI/MiniMax-H3"
 PROCESSOR_PATTERN = "FL2VA/processor/"

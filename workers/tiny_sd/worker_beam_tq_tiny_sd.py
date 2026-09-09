@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 from beam import Image, QueueDepthAutoscaler, Volume, task_queue
 
 from workers.tiny_sd._shared_tiny_sd import (
+    IMAGE_PIP_DEPS,
     TinySDInput,
     do_inference,
     load_dependencies,
@@ -21,16 +22,7 @@ _INFERENCE_LOCK = threading.Lock()
 
 image = (
     Image(python_version="python3.11")
-    .add_python_packages(
-        [
-            "torch==2.9.1",
-            "transformers==5.16.1",
-            "accelerate==1.14.0",
-            "diffusers==0.40.0",
-            "pillow==12.3.0",
-            "boto3==1.43.83",
-        ]
-    )
+    .add_python_packages(list(IMAGE_PIP_DEPS))
     .with_envs(
         {
             "HF_HOME": CACHE_PATH,

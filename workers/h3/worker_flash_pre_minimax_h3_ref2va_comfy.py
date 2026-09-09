@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 from runpod_flash import Endpoint, GpuGroup, PodTemplate
 
 from workers.h3._shared_minimax_h3_ref2va_comfy import (
+    IMAGE_PIP_DEPS,
     ValidatedRef2VAComfyInput,
     do_inference,
 )
@@ -43,10 +44,7 @@ def load_dependencies():
     flashboot=True,
     execution_timeout_ms=3600_000,
     template=PodTemplate(containerDiskInGb=150),
-    dependencies=[
-        "boto3==1.43.83",
-        "pydantic==2.13.5",
-    ],
+    dependencies=list(IMAGE_PIP_DEPS),
     env={
         "HF_HOME": "/runpod-volume/huggingface-cache",
         "R2_BUCKET": os.environ.get("R2_BUCKET", "generated-media"),

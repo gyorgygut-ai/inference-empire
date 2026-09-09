@@ -30,21 +30,18 @@ Every worker type must be implemented for all 3 providers (Flash, Beam, Modal).
 worker_{platform}_{pattern}_{model}.py
 ```
 
-**Platform:** `flash`, `beam`, `modal`
+Only these patterns exist in the repo — do not invent others:
 
-**Patterns:**
-
-- Flash: `qb` (queue), `lb` (routes), `cls` (class), `pre` (pre-built)
-- Beam: `fn` (function), `eq` (endpoint), `tq` (task queue), `asgi`, `pod`
-- Modal: `fn` (function), `cls` (class), `fe` (fastapi endpoint), `asgi`
+- Flash: `cls` (plus one `pre` exception for h3-ref2va-comfy)
+- Beam: `tq` (plus `asgi` for realtime voice only)
+- Modal: `cls`
 
 ---
 
 ## Worker Behaviour
 
 - All workers creating an artifact must upload to R2 and return access to it
-- Not all workers produce artifacts; some just return json directly
-- Production deps are inline in worker files, not in pyproject.toml
+- Production deps live in `_shared_*IMAGE_PIP_DEPS`, never inline in worker files, never in pyproject.toml
 
 ---
 
@@ -54,7 +51,6 @@ worker_{platform}_{pattern}_{model}.py
 - Every `input` and `output` schema MUST declare a non-empty `required` array
 - A field is optional ONLY if it has a `default`
 - Update JSON first, then update worker pydantic models to match
-- Rules implemented as pydantic validators in the worker, against the JSON
 
 ---
 
@@ -63,24 +59,39 @@ worker_{platform}_{pattern}_{model}.py
 - Pin ALL deps to exact versions. Never use bare package names.
 - Krea2 workers: `transformers>=4.57,<5` with `diffusers==0.39.0`
 - Flux2 workers: `transformers>=5.0,<6` with `diffusers==0.40.0`
+- **Single source of pins**: each model family's image pip deps live in exactly
+  one place — `IMAGE_PIP_DEPS` in its `_shared_*` module. Modal uses
+  `.pip_install(*IMAGE_PIP_DEPS)`, Beam uses `.add_python_packages(list(IMAGE_PIP_DEPS))`,
+  Flash uses `dependencies=list(IMAGE_PIP_DEPS)`. Comfy families use a pinned
+  registry image on Modal/Beam; only their Flash worker uses `IMAGE_PIP_DEPS`.
+- **Pre-deploy gate (mandatory)**: resolve the family's pin set in isolation
+  before any deploy. One line per family, e.g. Krea2:
+  ```bash
+  uv run python -c "from workers.krea2._shared_krea2_ref2img import IMAGE_PIP_DEPS; print('\n'.join(IMAGE_PIP_DEPS))" | uv pip compile --python-version 3.11 -
+  ```
+  Non-zero exit = do not deploy, fix the table. Voice tables live in
+  `workers/voice/_shared_voice_chat.py` (one per runtime: `REALTIME`,
+  `CHATTERBOX`, `OPENVOICE`, `QWEN`, `CHAT`); the `QWEN` table targets a
+  python3.10 image, so gate it with `--python-version 3.10`.
 - **Torch load shim** (required for flash/beam/modal):
   ```python
   import torch.distributed as dist
-  dist.is_available = lambda: False
+
+  def _dist_unavailable() -> bool:
+      return False
+
+  setattr(dist, "is_available", _dist_unavailable)
   ```
-- **Async by default for long tasks**: Long-running tasks (>30s) MUST use async patterns. Beam: `tq` not `eq`. Modal: `.spawn()` not webhooks. Sync only for tasks <30s.
+- **Async by default for long tasks**: Long-running tasks (>30s) MUST use async patterns. Beam: `tq`. Modal: `.spawn()`. Sync only for tasks <30s.
 
 ---
 
 ## Flash Rules
 
-- `import torch` INSIDE function body, never at module level
+- Never `import torch` at module level in worker files
 - Declare deps in `@Endpoint(dependencies=[...])`, not pyproject.toml
-- `workers=N` is shorthand for `(0, N)`
 - Class workers: model loading in `__init__`, request handling in instance methods
-- Cross-worker calls use `await`
-- System packages (ffmpeg) go in `system_dependencies`
-- `flashboot=True` for all stateful workers
+- `workers=(0, 1)` and `flashboot=True` for all stateful workers
 
 ---
 
@@ -89,17 +100,16 @@ worker_{platform}_{pattern}_{model}.py
 - One worker per file
 - Decorated function with `on_start` for pipeline loading
 - Pydantic `BaseModel` inputs/outputs use `ConfigDict(title=...)`
-- Image: Python 3.11/3.10, exact pinned deps, system packages (`ffmpeg`), env (`HF_HOME`, `HF_HUB_ENABLE_HF_TRANSFER=1`)
 - Volumes: use `Volume` for caching models across cold starts (`./hf-cache`)
-- Compute: smallest GPU that fits (`RTX4090` default), timeout 300s (or 3600s for video), memory 32-64Gi, checkpoint_enabled=True for task queues
-- Concurrency: `max_containers=1` for GPU workers, no concurrent execution for model inference (serialize with `threading.Lock`)
-- Secrets: create before deploy (`beam secret create`)
+- `checkpoint_enabled=True` for task queues
+- Serialize model inference with `threading.Lock`, `max_containers=1`
 
-### Beam task_queue E2E test invocation
+### Beam task_queue invocation
 
-- Use `dispatch.put(**kwargs).result(wait=True)` — enqueues task, blocks until completion, returns output
-- Do NOT use `.local()` — it is not the documented beam pattern
-- Good input test: `dispatch.put(**GOOD).result(wait=True)` returns contract + artifact
+```python
+task = worker_mod.dispatch.put(**GOOD)
+out = task.result(wait=True)
+```
 
 ---
 
@@ -114,81 +124,77 @@ worker_{platform}_{pattern}_{model}.py
 
 ---
 
-## Commands
+## Workflow
 
-### Flash
+Log tag order for all providers: `[INIT]` → `[REQ]` → `[GEN]` → `[R2]` → `[OK]` (or `[ERR]`).
 
-- Local dev: `flash dev`
-- Deploy: `flash deploy` (or `flash deploy --name <name>`)
-- Preview: `flash deploy --preview`
-- Tear down: `flash undeploy` (or `flash undeploy --name <name>`)
+### Modal — deploy / run / logs (verified live)
 
-### Beam
+Deploy:
 
-- Local dev: `beam serve`
-- Deploy: `beam deploy <file>` (or `beam deploy` for all)
-- Logs: `beam logs`
+```bash
+uv run --locked modal deploy workers/<model>/worker_modal_cls_*.py
+```
 
-### Modal
+Run manually (no tests):
 
-- Deploy: `modal deploy <file>` (or `modal deploy`)
-- Invoke: `modal.Function.from_name("app","method").spawn(...)` (do not use `modal run`)
+```python
+Cls = modal.Cls.from_name("<app>", "<Cls>")  # e.g. tiny-sd-worker / TinySDWorker
+call = Cls().generate.spawn(**GOOD)  # e.g. {"prompt": "a red square", "seed": 7}
+out = call.get(timeout=300)
+```
 
----
+Logs — poll every 10s while waiting:
 
-### Undeploy
+```bash
+modal app logs <app> --since <iso-start> --timestamps --tail 50
+```
 
-- Flash: `flash undeploy`
-- Beam: `beam worker stop --name <name>` (or `beam worker stop --all`)
-- Modal: `modal app stop <app-name>` (use `stop`, never `destroy`)
+When something fails: `[ERR]` in logs + `call.get()` raises → re-check logs with `--since`, fix, redeploy. Tear down with `modal app stop <app> --yes`.
 
-### Task Cancellation
+### Beam — run / logs
 
-- Beam: `beam task list` → `beam task stop <task-id>`
-- Beam (all pending): `beam task list | grep PENDING | awk '{print $1}' | xargs beam task stop`
-- Modal: N/A (`spawn()` + `.result()` tasks are not independently cancellable)
+Run:
 
-### Logging & Polling
+```python
+task = worker_mod.dispatch.put(**GOOD)
+out = task.result(wait=True)  # None means check beam logs
+```
 
-- Beam single task: `beam logs --task-id <id>`
-- Beam worker tasks: `beam logs --stub-id <name>`
-- Beam poll async task (owner live runs): `beam logs --task-id <id> --timeout 3600 --follow` (wait for `[OK]` or `[ERR]`)
-- Modal app logs: `modal app logs <app-name>`
-- Modal container logs: `modal container logs <container-id>`
+Logs — poll while waiting:
 
-Log tag order: `[INIT]` → `[REQ]` → `[GEN]` → `[R2]` → `[OK]` (or `[ERR]`).
+```bash
+beam logs --stub-id <name>
+```
+
+When something fails: `out is None` or `[ERR]` in logs → inspect `on_start` / `dispatch` body, fix, redeploy. Deploy is owner-operated (fixture assumes a deployed worker).
+
+### Flash — deploy / run (owner-operated, dev unavailable)
+
+`flash dev` is not available. E2E is written but not run live.
+
+```bash
+flash deploy --name <name>
+flash undeploy --name <name>
+```
+
+Run in-process: `TinySDWorker().generate(**GOOD)`. When something fails: `[ERR]` → check `.flash/logs/activity.log`, fix `@Endpoint(dependencies=[...])`, redeploy.
 
 ---
 
 ## Test Strategy
 
-### Run All Tests
+Verified commands (see `workers/VERIFICATION.md` — 245 unit passed):
 
-- All: `uv run --locked pytest workers/`
-- Per model: `uv run --locked pytest workers/<model>/tests/`
+- All unit: `uv run --locked pytest workers/ -k "not e2e"`
+- Per model unit: `uv run --locked pytest workers/<model>/tests/ -k "not e2e"`
+- All e2e: `uv run --locked pytest workers/ -k "e2e"`
+- Per model e2e: `uv run --locked pytest workers/<model>/tests/ -k "e2e"`
 
-### Run Unit Tests
+Rules:
 
-- All: `uv run --locked pytest workers/ -k "not e2e"`
-- Per model: `uv run --locked pytest workers/<model>/tests/ -k "not e2e"`
-
-### Run E2E Tests
-
-- All: `uv run --locked pytest workers/ -k "e2e"`
-- Per model: `uv run --locked pytest workers/<model>/tests/ -k "e2e"`
-
-### Run Per-Worker Tests
-
-- Single worker: `uv run --locked pytest workers/<model>/tests/test_<worker-name>.py -k "<test>"`
-
-### Test + Code Rules
-
-- Use `pytest` + `tests` folder
-- One test file per worker
-- Each worker file must have e2e tests
-- Any worker change must result in a failing test
 - Tests focus on set input -> expected output
-- Task finished when tests pass, without shortcuts
+- Non-voice workers have e2e files; voice workers are unit-only (no e2e)
 
 ---
 
@@ -196,21 +202,17 @@ Log tag order: `[INIT]` → `[REQ]` → `[GEN]` → `[R2]` → `[OK]` (or `[ERR]
 
 **Rules:**
 
-- Tests-first worker architecture with `_shared_*` file in worker folder
-- `load_dependencies` and `do_inference` always used from shared
+- Non-voice: `_shared_*` file in worker folder with `load_dependencies` and `do_inference`
 - `load_dependencies` mocked with fakes to avoid side effects
 
 **Cases:**
 
-- [ ] Inference requested with right args
-- [ ] Mock bucket has "uploaded" artifact
-- [ ] `do_inference` returns output contract
+- Inference requested with right args
+- Artifact workers: mock bucket has "uploaded" artifact (N/A for Vision JSON)
+- `do_inference` returns output contract
 
 ---
 
 ## E2E Tests
 
-**Tests:**
-
-- [ ] Iterate via local dev commands
-- [ ] Good input: should return contract + artifact must exist in bucket (if applicable)
+- Good input: should return contract + artifact must exist in bucket (if applicable)

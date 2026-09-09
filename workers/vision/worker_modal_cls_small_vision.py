@@ -6,6 +6,7 @@ from pathlib import Path
 import modal
 
 from workers.vision._shared_small_vision import (
+    IMAGE_PIP_DEPS,
     SmallVisionInput,
     do_inference,
     load_dependencies,
@@ -34,16 +35,7 @@ hf_cache_vol = modal.Volume.from_name("hf-cache", create_if_missing=True)
 
 image = (
     modal.Image.debian_slim(python_version="3.11")
-    .pip_install(
-        "torch==2.9.1",
-        "transformers==5.16.1",
-        "torchvision==0.24.1",
-        "pillow==12.3.0",
-        "accelerate==1.14.0",
-        "boto3==1.43.83",
-        "fastapi==0.141.1",
-        "hf_transfer==0.1.9",
-    )
+    .pip_install(*IMAGE_PIP_DEPS)
     .env(
         {
             "HF_HOME": "/root/.cache/huggingface",

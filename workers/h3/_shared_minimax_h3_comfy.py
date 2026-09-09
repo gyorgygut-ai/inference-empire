@@ -19,6 +19,15 @@ MODEL_FILES = {
 }
 FPS = 24
 
+# Single source of truth for ALL provider image pip deps (flash; modal/beam
+# use a pinned registry image instead). Worker files must reference this
+# list, never inline their own pins.
+# Pre-deploy gate: uv run python -c "from workers.h3._shared_minimax_h3_comfy import IMAGE_PIP_DEPS; print('\n'.join(IMAGE_PIP_DEPS))" | uv pip compile --python-version 3.11 -
+IMAGE_PIP_DEPS: list[str] = [
+    "boto3==1.43.83",
+    "pydantic==2.13.5",
+]
+
 
 def apply_torch_shims() -> None:
     """Patch torch runtime quirks once (remote containers)."""

@@ -14,6 +14,7 @@ import modal
 import numpy as np
 
 from workers.voice._shared_voice_chat import (
+    CHAT_IMAGE_PIP_DEPS,
     MAX_NEW_TOKENS,
     SUPPORTED_LANGUAGES,
     VoiceChatInput,
@@ -65,20 +66,7 @@ def _bake_models():
 image = (
     modal.Image.debian_slim(python_version="3.11")
     .apt_install("ffmpeg", "libsndfile1")
-    .pip_install(
-        "torch==2.9.1",
-        "torchaudio==2.9.1",
-        "transformers==4.57.6",
-        "accelerate==1.14.0",
-        "bitsandbytes==0.50.2",
-        "faster-whisper==1.2.1",
-        "coqui-tts==0.27.5",
-        "soundfile==0.14.0",
-        "numpy==2.5.2",
-        "fastapi==0.141.1",
-        "uvicorn==0.52.4",
-        "hf_transfer==0.1.9",
-    )
+    .pip_install(*CHAT_IMAGE_PIP_DEPS)
     .env(
         {
             # Model caches live on the persistent Volume mounted at MODEL_MOUNT.

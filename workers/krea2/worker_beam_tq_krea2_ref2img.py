@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 from beam import Image, QueueDepthAutoscaler, Volume, task_queue
 
 from workers.krea2._shared_krea2_ref2img import (
+    IMAGE_PIP_DEPS,
     Krea2Ref2ImgInput,
     do_inference,
     load_dependencies,
@@ -20,21 +21,7 @@ _INFERENCE_LOCK = threading.Lock()
 
 image = (
     Image(python_version="python3.11")
-    .add_python_packages(
-        [
-            "torch==2.9.1",
-            "diffusers==0.39.0",
-            "transformers==4.57.6",
-            "accelerate==1.14.0",
-            "safetensors==0.8.0",
-            "hf_transfer==0.1.9",
-            "pillow==12.3.0",
-            "protobuf==6.33.6",
-            "opencv-python-headless==4.12.0.88",
-            "peft==0.17.0",
-            "boto3==1.43.83",
-        ]
-    )
+    .add_python_packages(list(IMAGE_PIP_DEPS))
     .with_envs(
         {
             "HF_HOME": CACHE_PATH,

@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 import modal
 
 from workers.h3._shared_minimax_h3_ref2va import (
+    IMAGE_PIP_DEPS,
     ValidatedRef2VAInput,
     apply_torch_shims,
     do_inference,
@@ -27,22 +28,7 @@ r2_secret = modal.Secret.from_name(
 image = (
     modal.Image.debian_slim(python_version="3.11")
     .apt_install("git", "ffmpeg", "libgl1", "libglib2.0-0")
-    .pip_install(
-        "torch==2.9.1",
-        "torchcodec==0.9.0",
-        "diffsynth[audio]==2.1.6",
-        "diffusers==0.40.0",
-        "transformers==5.16.1",
-        "accelerate==1.14.0",
-        "bitsandbytes==0.50.2",
-        "pillow==12.3.0",
-        "imageio==2.37.2",
-        "imageio-ffmpeg==0.6.0",
-        "torchaudio==2.9.1",
-        "boto3==1.43.83",
-        "fastapi==0.141.1",
-        "hf_transfer==0.1.9",
-    )
+    .pip_install(*IMAGE_PIP_DEPS)
     .env(
         {
             "HF_HOME": "/root/.cache/huggingface",

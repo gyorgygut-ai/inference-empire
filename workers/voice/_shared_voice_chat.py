@@ -16,6 +16,69 @@ SUPPORTED_LANGUAGES = {"en": "English", "hu": "Hungarian"}
 
 _SENT_RE = re.compile(r"[.!?]+(?=\s|$)")
 
+# Single source of truth for ALL provider image pip deps. Worker files must
+# reference these lists, never inline their own pins. One table per distinct
+# runtime (voice workers differ by sub-model, not just provider).
+# Pre-deploy gate (py3.11 tables): uv run python -c "from workers.voice._shared_voice_chat import <TABLE>; print('\n'.join(<TABLE>))" | uv pip compile --python-version 3.11 -
+# QWEN table runs on a python3.10 image: use --python-version 3.10 for it.
+REALTIME_IMAGE_PIP_DEPS: list[str] = [
+    "torch==2.9.1",
+    "transformers==4.57.6",
+]
+CHATTERBOX_IMAGE_PIP_DEPS: list[str] = [
+    "fastapi==0.141.1",
+    "uvicorn[standard]==0.52.4",
+    "numpy==1.26.4",
+    "soundfile==0.14.0",
+    "chatterbox-tts==0.1.7",
+    "librosa==0.11.0",
+]
+OPENVOICE_IMAGE_PIP_DEPS: list[str] = [
+    "fastapi==0.141.1",
+    "uvicorn[standard]==0.52.4",
+    "numpy==2.4.6",
+    "soundfile==0.14.0",
+    "openvoice-cli==0.0.5",
+    "librosa==0.9.1",
+    "setuptools==84.0.0",
+    "torch==2.9.1",
+    "torchaudio==2.9.1",
+]
+# NOTE: chatterbox-tts==0.1.7 dictates torch==2.6.0 / transformers==5.2.0 /
+# numpy<2 — the Qwen LLM path moves to transformers 5.x with it. Resolves
+# clean; runtime behavior on GPU is unverified (no deploy in this change).
+QWEN_IMAGE_PIP_DEPS: list[str] = [
+    "fastapi==0.141.1",
+    "uvicorn[standard]==0.52.4",
+    "numpy==1.26.4",
+    "setuptools==84.0.0",
+    "soundfile==0.14.0",
+    "faster-whisper==1.2.1",
+    "ctranslate2==4.4.0",
+    "transformers==5.2.0",
+    "torch==2.6.0",
+    "bitsandbytes==0.50.2",
+    "chatterbox-tts==0.1.7",
+    "librosa==0.11.0",
+    "silero-vad==6.2.1",
+    "huggingface-hub[hf-transfer]==1.29.0",
+    "hf_xet==1.6.0",
+]
+CHAT_IMAGE_PIP_DEPS: list[str] = [
+    "torch==2.9.1",
+    "torchaudio==2.9.1",
+    "transformers==4.57.6",
+    "accelerate==1.14.0",
+    "bitsandbytes==0.50.2",
+    "faster-whisper==1.2.1",
+    "coqui-tts==0.27.5",
+    "soundfile==0.14.0",
+    "numpy==2.4.6",
+    "fastapi==0.141.1",
+    "uvicorn==0.52.4",
+    "hf_transfer==0.1.9",
+]
+
 
 def find_sentence_end(text: str) -> int:
     """Return index just after the last sentence-ending punctuation in `text`."""

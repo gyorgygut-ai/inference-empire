@@ -12,6 +12,20 @@ from pydantic import BaseModel, ConfigDict
 REPO_ID = "Qwen/Qwen2-VL-2B-Instruct"
 MAX_NEW_TOKENS = 512
 
+# Single source of truth for ALL provider image pip deps (modal/beam/flash).
+# Worker files must reference this list, never inline their own pins.
+# Pre-deploy gate: uv run python -c "from workers.vision._shared_small_vision import IMAGE_PIP_DEPS; print('\n'.join(IMAGE_PIP_DEPS))" | uv pip compile --python-version 3.11 -
+IMAGE_PIP_DEPS: list[str] = [
+    "torch==2.9.1",
+    "transformers==5.16.1",
+    "torchvision==0.24.1",
+    "pillow==12.3.0",
+    "accelerate==1.14.0",
+    "boto3==1.43.83",
+    "fastapi==0.141.1",
+    "hf_transfer==0.1.9",
+]
+
 
 def _load_dotenv() -> None:
     path = Path(__file__).parent.parent / ".env"

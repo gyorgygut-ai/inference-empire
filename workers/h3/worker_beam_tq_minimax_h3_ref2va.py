@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 from beam import Image, QueueDepthAutoscaler, Volume, task_queue
 
 from workers.h3._shared_minimax_h3_ref2va import (
+    IMAGE_PIP_DEPS,
     ValidatedRef2VAInput,
     apply_torch_shims,
     do_inference,
@@ -22,20 +23,7 @@ _INFERENCE_LOCK = threading.Lock()
 
 image = (
     Image(python_version="python3.11")
-    .add_python_packages([
-        "torch==2.9.1",
-        "torchcodec==0.9.0",
-        "diffsynth[audio]==2.1.6",
-        "diffusers==0.40.0",
-        "transformers==5.16.1",
-        "accelerate==1.14.0",
-        "bitsandbytes==0.50.2",
-        "pillow==12.3.0",
-        "imageio==2.37.2",
-        "imageio-ffmpeg==0.6.0",
-        "torchaudio==2.9.1",
-        "boto3==1.43.83",
-    ])
+    .add_python_packages(list(IMAGE_PIP_DEPS))
     .with_envs({
         "HF_HOME": CACHE_PATH,
         "DIFFSYNTH_DOWNLOAD_SOURCE": "huggingface",

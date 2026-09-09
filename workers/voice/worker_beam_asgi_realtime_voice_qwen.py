@@ -12,6 +12,9 @@ import time
 
 from beam import Image, QueueDepthAutoscaler, Volume, asgi
 
+# Pin table only (numpy+pydantic at import); handlers stay function-deferred.
+from workers.voice._shared_voice_chat import QWEN_IMAGE_PIP_DEPS
+
 VOLUME_NAME = "models"
 MOUNT_PATH = "/volumes/models"
 
@@ -27,25 +30,7 @@ image = (
         python_version="python3.10",
     )
     .add_commands(["apt-get update && apt-get install -y ffmpeg"])
-    .add_python_packages(
-        [
-            "fastapi==0.141.1",
-            "uvicorn[standard]==0.52.4",
-            "numpy==2.5.2",
-            "setuptools==84.0.0",
-            "soundfile==0.14.0",
-            "faster-whisper==1.2.1",
-            "ctranslate2==4.4.0",
-            "transformers==4.57.6",
-            "torch==2.9.1",
-            "bitsandbytes==0.50.2",
-            "chatterbox-tts==0.1.7",
-            "librosa==0.10.2.post1",
-            "silero-vad==6.2.1",
-            "huggingface_hub[hf-transfer]==1.29.0",
-            "hf_xet==1.6.0",
-        ]
-    )
+    .add_python_packages(list(QWEN_IMAGE_PIP_DEPS))
     .with_envs({"HF_HUB_ENABLE_HF_TRANSFER": "1", "HF_HOME": "/volumes/models/.hf_cache"})
 )
 

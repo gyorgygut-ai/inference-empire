@@ -5,6 +5,7 @@ import threading
 from beam import Image, QueueDepthAutoscaler, Volume, task_queue
 
 from workers.vision._shared_small_vision import (
+    IMAGE_PIP_DEPS,
     SmallVisionInput,
     do_inference,
     load_dependencies,
@@ -16,15 +17,7 @@ _INFERENCE_LOCK = threading.Lock()
 
 image = (
     Image(python_version="python3.11")
-    .add_python_packages(
-        [
-            "torch==2.9.1",
-            "transformers==5.16.1",
-            "torchvision==0.24.1",
-            "pillow==12.3.0",
-            "accelerate==1.14.0",
-        ]
-    )
+    .add_python_packages(list(IMAGE_PIP_DEPS))
     .with_envs(
         {
             "HF_HOME": CACHE_PATH,

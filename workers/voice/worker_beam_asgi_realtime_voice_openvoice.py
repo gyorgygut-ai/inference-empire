@@ -30,21 +30,12 @@ INPUT_SR = 24000
 VAD_SR = 16000
 CHUNK_BYTES = 4096
 
+# Pin table only (numpy+pydantic at import); handlers stay function-deferred.
+from workers.voice._shared_voice_chat import OPENVOICE_IMAGE_PIP_DEPS
+
 image = (
     Image(python_version="python3.11")
-    .add_python_packages(
-        [
-            "fastapi==0.141.1",
-            "uvicorn[standard]==0.52.4",
-            "numpy==2.5.2",
-            "soundfile==0.14.0",
-            "openvoice-cli==0.0.5",
-            "librosa==0.9.1",
-            "setuptools==84.0.0",
-            "torch==2.9.1",
-            "torchaudio==2.9.1",
-        ]
-    )
+    .add_python_packages(list(OPENVOICE_IMAGE_PIP_DEPS))
 )
 
 

@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 from runpod_flash import Endpoint, GpuGroup
 
 from workers.h3._shared_minimax_h3_ref2va import (
+    IMAGE_PIP_DEPS,
     ValidatedRef2VAInput,
     apply_torch_shims,
     do_inference,
@@ -42,20 +43,7 @@ def generate(storage: Storage, pipe, write_video_audio, **kwargs) -> dict:
         "R2_ACCESS_KEY": os.environ.get("R2_ACCESS_KEY", ""),
         "R2_SECRET_KEY": os.environ.get("R2_SECRET_KEY", ""),
     },
-    dependencies=[
-        "torch==2.9.1",
-        "diffusers==0.40.0",
-        "transformers==5.16.1",
-        "accelerate==1.14.0",
-        "torchcodec==0.9.0",
-        "diffsynth[audio]==2.1.6",
-        "bitsandbytes==0.50.2",
-        "pillow==12.3.0",
-        "imageio==2.37.2",
-        "imageio-ffmpeg==0.6.0",
-        "torchaudio==2.9.1",
-        "boto3==1.43.83",
-    ],
+    dependencies=list(IMAGE_PIP_DEPS),
 )
 class MiniMaxH3Ref2VAWorker:
     Input = ValidatedRef2VAInput

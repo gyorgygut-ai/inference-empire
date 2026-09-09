@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 from runpod_flash import Endpoint, GpuGroup
 
 from workers.flux2._shared_flux2_klein9b import (
+    IMAGE_PIP_DEPS,
     Flux2Klein9bInput,
     do_inference,
     load_dependencies,
@@ -42,17 +43,7 @@ def generate(storage: Storage, pipe, torch_module, **kwargs) -> dict:
         "R2_ACCESS_KEY": os.environ.get("R2_ACCESS_KEY", ""),
         "R2_SECRET_KEY": os.environ.get("R2_SECRET_KEY", ""),
     },
-    dependencies=[
-        "torch==2.9.1",
-        "diffusers==0.40.0",
-        "transformers==5.16.1",
-        "accelerate==1.14.0",
-        "sdnq==0.2.6",
-        "safetensors==0.8.0",
-        "huggingface_hub==1.29.0",
-        "pillow==12.3.0",
-        "boto3==1.43.83",
-    ],
+    dependencies=list(IMAGE_PIP_DEPS),
 )
 class FluxKleinWorker:
     Input = Flux2Klein9bInput
