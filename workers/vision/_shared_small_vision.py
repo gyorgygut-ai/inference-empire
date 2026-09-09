@@ -7,7 +7,9 @@ import time
 from pathlib import Path
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, ValidationInfo, field_validator
+
+from workers.services.media.validation import validate_image_b64
 
 REPO_ID = "Qwen/Qwen2-VL-2B-Instruct"
 MAX_NEW_TOKENS = 512
@@ -44,6 +46,11 @@ def _load_dotenv() -> None:
 class SmallVisionInput(BaseModel):
     model_config = ConfigDict(title="SmallVisionInput")
     image_base64: str
+
+    @field_validator("image_base64")
+    @classmethod
+    def _check_image(cls, v: str, info: ValidationInfo) -> str:
+        return validate_image_b64(v, info.field_name)
 
 class SmallVisionOutput(BaseModel):
     model_config = ConfigDict(title="SmallVisionOutput")

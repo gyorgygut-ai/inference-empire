@@ -6,7 +6,9 @@ import uuid
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, field_validator
+
+from workers.services.media.validation import validate_image_b64
 
 if TYPE_CHECKING:
     from workers.services.storage.storage import Storage
@@ -66,6 +68,13 @@ class MiniMaxH3ComfyInput(BaseModel):
     seed: int | None = Field(default=None)
     first_frame: str | None = Field(default=None)
     last_frame: str | None = Field(default=None)
+
+    @field_validator("first_frame", "last_frame")
+    @classmethod
+    def _check_frame(cls, v: str | None, info: ValidationInfo) -> str | None:
+        if v is None:
+            return None
+        return validate_image_b64(v, info.field_name)
 
 class Artifact(BaseModel):
     model_config = ConfigDict(title="Artifact")
@@ -155,9 +164,126 @@ def run_comfy_endpoint(endpoint, payload, timeout: int = 1800):
         with concurrent.futures.ThreadPoolExecutor() as pool:
             return pool.submit(lambda: asyncio.run(_run())).result()
 
-def _run_local(comfy_base_url: str, req: MiniMaxH3ComfyInput) -> tuple:
-    """Submit + 600s poll + fetch. Returns (video_bytes, data)."""
+POLL_INTERVAL_S = 5
+POLL_BUDGET_S = 3600
+HEARTBEAT_S = 60
+
+
+def _upload_frame(comfy_base_url: str, name: str, raw_b64: str) -> None:
+    """Upload a validated raw-base64 frame so LoadImage nodes can find it."""
     import base64
+
+    import requests
+
+    blob = base64.b64decode(raw_b64)
+    files = {"image": (name, blob, "image/png")}
+    r = requests.post(
+        f"{comfy_base_url}/upload/image",
+        files=files,
+        data={"overwrite": "true"},
+        timeout=60,
+    )
+    try:
+        r.raise_for_status()
+    except requests.HTTPError as exc:
+        raise RuntimeError(f"ComfyUI /upload/image for {name} failed: {exc}: {r.text[:2000]}") from exc
+    print(f"[GEN] uploaded frame {name} ({len(blob)} bytes)", flush=True)
+
+
+_QUEUE_SHAPE_LOGGED = False
+
+
+def _read_server_log_tail(max_bytes: int = 65536) -> str | None:
+    """Read the tail of the ComfyUI server log file (if the worker captures one)."""
+    try:
+        with open("/tmp/comfy_server.log", "rb") as fh:
+            fh.seek(0, 2)
+            fh.seek(max(0, fh.tell() - max_bytes))
+            return fh.read().decode("utf-8", "replace")
+    except OSError:
+        return None
+
+
+def _dump_server_log(lines: int = 40) -> None:
+    """Tail the ComfyUI server log file (if the worker captures one)."""
+    text = _read_server_log_tail()
+    if text is None:
+        print("[COMFY-SERVER] no server log", flush=True)
+        return
+    print("[COMFY-SERVER] last log lines:", flush=True)
+    for line in text.splitlines()[-lines:]:
+        print(f"[COMFY-SERVER] {line}", flush=True)
+
+
+def _video_from_server_log() -> tuple[str, str, str] | None:
+    """Parse the most recent saved-video (filename, subfolder, type) from the server log.
+
+    Some SaveVideo-style nodes persist the file but return nothing in the
+    history entry, so the log's save line is the only record of the name.
+    """
+    import re
+
+    text = _read_server_log_tail()
+    if not text:
+        return None
+    hits = re.findall(r"[Ss]av(?:ed?|ing) (?:video )?(?:to )?['\"]?([^\s'\"]+\.(?:mp4|webm|mov|gif))['\"]?", text)
+    if not hits:
+        return None
+    path = hits[-1]
+    filename = path.rsplit("/", 1)[-1]
+    subfolder = ""
+    if "/output/" in path:
+        subfolder = path.split("/output/", 1)[1].rsplit("/", 1)[0]
+        if subfolder == filename:
+            subfolder = ""
+    return filename, subfolder, "output"
+
+
+def _queue_position(comfy_base_url: str, prompt_id: str) -> str:
+    """Best-effort running/queued position for heartbeat lines."""
+    import requests
+
+    global _QUEUE_SHAPE_LOGGED
+    try:
+        q = requests.get(f"{comfy_base_url}/queue", timeout=10).json()
+        if not _QUEUE_SHAPE_LOGGED:
+            _QUEUE_SHAPE_LOGGED = True
+            print(
+                f"[COMFY] queue shape keys={sorted(q.keys())} "
+                f"running0={str(q.get('queue_running', [])[:1])[:300]} "
+                f"pending0={str(q.get('queue_pending', [])[:1])[:300]}",
+                flush=True,
+            )
+        running = [e[1] for e in q.get("queue_running", []) if len(e) > 1]
+        pending = [e[1] for e in q.get("queue_pending", []) if len(e) > 1]
+        if prompt_id in running:
+            return "running"
+        if prompt_id in pending:
+            return f"queued #{pending.index(prompt_id) + 1}/{len(pending)}"
+        return "finishing"
+    except Exception:  # noqa: BLE001 — heartbeat must never kill the poll
+        return "unknown"
+
+
+def _comfy_error(entry: dict) -> str | None:
+    """Extract node error text from a history entry, or None if not failed."""
+    status = entry.get("status") or {}
+    if status.get("status_str") == "error":
+        msgs = status.get("messages") or []
+        errors = [
+            str(m[1].get("exception_message", m[1]))
+            for m in msgs
+            if isinstance(m, (list, tuple)) and len(m) > 1
+            and m[0] in ("execution_error", "execution_interrupted")
+            and isinstance(m[1], dict)
+        ]
+        detail = "; ".join(errors) if errors else str(msgs)
+        return f"ComfyUI job failed: {detail}"
+    return None
+
+
+def _run_local(comfy_base_url: str, req: MiniMaxH3ComfyInput) -> bytes:
+    """Submit + poll (up to POLL_BUDGET_S) + fetch. Returns video_bytes."""
     import time
 
     import requests
@@ -165,37 +291,87 @@ def _run_local(comfy_base_url: str, req: MiniMaxH3ComfyInput) -> tuple:
     print(f"[REQ] prompt={req.prompt[:40]}", flush=True)
     workflow = build_workflow(req)
 
-    print(f"[GEN] starting ComfyUI job prompt={req.prompt[:40]}", flush=True)
+    if req.first_frame:
+        _upload_frame(comfy_base_url, "first_frame.png", req.first_frame)
+    if req.last_frame:
+        _upload_frame(comfy_base_url, "last_frame.png", req.last_frame)
+
     t_gen = time.time()
     r = requests.post(f"{comfy_base_url}/prompt", json={"prompt": workflow}, timeout=30)
-    r.raise_for_status()
+    try:
+        r.raise_for_status()
+    except requests.HTTPError as exc:
+        # ComfyUI's 400 body names the rejecting node (node_errors) — never drop it.
+        raise RuntimeError(f"ComfyUI /prompt rejected workflow: {exc}: {r.text[:2000]}") from exc
     prompt_id = r.json()["prompt_id"]
+    print(f"[GEN] starting ComfyUI job prompt={req.prompt[:40]} prompt_id={prompt_id}", flush=True)
 
-    for attempt in range(600):
+    video_info = None
+    attempt = 0
+    last_beat = t_gen
+    last_summary = "no-entry"
+    deadline = t_gen + POLL_BUDGET_S
+    while time.time() < deadline:
+        attempt += 1
         try:
             r = requests.get(f"{comfy_base_url}/history/{prompt_id}", timeout=10)
+            r.raise_for_status()
             history = r.json()
-            if prompt_id in history:
-                outputs = history[prompt_id]["outputs"]
-                save_node = outputs.get("save", {})
-                video_info = (save_node.get("videos") or save_node.get("gifs") or [None])[0]
-                if video_info:
-                    break
-        except (requests.ConnectionError, requests.Timeout, ValueError) as e:
+        except (requests.ConnectionError, requests.Timeout, requests.HTTPError, ValueError) as e:
             print(
-                f"[COMFY] poll {attempt + 1}/600 transient error: {type(e).__name__}: {e}",
+                f"[COMFY] poll {attempt} transient error: {type(e).__name__}: {e}",
                 flush=True,
             )
-        time.sleep(1)
-    else:
-        raise RuntimeError(f"ComfyUI job {prompt_id} did not complete within 600s")
+            time.sleep(POLL_INTERVAL_S)
+            continue
+        entry = history.get(prompt_id)
+        if entry is not None:
+            err = _comfy_error(entry)
+            if err is not None:
+                _dump_server_log()
+                raise RuntimeError(f"ComfyUI job {prompt_id}: {err}")
+            outputs = entry.get("outputs") or {}
+            status_str = (entry.get("status") or {}).get("status_str")
+            save_node = outputs.get("save", {})
+            last_summary = f"status={status_str} outputs={sorted(outputs.keys())} save_keys={sorted(save_node.keys())}"
+            # SaveVideo here returns a PreviewImage-style payload (images + animated flag).
+            video_info = (
+                save_node.get("videos")
+                or save_node.get("gifs")
+                or save_node.get("images")
+                or [None]
+            )[0]
+            if video_info:
+                break
+            if status_str == "success" and save_node is not None:
+                # Node persisted the file but returned no handle — resolve via server log.
+                logged = _video_from_server_log()
+                if logged is not None:
+                    filename, subfolder, typ = logged
+                    print(f"[GEN] save node empty, server log points at {subfolder}/{filename}", flush=True)
+                    video_info = {"filename": filename, "subfolder": subfolder, "type": typ}
+                    break
+        now = time.time()
+        if now - last_beat >= HEARTBEAT_S:
+            pos = _queue_position(comfy_base_url, prompt_id)
+            print(f"[COMFY] still running {now - t_gen:.0f}s ({pos}) history={last_summary}", flush=True)
+            last_beat = now
+        time.sleep(POLL_INTERVAL_S)
+
+    if video_info is None:
+        _dump_server_log()
+        raise RuntimeError(f"ComfyUI job {prompt_id} did not complete within {POLL_BUDGET_S}s")
 
     print(f"[GEN] ComfyUI job done in {time.time() - t_gen:.1f}s", flush=True)
     video_url = (
         f"{comfy_base_url}/view?filename={video_info['filename']}"
         f"&subfolder={video_info.get('subfolder', '')}&type={video_info.get('type', 'output')}"
     )
-    video_bytes = requests.get(video_url, timeout=60).content
+    r = requests.get(video_url, timeout=60)
+    r.raise_for_status()
+    video_bytes = r.content
+    if not video_bytes:
+        raise RuntimeError(f"ComfyUI job {prompt_id}: empty video at {video_url}")
 
     return video_bytes
 

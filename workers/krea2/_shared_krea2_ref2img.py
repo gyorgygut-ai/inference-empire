@@ -7,7 +7,9 @@ import uuid
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, field_validator
+
+from workers.services.media.validation import validate_image_b64
 
 if TYPE_CHECKING:
     from diffusers import DiffusionPipeline
@@ -54,6 +56,13 @@ class Krea2Ref2ImgInput(BaseModel):
     model_config = ConfigDict(title="Krea2Ref2ImgInput")
     prompt: str
     reference_image: str | None = Field(default=None)
+
+    @field_validator("reference_image")
+    @classmethod
+    def _check_reference_image(cls, v: str | None, info: ValidationInfo) -> str | None:
+        if v is None:
+            return None
+        return validate_image_b64(v, info.field_name)
     height: int = Field(default=768)
     width: int = Field(default=768)
     num_inference_steps: int = Field(default=8)
@@ -151,13 +160,14 @@ def load_pipeline(cache_dir=None):
     print(f"[INIT] model loaded in {time.time() - t0:.1f}s", flush=True)
     return pipe, runtime_dir, torch
 
-def decode_image(base64_str: str):
+def decode_image(base64_str: str, field: str = "reference_image"):
     import base64
     import io
 
     from PIL import Image
 
-    img = Image.open(io.BytesIO(base64.b64decode(base64_str)))
+    raw = validate_image_b64(base64_str, field)
+    img = Image.open(io.BytesIO(base64.b64decode(raw)))
     return img.convert("RGB")
 
 def face_crop(img, runtime_dir: Path, margin: float = 0.4):

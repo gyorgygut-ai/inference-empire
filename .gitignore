@@ -58,3 +58,14 @@ htmlcov/
 .ruff_cache/
 
 node_modules
+
+.nx/installation
+.nx/cache
+.nx/workspace-data
+.nx/self-healing
+.nx/migrate-runs
+.nx/polygraph
+.claude/worktrees
+.claude/settings.local.json
+# Secrets
+.env

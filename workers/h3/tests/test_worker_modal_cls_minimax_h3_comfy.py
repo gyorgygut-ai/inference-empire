@@ -108,8 +108,35 @@ def test_workflow_scheduler_simple_and_steps():
 def test_first_last_frame_workflow_and_images():
     from workers.h3._shared_minimax_h3_comfy import build_images, build_workflow
 
-    req = MiniMaxH3ComfyInput(prompt="clip", first_frame="abc", last_frame="def")
+    _img = (
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
+    )
+    req = MiniMaxH3ComfyInput(prompt="clip", first_frame=_img, last_frame=_img)
     wf = build_workflow(req)
     assert "load_first" in wf
     assert "load_last" in wf
     assert len(build_images(req)) == 2
+
+
+def test_ensure_comfy_models_calls_snapshot_download_when_missing(monkeypatch, tmp_path):
+    # Mock filesystem operations to avoid real /comfyui writes
+    import workers.h3.worker_modal_cls_minimax_h3_comfy as worker_mod
+    from pathlib import Path
+    monkeypatch.setattr(worker_mod.os, "makedirs", lambda *a, **k: None)
+    # Simulate /comfyui not writable by raising OSError on makedirs for models
+    # Actually we let OSError path swallow; just test snapshot_download call
+    called = {}
+    def fake_snapshot(repo_id, local_dir, local_dir_use_symlinks=False, allow_patterns=None):
+        called["repo"] = repo_id
+        called["dir"] = local_dir
+        called["patterns"] = allow_patterns
+    monkeypatch.setattr(worker_mod, "snapshot_download", fake_snapshot)
+    # Make Path(dst).exists() False, Path(src).exists() True to avoid RuntimeError
+    monkeypatch.setattr(Path, "exists", lambda self: True)
+    # Avoid actual copy
+    monkeypatch.setattr(worker_mod.shutil, "copy2", lambda *a, **k: None)
+    # Run
+    worker_mod._ensure_comfy_models()
+    assert called.get("repo") == "Comfy-Org/MiniMax-H3"
+    assert called.get("dir") == "/root/.cache/huggingface/diffsynth"
+    assert sorted(p.split("/")[-1] for p in called.get("patterns")) == sorted(worker_mod.COMFY_MODELS)

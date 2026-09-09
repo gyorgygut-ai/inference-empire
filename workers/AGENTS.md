@@ -14,12 +14,9 @@
 Every worker type must be implemented for all 3 providers (Flash, Beam, Modal).
 
 - Flux2: async, 4 steps, cfg 1, produces artifact
-- H3-FL2VA-NF4: async, 50 steps, 1344x768, produces artifact
-- H3-REF2VA-NF4: async, 50 steps, 1344x768, produces artifact
-- H3-FL2VA-COMFY: async, 20 steps, 1344x768, produces artifact
-- H3-REF2VA-COMFY: async, 20 steps, 1344x768, produces artifact
-- H3-REF2VA-TURBO: async, 4 steps, 960x544, produces artifact
 - H3-FL2VA-TURBO: async, 4 steps, 1344x768, produces artifact
+- H3-FL2VA-COMFY: async, 20 steps, 1344x768, produces artifact
+- H3-REF2VA-TURBO: async, 4 steps, 960x544, produces artifact
 - Krea2: sync, 8 steps, cfg 0.0, produces artifact
 - tiny-sd: sync, 20 steps, cfg 7.5, produces artifact
 - Vision: sync, produces JSON
@@ -35,7 +32,7 @@ worker_{platform}_{pattern}_{model}.py
 
 Only these patterns exist in the repo — do not invent others:
 
-- Flash: `cls` (plus one `pre` exception for h3-nf4-ref2va)
+- Flash: `cls`
 - Beam: `tq` (plus `asgi` for realtime voice only)
 - Modal: `cls`
 
@@ -65,8 +62,8 @@ Only these patterns exist in the repo — do not invent others:
 - **Single source of pins**: each model family's image pip deps live in exactly
   one place — `IMAGE_PIP_DEPS` in its `_shared_*` module. Modal uses
   `.pip_install(*IMAGE_PIP_DEPS)`, Beam uses `.add_python_packages(list(IMAGE_PIP_DEPS))`,
-   Flash uses `dependencies=list(IMAGE_PIP_DEPS)`. All families including
-   H3-NF4 use `IMAGE_PIP_DEPS` on every provider.
+ Flash uses `dependencies=list(IMAGE_PIP_DEPS)`. All families including H3
+   use `IMAGE_PIP_DEPS` on every provider.
 - **Pre-deploy gate (mandatory)**: resolve the family's pin set in isolation
   before any deploy. One line per family, e.g. Krea2:
   ```bash
@@ -216,7 +213,7 @@ Run in-process: `TinySDWorker().generate(**GOOD)`. When something fails: `[ERR]`
 
 ## Test Strategy
 
-Verified commands (see `workers/VERIFICATION.md` — 99 unit passed):
+Verified commands (see `workers/VERIFICATION.md` — 166 unit passed):
 
 - All unit: `uv run --locked pytest workers/ -k "not e2e"`
 - Per model unit: `uv run --locked pytest workers/<model>/tests/ -k "not e2e"`

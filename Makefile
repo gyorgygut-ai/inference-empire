@@ -9,3 +9,6 @@ test-fake:
 
 test-live:
 	@f=$$(find workers -name "test_*.py" | fzf --prompt="test-live> ") && [ -n "$$f" ] && uv run --locked pytest "$$f" --target live -q
+
+generate:
+	@f=$$(find cli -name '*.md' | fzf --prompt='generate> ') && [ -n "$$f" ] && uv run --locked python cli/generate.py "$$f"

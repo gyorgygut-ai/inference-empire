@@ -20,7 +20,7 @@
 - `flux` `flux2_klein9b` — both: **(a)** direct context `flux` boxes + prompt **(b)** tool `flux2_klein9b` — stem `flux2_klein9b`
 - `krea` `krea2_ref2img` — both: **(a)** direct context `krea` boxes + prompt **(b)** tool — stem `krea2_ref2img`
 - `h3` `minimax_h3_comfy` — **(a)** direct context `h3` boxes: `first_frame/last_frame` **(b)** tool `h3_comfy` — stem `minimax_h3_comfy`
-- `h3-ref` `minimax_h3_ref2va_comfy` — **(a)** direct context `h3-ref` boxes: `ref_images/ref_videos/ref_audios` **(b)** tool `h3_ref2va_comfy` — stem `minimax_h3_ref2va_comfy`
+- `h3-ref` `minimax_h3_turbo_ref2va` — **(a)** direct context `h3-ref` boxes: `ref_images/ref_videos/ref_video_audios/ref_audios` **(b)** tool `h3_turbo_ref2va` — stem `minimax_h3_turbo_ref2va`
 - `voice` `realtime_voice_*` — ASGI stream `audio.delta` (v2) — not in this cut
 
 Boxes are context-specific: visible only when that `flux|krea|h3|h3-ref` picked in selector; switch model → boxes swap.

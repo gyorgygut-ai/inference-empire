@@ -6,7 +6,9 @@ import time
 import uuid
 from typing import TYPE_CHECKING
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, field_validator
+
+from workers.services.media.validation import validate_image_b64
 
 if TYPE_CHECKING:
     from diffusers import Flux2KleinPipeline
@@ -45,6 +47,18 @@ class Flux2Klein9bInput(BaseModel):
     input_image: str | None = Field(default=None)
     reference_images: list[str] = Field(default=[])
 
+    @field_validator("input_image")
+    @classmethod
+    def _check_input_image(cls, v: str | None, info: ValidationInfo) -> str | None:
+        if v is None:
+            return None
+        return validate_image_b64(v, info.field_name)
+
+    @field_validator("reference_images")
+    @classmethod
+    def _check_reference_images(cls, v: list[str], info: ValidationInfo) -> list[str]:
+        return [validate_image_b64(item, f"{info.field_name}[{i}]") for i, item in enumerate(v)]
+
 class Artifact(BaseModel):
     model_config = ConfigDict(title="Artifact")
     presigned_url: str
@@ -53,13 +67,14 @@ class Flux2Klein9bOutput(BaseModel):
     model_config = ConfigDict(title="Flux2Klein9bOutput")
     artifact: Artifact
 
-def prepare_image(base64_str: str):
+def prepare_image(base64_str: str, field: str = "image"):
     import base64
     import io
 
     from PIL import Image
 
-    img = Image.open(io.BytesIO(base64.b64decode(base64_str))).convert("RGB")
+    raw = validate_image_b64(base64_str, field)
+    img = Image.open(io.BytesIO(base64.b64decode(raw))).convert("RGB")
     w, h = img.size
     w = min(w - (w % 16), _MAX_WIDTH)
     h = min(h - (h % 16), _MAX_HEIGHT)

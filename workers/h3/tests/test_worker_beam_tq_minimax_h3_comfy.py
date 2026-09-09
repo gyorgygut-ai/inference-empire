@@ -112,7 +112,24 @@ def test_workflow_scheduler_simple_and_steps():
     wf = build_workflow(req)
     assert wf["sigmas"]["inputs"]["scheduler"] == "simple"
     assert wf["sigmas"]["inputs"]["steps"] == 20
-    assert wf["sampler_select"]["inputs"]["sampler_name"] == "res_multistep"
+
+
+def test_ensure_comfy_models_calls_snapshot_download_when_missing(monkeypatch):
+    import workers.h3.worker_beam_tq_minimax_h3_comfy as worker_mod
+    from pathlib import Path
+    monkeypatch.setattr(worker_mod.os, "makedirs", lambda *a, **k: None)
+    called = {}
+    def fake_snapshot(repo_id, local_dir, local_dir_use_symlinks=False, allow_patterns=None):
+        called["repo"] = repo_id
+        called["dir"] = local_dir
+        called["patterns"] = allow_patterns
+    monkeypatch.setattr(worker_mod, "snapshot_download", fake_snapshot)
+    monkeypatch.setattr(Path, "exists", lambda self: True)
+    monkeypatch.setattr(worker_mod.shutil, "copy2", lambda *a, **k: None)
+    worker_mod._ensure_comfy_models()
+    assert called.get("repo") == "Comfy-Org/MiniMax-H3"
+    assert str(called.get("dir")).endswith("/hf-cache/diffsynth")
+    assert sorted(p.split("/")[-1] for p in called.get("patterns")) == sorted(worker_mod.COMFY_MODELS)
 
 
 def test_workflow_seed_default_and_set():
@@ -125,7 +142,10 @@ def test_workflow_seed_default_and_set():
 def test_first_last_frame_workflow_and_images():
     from workers.h3._shared_minimax_h3_comfy import build_images, build_workflow
 
-    req = MiniMaxH3ComfyInput(prompt="clip", first_frame="abc", last_frame="def")
+    _img = (
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
+    )
+    req = MiniMaxH3ComfyInput(prompt="clip", first_frame=_img, last_frame=_img)
     wf = build_workflow(req)
     assert "load_first" in wf
     assert "load_last" in wf

@@ -7,7 +7,9 @@ import uuid
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, field_validator
+
+from workers.services.media.validation import validate_image_b64, validate_media_b64
 
 if TYPE_CHECKING:
     from diffsynth.pipelines.minimax_h3_audio_video import MiniMaxH3Pipeline
@@ -35,6 +37,7 @@ IMAGE_PIP_DEPS: list[str] = [
     "torch==2.9.1",
     "torchcodec==0.9.0",
     "diffsynth[audio]==2.1.6",
+    "comfy-kitchen==0.2.33",
     "diffusers==0.40.0",
     "transformers==5.16.1",
     "accelerate==1.14.0",
@@ -78,6 +81,16 @@ class MiniMaxH3TurboRef2vaInput(BaseModel):
     height: int = Field(default=544)
     length: int = Field(default=124)
     seed: int | None = Field(default=None)
+
+    @field_validator("ref_images")
+    @classmethod
+    def _check_ref_images(cls, v: list[str], info: ValidationInfo) -> list[str]:
+        return [validate_image_b64(item, f"{info.field_name}[{i}]") for i, item in enumerate(v)]
+
+    @field_validator("ref_videos", "ref_video_audios", "ref_audios")
+    @classmethod
+    def _check_ref_media(cls, v: list[str], info: ValidationInfo) -> list[str]:
+        return [validate_media_b64(item, f"{info.field_name}[{i}]") for i, item in enumerate(v)]
 
 class ValidatedRef2VAInput(MiniMaxH3TurboRef2vaInput):
     @field_validator("ref_images")
@@ -347,9 +360,13 @@ def do_inference(
     print(f"[GEN] starting turbo inference prompt={req.prompt[:40]}", flush=True)
     t_gen = time.time()
     video, audio = pipe(**pipe_kwargs)
+    if isinstance(video, list):
+        _size = video[0].size if video and hasattr(video[0], "size") else "?"
+        _info = f"frames={len(video)} size={_size}"
+    else:
+        _info = f"shape={video.shape[2]}x{video.shape[3]}  frames={video.shape[1]}"
     print(
-        f"[GEN] inference done in {time.time() - t_gen:.1f}s  "
-        f"shape={video.shape[2]}x{video.shape[3]}  frames={video.shape[1]}",
+        f"[GEN] inference done in {time.time() - t_gen:.1f}s  {_info}",
         flush=True,
     )
 

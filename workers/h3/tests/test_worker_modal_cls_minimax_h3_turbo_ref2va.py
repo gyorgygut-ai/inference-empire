@@ -9,6 +9,14 @@ from workers.h3._shared_minimax_h3_turbo_ref2va import ValidatedRef2VAInput, Min
 from workers.services.inference.video_pipe_fake import FakeVideoPipe
 from workers.services.write_video_audio.write_video_audio_fake import FakeWriteVideoAudio
 
+# Real (tiny) payloads: validators reject junk strings, so count tests use these.
+_IMG = (
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
+)
+_VID = (
+    "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
+)
+
 
 def _pipe():
     pipe = FakeVideoPipe(np.zeros((1, 4, 8, 8), dtype=np.uint8), None)
@@ -77,46 +85,46 @@ def test_load_dependencies_mocked(monkeypatch, bucket):
 
 def test_rejects_too_many_ref_images():
     with pytest.raises(ValidationError):
-        ValidatedRef2VAInput(prompt="clip", ref_images=["x"] * 10)
+        ValidatedRef2VAInput(prompt="clip", ref_images=[_IMG] * 10)
 
 
 def test_rejects_too_many_ref_videos():
     with pytest.raises(ValidationError):
-        ValidatedRef2VAInput(prompt="clip", ref_videos=["x"] * 4)
+        ValidatedRef2VAInput(prompt="clip", ref_videos=[_VID] * 4)
 
 
 def test_rejects_too_many_ref_video_audios():
     with pytest.raises(ValidationError):
         ValidatedRef2VAInput(
-            prompt="clip", ref_videos=["x"] * 3, ref_video_audios=["x"] * 4
+            prompt="clip", ref_videos=[_VID] * 3, ref_video_audios=[_VID] * 4
         )
 
 
 def test_rejects_too_many_ref_audios():
     with pytest.raises(ValidationError):
-        ValidatedRef2VAInput(prompt="clip", ref_images=["img"], ref_audios=["x"] * 4)
+        ValidatedRef2VAInput(prompt="clip", ref_images=[_IMG], ref_audios=[_VID] * 4)
 
 
 def test_rejects_video_audio_without_video():
     with pytest.raises(ValidationError):
-        ValidatedRef2VAInput(prompt="clip", ref_video_audios=["x"])
+        ValidatedRef2VAInput(prompt="clip", ref_video_audios=[_VID])
 
 
 def test_rejects_audio_alone_without_visual():
     with pytest.raises(ValidationError):
-        ValidatedRef2VAInput(prompt="clip", ref_audios=["x"])
+        ValidatedRef2VAInput(prompt="clip", ref_audios=[_VID])
 
 
 def test_rejects_total_over_12():
     with pytest.raises(ValidationError):
         ValidatedRef2VAInput(
             prompt="clip",
-            ref_images=["x"] * 9,
-            ref_videos=["x"] * 3,
-            ref_audios=["x"],
+            ref_images=[_IMG] * 9,
+            ref_videos=[_VID] * 3,
+            ref_audios=[_VID],
         )
 
 
 def test_accepts_valid_boundary():
-    req = ValidatedRef2VAInput(prompt="clip", ref_images=["x"] * 9, ref_videos=["x"] * 3)
+    req = ValidatedRef2VAInput(prompt="clip", ref_images=[_IMG] * 9, ref_videos=[_VID] * 3)
     assert len(req.ref_images) == 9
