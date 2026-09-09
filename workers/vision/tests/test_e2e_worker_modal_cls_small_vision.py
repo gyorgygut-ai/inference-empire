@@ -6,9 +6,9 @@ import modal
 import pytest
 from PIL import Image
 
+import workers.vision.worker_modal_cls_small_vision as worker_module
 from workers.vision._shared_small_vision import SmallVisionOutput
 
-WORKER_FILE = "workers/vision/worker_modal_cls_small_vision.py"
 APP_NAME = "small-vision-worker"
 
 
@@ -24,7 +24,7 @@ GOOD = {"image_base64": _image_b64()}
 
 @pytest.fixture(scope="module")
 def deployed_app():
-    subprocess.run(["modal", "deploy", WORKER_FILE], check=True)
+    subprocess.run(["modal", "deploy", worker_module.__file__], check=True)
     yield
     subprocess.run(["modal", "app", "stop", APP_NAME, "--yes"], check=False)
 

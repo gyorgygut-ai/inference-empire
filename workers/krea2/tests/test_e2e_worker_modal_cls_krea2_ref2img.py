@@ -3,17 +3,17 @@ import subprocess
 import modal
 import pytest
 
+import workers.krea2.worker_modal_cls_krea2_ref2img as worker_module
 from workers.artifact_check import artifact_exists
 from workers.krea2._shared_krea2_ref2img import Artifact, Krea2Ref2ImgOutput
 
-WORKER_FILE = "workers/krea2/worker_modal_cls_krea2_ref2img.py"
 APP_NAME = "krea2-ref2img-worker"
 GOOD = {"prompt": "a red square", "seed": 7}
 
 
 @pytest.fixture(scope="module")
 def deployed_app():
-    subprocess.run(["modal", "deploy", WORKER_FILE], check=True)
+    subprocess.run(["modal", "deploy", worker_module.__file__], check=True)
     yield
     subprocess.run(["modal", "app", "stop", APP_NAME, "--yes"], check=False)
 

@@ -12,6 +12,7 @@ def test_good_input_returns_contract_and_artifact():
     assert out is not None, "beam task returned None - check beam logs"
 
     url = out["artifact"]["presigned_url"]
+    assert isinstance(out["video"], str) and len(out["video"]) > 0
     assert out == MiniMaxH3Ref2VAComfyOutput(
         artifact=Artifact(presigned_url=url), video=out["video"]
     ).model_dump()

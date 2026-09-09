@@ -3,17 +3,17 @@ import subprocess
 import modal
 import pytest
 
+import workers.flux2.worker_modal_cls_flux2_klein9b as worker_module
 from workers.artifact_check import artifact_exists
 from workers.flux2._shared_flux2_klein9b import Artifact, Flux2Klein9bOutput
 
-WORKER_FILE = "workers/flux2/worker_modal_cls_flux2_klein9b.py"
 APP_NAME = "flux2-klein9b-worker"
 GOOD = {"prompt": "a red square", "seed": 7}
 
 
 @pytest.fixture(scope="module")
 def deployed_app():
-    subprocess.run(["modal", "deploy", WORKER_FILE], check=True)
+    subprocess.run(["modal", "deploy", worker_module.__file__], check=True)
     yield
     subprocess.run(["modal", "app", "stop", APP_NAME, "--yes"], check=False)
 

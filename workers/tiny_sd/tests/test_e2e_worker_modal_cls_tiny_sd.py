@@ -3,17 +3,17 @@ import subprocess
 import modal
 import pytest
 
+import workers.tiny_sd.worker_modal_cls_tiny_sd as worker_module
 from workers.artifact_check import artifact_exists
 from workers.tiny_sd._shared_tiny_sd import Artifact, TinySDOutput
 
-WORKER_FILE = "workers/tiny_sd/worker_modal_cls_tiny_sd.py"
 APP_NAME = "tiny-sd-worker"
 GOOD = {"prompt": "a red square", "seed": 7}
 
 
 @pytest.fixture(scope="module")
 def deployed_app():
-    subprocess.run(["modal", "deploy", WORKER_FILE], check=True)
+    subprocess.run(["modal", "deploy", worker_module.__file__], check=True)
     yield
     subprocess.run(["modal", "app", "stop", APP_NAME, "--yes"], check=False)
 

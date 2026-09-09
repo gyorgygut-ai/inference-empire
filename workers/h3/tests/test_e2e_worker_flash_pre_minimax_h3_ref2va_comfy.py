@@ -12,6 +12,7 @@ GOOD = {"prompt": "a cat walking in a garden", "seed": 7}
 def test_good_input_returns_contract_and_artifact():
     out = worker_function.MiniMaxH3Ref2VAComfyWorker().generate(**GOOD)
     url = out["artifact"]["presigned_url"]
+    assert isinstance(out["video"], str) and len(out["video"]) > 0
     assert out == MiniMaxH3Ref2VAComfyOutput(
         artifact=Artifact(presigned_url=url), video=out["video"]
     ).model_dump()
