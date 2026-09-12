@@ -38,54 +38,50 @@ def _ws_client():
 
 
 def test_connect_emits_session_created():
-    with _ws_client() as client:
-        with client.websocket_connect("/v1/realtime") as ws:
-            ev = json.loads(ws.receive_text())
-            assert ev["type"] == "session.created"
+    with _ws_client() as client, client.websocket_connect("/v1/realtime") as ws:
+        ev = json.loads(ws.receive_text())
+        assert ev["type"] == "session.created"
 
 
 def test_session_update_echoes_voice():
-    with _ws_client() as client:
-        with client.websocket_connect("/v1/realtime") as ws:
-            ws.receive_text()  # session.created
-            ws.send_text(
-                json.dumps({"type": "session.update", "session": {"voice": "Bob"}})
-            )
-            ev = json.loads(ws.receive_text())
-            assert ev["type"] == "session.updated"
-            assert ev["session"]["voice"] == "Bob"
+    with _ws_client() as client, client.websocket_connect("/v1/realtime") as ws:
+        ws.receive_text()  # session.created
+        ws.send_text(
+            json.dumps({"type": "session.update", "session": {"voice": "Bob"}})
+        )
+        ev = json.loads(ws.receive_text())
+        assert ev["type"] == "session.updated"
+        assert ev["session"]["voice"] == "Bob"
 
 
 def test_malformed_json_returns_error():
-    with _ws_client() as client:
-        with client.websocket_connect("/v1/realtime") as ws:
-            ws.receive_text()  # session.created
-            ws.send_text("not json")
-            ev = json.loads(ws.receive_text())
-            assert ev["type"] == "error"
+    with _ws_client() as client, client.websocket_connect("/v1/realtime") as ws:
+        ws.receive_text()  # session.created
+        ws.send_text("not json")
+        ev = json.loads(ws.receive_text())
+        assert ev["type"] == "error"
 
 
 def test_text_turn_streams_response():
-    with _ws_client() as client:
-        with client.websocket_connect("/v1/realtime") as ws:
-            ws.receive_text()  # session.created
-            ws.send_text(
-                json.dumps(
-                    {
-                        "type": "conversation.item.create",
-                        "item": {
-                            "type": "message",
-                            "content": [{"type": "input_text", "text": "hi"}],
-                        },
-                    }
-                )
+    with _ws_client() as client, client.websocket_connect("/v1/realtime") as ws:
+        ws.receive_text()  # session.created
+        ws.send_text(
+            json.dumps(
+                {
+                    "type": "conversation.item.create",
+                    "item": {
+                        "type": "message",
+                        "content": [{"type": "input_text", "text": "hi"}],
+                    },
+                }
             )
-            ws.send_text(json.dumps({"type": "response.create"}))
-            types = []
-            for _ in range(6):
-                ev = json.loads(ws.receive_text())
-                types.append(ev["type"])
-            assert "response.created" in types
-            assert "response.audio_transcript.delta" in types
-            assert "response.audio.delta" in types
-            assert "response.done" in types
+        )
+        ws.send_text(json.dumps({"type": "response.create"}))
+        types = []
+        for _ in range(6):
+            ev = json.loads(ws.receive_text())
+            types.append(ev["type"])
+        assert "response.created" in types
+        assert "response.audio_transcript.delta" in types
+        assert "response.audio.delta" in types
+        assert "response.done" in types

@@ -1,0 +1,20 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "contracts",
+  "projectType": "library",
+  "sourceRoot": "packages/contracts/src",
+  "tags": ["type:lib", "scope:contracts"],
+  "targets": {
+    "test-unit": {
+      "executor": "nx:run-commands",
+      "options": { "command": "node src/validate.mjs", "cwd": "packages/contracts" },
+      "inputs": ["default"],
+      "cache": true
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": { "command": "node src/validate.mjs", "cwd": "packages/contracts" },
+      "cache": true
+    }
+  }
+}

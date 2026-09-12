@@ -1,0 +1,29 @@
+{
+  "input": {
+    "title": "Flux2Klein9bInput",
+    "required": ["prompt"],
+    "properties": {
+      "prompt": { "type": "string" },
+      "height": { "type": "integer", "default": 512 },
+      "width": { "type": "integer", "default": 512 },
+      "guidance_scale": { "type": "number", "default": 1.0 },
+      "num_inference_steps": { "type": "integer", "default": 4 },
+      "seed": { "type": ["integer", "null"], "default": null },
+      "input_image": { "type": ["string", "null"], "default": null },
+      "reference_images": { "type": "array", "items": { "type": "string" }, "default": [] }
+    }
+  },
+  "output": {
+    "title": "Flux2Klein9bOutput",
+    "required": ["artifact"],
+    "properties": {
+      "artifact": {
+        "type": "object",
+        "required": ["presigned_url"],
+        "properties": {
+          "presigned_url": { "type": "string" }
+        }
+      }
+    }
+  }
+}

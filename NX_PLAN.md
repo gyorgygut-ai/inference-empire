@@ -48,7 +48,8 @@ inference-tooling/
 ## Nx Targets to Implement
 
 - `build`: For TypeScript applications and packages
-- `test`: Python and JavaScript unit/e2e tests
+- `test-unit`: Python (`pytest -k "not e2e"`) and JavaScript unit tests. No `--target` flag.
+- `test-e2e`: Python (`pytest -k "e2e"`) and JavaScript e2e tests. No `--target` flag.
 - `lint`: Code quality across languages
 - `deploy-modal`: Custom executor for Modal deployments
 - `deploy-beam`: Custom executor for Beam deployments

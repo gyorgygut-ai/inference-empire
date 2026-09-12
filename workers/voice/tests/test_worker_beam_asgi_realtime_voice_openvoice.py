@@ -30,30 +30,27 @@ def _app(monkeypatch):
 
 def test_connect_emits_session_created(monkeypatch):
     app = _app(monkeypatch)
-    with TestClient(app) as client:
-        with client.websocket_connect("/v1/realtime") as ws:
-            ev = json.loads(ws.receive_text())
-            assert ev["type"] == "session.created"
+    with TestClient(app) as client, client.websocket_connect("/v1/realtime") as ws:
+        ev = json.loads(ws.receive_text())
+        assert ev["type"] == "session.created"
 
 
 def test_session_update_echoes_voice(monkeypatch):
     app = _app(monkeypatch)
-    with TestClient(app) as client:
-        with client.websocket_connect("/v1/realtime") as ws:
-            ws.receive_text()  # session.created
-            ws.send_text(
-                json.dumps({"type": "session.update", "session": {"voice": "Bob"}})
-            )
-            ev = json.loads(ws.receive_text())
-            assert ev["type"] == "session.updated"
-            assert ev["session"]["voice"] == "Bob"
+    with TestClient(app) as client, client.websocket_connect("/v1/realtime") as ws:
+        ws.receive_text()  # session.created
+        ws.send_text(
+            json.dumps({"type": "session.update", "session": {"voice": "Bob"}})
+        )
+        ev = json.loads(ws.receive_text())
+        assert ev["type"] == "session.updated"
+        assert ev["session"]["voice"] == "Bob"
 
 
 def test_malformed_json_returns_error(monkeypatch):
     app = _app(monkeypatch)
-    with TestClient(app) as client:
-        with client.websocket_connect("/v1/realtime") as ws:
-            ws.receive_text()  # session.created
-            ws.send_text("garbage")
-            ev = json.loads(ws.receive_text())
-            assert ev["type"] == "error"
+    with TestClient(app) as client, client.websocket_connect("/v1/realtime") as ws:
+        ws.receive_text()  # session.created
+        ws.send_text("garbage")
+        ev = json.loads(ws.receive_text())
+        assert ev["type"] == "error"

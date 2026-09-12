@@ -1,0 +1,137 @@
+{
+  "$schema": "./node_modules/nx/schemas/nx-schema.json",
+  "defaultBase": "main",
+  "namedInputs": {
+    "default": [
+      "{projectRoot}/**/*",
+      "sharedGlobals"
+    ],
+    "sharedGlobals": [
+      "{workspaceRoot}/nx.json",
+      "{workspaceRoot}/package.json"
+    ],
+    "contracts": [
+      "{workspaceRoot}/workers/*/contracts/*.json",
+      "{workspaceRoot}/packages/contracts/**/*.json"
+    ],
+    "production": [
+      "!{projectRoot}/**/*.spec.ts",
+      "!{projectRoot}/**/*.test.ts",
+      "!{projectRoot}/tests/**",
+      "!{projectRoot}/.eslintrc.json",
+      "!{projectRoot}/eslint.config.mjs",
+      "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)",
+      "!{projectRoot}/tsconfig.spec.json"
+    ]
+  },
+  "targetDefaults": {
+    "build": {
+      "dependsOn": [
+        "^build"
+      ],
+      "inputs": [
+        "production",
+        "^production"
+      ],
+      "cache": true
+    },
+    "build-manifest": {
+      "inputs": [
+        "contracts"
+      ],
+      "outputs": [
+        "{projectRoot}/src/lib/manifest.json"
+      ],
+      "cache": true
+    },
+    "test-unit": {
+      "inputs": [
+        "default",
+        "^production"
+      ],
+      "cache": true
+    },
+    "test-e2e": {
+      "inputs": [
+        "default",
+        "^production"
+      ],
+      "cache": false
+    },
+    "lint": {
+      "inputs": [
+        "default",
+        "{workspaceRoot}/eslint.config.mjs"
+      ],
+      "cache": true
+    },
+    "typecheck": {
+      "inputs": [
+        "default",
+        "^production"
+      ],
+      "cache": true
+    },
+    "verify-deploy-gate": {
+      "inputs": [
+        "default"
+      ],
+      "cache": true
+    },
+    "deploy": {
+      "dependsOn": [
+        "^deploy"
+      ],
+      "cache": false
+    },
+    "deploy-modal": {
+      "dependsOn": [
+        "verify-deploy-gate"
+      ],
+      "cache": false
+    },
+    "deploy-beam": {
+      "dependsOn": [
+        "verify-deploy-gate"
+      ],
+      "cache": false
+    },
+    "deploy-flash": {
+      "dependsOn": [
+        "verify-deploy-gate"
+      ],
+      "cache": false
+    },
+    "@nx/js:tsc": {
+      "cache": true,
+      "dependsOn": [
+        "^build"
+      ],
+      "inputs": [
+        "production",
+        "^production"
+      ]
+    },
+    "@nx/eslint:lint": {
+      "cache": true,
+      "inputs": [
+        "default",
+        "^default",
+        "{workspaceRoot}/.eslintrc.json",
+        "{workspaceRoot}/.eslintignore",
+        "{workspaceRoot}/eslint.config.mjs",
+        "{workspaceRoot}/tools/eslint-rules/**/*"
+      ]
+    }
+  },
+  "plugins": [
+    "@nx/next",
+    "@nx/react",
+    "@nx/node",
+    "@nx/js",
+    "@nx/vitest",
+    "@nx/eslint"
+  ],
+  "nxCloudAccessToken": "",
+  "useInferencePlugins": false
+}

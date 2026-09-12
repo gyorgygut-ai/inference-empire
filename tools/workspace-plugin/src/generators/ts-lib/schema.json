@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/schema",
+  "$id": "TsLib",
+  "title": "TypeScript lib",
+  "description": "Scaffold a new TypeScript lib under packages/",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Lib dir under packages/ (e.g. workers-core)",
+      "$default": { "$source": "argv", "index": 0 },
+      "x-prompt": "Lib name?"
+    },
+    "scope": {
+      "type": "string",
+      "description": "Scope tag (defaults to name)"
+    }
+  },
+  "required": ["name"]
+}

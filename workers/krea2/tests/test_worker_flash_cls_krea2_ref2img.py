@@ -75,5 +75,5 @@ def test_load_dependencies_mocked(monkeypatch, bucket):
         return bucket, fake_pipe, "/tmp/runtime", fake_torch
 
     monkeypatch.setattr(worker_mod, "load_dependencies", fake_load)
-    storage, pipe, runtime_dir, torch_mod = worker_mod.load_dependencies()
+    storage, _pipe, _runtime_dir, _torch_mod = worker_mod.load_dependencies()
     assert storage is bucket

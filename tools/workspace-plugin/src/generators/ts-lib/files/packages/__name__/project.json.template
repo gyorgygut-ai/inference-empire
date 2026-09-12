@@ -1,0 +1,20 @@
+{
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "name": "<%= name %>",
+  "projectType": "library",
+  "sourceRoot": "packages/<%= name %>/src",
+  "tags": ["type:lib", "scope:<%= scope %>"],
+  "targets": {
+    "typecheck": {
+      "executor": "@nx/js:tsc",
+      "options": {
+        "tsconfig": "{projectRoot}/tsconfig.json"
+      },
+      "cache": true
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "cache": true
+    }
+  }
+}

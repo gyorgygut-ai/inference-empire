@@ -12,7 +12,6 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, field_validat
 from workers.services.media.validation import validate_image_b64, validate_media_b64
 
 if TYPE_CHECKING:
-    from diffsynth.pipelines.minimax_h3_audio_video import MiniMaxH3Pipeline
 
     from workers.services.storage.storage import Storage
 
@@ -194,7 +193,7 @@ def apply_torch_shims() -> None:
         def _dist_unavailable() -> bool:
             return False
 
-        setattr(dist, "is_available", _dist_unavailable)
+        dist.is_available = _dist_unavailable
     except Exception:  # noqa: BLE001, S110
         pass
 
@@ -208,7 +207,7 @@ def apply_torch_shims() -> None:
         except OSError as e:
             raise RuntimeError(f"torch native library failed to load: {path}: {e}") from e
 
-    setattr(torch.ops, "load_library", _patched_load_library)
+    torch.ops.load_library = _patched_load_library
 
 def read_image(base64_str: str):
     import base64
@@ -289,7 +288,7 @@ def load_pipeline(vram_reserve_gb: float = 5.0):
         def _dist_unavailable() -> bool:
             return False
 
-        setattr(dist, "is_available", _dist_unavailable)
+        dist.is_available = _dist_unavailable
     except Exception:  # noqa: BLE001, S110
         pass
 

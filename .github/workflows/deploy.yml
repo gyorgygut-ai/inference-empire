@@ -1,0 +1,21 @@
+name: deploy
+on:
+  push:
+    branches: [main]
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.11"
+      - run: npm ci
+      - run: npx nx affected -t test-unit,lint,typecheck,verify-deploy-gate --base=origin/main
+      - run: npm run deploy:affected

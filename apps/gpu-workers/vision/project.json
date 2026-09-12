@@ -1,0 +1,62 @@
+{
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "name": "gpu-workers-vision",
+  "projectType": "application",
+  "sourceRoot": "apps/gpu-workers/vision",
+  "tags": ["type:app", "scope:gpu", "model:vision"],
+  "targets": {
+    "test-unit": {
+      "executor": "@inference/workspace-plugin:pytest",
+      "options": { "family": "vision", "mode": "unit" },
+      "inputs": ["default"],
+      "cache": true
+    },
+    "test-e2e": {
+      "executor": "@inference/workspace-plugin:pytest",
+      "options": { "family": "vision", "mode": "e2e" },
+      "cache": false
+    },
+    "lint": {
+      "executor": "@inference/workspace-plugin:ruff",
+      "options": { "family": "vision" },
+      "cache": true
+    },
+    "typecheck": {
+      "executor": "@inference/workspace-plugin:ty",
+      "options": { "family": "vision" },
+      "cache": true
+    },
+    "verify-deploy-gate": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "uv run python -c \"from workers.vision._shared_small_vision import IMAGE_PIP_DEPS; print('\\n'.join(IMAGE_PIP_DEPS))\" | uv pip compile --python-version 3.11 -",
+        "cwd": "."
+      },
+      "cache": true
+    },
+    "deploy-modal": {
+      "executor": "nx:run-commands",
+      "options": { "command": "uv run --locked modal deploy workers/vision/worker_modal_cls_small_vision.py", "cwd": "." },
+      "dependsOn": ["verify-deploy-gate"],
+      "cache": false
+    },
+    "deploy-beam": {
+      "executor": "nx:run-commands",
+      "options": { "command": "echo 'Beam deploys on dispatch.put(); see workers/AGENTS.md'", "cwd": "." },
+      "dependsOn": ["verify-deploy-gate"],
+      "cache": false
+    },
+    "deploy-flash": {
+      "executor": "nx:run-commands",
+      "options": { "command": "echo 'flash deploy --name vision; see workers/AGENTS.md'", "cwd": "." },
+      "dependsOn": ["verify-deploy-gate"],
+      "cache": false
+    },
+    "deploy": {
+      "executor": "nx:run-commands",
+      "options": { "command": "echo deploy gpu-workers-vision", "cwd": "." },
+      "dependsOn": ["deploy-modal", "deploy-beam", "deploy-flash"],
+      "cache": false
+    }
+  }
+}

@@ -224,6 +224,7 @@ Rules:
 
 - Tests focus on set input -> expected output
 - Non-voice workers have e2e files; voice workers are unit-only (no e2e)
+- Selection is by filename via `-k "not e2e"` / `-k "e2e"`. No `--target` flag exists.
 
 ---
 

@@ -1,11 +1,14 @@
-import base64
 from types import SimpleNamespace
 
 import pytest
 from pydantic import ValidationError
 
 import workers.h3.worker_beam_tq_minimax_h3_comfy as worker_mod
-from workers.h3._shared_minimax_h3_comfy import MiniMaxH3ComfyInput, MiniMaxH3ComfyOutput, do_inference
+from workers.h3._shared_minimax_h3_comfy import (
+    MiniMaxH3ComfyInput,
+    MiniMaxH3ComfyOutput,
+    do_inference,
+)
 
 
 class _Resp:
@@ -115,8 +118,9 @@ def test_workflow_scheduler_simple_and_steps():
 
 
 def test_ensure_comfy_models_calls_snapshot_download_when_missing(monkeypatch):
-    import workers.h3.worker_beam_tq_minimax_h3_comfy as worker_mod
     from pathlib import Path
+
+    import workers.h3.worker_beam_tq_minimax_h3_comfy as worker_mod
     monkeypatch.setattr(worker_mod.os, "makedirs", lambda *a, **k: None)
     called = {}
     def fake_snapshot(repo_id, local_dir, local_dir_use_symlinks=False, allow_patterns=None):

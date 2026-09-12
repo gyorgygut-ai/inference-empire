@@ -123,7 +123,7 @@ class VoiceChatPipeline:
         def _dist_unavailable() -> bool:
             return False
 
-        setattr(dist, "is_available", _dist_unavailable)
+        dist.is_available = _dist_unavailable
 
         print("[INIT] loading model Qwen/Qwen3-8B + Whisper + XTTS", flush=True)
         t0 = time.time()

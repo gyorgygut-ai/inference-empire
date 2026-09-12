@@ -1,0 +1,2 @@
+// <%= name %> — shared library entry point.
+export {};

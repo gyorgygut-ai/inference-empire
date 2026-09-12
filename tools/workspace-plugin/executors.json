@@ -1,0 +1,19 @@
+{
+  "executors": {
+    "pytest": {
+      "implementation": "./src/executors/pytest/pytest",
+      "schema": "./src/executors/pytest/schema.json",
+      "description": "Run pytest unit or e2e tests for a GPU worker family"
+    },
+    "ruff": {
+      "implementation": "./src/executors/ruff/ruff",
+      "schema": "./src/executors/ruff/schema.json",
+      "description": "Run ruff lint for a GPU worker family"
+    },
+    "ty": {
+      "implementation": "./src/executors/ty/ty",
+      "schema": "./src/executors/ty/schema.json",
+      "description": "Run ty typecheck for a GPU worker family"
+    }
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "skipLibCheck": true,
+    "paths": {
+      "@inference/contracts": [
+        "packages/contracts/src/index.ts"
+      ],
+      "@inference/types": [
+        "packages/types/src/index.ts"
+      ],
+      "@inference/workspace-plugin": [
+        "./tools/workspace-plugin/src/index.ts"
+      ]
+    }
+  }
+}

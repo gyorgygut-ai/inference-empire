@@ -31,7 +31,7 @@ def _run(argv):
 def _json_argv(tool, *args):
     try:
         return json.loads(_run([tool, *args, "--output", "json"]))
-    except Exception:
+    except (subprocess.CalledProcessError, json.JSONDecodeError, FileNotFoundError):
         return None
 
 
@@ -68,10 +68,10 @@ def _describe(image_path, prompt):
             text = data.get("response") or data.get("text") or out
         else:
             text = out
-    except Exception:
+    except (subprocess.CalledProcessError, json.JSONDecodeError, FileNotFoundError):
         try:
             text = _run(["apfel", "-f", str(image_path), prompt])
-        except Exception:
+        except (subprocess.CalledProcessError, FileNotFoundError):
             text = ""
     return text if isinstance(text, str) else json.dumps(text)
 

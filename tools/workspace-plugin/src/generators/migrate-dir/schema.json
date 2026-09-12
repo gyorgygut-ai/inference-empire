@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/schema",
+  "$id": "MigrateDir",
+  "title": "Migrate existing dir",
+  "description": "Migrate an existing dir into Nx layout (git mv + package.json + project.json)",
+  "type": "object",
+  "properties": {
+    "from": {
+      "type": "string",
+      "description": "Existing dir, workspace-relative (e.g. archive/proxy)",
+      "$default": { "$source": "argv", "index": 0 },
+      "x-prompt": "Move from where?"
+    },
+    "to": {
+      "type": "string",
+      "description": "Target dir, workspace-relative (e.g. apps/chat-ui)",
+      "$default": { "$source": "argv", "index": 1 },
+      "x-prompt": "Move to where?"
+    },
+    "kind": {
+      "type": "string",
+      "enum": ["app", "lib", "tool"],
+      "description": "Project kind: app (apps/), lib (packages/), tool (tools/)"
+    },
+    "skipMove": {
+      "type": "boolean",
+      "description": "Internal: skip the git mv (for tests)",
+      "default": false
+    }
+  },
+  "required": ["from", "to", "kind"]
+}

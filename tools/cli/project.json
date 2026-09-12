@@ -1,0 +1,22 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "cli",
+  "projectType": "application",
+  "sourceRoot": "tools/cli",
+  "tags": ["type:tool", "scope:cli"],
+  "targets": {
+    "generate": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "uv run --locked python tools/cli/generate.py",
+        "cwd": "."
+      },
+      "cache": false
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+        "options": { "command": "uvx ruff check tools/cli/generate.py --line-length 100", "cwd": "." },
+      "cache": true
+    }
+  }
+}

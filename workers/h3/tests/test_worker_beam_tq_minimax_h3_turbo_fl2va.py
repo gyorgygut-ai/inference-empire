@@ -5,7 +5,11 @@ import pytest
 from pydantic import ValidationError
 
 import workers.h3.worker_beam_tq_minimax_h3_turbo_fl2va as worker_mod
-from workers.h3._shared_minimax_h3_turbo_fl2va import MiniMaxH3TurboFl2vaInput, MiniMaxH3TurboFl2vaOutput, do_inference
+from workers.h3._shared_minimax_h3_turbo_fl2va import (
+    MiniMaxH3TurboFl2vaInput,
+    MiniMaxH3TurboFl2vaOutput,
+    do_inference,
+)
 from workers.services.inference.video_pipe_fake import FakeVideoPipe
 from workers.services.write_video_audio.write_video_audio_fake import FakeWriteVideoAudio
 

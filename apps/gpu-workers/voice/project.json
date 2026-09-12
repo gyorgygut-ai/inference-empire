@@ -1,0 +1,51 @@
+{
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "name": "gpu-workers-voice",
+  "projectType": "application",
+  "sourceRoot": "apps/gpu-workers/voice",
+  "tags": ["type:app", "scope:gpu", "model:voice"],
+  "targets": {
+    "test-unit": {
+      "executor": "@inference/workspace-plugin:pytest",
+      "options": { "family": "voice", "mode": "unit" },
+      "inputs": ["default"],
+      "cache": true
+    },
+    "lint": {
+      "executor": "@inference/workspace-plugin:ruff",
+      "options": { "family": "voice" },
+      "cache": true
+    },
+    "typecheck": {
+      "executor": "@inference/workspace-plugin:ty",
+      "options": { "family": "voice" },
+      "cache": true
+    },
+    "verify-deploy-gate": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "uv run python -c \"from workers.voice._shared_voice_chat import REALTIME_IMAGE_PIP_DEPS; print('\\n'.join(REALTIME_IMAGE_PIP_DEPS))\" | uv pip compile --python-version 3.11 - && uv run python -c \"from workers.voice._shared_voice_chat import CHATTERBOX_IMAGE_PIP_DEPS; print('\\n'.join(CHATTERBOX_IMAGE_PIP_DEPS))\" | uv pip compile --python-version 3.11 - && uv run python -c \"from workers.voice._shared_voice_chat import OPENVOICE_IMAGE_PIP_DEPS; print('\\n'.join(OPENVOICE_IMAGE_PIP_DEPS))\" | uv pip compile --python-version 3.11 - && uv run python -c \"from workers.voice._shared_voice_chat import QWEN_IMAGE_PIP_DEPS; print('\\n'.join(QWEN_IMAGE_PIP_DEPS))\" | uv pip compile --python-version 3.10 - && uv run python -c \"from workers.voice._shared_voice_chat import CHAT_IMAGE_PIP_DEPS; print('\\n'.join(CHAT_IMAGE_PIP_DEPS))\" | uv pip compile --python-version 3.11 -",
+        "cwd": "."
+      },
+      "cache": true
+    },
+    "deploy-beam": {
+      "executor": "nx:run-commands",
+      "options": { "command": "echo 'Beam ASGI voice deploys via beam; see workers/AGENTS.md'", "cwd": "." },
+      "dependsOn": ["verify-deploy-gate"],
+      "cache": false
+    },
+    "deploy-flash": {
+      "executor": "nx:run-commands",
+      "options": { "command": "echo 'flash deploy --name voice; see workers/AGENTS.md'", "cwd": "." },
+      "dependsOn": ["verify-deploy-gate"],
+      "cache": false
+    },
+    "deploy": {
+      "executor": "nx:run-commands",
+      "options": { "command": "echo deploy gpu-workers-voice", "cwd": "." },
+      "dependsOn": ["deploy-beam", "deploy-flash"],
+      "cache": false
+    }
+  }
+}

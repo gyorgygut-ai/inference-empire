@@ -127,7 +127,7 @@ def _patch_torch_load():
         kwargs.setdefault("weights_only", False)
         return _orig(*args, **kwargs)
 
-    setattr(_load, "_patched", True)
+    _load._patched = True
     torch.load = cast(Any, _load)
 
 

@@ -11,6 +11,7 @@ from workers.krea2._shared_krea2_ref2img import (
     do_inference,
     load_dependencies,
 )
+
 if TYPE_CHECKING:
     from workers.services.storage.storage import Storage
 

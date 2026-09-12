@@ -1,0 +1,43 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "infra-router",
+  "projectType": "application",
+  "sourceRoot": "apps/infra-router/src",
+  "tags": ["type:app", "scope:edge"],
+  "implicitDependencies": ["gpu-workers-flux2", "gpu-workers-krea2", "gpu-workers-vision", "gpu-workers-tiny-sd", "gpu-workers-h3", "gpu-workers-voice"],
+  "targets": {
+    "test-unit": {
+      "executor": "@nx/vitest:test",
+      "options": {
+        "config": "{projectRoot}/vitest.config.ts"
+      },
+      "inputs": ["default"],
+      "cache": true
+    },
+    "typecheck": {
+      "executor": "@nx/js:tsc",
+      "options": {
+        "tsconfig": "{projectRoot}/tsconfig.json"
+      },
+      "cache": true
+    },
+    "deploy": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx wrangler deploy",
+        "cwd": "apps/infra-router"
+      },
+      "dependsOn": ["^deploy"],
+      "cache": false
+    },
+    "dev": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx wrangler dev",
+        "cwd": "apps/infra-router"
+      },
+      "cache": false,
+      "persistent": true
+    }
+  }
+}

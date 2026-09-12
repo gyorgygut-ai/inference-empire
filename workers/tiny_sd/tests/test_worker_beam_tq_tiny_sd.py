@@ -6,9 +6,9 @@ from PIL import Image
 from pydantic import ValidationError
 
 import workers.tiny_sd.worker_beam_tq_tiny_sd as worker_mod
-from workers.tiny_sd._shared_tiny_sd import TinySDInput, TinySDOutput, do_inference
 from workers.services.inference.image_pipe_fake import FakeImagePipe
 from workers.services.torch_module.torch_module_fake import FakeTorchModule
+from workers.tiny_sd._shared_tiny_sd import TinySDInput, TinySDOutput, do_inference
 
 
 def _png_bytes(img):
@@ -79,7 +79,7 @@ def test_load_dependencies_mocked(monkeypatch, bucket):
         return bucket, fake_pipe, fake_torch
 
     monkeypatch.setattr(worker_mod, "load_dependencies", fake_load)
-    storage, pipe, torch_mod = worker_mod.load_dependencies()
+    storage, _pipe, _torch_mod = worker_mod.load_dependencies()
     assert storage is bucket
 
 

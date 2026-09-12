@@ -4,9 +4,29 @@ This is a monorepo for all my custom inference related code.
 
 ## Key Components / Subfolders
 
-- [Chat GUI](./gui/AGENTS.md)
+- [Chat GUI](./apps/chat-ui/AGENTS.md)
 - [Cloud GPU Workers](./workers/AGENTS.md)
-- [Inference Router Proxy](./proxy/AGENTS.md)
+- [Inference Router Proxy](./apps/infra-router/AGENTS.md) (legacy copy: `./archive/proxy/AGENTS.md`)
+
+---
+
+## Core Nx Commands
+
+- `npm run test-unit` — run all unit tests (Nx orchestrated).
+- `npm run test-e2e` — run live e2e tests (costs GPU/provider calls).
+- `npm run lint` — lint everything.
+- `npm run build` — build everything.
+- `npm run generate` — run the worker prompt generator (`nx run cli:generate`, code in `tools/cli/generate.py`).
+- `npx nx run <project>:<target>` — run one target, e.g. `npx nx run chat-ui:build`.
+- `npx nx show projects` — list all projects (source of truth, never hardcode).
+- `npx nx show project <name>` — targets, executors and tags for one project.
+- `npx nx graph` — visual project/task dependency graph.
+- `npx nx g workspace-plugin:<gpu-family|ts-app|ts-lib|migrate-dir> [--dry-run]` — new or migrated projects; never hand-write `project.json`.
+- `npx nx run types:generate` — regenerate TS types after any contract edit; commit `packages/types/src/generated.ts`.
+
+Python selection is filename-based (`-k "not e2e"` / `-k "e2e"`); never invent
+`--target` flags and never edit tests to fit the runner. `archive/` is frozen
+legacy — never edit. `workers/` stays live (`workers.*` imports unchanged).
 
 ---
 

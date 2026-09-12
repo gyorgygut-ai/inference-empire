@@ -101,7 +101,7 @@ def load_pipeline(cache_dir=None):
     def _dist_unavailable() -> bool:
         return False
 
-    setattr(dist, "is_available", _dist_unavailable)
+    dist.is_available = _dist_unavailable
 
     print("[INIT] loading model krea/Krea-2-Turbo", flush=True)
     t0 = time.time()

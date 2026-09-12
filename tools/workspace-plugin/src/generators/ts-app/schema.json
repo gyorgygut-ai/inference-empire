@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/schema",
+  "$id": "TsApp",
+  "title": "TypeScript app",
+  "description": "Scaffold a new TypeScript app under apps/",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "App dir under apps/ (e.g. infra-router)",
+      "$default": { "$source": "argv", "index": 0 },
+      "x-prompt": "App name?"
+    },
+    "scope": {
+      "type": "string",
+      "description": "Scope tag (defaults to name)"
+    }
+  },
+  "required": ["name"]
+}

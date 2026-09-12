@@ -1,10 +1,13 @@
-import base64
 
 import pytest
 from pydantic import ValidationError
 
 import workers.h3.worker_modal_cls_minimax_h3_comfy as worker_mod
-from workers.h3._shared_minimax_h3_comfy import MiniMaxH3ComfyInput, MiniMaxH3ComfyOutput, do_inference
+from workers.h3._shared_minimax_h3_comfy import (
+    MiniMaxH3ComfyInput,
+    MiniMaxH3ComfyOutput,
+    do_inference,
+)
 
 
 class _Resp:
@@ -120,8 +123,9 @@ def test_first_last_frame_workflow_and_images():
 
 def test_ensure_comfy_models_calls_snapshot_download_when_missing(monkeypatch, tmp_path):
     # Mock filesystem operations to avoid real /comfyui writes
-    import workers.h3.worker_modal_cls_minimax_h3_comfy as worker_mod
     from pathlib import Path
+
+    import workers.h3.worker_modal_cls_minimax_h3_comfy as worker_mod
     monkeypatch.setattr(worker_mod.os, "makedirs", lambda *a, **k: None)
     # Simulate /comfyui not writable by raising OSError on makedirs for models
     # Actually we let OSError path swallow; just test snapshot_download call

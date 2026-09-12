@@ -39,7 +39,7 @@ def apply_torch_shims() -> None:
         def _dist_unavailable() -> bool:
             return False
 
-        setattr(dist, "is_available", _dist_unavailable)
+        dist.is_available = _dist_unavailable
     except Exception:  # noqa: BLE001, S110
         pass
 

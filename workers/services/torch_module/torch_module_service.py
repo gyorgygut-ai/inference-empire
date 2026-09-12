@@ -13,7 +13,7 @@ class TorchModuleService:
         def _dist_unavailable() -> bool:
             return False
 
-        setattr(dist, "is_available", _dist_unavailable)
+        dist.is_available = _dist_unavailable
 
     def __getattr__(self, name: str):
         return getattr(torch, name)

@@ -41,6 +41,9 @@ Thumbs.db
 .coverage
 htmlcov/
 
+# Generated files
+**/manifest.json
+
 # Flash
 .flash/
 .flashignore
@@ -68,4 +71,8 @@ node_modules
 .claude/worktrees
 .claude/settings.local.json
 # Secrets
-.env
+**/.env
+**/.env.local
+**/.dev.vars
+
+vitest.config.*.timestamp*

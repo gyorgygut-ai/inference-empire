@@ -49,7 +49,7 @@ class Chatterbox:
         # PerthImplicitWatermarker resolve to None and from_pretrained() crashes.
         # Fall back to the bundled dummy watermarker (audio is just unwatermarked).
         if getattr(perth, "PerthImplicitWatermarker", None) is None:
-            setattr(perth, "PerthImplicitWatermarker", perth.DummyWatermarker)
+            perth.PerthImplicitWatermarker = perth.DummyWatermarker
 
         try:
             ChatterboxTTS = importlib.import_module("chatterbox.tts").ChatterboxTTS

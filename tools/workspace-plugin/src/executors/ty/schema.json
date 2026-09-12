@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/schema",
+  "version": 2,
+  "title": "Ty executor",
+  "description": "Run ty typecheck for a GPU worker family",
+  "type": "object",
+  "properties": {
+    "family": {
+      "type": "string",
+      "description": "Worker family dir under workers/ (e.g. tiny_sd)"
+    }
+  },
+  "required": ["family"]
+}

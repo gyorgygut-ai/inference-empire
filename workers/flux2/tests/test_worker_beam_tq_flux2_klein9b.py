@@ -1,13 +1,16 @@
 import io
 from types import SimpleNamespace
-from unittest.mock import MagicMock
 
 import pytest
 from PIL import Image
 from pydantic import ValidationError
 
 import workers.flux2.worker_beam_tq_flux2_klein9b as worker_mod
-from workers.flux2._shared_flux2_klein9b import Flux2Klein9bInput, Flux2Klein9bOutput, do_inference, load_dependencies
+from workers.flux2._shared_flux2_klein9b import (
+    Flux2Klein9bInput,
+    Flux2Klein9bOutput,
+    do_inference,
+)
 from workers.services.inference.image_pipe_fake import FakeImagePipe
 from workers.services.torch_module.torch_module_fake import FakeTorchModule
 

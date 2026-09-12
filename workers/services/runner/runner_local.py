@@ -1,8 +1,6 @@
 """Local runners: HTTP calls to each platform's mock server for queue simulation."""
 from __future__ import annotations
 
-import time
-
 import requests
 
 FLASH_URL = "http://127.0.0.1:9000"

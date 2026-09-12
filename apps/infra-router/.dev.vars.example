@@ -1,0 +1,11 @@
+# Local dev vars for `wrangler dev` (never commit real values).
+# Copy to .dev.vars and fill in after rotating the previously tracked secrets.
+# See workers/AGENTS.md for provider auth details.
+RUNPOD_API_KEY=""
+MODAL_TOKEN_ID=""
+MODAL_TOKEN_SECRET=""
+BEAM_TOKEN=""
+HF_TOKEN=""
+R2_ACCOUNT_ID=""
+R2_ACCESS_KEY_ID=""
+R2_SECRET_ACCESS_KEY=""

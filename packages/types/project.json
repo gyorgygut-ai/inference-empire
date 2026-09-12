@@ -1,0 +1,22 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "types",
+  "projectType": "library",
+  "sourceRoot": "packages/types/src",
+  "tags": ["type:lib", "scope:shared"],
+  "targets": {
+    "generate": {
+      "executor": "nx:run-commands",
+      "options": { "command": "node scripts/generate.mjs", "cwd": "packages/types" },
+      "inputs": ["{workspaceRoot}/packages/contracts/src/*.json"],
+      "outputs": ["{projectRoot}/src/generated.ts"],
+      "cache": true
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": { "command": "npx tsc --noEmit -p ../../tsconfig.base.json", "cwd": "packages/types" },
+      "dependsOn": ["generate"],
+      "cache": true
+    }
+  }
+}

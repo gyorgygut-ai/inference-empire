@@ -6,8 +6,13 @@ from PIL import Image
 from pydantic import ValidationError
 
 import workers.vision.worker_modal_cls_small_vision as worker_mod
-from workers.vision._shared_small_vision import SmallVisionInput, SmallVisionOutput, build_analyze_prompt, do_inference
 from workers.services.inference.vision_fake import FakeVisionModel, FakeVisionProcessor
+from workers.vision._shared_small_vision import (
+    SmallVisionInput,
+    SmallVisionOutput,
+    build_analyze_prompt,
+    do_inference,
+)
 
 
 def _image_b64():
@@ -73,5 +78,5 @@ def test_load_dependencies_mocked(monkeypatch):
         return fake_model, fake_processor, fake_prompt
 
     monkeypatch.setattr(worker_mod, "load_dependencies", fake_load)
-    model, processor, prompt = worker_mod.load_dependencies()
+    model, _processor, _prompt = worker_mod.load_dependencies()
     assert model is fake_model

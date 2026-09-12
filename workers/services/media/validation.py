@@ -81,7 +81,7 @@ def validate_image_b64(value: str, field: str) -> str:
             img.verify()
         with Image.open(io.BytesIO(blob)) as img:
             width, height = img.size
-    except Exception as exc:  # noqa: BLE001 — any PIL failure means "not an image"
+    except Exception as exc:
         preview = blob[:32]
         raise ValueError(
             f"{field}: decodes but is not an image "

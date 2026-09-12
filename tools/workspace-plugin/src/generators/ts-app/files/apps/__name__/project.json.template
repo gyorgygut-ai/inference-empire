@@ -1,0 +1,28 @@
+{
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "name": "<%= name %>",
+  "projectType": "application",
+  "sourceRoot": "apps/<%= name %>/src",
+  "tags": ["type:app", "scope:<%= scope %>"],
+  "targets": {
+    "test-unit": {
+      "executor": "@nx/vitest:test",
+      "options": {
+        "config": "{projectRoot}/vitest.config.ts"
+      },
+      "inputs": ["default"],
+      "cache": true
+    },
+    "typecheck": {
+      "executor": "@nx/js:tsc",
+      "options": {
+        "tsconfig": "{projectRoot}/tsconfig.json"
+      },
+      "cache": true
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "cache": true
+    }
+  }
+}
