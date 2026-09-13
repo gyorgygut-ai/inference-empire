@@ -41,6 +41,13 @@ Thumbs.db
 .coverage
 htmlcov/
 
+# Temporary verification files
+.tmp_verify_*
+.tmp_verify_*.py
+
+# Legacy archive (frozen, do not edit)
+archive/
+
 # Generated files
 **/manifest.json
 

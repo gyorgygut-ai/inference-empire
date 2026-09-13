@@ -1,4 +1,4 @@
-# Agent Implementation Spec
+# Inference Empire
 
 This is a monorepo for all my custom inference related code.
 
