@@ -1,0 +1,11 @@
+{
+  "name": "automation",
+  "projectType": "application",
+  "sourceRoot": "tools/automation",
+  "tags": ["type:tool", "scope:automation"],
+  "targets": {
+    "auth": { "executor": "nx:run-commands", "options": { "command": "./automation-auth.sh", "cwd": "tools/automation" } },
+    "api": { "executor": "nx:run-commands", "options": { "command": "./automation", "cwd": "tools/automation" } },
+    "find": { "executor": "nx:run-commands", "options": { "command": "./automation-find", "cwd": "tools/automation" } }
+  }
+}

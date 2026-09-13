@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+# find-dirigera.sh - locate an IKEA Dirigera hub (same or routed subnet)
+set -euo pipefail
+
+API_PORT=8443
+IKEA_OUI="68:ec:8a|e8:59:3f"
+WAIT=6
+CANDIDATE_SUBNETS=(192.168.0.0/24 192.168.2.0/24 192.168.4.0/24 10.0.0.0/24 10.0.1.0/24)
+
+verify() {  # $1 = ip
+  curl -k -s -m 4 "https://$1:${API_PORT}/" >/dev/null 2>&1 && { echo "$1"; return 0; }
+  return 1
+}
+
+# --- 1. mDNS ---
+mdns_host() {
+  local svc pid out h
+  for svc in _ihsp._tcp _dirigera._tcp _hap._tcp; do
+    out=$( ( dns-sd -B "$svc" local & pid=$!; sleep "$WAIT"; kill "$pid" 2>/dev/null ) 2>&1 )
+    h=$(printf '%s\n' "$out" | grep -oE '(gw2|dirigera)-[A-Za-z0-9_-]+' | head -1)
+    [ -n "$h" ] && { printf '%s.local' "$h"; return 0; }
+  done
+  return 1
+}
+
+# --- 2. local ARP ---
+arp_find() {
+  local base
+  base=$(ipconfig getifaddr en0 | sed 's/\.[0-9]*$//') || return 1
+  for i in $(seq 1 254); do ping -c1 -t1 "${base}.${i}" >/dev/null 2>&1 & done; wait
+  arp -a | awk -v oui="$IKEA_OUI" 'tolower($0) ~ oui {print $2}' | tr -d '()'
+}
+
+# --- 3. port 8443 sweep (parallel, hard-capped per subnet) ---
+scan_subnet() {  # $1=subnet $2=outfile
+  ( nmap -p "$API_PORT" --open -T4 --max-retries 1 --host-timeout 1s --min-rate 500 \
+        -oG - "$1" > "$2" 2>/dev/null & pid=$!
+    sleep 25
+    kill "$pid" 2>/dev/null )
+}
+port_find() {
+  local base sub tmp i
+  base=$(ipconfig getifaddr en0 | sed 's/\.[0-9]*$//')
+  tmp=$(mktemp -d)
+  i=0
+  for sub in "${base}.0/24" "${CANDIDATE_SUBNETS[@]}"; do
+    scan_subnet "$sub" "$tmp/$i" &
+    i=$((i+1))
+  done
+  wait
+  for f in "$tmp"/*; do
+    awk -v p=":$API_PORT" '$2=="Host" && $3=="Up" && $0 ~ p {print $1}' "$f"
+  done
+  rm -rf "$tmp"
+}
+
+echo "1) mDNS ..."
+if h=$(mdns_host); then
+  ip=$( ( dns-sd -G v4 "$h" & p=$!; sleep "$WAIT"; kill $p ) 2>&1 | awk 'NR>1&&$5~/^[0-9.]+$/{print $5;exit}' )
+  if [ -n "$ip" ] && verify "$ip"; then echo "Found via mDNS: $ip"; echo "  api: https://$ip:${API_PORT}/"; exit 0; fi
+fi
+
+echo "2) local ARP (IKEA OUI $IKEA_OUI) ..."
+for ip in $(arp_find); do
+  if verify "$ip"; then echo "Found via ARP: $ip"; echo "  api: https://$ip:${API_PORT}/"; exit 0; fi
+done
+
+echo "3) port ${API_PORT} sweep (routed subnets) ..."
+for ip in $(port_find); do
+  if verify "$ip"; then echo "Found via port scan: $ip"; echo "  api: https://$ip:${API_PORT}/"; exit 0; fi
+done
+
+echo "Dirigera not reachable from this Mac."
+echo "Diagnosis: your router isolates Wi-Fi/IoT clients (separate VLAN or AP-isolation),"
+echo "and blocks cross-subnet initiation, so discovery can't run from here."
+echo
+echo "To get the hub IP, pick one:"
+echo "  A) Connect THIS Mac to the same Wi-Fi the hub uses (or disable AP/SSID"
+echo "     isolation on the router), then re-run this script -- it will find it instantly."
+echo "  B) Log into the router (http://192.168.1.1 -- Technicolor/Arcadyan gateway,"
+echo "     use the admin password on the sticker) and find the device named 'dirigera-*'"
+echo "     or with MAC OUI $IKEA_OUI. Then verify with:"
+echo "       curl -k https://<that-ip>:${API_PORT}/"
+echo "  C) If you give me the router admin password, I can try scripting its device list."
+exit 1
