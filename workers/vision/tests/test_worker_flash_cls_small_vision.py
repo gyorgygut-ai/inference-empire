@@ -12,6 +12,7 @@ from workers.vision._shared_small_vision import (
     SmallVisionOutput,
     build_analyze_prompt,
     do_inference,
+    resolve_analyze_prompt,
 )
 
 
@@ -58,6 +59,43 @@ def test_generate_returns_classification():
 def test_generate_rejects_missing_image():
     with pytest.raises(ValidationError):
         worker_mod.generate(FakeVisionModel(CANNED), FakeVisionProcessor(CANNED), "fake-prompt")
+
+
+def test_generate_uses_default_when_prompt_omitted():
+    req = SmallVisionInput(image_base64=_image_b64())
+    assert req.prompt is None
+    out = worker_mod.generate(FakeVisionModel(CANNED), FakeVisionProcessor(CANNED), "fake-prompt", image_base64=_image_b64())
+    assert out == CANNED
+
+
+def test_generate_uses_custom_prompt_override():
+    seen: dict = {}
+
+    class _RecordingProcessor(FakeVisionProcessor):
+        def apply_chat_template(self, messages, **kwargs):
+            seen["messages"] = messages
+            return super().apply_chat_template(messages, **kwargs)
+
+    out = worker_mod.generate(
+        FakeVisionModel(CANNED),
+        _RecordingProcessor(CANNED),
+        "fake-default",
+        image_base64=_image_b64(),
+        prompt="custom detailed analyze instruction",
+    )
+    assert out == CANNED
+    texts = [c.get("text", "") for m in seen["messages"] for c in m.get("content", []) if c.get("type") == "text"]
+    assert any("custom detailed analyze instruction" in t for t in texts)
+
+
+def test_resolve_analyze_prompt_prefers_override():
+    assert resolve_analyze_prompt("default", None) == "default"
+    assert resolve_analyze_prompt("default", "custom") == "custom"
+
+
+def test_input_rejects_non_string_prompt():
+    with pytest.raises(ValidationError):
+        SmallVisionInput(image_base64=_image_b64(), prompt=123)
 
 
 def test_do_inference_rejects_non_json():

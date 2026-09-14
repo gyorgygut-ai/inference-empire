@@ -3,7 +3,12 @@
     "title": "SmallVisionInput",
     "required": ["image_base64"],
     "properties": {
-      "image_base64": { "type": "string" }
+      "image_base64": { "type": "string" },
+      "prompt": {
+        "type": ["string", "null"],
+        "default": null,
+        "description": "Custom analyze instruction override. Null uses built-in default."
+      }
     }
   },
   "output": {

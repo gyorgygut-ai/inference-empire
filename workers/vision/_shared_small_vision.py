@@ -7,7 +7,7 @@ import time
 from pathlib import Path
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, ValidationInfo, field_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, field_validator
 
 from workers.services.media.validation import validate_image_b64
 
@@ -46,6 +46,10 @@ def _load_dotenv() -> None:
 class SmallVisionInput(BaseModel):
     model_config = ConfigDict(title="SmallVisionInput")
     image_base64: str
+    prompt: str | None = Field(
+        default=None,
+        description="Custom analyze instruction override. Null uses built-in default.",
+    )
 
     @field_validator("image_base64")
     @classmethod
@@ -87,6 +91,11 @@ def build_analyze_prompt() -> str:
 - classification: one of [{classification_values}]
 - subjects: array of strings (describe each main subject including people, e.g., "woman in red dress", "golden retriever")
 - description: string (concise natural language description including any visible text)"""
+
+
+def resolve_analyze_prompt(loaded_default: str, override: str | None) -> str:
+    """Return caller override when set, else the built-in default prompt."""
+    return override if override else loaded_default
 
 def load_models(cache_dir=None):
     """Production path: always boots the real model."""

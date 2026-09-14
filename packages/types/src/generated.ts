@@ -149,6 +149,7 @@ export interface RealtimeVoiceQwenOutput {
 
 export interface SmallVisionInput {
   image_base64: string
+  prompt?: string | null
 }
 
 export interface SmallVisionOutput {
