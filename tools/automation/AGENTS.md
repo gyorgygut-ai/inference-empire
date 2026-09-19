@@ -139,27 +139,47 @@ done
 
 ```bash
 #!/bin/bash
-RED='eb6623f9-c1f8-4830-b4fb-5b29f92c43e7_1'
-BLUE='2deca4ae-eb4d-45b3-b022-3c90475ca8a9_1'
+RED=('eb6623f9-c1f8-4830-b4fb-5b29f92c43e7_1' '6f78552b-687d-43e4-ab8a-994b722ca79c_1')
+BLUE=('2deca4ae-eb4d-45b3-b022-3c90475ca8a9_1' 'e6cef233-7b27-466d-9c28-e6f7947822e4_1')
 while true; do
-  curl -sk -X PATCH -H "Authorization: Bearer $(automation token)" \
-    -H "Content-Type: application/json" \
-    -d '{"attributes":{"isOn":true,"lightLevel":200,"colorHue":0,"colorSaturation":100}}' \
-    "https://192.168.1.64:8443/v1/devices/$RED"
-  curl -sk -X PATCH -H "Authorization: Bearer $(automation token)" \
-    -H "Content-Type: application/json" \
-    -d '{"attributes":{"isOn":false}}' \
-    "https://192.168.1.64:8443/v1/devices/$BLUE"
-  sleep 0.15
-  curl -sk -X PATCH -H "Authorization: Bearer $(automation token)" \
-    -H "Content-Type: application/json" \
-    -d '{"attributes":{"isOn":false,"lightLevel":100}}' \
-    "https://192.168.1.64:8443/v1/devices/$RED"
-  curl -sk -X PATCH -H "Authorization: Bearer $(automation token)" \
-    -H "Content-Type: application/json" \
-    -d '{"attributes":{"isOn":true,"lightLevel":200,"colorHue":43691,"colorSaturation":100}}' \
-    "https://192.168.1.64:8443/v1/devices/$BLUE"
-  sleep 0.15
+  for id in "${RED[@]}"; do
+    curl -sk -X PATCH -H "Authorization: Bearer $(automation token)" -H "Content-Type: application/json" \
+      -d '{"attributes":{"isOn":true,"lightLevel":200,"colorHue":0,"colorSaturation":100}}' \
+      "https://192.168.1.64:8443/v1/devices/$id"
+  done
+  for id in "${BLUE[@]}"; do
+    curl -sk -X PATCH -H "Authorization: Bearer $(automation token)" -H "Content-Type: application/json" \
+      -d '{"attributes":{"isOn":true,"lightLevel":200,"colorHue":43691,"colorSaturation":100}}' \
+      "https://192.168.1.64:8443/v1/devices/$id"
+  done
+  sleep 0.25
+  for id in "${RED[@]}" "${BLUE[@]}"; do
+    curl -sk -X PATCH -H "Authorization: Bearer $(automation token)" -H "Content-Type: application/json" \
+      -d '{"attributes":{"isOn":false}}' \
+      "https://192.168.1.64:8443/v1/devices/$id"
+  done
+  sleep 0.25
+done
+```
+
+### Strobe (White Flash)
+
+```bash
+#!/bin/bash
+BULBS=("eb6623f9-c1f8-4830-b4fb-5b29f92c43e7_1" "2deca4ae-eb4d-45b3-b022-3c90475ca8a9_1" "e6cef233-7b27-466d-9c28-e6f7947822e4_1" "6f78552b-687d-43e4-ab8a-994b722ca79c_1")
+while true; do
+  for id in "${BULBS[@]}"; do
+    curl -sk -X PATCH -H "Authorization: Bearer $(automation token)" -H "Content-Type: application/json" \
+      -d '{"attributes":{"isOn":true,"lightLevel":254,"colorTemperature":4000}}' \
+      "https://192.168.1.64:8443/v1/devices/$id"
+  done
+  sleep 0.05
+  for id in "${BULBS[@]}"; do
+    curl -sk -X PATCH -H "Authorization: Bearer $(automation token)" -H "Content-Type: application/json" \
+      -d '{"attributes":{"isOn":false}}' \
+      "https://192.168.1.64:8443/v1/devices/$id"
+  done
+  sleep 0.05
 done
 ```
 
