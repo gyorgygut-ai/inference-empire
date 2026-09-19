@@ -4,7 +4,7 @@ import type { PytestExecutorSchema } from './schema';
 
 export function buildCommand(family: string, mode: 'unit' | 'e2e'): string {
   const k = mode === 'e2e' ? 'e2e' : 'not e2e';
-  return `uv run --locked pytest workers/${family}/tests/ -k "${k}" -q`;
+  return `uv run --locked pytest apps/gpu-workers/${family}/tests/ -k "${k}" -q`;
 }
 
 const runExecutor: PromiseExecutor<PytestExecutorSchema> = async (

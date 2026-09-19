@@ -1,0 +1,56 @@
+{
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "name": "gpu-workers-tiny-sd",
+  "projectType": "application",
+  "sourceRoot": "apps/gpu-workers/tiny_sd",
+  "tags": ["type:app", "scope:gpu", "model:tiny-sd"],
+  "targets": {
+    "test-unit": {
+      "executor": "@inference/workspace-plugin:pytest",
+      "options": { "family": "tiny_sd", "mode": "unit" },
+      "inputs": ["default"],
+      "cache": true
+    },
+    "test-e2e": {
+      "executor": "@inference/workspace-plugin:pytest",
+      "options": { "family": "tiny_sd", "mode": "e2e" },
+      "cache": false
+    },
+    "lint": {
+      "executor": "@inference/workspace-plugin:ruff",
+      "options": { "family": "tiny_sd" },
+      "cache": true
+    },
+    "typecheck": {
+      "executor": "@inference/workspace-plugin:ty",
+      "options": { "family": "tiny_sd" },
+      "cache": true
+    },
+    "verify-deploy-gate": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "uv run python -c \"from apps.gpu_workers.tiny_sd._shared_tiny_sd import IMAGE_PIP_DEPS; print('\\n'.join(IMAGE_PIP_DEPS))\" | uv pip compile --python-version 3.11 -",
+        "cwd": "."
+      },
+      "cache": true
+    },
+    "deploy-modal": {
+      "executor": "nx:run-commands",
+      "options": { "command": "uv run --locked modal deploy tiny_sd/worker_modal_cls_tiny_sd.py", "cwd": "." },
+      "dependsOn": ["verify-deploy-gate"],
+      "cache": false
+    },
+    "deploy-beam": {
+      "executor": "nx:run-commands",
+      "options": { "command": "echo 'Beam deploys on dispatch.put(); see AGENTS.md'", "cwd": "." },
+      "dependsOn": ["verify-deploy-gate"],
+      "cache": false
+    },
+    "deploy-flash": {
+      "executor": "nx:run-commands",
+      "options": { "command": "echo 'flash deploy --name tiny-sd; see AGENTS.md'", "cwd": "." },
+      "dependsOn": ["verify-deploy-gate"],
+      "cache": false
+    }
+  }
+}

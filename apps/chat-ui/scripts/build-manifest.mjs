@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url"
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
-const workersDir = resolve(__dirname, "../../../workers")
+const workersDir = resolve(__dirname, "../../../apps/gpu-workers")
 const outPath = resolve(__dirname, "../src/lib/manifest.json")
 
 function walk(dir, out = []) {

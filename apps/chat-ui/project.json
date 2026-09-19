@@ -13,8 +13,8 @@
         "cwd": "apps/chat-ui"
       },
       "inputs": [
-        "{workspaceRoot}/workers/*/contracts/*.json",
-        "{workspaceRoot}/workers/**/worker_*.py"
+        "{workspaceRoot}/apps/gpu-workers/*/contracts/*.json",
+        "{workspaceRoot}/apps/gpu-workers/**/worker_*.py"
       ],
       "outputs": ["{projectRoot}/src/lib/manifest.json"],
       "cache": true

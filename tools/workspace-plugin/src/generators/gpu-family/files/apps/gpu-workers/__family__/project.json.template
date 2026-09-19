@@ -29,26 +29,26 @@
     "verify-deploy-gate": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "uv run python -c \"from workers.<%= family %>._shared_<%= family %> import IMAGE_PIP_DEPS; print('\\n'.join(IMAGE_PIP_DEPS))\" | uv pip compile --python-version <%= pythonVersion %> -",
+        "command": "uv run python -c \"from apps.gpu_workers.<%= family %>._shared_<%= family %> import IMAGE_PIP_DEPS; print('\\n'.join(IMAGE_PIP_DEPS))\" | uv pip compile --python-version <%= pythonVersion %> -",
         "cwd": "."
       },
       "cache": true
     },
     "deploy-modal": {
       "executor": "nx:run-commands",
-      "options": { "command": "uv run --locked modal deploy workers/<%= family %>/worker_modal_cls_<%= family %>.py", "cwd": "." },
+      "options": { "command": "uv run --locked modal deploy <%= family %>/worker_modal_cls_<%= family %>.py", "cwd": "." },
       "dependsOn": ["verify-deploy-gate"],
       "cache": false
     },
     "deploy-beam": {
       "executor": "nx:run-commands",
-      "options": { "command": "echo 'Beam deploys on dispatch.put(); see workers/AGENTS.md'", "cwd": "." },
+      "options": { "command": "echo 'Beam deploys on dispatch.put(); see AGENTS.md'", "cwd": "." },
       "dependsOn": ["verify-deploy-gate"],
       "cache": false
     },
     "deploy-flash": {
       "executor": "nx:run-commands",
-      "options": { "command": "echo 'flash deploy --name <%= modelTag %>; see workers/AGENTS.md'", "cwd": "." },
+      "options": { "command": "echo 'flash deploy --name <%= modelTag %>; see AGENTS.md'", "cwd": "." },
       "dependsOn": ["verify-deploy-gate"],
       "cache": false
     }

@@ -8,14 +8,14 @@
     "test-unit": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "uv run --locked pytest workers/services -q",
+        "command": "uv run --locked pytest apps/gpu-workers/services -q",
         "cwd": "."
       },
       "cache": true
     },
     "lint": {
       "executor": "nx:run-commands",
-      "options": { "command": "uvx ruff check workers/services --line-length 100", "cwd": "." },
+      "options": { "command": "uvx ruff check apps/gpu-workers/services --line-length 100", "cwd": "." },
       "cache": true
     }
   }

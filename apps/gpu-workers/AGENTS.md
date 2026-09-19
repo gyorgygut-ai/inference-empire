@@ -70,7 +70,7 @@ Only these patterns exist in the repo — do not invent others:
   uv run python -c "from workers.krea2._shared_krea2_ref2img import IMAGE_PIP_DEPS; print('\n'.join(IMAGE_PIP_DEPS))" | uv pip compile --python-version 3.11 -
   ```
   Non-zero exit = do not deploy, fix the table. Voice tables live in
-  `workers/voice/_shared_voice_chat.py` (one per runtime: `REALTIME`,
+  `apps/gpu-workers/voice/_shared_voice_chat.py` (one per runtime: `REALTIME`,
   `CHATTERBOX`, `OPENVOICE`, `QWEN`, `CHAT`); the `QWEN` table targets a
   python3.10 image, so gate it with `--python-version 3.10`.
 - **Torch load shim** (required for flash/beam/modal):
@@ -136,7 +136,7 @@ worker module, `modal app stop` in a `finally` block). No shared fixtures.
 Deploy:
 
 ```bash
-uv run --locked modal deploy workers/<model>/worker_modal_cls_*.py
+uv run --locked modal deploy <model>/worker_modal_cls_*.py
 ```
 
 Run manually (no tests):
@@ -180,7 +180,7 @@ When something fails: `out is None` or `[ERR]` in logs → inspect `on_start` / 
 unreachable, reproduce the failure in a fresh shell container instead:
 
 ```bash
-beam shell workers/<model>/worker_beam_tq_*.py:dispatch   # new container, cold start
+beam shell <model>/worker_beam_tq_*.py:dispatch   # new container, cold start
 ```
 
 In-shell, re-run the real worker path and watch tags live:
@@ -213,12 +213,12 @@ Run in-process: `TinySDWorker().generate(**GOOD)`. When something fails: `[ERR]`
 
 ## Test Strategy
 
-Verified commands (see `workers/VERIFICATION.md` — 166 unit passed):
+Verified commands (see `AGENTS.md` — 166 unit passed):
 
-- All unit: `uv run --locked pytest workers/ -k "not e2e"`
-- Per model unit: `uv run --locked pytest workers/<model>/tests/ -k "not e2e"`
-- All e2e: `uv run --locked pytest workers/ -k "e2e"`
-- Per model e2e: `uv run --locked pytest workers/<model>/tests/ -k "e2e"`
+- All unit: `uv run --locked pytest apps/gpu-workers/ -k "not e2e"`
+- Per model unit: `uv run --locked pytest <model>/tests/ -k "not e2e"`
+- All e2e: `uv run --locked pytest apps/gpu-workers/ -k "e2e"`
+- Per model e2e: `uv run --locked pytest <model>/tests/ -k "e2e"`
 
 Rules:
 

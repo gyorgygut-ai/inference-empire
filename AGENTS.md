@@ -5,7 +5,7 @@ This is a monorepo for all my custom inference related code.
 ## Key Components / Subfolders
 
 - [Chat GUI](./apps/chat-ui/AGENTS.md)
-- [Cloud GPU Workers](./workers/AGENTS.md)
+- [Cloud GPU Workers](./apps/gpu-workers/AGENTS.md)
 - [Inference Router Proxy](./apps/infra-router/AGENTS.md) (legacy copy: `./archive/proxy/AGENTS.md`)
 
 ---
@@ -26,7 +26,7 @@ This is a monorepo for all my custom inference related code.
 
 Python selection is filename-based (`-k "not e2e"` / `-k "e2e"`); never invent
 `--target` flags and never edit tests to fit the runner. `archive/` is frozen
-legacy — never edit. `workers/` stays live (`workers.*` imports unchanged).
+legacy — never edit.
 
 ---
 
