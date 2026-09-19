@@ -1,1 +1,1 @@
-{"baseUrl": "https://modal.test", "input": {"prompt": "a red square"}, "response": {"task_id": "m-1"}}
+{"coords": {"baseUrl": "https://modal.test"}, "secrets": {"wrapperToken": "wrap-1"}, "input": {"prompt": "a red square"}, "response": {"call_id": "m-1"}}

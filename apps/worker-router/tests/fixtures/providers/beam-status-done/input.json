@@ -1,1 +1,1 @@
-{"baseUrl": "https://beam.test", "id": "b-1", "response": {"output": {"artifact": {"presigned_url": "https://r2/y.png"}}, "status": "DONE"}}
+{"coords": {"invokeUrl": "https://beam.test", "taskApi": "https://beam-task.test"}, "secrets": {"basicToken": "basic-1", "bearerToken": "bearer-1"}, "id": "b-1", "response": {"status": "COMPLETE", "outputs": {"artifact": {"presigned_url": "https://r2/y.png"}}}}

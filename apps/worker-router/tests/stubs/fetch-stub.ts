@@ -3,18 +3,19 @@ export interface CapturedRequest {
   init: RequestInit
 }
 
-export function createFetchStub(responses: Response[]): typeof fetch & { requests: CapturedRequest[] } {
+export interface StubbedResponse {
+  body: unknown
+  status?: number
+}
+
+export function createFetchStub(responses: StubbedResponse[]): typeof fetch & { requests: CapturedRequest[] } {
   const requests: CapturedRequest[] = []
   const impl = (async (url: string | URL | Request, init?: RequestInit): Promise<Response> => {
     requests.push({ url: String(url), init: init ?? {} })
     const next = responses.shift()
     if (next === undefined) throw new Error("fetch stub exhausted")
-    return next
+    return Response.json(next.body, { status: next.status ?? 200 })
   }) as typeof fetch & { requests: CapturedRequest[] }
   impl.requests = requests
   return impl
-}
-
-export function jsonResponse(body: unknown, status = 200): Response {
-  return Response.json(body, { status })
 }

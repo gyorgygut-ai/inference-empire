@@ -1,1 +1,1 @@
-{"baseUrl": "https://beam.test", "input": {"prompt": "a red square"}, "response": {"task_id": "b-1"}}
+{"coords": {"invokeUrl": "https://beam.test", "taskApi": "https://beam-task.test"}, "secrets": {"basicToken": "basic-1", "bearerToken": "bearer-1"}, "input": {"prompt": "a red square"}, "response": {"task_id": "b-1"}}

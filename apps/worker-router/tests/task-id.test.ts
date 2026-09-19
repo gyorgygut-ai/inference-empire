@@ -1,35 +1,23 @@
-import { readFileSync } from "node:fs"
-import { join } from "node:path"
 import { describe, test, expect } from "vitest"
-import { encodeTaskId, decodeTaskId } from "../src/task-id"
-
-const fixturesDir = join(import.meta.dirname, "fixtures", "task-id")
-
-function json(name: string, dir: string): any {
-  return JSON.parse(readFileSync(join(fixturesDir, dir, name), "utf-8"))
-}
-
-function text(name: string, dir: string): string {
-  return readFileSync(join(fixturesDir, dir, name), "utf-8").trim()
-}
+import { encodeTaskId, decodeTaskId, type ProviderName } from "../src/task-id"
+import modalInput from "./fixtures/task-id/modal-roundtrip/input.json"
+import modalExpected from "./fixtures/task-id/modal-roundtrip/expected.txt?raw"
+import beamInput from "./fixtures/task-id/beam-roundtrip/input.json"
+import beamExpected from "./fixtures/task-id/beam-roundtrip/expected.txt?raw"
+import invalidInput from "./fixtures/task-id/invalid-id/input.txt?raw"
+import invalidExpected from "./fixtures/task-id/invalid-id/expected.json"
 
 describe("task-id", () => {
   test("modal-roundtrip", () => {
-    const input = json("input.json", "modal-roundtrip")
-    const expected = text("expected.txt", "modal-roundtrip")
-    const output = encodeTaskId(input.provider, input.id)
-    expect(output).toBe(expected)
+    const output = encodeTaskId(modalInput.provider as ProviderName, modalInput.id)
+    expect(output).toBe(modalExpected.trim())
   })
   test("beam-roundtrip", () => {
-    const input = json("input.json", "beam-roundtrip")
-    const expected = text("expected.txt", "beam-roundtrip")
-    const output = encodeTaskId(input.provider, input.id)
-    expect(output).toBe(expected)
+    const output = encodeTaskId(beamInput.provider as ProviderName, beamInput.id)
+    expect(output).toBe(beamExpected.trim())
   })
   test("invalid-id", () => {
-    const input = text("input.txt", "invalid-id")
-    const expected = json("expected.json", "invalid-id")
-    const output = decodeTaskId(input)
-    expect(output).toBe(expected)
+    const output = decodeTaskId(invalidInput.trim())
+    expect(output).toBe(invalidExpected)
   })
 })

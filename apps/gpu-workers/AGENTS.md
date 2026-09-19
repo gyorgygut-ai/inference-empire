@@ -155,6 +155,8 @@ modal app logs <app> --since <iso-start> --timestamps --tail 50
 
 When something fails: `[ERR]` in logs + `call.get()` raises → re-check logs with `--since`, fix, redeploy. Tear down with `modal app stop <app> --yes`.
 
+- **Nx integration**: `deploy-modal` writes `dist/apps/gpu-workers-{model}/contract.json` with provider deployment metadata. Consumed by `worker-router:build-manifest`.
+
 ### Beam — run / logs
 
 No deploy step and no fixtures: `.put()` deploys on demand directly in Python.
@@ -197,6 +199,8 @@ krea unpacks 4 values (`s,p,r,t`), vision 3 (`m,p,a`).
 Bad input must surface `[ERR]` + raised exception. This reproduces
 failures for diagnosis — it does not recover past log history.
 
+- **Nx integration**: `deploy-beam` writes `dist/apps/gpu-workers-{model}/contract.json` with provider deployment metadata. Consumed by `worker-router:build-manifest`.
+
 ### Flash — deploy / run (dev unavailable)
 
 `flash dev` is not available. E2E files skip at file level
@@ -208,6 +212,8 @@ flash undeploy --name <name>
 ```
 
 Run in-process: `TinySDWorker().generate(**GOOD)`. When something fails: `[ERR]` → check `.flash/logs/activity.log`, fix `@Endpoint(dependencies=[...])`, redeploy.
+
+- **Nx integration**: `deploy-flash` writes `dist/apps/gpu-workers-{model}/contract.json` with provider deployment metadata. Consumed by `worker-router:build-manifest`.
 
 ---
 

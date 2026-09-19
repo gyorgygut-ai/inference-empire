@@ -1,4 +1,4 @@
-import type { Flux2Klein9bInput, TinySdInput } from "@inference-empire/types"
+import type { Flux2Klein9bInput, TinySdInput } from "@inference/types"
 
 export type RouterContract = "flux2_klein9b" | "tiny_sd"
 export type RouterInput = Flux2Klein9bInput | TinySdInput

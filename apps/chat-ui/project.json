@@ -4,7 +4,7 @@
   "projectType": "application",
   "sourceRoot": "apps/chat-ui/src",
   "tags": ["type:app", "scope:client"],
-  "implicitDependencies": ["infra-router"],
+  "implicitDependencies": ["infra-router", "worker-router"],
   "targets": {
     "build-manifest": {
       "executor": "nx:run-commands",
@@ -24,7 +24,7 @@
       "options": {
         "outputPath": "{projectRoot}/.next"
       },
-      "dependsOn": ["build-manifest"],
+      "dependsOn": ["build-manifest", { "projects": ["worker-router"], "target": "build-manifest" }],
       "inputs": ["production", "^production"],
       "outputs": ["{projectRoot}/.next"],
       "cache": true

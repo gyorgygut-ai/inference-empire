@@ -1,37 +1,29 @@
-import { readFileSync } from "node:fs"
-import { join } from "node:path"
 import { describe, test, expect } from "vitest"
 import { verifyToken } from "../src/auth"
-
-const fixturesDir = join(import.meta.dirname, "fixtures", "auth")
-
-function json(name: string, dir: string): any {
-  return JSON.parse(readFileSync(join(fixturesDir, dir, name), "utf-8"))
-}
+import validInput from "./fixtures/auth/valid/input.json"
+import validExpected from "./fixtures/auth/valid/expected.json"
+import schemeInput from "./fixtures/auth/wrong-scheme/input.json"
+import schemeExpected from "./fixtures/auth/wrong-scheme/expected.json"
+import missingInput from "./fixtures/auth/missing/input.json"
+import missingExpected from "./fixtures/auth/missing/expected.json"
+import mismatchInput from "./fixtures/auth/mismatch/input.json"
+import mismatchExpected from "./fixtures/auth/mismatch/expected.json"
 
 describe("auth", () => {
   test("valid", async () => {
-    const input = json("input.json", "valid")
-    const expected = json("expected.json", "valid")
-    const output = await verifyToken(input.header, input.secret)
-    expect(output).toBe(expected)
+    const output = await verifyToken(validInput.header, validInput.secret)
+    expect(output).toBe(validExpected)
   })
   test("wrong-scheme", async () => {
-    const input = json("input.json", "wrong-scheme")
-    const expected = json("expected.json", "wrong-scheme")
-    const output = await verifyToken(input.header, input.secret)
-    expect(output).toBe(expected)
+    const output = await verifyToken(schemeInput.header, schemeInput.secret)
+    expect(output).toBe(schemeExpected)
   })
   test("missing", async () => {
-    const input = json("input.json", "missing")
-    const expected = json("expected.json", "missing")
-    const output = await verifyToken(input.header, input.secret)
-    expect(output).toBe(expected)
+    const output = await verifyToken(missingInput.header, missingInput.secret)
+    expect(output).toBe(missingExpected)
   })
   test("mismatch", async () => {
-    const input = json("input.json", "mismatch")
-    const expected = json("expected.json", "mismatch")
-    const output = await verifyToken(input.header, input.secret)
-    expect(output).toBe(expected)
+    const output = await verifyToken(mismatchInput.header, mismatchInput.secret)
+    expect(output).toBe(mismatchExpected)
   })
 })

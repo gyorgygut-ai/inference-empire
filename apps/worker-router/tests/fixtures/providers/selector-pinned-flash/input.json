@@ -1,1 +1,1 @@
-{"env": {"PROVIDER_MODAL_URL": "https://modal.test", "PROVIDER_BEAM_URL": "https://beam.test", "PROVIDER_FLASH_URL": "https://flash.test"}, "pinned": "flash"}
+{"coords": {"beam": {"invokeUrl": "https://beam.test", "taskApi": "https://beam-task.test"}, "flash": {"baseUrl": "https://flash.test"}, "modal": {"baseUrl": "https://modal.test"}}, "secrets": {"beam": {"basicToken": "basic-1", "bearerToken": "bearer-1"}, "flash": {"apiKey": "key-1"}, "modal": {"wrapperToken": "wrap-1"}}, "pinned": "flash"}

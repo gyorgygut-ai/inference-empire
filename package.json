@@ -18,6 +18,7 @@
     "generate": "nx run cli:generate"
   },
   "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.22.0",
     "@eslint/js": "^9.8.0",
     "@nx/devkit": "^23.2.1",
     "@nx/eslint": "^23.2.1",
@@ -48,6 +49,5 @@
   },
   "engines": {
     "node": ">=20"
-  },
-  "dependencies": {}
+  }
 }

@@ -1,0 +1,16 @@
+{
+  "name": "worker-router",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test-unit": "vitest run"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.0",
+    "vitest": "^4.1.11"
+  },
+  "dependencies": {
+    "@inference/types": "^0.1.0"
+  }
+}

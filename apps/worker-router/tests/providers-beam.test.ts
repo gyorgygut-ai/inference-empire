@@ -1,50 +1,51 @@
-import { readFileSync } from "node:fs"
-import { join } from "node:path"
 import { describe, test, expect } from "vitest"
 import { createBeamProvider } from "../src/providers/beam"
-import { createFetchStub, jsonResponse } from "./stubs/fetch-stub"
+import { createFetchStub } from "./stubs/fetch-stub"
+import queueIdInput from "./fixtures/providers/beam-queue-id/input.json"
+import queueIdExpected from "./fixtures/providers/beam-queue-id/expected.json"
+import queueReqInput from "./fixtures/providers/beam-queue-request/input.json"
+import queueReqExpected from "./fixtures/providers/beam-queue-request/expected.json"
+import doneInput from "./fixtures/providers/beam-status-done/input.json"
+import doneExpected from "./fixtures/providers/beam-status-done/expected.json"
+import busyInput from "./fixtures/providers/beam-status-busy/input.json"
+import busyExpected from "./fixtures/providers/beam-status-busy/expected.json"
+import rejectedInput from "./fixtures/providers/beam-status-rejected/input.json"
+import rejectedExpected from "./fixtures/providers/beam-status-rejected/expected.json"
 
-const fixturesDir = join(import.meta.dirname, "fixtures", "providers")
-
-function json(name: string, dir: string): any {
-  return JSON.parse(readFileSync(join(fixturesDir, dir, name), "utf-8"))
+function sent(fetchStub: { requests: { url: string, init: RequestInit }[] }): unknown {
+  const first = fetchStub.requests[0]
+  return {
+    url: first.url,
+    method: first.init.method,
+    auth: (first.init.headers as Record<string, string>)["authorization"],
+    body: JSON.parse(first.init.body as string)
+  }
 }
 
 describe("beam provider", () => {
   test("beam-queue-id", async () => {
-    const input = json("input.json", "beam-queue-id")
-    const expected = json("expected.json", "beam-queue-id")
-    const fetchStub = createFetchStub([jsonResponse(input.response)])
-    const output = await createBeamProvider(input.baseUrl, fetchStub).queue(input.input)
-    expect(output).toBe(expected)
+    const fetchStub = createFetchStub([{ body: queueIdInput.response }])
+    const output = await createBeamProvider(queueIdInput.coords, queueIdInput.secrets, fetchStub).queue(queueIdInput.input)
+    expect(output).toBe(queueIdExpected)
   })
   test("beam-queue-request", async () => {
-    const input = json("input.json", "beam-queue-request")
-    const expected = json("expected.json", "beam-queue-request")
-    const fetchStub = createFetchStub([jsonResponse(input.response)])
-    await createBeamProvider(input.baseUrl, fetchStub).queue(input.input)
-    const output = { url: fetchStub.requests[0].url, method: fetchStub.requests[0].init.method }
-    expect(output).toEqual(expected)
+    const fetchStub = createFetchStub([{ body: queueReqInput.response }])
+    await createBeamProvider(queueReqInput.coords, queueReqInput.secrets, fetchStub).queue(queueReqInput.input)
+    expect(sent(fetchStub)).toEqual(queueReqExpected)
   })
   test("beam-status-done", async () => {
-    const input = json("input.json", "beam-status-done")
-    const expected = json("expected.json", "beam-status-done")
-    const fetchStub = createFetchStub([jsonResponse(input.response)])
-    const output = await createBeamProvider(input.baseUrl, fetchStub).status(input.id)
-    expect(output).toEqual(expected)
+    const fetchStub = createFetchStub([{ body: doneInput.response }])
+    const output = await createBeamProvider(doneInput.coords, doneInput.secrets, fetchStub).status(doneInput.id)
+    expect(output).toEqual(doneExpected)
   })
   test("beam-status-busy", async () => {
-    const input = json("input.json", "beam-status-busy")
-    const expected = json("expected.json", "beam-status-busy")
-    const fetchStub = createFetchStub([jsonResponse(input.response)])
-    const output = await createBeamProvider(input.baseUrl, fetchStub).status(input.id)
-    expect(output).toEqual(expected)
+    const fetchStub = createFetchStub([{ body: busyInput.response }])
+    const output = await createBeamProvider(busyInput.coords, busyInput.secrets, fetchStub).status(busyInput.id)
+    expect(output).toEqual(busyExpected)
   })
   test("beam-status-rejected", async () => {
-    const input = json("input.json", "beam-status-rejected")
-    const expected = json("expected.json", "beam-status-rejected")
-    const fetchStub = createFetchStub([jsonResponse(input.response, input.responseStatus)])
-    const output = await createBeamProvider(input.baseUrl, fetchStub).status(input.id)
-    expect(output).toEqual(expected)
+    const fetchStub = createFetchStub([{ body: rejectedInput.response }])
+    const output = await createBeamProvider(rejectedInput.coords, rejectedInput.secrets, fetchStub).status(rejectedInput.id)
+    expect(output).toEqual(rejectedExpected)
   })
 })

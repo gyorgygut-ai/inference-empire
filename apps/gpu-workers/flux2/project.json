@@ -36,21 +36,27 @@
     },
     "deploy-modal": {
       "executor": "nx:run-commands",
-      "options": { "command": "uv run --locked modal deploy flux2/worker_modal_cls_flux2_klein9b.py", "cwd": "." },
+      "options": { "command": "uv run --locked modal deploy flux2/worker_modal_cls_flux2_klein9b.py && node scripts/modal-output.mjs", "cwd": "." },
       "dependsOn": ["verify-deploy-gate"],
-      "cache": false
+      "cache": false,
+      "outputs": ["{workspaceRoot}/dist/apps/gpu-workers-flux2"]
     },
     "deploy-beam": {
       "executor": "nx:run-commands",
-      "options": { "command": "echo 'Beam deploys on dispatch.put(); see AGENTS.md'", "cwd": "." },
+      "options": { "command": "node scripts/deploy-beam.mjs", "cwd": "." },
       "dependsOn": ["verify-deploy-gate"],
-      "cache": false
+      "cache": false,
+      "outputs": ["{workspaceRoot}/dist/apps/gpu-workers-flux2"]
     },
     "deploy-flash": {
       "executor": "nx:run-commands",
-      "options": { "command": "echo 'flash deploy --name flux2; see AGENTS.md'", "cwd": "." },
+      "options": {
+        "command": "uv run --locked python scripts/deploy-flash.py && node scripts/flash-output.mjs",
+        "cwd": "."
+      },
       "dependsOn": ["verify-deploy-gate"],
-      "cache": false
+      "cache": false,
+      "outputs": ["{workspaceRoot}/dist/apps/gpu-workers-flux2"]
     }
   }
 }

@@ -1,0 +1,67 @@
+{
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "name": "worker-router",
+  "projectType": "application",
+  "sourceRoot": "apps/worker-router/src",
+  "tags": ["type:app", "scope:edge"],
+  "implicitDependencies": ["gpu-workers-flux2", "gpu-workers-tiny-sd", "contracts", "types"],
+  "targets": {
+    "build-manifest": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node scripts/build-manifest.mjs",
+        "cwd": "apps/worker-router"
+      },
+      "outputs": ["{projectRoot}/src/lib/providers.generated.json", "{workspaceRoot}/dist/apps/worker-router"],
+      "cache": true
+    },
+    "test-unit": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx vitest run --config vitest.workers.config.ts",
+        "cwd": "apps/worker-router"
+      },
+      "inputs": ["default"],
+      "cache": true
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx tsc --noEmit -p tsconfig.json",
+        "cwd": "apps/worker-router"
+      },
+      "dependsOn": ["build-manifest"],
+      "cache": true
+    },
+    "deploy": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node scripts/deploy.mjs",
+        "cwd": "apps/worker-router"
+      },
+      "dependsOn": [
+        "build-manifest",
+        "gpu-workers-flux2:deploy-modal",
+        "gpu-workers-flux2:deploy-beam",
+        "gpu-workers-flux2:deploy-flash",
+        "gpu-workers-tiny-sd:deploy-modal",
+        "gpu-workers-tiny-sd:deploy-beam",
+        "gpu-workers-tiny-sd:deploy-flash"
+      ],
+      "cache": false
+    },
+    "dev": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx wrangler dev",
+        "cwd": "apps/worker-router"
+      },
+      "cache": false,
+      "persistent": true
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "cache": true
+    }
+  }
+}

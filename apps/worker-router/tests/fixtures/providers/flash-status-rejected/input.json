@@ -1,1 +1,1 @@
-{"baseUrl": "https://flash.test", "id": "f-1", "response": {}, "responseStatus": 404}
+{"coords": {"baseUrl": "https://flash.test"}, "secrets": {"apiKey": "key-1"}, "id": "f-1", "response": {"status": "FAILED", "error": "boom"}}

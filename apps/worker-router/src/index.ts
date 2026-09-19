@@ -1,7 +1,18 @@
 import { verifyToken } from "./auth"
 import { encodeTaskId, decodeTaskId } from "./task-id"
 import { parseQueueBody } from "./contracts"
-import { selectProvider } from "./providers/selector"
+import { selectProvider, type ContractCoordinates, type ProviderSecrets } from "./providers/selector"
+import manifest from "./lib/providers.generated.json"
+
+const coordinates = manifest as Record<string, ContractCoordinates>
+
+function secretsOf(env: Env): ProviderSecrets {
+  return {
+    beam: { basicToken: env.BEAM_BASIC_TOKEN, bearerToken: env.BEAM_BEARER_TOKEN },
+    flash: { apiKey: env.RUNPOD_API_KEY },
+    modal: { wrapperToken: env.WRAPPER_TOKEN }
+  }
+}
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
@@ -11,23 +22,25 @@ export default {
         console.error(JSON.stringify({ message: "unauthorized", path: new URL(request.url).pathname }))
         return Response.json({ error: "Unauthorized" }, { status: 401 })
       }
+      const coords = coordinates[env.CONTRACT]
+      if (coords === undefined) throw new Error(`unknown contract: ${env.CONTRACT}`)
       const url = new URL(request.url)
       if (request.method === "POST" && url.pathname === "/queue") {
         const body: unknown = await request.json()
         const input = parseQueueBody(body, env.CONTRACT)
         if (input === null) return Response.json({ error: "Bad request" }, { status: 400 })
         console.log(JSON.stringify({ message: "queue", contract: env.CONTRACT }))
-        const adapter = selectProvider(env)
-        const providerId = await adapter.queue(input)
+        const provider = selectProvider(coords, secretsOf(env))
+        const providerId = await provider.queue(input)
         ctx.waitUntil(Promise.resolve().then(() => console.log(JSON.stringify({ message: "queued" }))))
-        return Response.json({ task_id: encodeTaskId(adapter.name, providerId) }, { status: 202 })
+        return Response.json({ task_id: encodeTaskId(provider.name, providerId) }, { status: 202 })
       }
       if (request.method === "GET" && url.pathname.startsWith("/task/")) {
         const raw = decodeURIComponent(url.pathname.slice("/task/".length))
         const decoded = decodeTaskId(raw)
         if (decoded === null) return Response.json({ error: "Not found" }, { status: 404 })
-        const adapter = selectProvider(env, decoded.provider)
-        const result = await adapter.status(decoded.id)
+        const provider = selectProvider(coords, secretsOf(env), decoded.provider)
+        const result = await provider.status(decoded.id)
         return Response.json(result, { status: 200 })
       }
       return Response.json({ error: "Not found" }, { status: 404 })

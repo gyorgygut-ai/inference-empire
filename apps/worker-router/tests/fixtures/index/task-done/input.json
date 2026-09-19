@@ -1,0 +1,1 @@
+{"path": "/queue", "method": "POST", "auth": "Bearer secret", "body": {"input": {"prompt": "a red square"}}, "queueResponse": {"call_id": "t-1"}, "statusResponse": {"artifact": {"presigned_url": "https://r2/t.png"}}}

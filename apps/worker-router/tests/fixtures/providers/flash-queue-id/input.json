@@ -1,1 +1,1 @@
-{"baseUrl": "https://flash.test", "input": {"prompt": "a red square"}, "response": {"task_id": "f-1"}}
+{"coords": {"baseUrl": "https://flash.test"}, "secrets": {"apiKey": "key-1"}, "input": {"prompt": "a red square"}, "response": {"id": "f-1"}}

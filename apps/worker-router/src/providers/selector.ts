@@ -1,17 +1,30 @@
 import type { ProviderName } from "../task-id"
-import type { ProviderAdapter } from "./types"
-import { createModalAdapter } from "./modal"
-import { createBeamAdapter } from "./beam"
-import { createFlashAdapter } from "./flash"
+import type { Provider } from "./types"
+import { createModalProvider, type ModalCoordinates, type ModalSecrets } from "./modal"
+import { createBeamProvider, type BeamCoordinates, type BeamSecrets } from "./beam"
+import { createFlashProvider, type FlashCoordinates, type FlashSecrets } from "./flash"
 
-interface SelectorEnv {
-  PROVIDER_MODAL_URL: string
-  PROVIDER_BEAM_URL: string
-  PROVIDER_FLASH_URL: string
+export interface ContractCoordinates {
+  beam: BeamCoordinates | null
+  flash: FlashCoordinates | null
+  modal: ModalCoordinates | null
 }
 
-export function selectProvider(env: SelectorEnv, pinned?: ProviderName): ProviderAdapter {
-  if (pinned === "beam") return createBeamAdapter(env.PROVIDER_BEAM_URL)
-  if (pinned === "flash") return createFlashAdapter(env.PROVIDER_FLASH_URL)
-  return createModalAdapter(env.PROVIDER_MODAL_URL)
+export interface ProviderSecrets {
+  beam: BeamSecrets
+  flash: FlashSecrets
+  modal: ModalSecrets
+}
+
+export function selectProvider(coords: ContractCoordinates, secrets: ProviderSecrets, pinned?: ProviderName, fetchImpl: typeof fetch = fetch): Provider {
+  if (pinned === "beam") {
+    if (coords.beam === null) throw new Error("beam not configured")
+    return createBeamProvider(coords.beam, secrets.beam, fetchImpl)
+  }
+  if (pinned === "flash") {
+    if (coords.flash === null) throw new Error("flash not configured")
+    return createFlashProvider(coords.flash, secrets.flash, fetchImpl)
+  }
+  if (coords.modal === null) throw new Error("modal not configured")
+  return createModalProvider(coords.modal, secrets.modal, fetchImpl)
 }

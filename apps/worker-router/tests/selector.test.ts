@@ -1,31 +1,29 @@
-import { readFileSync } from "node:fs"
-import { join } from "node:path"
 import { describe, test, expect } from "vitest"
 import { selectProvider } from "../src/providers/selector"
-
-const fixturesDir = join(import.meta.dirname, "fixtures", "providers")
-
-function json(name: string, dir: string): any {
-  return JSON.parse(readFileSync(join(fixturesDir, dir, name), "utf-8"))
-}
+import type { ProviderName } from "../src/task-id"
+import defaultInput from "./fixtures/providers/selector-default/input.json"
+import defaultExpected from "./fixtures/providers/selector-default/expected.json"
+import beamInput from "./fixtures/providers/selector-pinned-beam/input.json"
+import beamExpected from "./fixtures/providers/selector-pinned-beam/expected.json"
+import flashInput from "./fixtures/providers/selector-pinned-flash/input.json"
+import flashExpected from "./fixtures/providers/selector-pinned-flash/expected.json"
+import unconfiguredInput from "./fixtures/providers/selector-unconfigured-beam/input.json"
+import unconfiguredExpected from "./fixtures/providers/selector-unconfigured-beam/expected.json"
 
 describe("selector", () => {
   test("selector-default", () => {
-    const input = json("input.json", "selector-default")
-    const expected = json("expected.json", "selector-default")
-    const output = selectProvider(input).name
-    expect(output).toBe(expected)
+    const output = selectProvider(defaultInput.coords, defaultInput.secrets).name
+    expect(output).toBe(defaultExpected)
   })
   test("selector-pinned-beam", () => {
-    const input = json("input.json", "selector-pinned-beam")
-    const expected = json("expected.json", "selector-pinned-beam")
-    const output = selectProvider(input.env, input.pinned).name
-    expect(output).toBe(expected)
+    const output = selectProvider(beamInput.coords, beamInput.secrets, beamInput.pinned as ProviderName).name
+    expect(output).toBe(beamExpected)
   })
   test("selector-pinned-flash", () => {
-    const input = json("input.json", "selector-pinned-flash")
-    const expected = json("expected.json", "selector-pinned-flash")
-    const output = selectProvider(input.env, input.pinned).name
-    expect(output).toBe(expected)
+    const output = selectProvider(flashInput.coords, flashInput.secrets, flashInput.pinned as ProviderName).name
+    expect(output).toBe(flashExpected)
+  })
+  test("selector-unconfigured-beam", () => {
+    expect(() => selectProvider(unconfiguredInput.coords, unconfiguredInput.secrets, unconfiguredInput.pinned as ProviderName)).toThrow(unconfiguredExpected)
   })
 })

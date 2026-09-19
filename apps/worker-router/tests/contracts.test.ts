@@ -1,37 +1,29 @@
-import { readFileSync } from "node:fs"
-import { join } from "node:path"
 import { describe, test, expect } from "vitest"
 import { parseQueueBody } from "../src/contracts"
-
-const fixturesDir = join(import.meta.dirname, "fixtures", "contracts")
-
-function json(name: string, dir: string): any {
-  return JSON.parse(readFileSync(join(fixturesDir, dir, name), "utf-8"))
-}
+import flux2Input from "./fixtures/contracts/flux2-valid/input.json"
+import flux2Expected from "./fixtures/contracts/flux2-valid/expected.json"
+import tinysdInput from "./fixtures/contracts/tinysd-valid/input.json"
+import tinysdExpected from "./fixtures/contracts/tinysd-valid/expected.json"
+import missingInput from "./fixtures/contracts/missing-prompt/input.json"
+import missingExpected from "./fixtures/contracts/missing-prompt/expected.json"
+import unknownInput from "./fixtures/contracts/unknown-contract/input.json"
+import unknownExpected from "./fixtures/contracts/unknown-contract/expected.json"
 
 describe("contracts", () => {
   test("flux2-valid", () => {
-    const input = json("input.json", "flux2-valid")
-    const expected = json("expected.json", "flux2-valid")
-    const output = parseQueueBody(input, "flux2_klein9b")
-    expect(output).toEqual(expected)
+    const output = parseQueueBody(flux2Input, "flux2_klein9b")
+    expect(output).toEqual(flux2Expected)
   })
   test("tinysd-valid", () => {
-    const input = json("input.json", "tinysd-valid")
-    const expected = json("expected.json", "tinysd-valid")
-    const output = parseQueueBody(input, "tiny_sd")
-    expect(output).toEqual(expected)
+    const output = parseQueueBody(tinysdInput, "tiny_sd")
+    expect(output).toEqual(tinysdExpected)
   })
   test("missing-prompt", () => {
-    const input = json("input.json", "missing-prompt")
-    const expected = json("expected.json", "missing-prompt")
-    const output = parseQueueBody(input, "flux2_klein9b")
-    expect(output).toBe(expected)
+    const output = parseQueueBody(missingInput, "flux2_klein9b")
+    expect(output).toBe(missingExpected)
   })
   test("unknown-contract", () => {
-    const input = json("input.json", "unknown-contract")
-    const expected = json("expected.json", "unknown-contract")
-    const output = parseQueueBody(input, "nope")
-    expect(output).toBe(expected)
+    const output = parseQueueBody(unknownInput, "nope")
+    expect(output).toBe(unknownExpected)
   })
 })
