@@ -10,7 +10,7 @@ IKEA Dirigera hub local REST API (port 8443, HTTPS, self-signed cert). PKCE OAut
    - Prompts: "Press the hub button once, then press Enter"
    - Saves token to **macOS Keychain** (service: `automation`, account: your user)
 3. **Test connection** — `nx run automation:api -- GET /v1/devices`
-4. **Control lights** — `nx run automation:api -- PATCH /v1/devices/{id} '{"attributes":{"isOn":true}}'`
+4. **Control lights** — `nx run automation:api -- PATCH /v1/devices/{id} '[{"attributes":{"isOn":true}}]'`
 
 ## Token Storage
 
@@ -68,18 +68,20 @@ IKEA Dirigera hub local REST API (port 8443, HTTPS, self-signed cert). PKCE OAut
 
 ### PATCH Endpoints
 
+> **Payload format:** Every PATCH body must wrap attributes in a list: `[{"attributes":{...}}]`. Never send a bare `{"attributes":{...}}` — the hub returns 500 Internal Server Error for that. Verified working across multiple Python/JS clients.
+
 | Endpoint | Payload | Does |
 |----------|---------|------|
-| `/v1/devices/{id}` | `{"attributes":{"isOn":true}}` | Turn device on |
-| `/v1/devices/{id}` | `{"attributes":{"isOn":false}}` | Turn device off |
-| `/v1/devices/{id}` | `{"attributes":{"lightLevel":127}}` | Set brightness 0–254 (0=off) |
-| `/v1/devices/{id}` | `{"attributes":{"colorTemperature":2202}}` | Set white temperature (check `colorTemperatureMin`/`Max` per bulb, e.g. 2202–4000K) |
-| `/v1/devices/{id}` | `{"attributes":{"colorHue":21845,"colorSaturation":80}}` | Set color (hue 0–65535, sat 0–100) |
-| `/v1/devices/{id}` | `{"attributes":{"customName":"Kitchen Lamp"}}` | Rename device |
-| `/v1/devices/{id}` | `{"attributes":{"childLock":true}}` | Enable child lock (outlets) |
-| `/v1/devices/{id}` | `{"attributes":{"statusLight":false}}` | Disable LED status indicator (outlets) |
-| `/v1/devices/{id}` | `{"attributes":{"startupOnOff":"startOff"}}` | Set power-on behavior: `startOn`/`startOff`/`startPrevious` |
-| `/v1/scenes/{id}` | `{"actions":[], "commands":[...]}` | Trigger/modify scene (type-dependent) |
+| `/v1/devices/{id}` | `[{"attributes":{"isOn":true}}]` | Turn device on |
+| `/v1/devices/{id}` | `[{"attributes":{"isOn":false}}]` | Turn device off |
+| `/v1/devices/{id}` | `[{"attributes":{"lightLevel":127}}]` | Set brightness 0–254 (0=off) |
+| `/v1/devices/{id}` | `[{"attributes":{"colorTemperature":2202}}]` | Set white temperature (check `colorTemperatureMin`/`Max` per bulb, e.g. 2202–4000K) |
+| `/v1/devices/{id}` | `[{"attributes":{"colorHue":21845,"colorSaturation":80}}]` | Set color (hue 0–65535, sat 0–100) |
+| `/v1/devices/{id}` | `[{"attributes":{"customName":"Kitchen Lamp"}}]` | Rename device |
+| `/v1/devices/{id}` | `[{"attributes":{"childLock":true}}]` | Enable child lock (outlets) |
+| `/v1/devices/{id}` | `[{"attributes":{"statusLight":false}}]` | Disable LED status indicator (outlets) |
+| `/v1/devices/{id}` | `[{"attributes":{"startupOnOff":"startOff"}}]` | Set power-on behavior: `startOn`/`startOff`/`startPrevious` |
+| `/v1/scenes/{id}` | `[{"actions":[], "commands":[...]}]` | Trigger/modify scene (type-dependent) |
 
 ### Device Attribute Index
 
@@ -103,7 +105,7 @@ IKEA Dirigera hub local REST API (port 8443, HTTPS, self-signed cert). PKCE OAut
 | Sensor downstairs | `0e5efacf-4a95-4e3a-b9df-81a88cd64836_1` | motionSensor | Staircase |
 | Sensor hall | `d735707f-05dc-47bc-8b81-7a04ad347b49_1` | motionSensor | Hall |
 | Sensor upstairs | `5eff3018-c4ec-4a63-8779-f8895db8f405_1` | motionSensor | Staircase (battery: 1%, unreachable) |
-| Sensor Fridge Door | `9e26b14b-591c-4a48-810e-4697e36562c7_1` | openCloseSensor | Kitchen |
+| Sensor Fridge Door | `9e26b14b-591c-4a48-a048-b193d5128dbf_1` | openCloseSensor | Kitchen |
 | Shortcut button | `ebf8b8dd-081c-41c8-ba9b-f969b63312b0_1` | shortcutController | Living room |
 | Plug 1 | `dee49759-bb38-4a48-a048-b193d5128dbf_1` | outlet | Living room |
 | Hall pendant | `7b3bad7e-f6c4-4197-82e2-031eb4edfb4a_1` | TRADFRIbulbE27WS | Hall (warm/white only) |
@@ -127,7 +129,7 @@ while true; do
     for id in "${DEVICE_IDS[@]}"; do
       curl -sk -X PATCH -H "Authorization: Bearer $(automation token)" \
         -H "Content-Type: application/json" \
-        -d "{\"attributes\":{\"isOn\":true,\"lightLevel\":200,\"colorHue\":$hue,\"colorSaturation\":100}}" \
+        -d "[{\"attributes\":{\"isOn\":true,\"lightLevel\":200,\"colorHue\":$hue,\"colorSaturation\":100}}" \
         "https://192.168.1.64:8443/v1/devices/$id"
     done
     sleep 0.2
@@ -144,18 +146,18 @@ BLUE=('2deca4ae-eb4d-45b3-b022-3c90475ca8a9_1' 'e6cef233-7b27-466d-9c28-e6f79478
 while true; do
   for id in "${RED[@]}"; do
     curl -sk -X PATCH -H "Authorization: Bearer $(automation token)" -H "Content-Type: application/json" \
-      -d '{"attributes":{"isOn":true,"lightLevel":200,"colorHue":0,"colorSaturation":100}}' \
+      -d '[{"attributes":{"isOn":true,"lightLevel":200,"colorHue":0,"colorSaturation":100}}]' \
       "https://192.168.1.64:8443/v1/devices/$id"
   done
   for id in "${BLUE[@]}"; do
     curl -sk -X PATCH -H "Authorization: Bearer $(automation token)" -H "Content-Type: application/json" \
-      -d '{"attributes":{"isOn":true,"lightLevel":200,"colorHue":43691,"colorSaturation":100}}' \
+      -d '[{"attributes":{"isOn":true,"lightLevel":200,"colorHue":43691,"colorSaturation":100}}]' \
       "https://192.168.1.64:8443/v1/devices/$id"
   done
   sleep 0.25
   for id in "${RED[@]}" "${BLUE[@]}"; do
     curl -sk -X PATCH -H "Authorization: Bearer $(automation token)" -H "Content-Type: application/json" \
-      -d '{"attributes":{"isOn":false}}' \
+      -d '[{"attributes":{"isOn":false}}]' \
       "https://192.168.1.64:8443/v1/devices/$id"
   done
   sleep 0.25
@@ -170,13 +172,13 @@ BULBS=("eb6623f9-c1f8-4830-b4fb-5b29f92c43e7_1" "2deca4ae-eb4d-45b3-b022-3c90475
 while true; do
   for id in "${BULBS[@]}"; do
     curl -sk -X PATCH -H "Authorization: Bearer $(automation token)" -H "Content-Type: application/json" \
-      -d '{"attributes":{"isOn":true,"lightLevel":254,"colorTemperature":4000}}' \
+      -d '[{"attributes":{"isOn":true,"lightLevel":254,"colorTemperature":4000}}]' \
       "https://192.168.1.64:8443/v1/devices/$id"
   done
   sleep 0.05
   for id in "${BULBS[@]}"; do
     curl -sk -X PATCH -H "Authorization: Bearer $(automation token)" -H "Content-Type: application/json" \
-      -d '{"attributes":{"isOn":false}}' \
+      -d '[{"attributes":{"isOn":false}}]' \
       "https://192.168.1.64:8443/v1/devices/$id"
   done
   sleep 0.05
@@ -193,14 +195,14 @@ while true; do
   for ((lvl=1; lvl<=200; lvl+=STEP)); do
     curl -sk -X PATCH -H "Authorization: Bearer $(automation token)" \
       -H "Content-Type: application/json" \
-      -d "{\"attributes\":{\"isOn\":true,\"lightLevel\":$lvl,\"colorTemperature\":3000}}" \
+      -d "[{\"attributes\":{\"isOn\":true,\"lightLevel\":$lvl,\"colorTemperature\":3000}}" \
       "https://192.168.1.64:8443/v1/devices/$ID"
     sleep 0.03
   done
   for ((lvl=200; lvl>=1; lvl-=STEP)); do
     curl -sk -X PATCH -H "Authorization: Bearer $(automation token)" \
       -H "Content-Type: application/json" \
-      -d "{\"attributes\":{\"isOn\":true,\"lightLevel\":$lvl,\"colorTemperature\":3000}}" \
+      -d "[{\"attributes\":{\"isOn\":true,\"lightLevel\":$lvl,\"colorTemperature\":3000}}" \
       "https://192.168.1.64:8443/v1/devices/$ID"
     sleep 0.03
   done
@@ -217,7 +219,7 @@ for ((i=0; i<360; i++)); do
   for id in "${DEVICE_IDS[@]}"; do
     curl -sk -X PATCH -H "Authorization: Bearer $(automation token)" \
       -H "Content-Type: application/json" \
-      -d "{\"attributes\":{\"isOn\":true,\"lightLevel\":180,\"colorHue\":$hue,\"colorSaturation\":100}}" \
+      -d "[{\"attributes\":{\"isOn\":true,\"lightLevel\":180,\"colorHue\":$hue,\"colorSaturation\":100}}" \
       "https://192.168.1.64:8443/v1/devices/$id"
   done
   sleep 0.05
@@ -233,12 +235,12 @@ while true; do
   for id in "${DEVICE_IDS[@]}"; do
     curl -sk -X PATCH -H "Authorization: Bearer $(automation token)" \
       -H "Content-Type: application/json" \
-      -d '{"attributes":{"isOn":true,"lightLevel":254,"colorHue":0,"colorSaturation":100}}' \
+      -d '[{"attributes":{"isOn":true,"lightLevel":254,"colorHue":0,"colorSaturation":100}}]' \
       "https://192.168.1.64:8443/v1/devices/$id"
     sleep 0.3
     curl -sk -X PATCH -H "Authorization: Bearer $(automation token)" \
       -H "Content-Type: application/json" \
-      -d '{"attributes":{"isOn":false}}' \
+      -d '[{"attributes":{"isOn":false}}]' \
       "https://192.168.1.64:8443/v1/devices/$id"
     sleep 0.3
   done
@@ -254,7 +256,7 @@ for ((temp=4000; temp>=2200; temp-=50)); do
   for id in "${DEVICE_IDS[@]}"; do
     curl -sk -X PATCH -H "Authorization: Bearer $(automation token)" \
       -H "Content-Type: application/json" \
-      -d "{\"attributes\":{\"isOn\":true,\"lightLevel\":100,\"colorTemperature\":$temp}}" \
+      -d "[{\"attributes\":{\"isOn\":true,\"lightLevel\":100,\"colorTemperature\":$temp}}" \
       "https://192.168.1.64:8443/v1/devices/$id"
   done
   sleep 0.2
@@ -263,7 +265,7 @@ for ((lvl=100; lvl>=1; lvl-=10)); do
   for id in "${DEVICE_IDS[@]}"; do
     curl -sk -X PATCH -H "Authorization: Bearer $(automation token)" \
       -H "Content-Type: application/json" \
-      -d "{\"attributes\":{\"isOn\":true,\"lightLevel\":$lvl,\"colorTemperature\":2202}}" \
+      -d "[{\"attributes\":{\"isOn\":true,\"lightLevel\":$lvl,\"colorTemperature\":2202}}" \
       "https://192.168.1.64:8443/v1/devices/$id"
   done
   sleep 0.2
@@ -279,7 +281,7 @@ for ((pass=0; pass<5; pass++)); do
   for ((i=pass; i<${#ORDER[@]}; i++)); do
     curl -sk -X PATCH -H "Authorization: Bearer $(automation token)" \
       -H "Content-Type: application/json" \
-      -d "{\"attributes\":{\"isOn\":true,\"lightLevel\":200,\"colorHue\":$((i * 13000)),\"colorSaturation\":80}}" \
+      -d "[{\"attributes\":{\"isOn\":true,\"lightLevel\":200,\"colorHue\":$((i * 13000)),\"colorSaturation\":80}}" \
       "https://192.168.1.64:8443/v1/devices/${ORDER[$i]}"
     sleep 0.1
   done
@@ -287,7 +289,7 @@ for ((pass=0; pass<5; pass++)); do
   for id in "${ORDER[@]}"; do
     curl -sk -X PATCH -H "Authorization: Bearer $(automation token)" \
       -H "Content-Type: application/json" \
-      -d '{"attributes":{"isOn":false}}' \
+      -d '[{"attributes":{"isOn":false}}]' \
       "https://192.168.1.64:8443/v1/devices/$id"
   done
 done
@@ -301,15 +303,15 @@ MOOD="${1:-relax}"  # relax / focus / party / movie
 case $MOOD in
   relax)
     curl -sk -X PATCH -H "Authorization: Bearer $(automation token)" -H "Content-Type: application/json" \
-      -d '{"attributes":{"isOn":true,"lightLevel":60,"colorTemperature":2202}}' \
+      -d '[{"attributes":{"isOn":true,"lightLevel":60,"colorTemperature":2202}}]' \
       https://192.168.1.64:8443/v1/devices/7b3bad7e-f6c4-4197-82e2-031eb4edfb4a_1
     ;;
   focus)
     curl -sk -X PATCH -H "Authorization: Bearer $(automation token)" -H "Content-Type: application/json" \
-      -d '{"attributes":{"isOn":true,"lightLevel":200,"colorTemperature":4000}}' \
+      -d '[{"attributes":{"isOn":true,"lightLevel":200,"colorTemperature":4000}}]' \
       https://192.168.1.64:8443/v1/devices/e6cef233-7b27-466d-9c28-e6f7947822e4_1
     curl -sk -X PATCH -H "Authorization: Bearer $(automation token)" -H "Content-Type: application/json" \
-      -d '{"attributes":{"isOn":true,"lightLevel":150,"colorTemperature":4000}}' \
+      -d '[{"attributes":{"isOn":true,"lightLevel":150,"colorTemperature":4000}}]' \
       https://192.168.1.64:8443/v1/devices/6f78552b-687d-43e4-ab8a-994b722ca79c_1
     ;;
   party)
@@ -317,10 +319,10 @@ case $MOOD in
     ;;
   movie)
     curl -sk -X PATCH -H "Authorization: Bearer $(automation token)" -H "Content-Type: application/json" \
-      -d '{"attributes":{"isOn":true,"lightLevel":20,"colorHue":24000,"colorSaturation":50}}' \
+      -d '[{"attributes":{"isOn":true,"lightLevel":20,"colorHue":24000,"colorSaturation":50}}]' \
       https://192.168.1.64:8443/v1/devices/eb6623f9-c1f8-4830-b4fb-5b29f92c43e7_1
     curl -sk -X PATCH -H "Authorization: Bearer $(automation token)" -H "Content-Type: application/json" \
-      -d '{"attributes":{"isOn":true,"lightLevel":20,"colorHue":24000,"colorSaturation":50}}' \
+      -d '[{"attributes":{"isOn":true,"lightLevel":20,"colorHue":24000,"colorSaturation":50}}]' \
       https://192.168.1.64:8443/v1/devices/2deca4ae-eb4d-45b3-b022-3c90475ca8a9_1
     ;;
 esac
