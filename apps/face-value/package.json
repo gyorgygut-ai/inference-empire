@@ -18,10 +18,9 @@
     "gray-matter": "^4.0.3",
     "jose": "^6.2.3",
     "next": "16.2.6",
-    "react": "19.2.8",
-    "react-dom": "19.2.8",
-    "runpod-sdk": "^1.1.2",
-    "sharp": "^0.34.5"
+     "react": "19.2.8",
+     "react-dom": "19.2.8",
+     "sharp": "^0.34.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

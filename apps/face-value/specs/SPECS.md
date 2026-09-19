@@ -6,7 +6,8 @@
 
 - **Reference image** — the face photo submitted by the user for transformation
 - **Image gen prompt** — the text instruction sent to the inference server, sourced from an outcome `.md` file, never exposed to client
-- **Inference server** — tThings gRPC server running in Docker on RunPod, receives reference image + prompt, returns generated image
+- **Inference backend** — `worker-router-flux2` Cloudflare Worker (`flux2_klein9b` contract), receives reference image + prompt, returns generated image
+- **Inference server** — (legacy) RunPod endpoint; deprecated, kept in `schema.ts` for contract parity
 - **Outcome** — a `.md` file in `/outcomes` defining an image gen prompt, identified by id; also the transformation effect the user selects
 - **Generated image** — the image returned by the inference server after processing reference image + prompt
 
@@ -14,7 +15,7 @@
 
 - Upload a reference image
 - Select an outcome
-- Submit generates an image on cloud GPU (Runpod)
+- Submit posts to `worker-router-flux2` `/queue`, polls `/task/:id` until DONE, returns generated image
 - Generated image displayed inline, downloadable
 - Access gated behind Cloudflare Access email OTP
 
@@ -35,9 +36,9 @@
 ### Business Logic
 
 - **Magic Encapsulated**:
-  - Inference server url, image gen. mode, prompts hidden from client
+  - `worker-router-flux2` URL and auth token derived from `dist/apps/worker-router/contract.json` at build time via server-only `router-config.ts`, never exposed to client
   - Client sends reference image + selected outcome id upon submit to Server Action
-  - Server Action sends corresponding outcome prompt + reference image to inference server
+  - Server Action posts outcome prompt + reference image to `worker-router-flux2` `/queue`, polls `/task/:id` until DONE or timeout (max 5 min, poll interval 3s)
   - Upon response, serves generated image or error message to client
 - **Markdown + Frontmatter**:
   - Each outcome is a .md file in /outcomes
@@ -74,8 +75,10 @@
 
 ### Inference Backend
 
-- On-demand inference server in Docker on RunPod serverless
-- Model: `flux_2_klein_9b_q6p.ckpt` (~7.3GB)
+- **Worker router (flux2)** — `POST /queue` with `{ input: Flux2Klein9BInput }` + `Authorization: Bearer <token>` → `{ task_id }` (202), then `GET /task/:task_id` with auth → `{ status: "BUSY"|"REJECTED"|"DONE", output?: Flux2Klein9BOutput }`. Poll every 3s, max 5 min.
+- **Provider routing** — flux2 worker-router internally routes to Modal/Flash/Beam providers based on `providers.generated.json` (written by `worker-router:build-manifest` reading `dist/apps/gpu-workers-flux2/contract.json`). face-value never calls providers directly.
+- **Auth token** generated at build time, injected into `dist/apps/worker-router/contract.json`.
+- **Model**: `flux_2_klein_9b_q6p.ckpt` (~7.3GB) — hosted on `gpu-workers-flux2/` provider backend. Deployment managed separately via Nx chain.
 
 ### Auth
 
@@ -101,14 +104,22 @@
 
 - Reference image missing → form error, no submission
 - Reference image exceeds size limit → client-side error before submission
-- Inference server unreachable → server error returned to client
+- Worker-router unreachable (401/404/502) → server error returned to client
 - Health ping fails → submit disabled, `❌ Server offline` shown
-- Inference server returns error → error message displayed in result area
+- Worker-router returns REJECTED → error message displayed in result area
+- Timeout after 5 min polling → SERVER_TIMEOUT error
 - CF JWT invalid → redirect to CF Access login
 
-### API Contract - Inference Server
+### API Contract - Worker Router (flux2)
 
-[API Typescript schema](./types/schema.ts)
+- `POST /queue` — `Authorization: Bearer <token>`, `Content-Type: application/json`, body: `{ input: Flux2Klein9BInput }` → 202 `{ task_id: string }`
+- `GET /task/:task_id` — `Authorization: Bearer <token>` → 200 `{ status: "BUSY"|"REJECTED"|"DONE", output?: Flux2Klein9BOutput }`
+- Error responses: 400 `{ error: "Bad request" }`, 401 `{ error: "Unauthorized" }`, 404 `{ error: "Not found" }`, 500 `{ error: "Internal server error" }`
+- Contract name bound to Cloudflare Worker env var: `flux2_klein9b`
+
+### Legacy API Contract — RunPod (deprecated)
+
+[API Typescript schema](./types/schema.ts) — types retained for contract parity. No longer used at runtime.
 
 ## assistant-ui
 

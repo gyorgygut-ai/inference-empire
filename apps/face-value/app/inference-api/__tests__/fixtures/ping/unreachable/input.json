@@ -1,0 +1,9 @@
+{
+  "config": {
+    "baseUrl": "http://test",
+    "token": "secret",
+    "maxPollMillis": 300000,
+    "pollIntervalMillis": 3000,
+    "pingTimeout": 1000
+  }
+}

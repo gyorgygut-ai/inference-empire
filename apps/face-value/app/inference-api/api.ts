@@ -1,30 +1,76 @@
-import runpod from "runpod-sdk"
-import { EndpointCompletedOutput } from "runpod-sdk/src"
 import type { Flux2Klein9BInput, Flux2Klein9BOutput } from "./schema"
+import { routerConfig } from "@/src/lib/router-config"
 
 export type RequestPayload = Flux2Klein9BInput
-
 export type ResponsePayload = Flux2Klein9BOutput
 
-const { INFERENCE_TOKEN, INFERENCE_ENDPOINT_ID } = process.env
+export interface InferenceConfig {
+  baseUrl: string
+  token: string
+  maxPollMillis: number
+  pollIntervalMillis: number
+  pingTimeout: number
+}
 
-const client = runpod(INFERENCE_TOKEN)
-const inferenceEndpoint = client.endpoint(INFERENCE_ENDPOINT_ID)
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
 
-const RUNPOD_TIMEOUT = 60000 * 5
-const PING_TIMEOUT = 1000
+export async function postQueue(input: RequestPayload, config: InferenceConfig, fetchImpl: typeof fetch = fetch): Promise<string> {
+  const res = await fetchImpl(`${config.baseUrl}/queue`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${config.token}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ input })
+  })
+  if (!res.ok) throw new Error(`queue failed: ${res.status}`)
+  const body = await res.json()
+  return (body as { task_id: string }).task_id
+}
 
-export async function pingInference(): Promise<boolean> {
+async function getStatus(taskId: string, config: InferenceConfig, fetchImpl: typeof fetch = fetch): Promise<{ status: string; output?: Flux2Klein9BOutput }> {
+  const res = await fetchImpl(`${config.baseUrl}/task/${taskId}`, {
+    headers: { Authorization: `Bearer ${config.token}` }
+  })
+  if (!res.ok) throw new Error(`status failed: ${res.status}`)
+  return (await res.json()) as { status: string; output?: Flux2Klein9BOutput }
+}
+
+export async function pollQueue(taskId: string, config: InferenceConfig, fetchImpl: typeof fetch = fetch): Promise<{ output: Flux2Klein9BOutput }> {
+  const start = Date.now()
+  while (Date.now() - start < config.maxPollMillis) {
+    const result = await getStatus(taskId, config, fetchImpl)
+    if (result.status === "DONE") return { output: result.output as Flux2Klein9BOutput }
+    if (result.status === "REJECTED") throw new Error("inference rejected")
+    await sleep(config.pollIntervalMillis)
+  }
+  throw new Error("timeout")
+}
+
+export async function pingRouter(config: InferenceConfig, fetchImpl: typeof fetch = fetch): Promise<boolean> {
+  const start = Date.now()
   try {
-    const check = await inferenceEndpoint!.health(PING_TIMEOUT)
-    return typeof check === "object" && check !== null && "workers" in check
+    const res = await fetchImpl(config.baseUrl, { method: "HEAD", signal: AbortSignal.timeout(config.pingTimeout) })
+    return res.ok
   } catch {
-    return false
+    return Date.now() - start >= config.pingTimeout
   }
 }
 
-export function runInferenceWithPolling(input: RequestPayload) {
-  return inferenceEndpoint!.runSync({ input }, RUNPOD_TIMEOUT) as Promise<
-    EndpointCompletedOutput & { output: ResponsePayload }
-  >
+const defaultConfig: InferenceConfig = {
+  ...routerConfig,
+  maxPollMillis: 300_000,
+  pollIntervalMillis: 3000,
+  pingTimeout: 1000
+}
+
+export async function runInferenceWithPolling(input: RequestPayload): Promise<{ output: Flux2Klein9BOutput }> {
+  const taskId = await postQueue(input, defaultConfig)
+  return pollQueue(taskId, defaultConfig)
+}
+
+export async function pingInference(): Promise<boolean> {
+  return pingRouter(defaultConfig)
 }

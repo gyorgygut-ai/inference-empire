@@ -1,0 +1,42 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "face-value",
+  "projectType": "application",
+  "sourceRoot": "apps/face-value",
+  "tags": ["type:app", "scope:client"],
+  "implicitDependencies": ["worker-router"],
+  "targets": {
+    "build": {
+      "executor": "@nx/next:build",
+      "options": {
+        "outputPath": "{projectRoot}/.next"
+      },
+      "dependsOn": ["build-manifest", { "projects": ["worker-router"], "target": "build-manifest" }],
+      "inputs": ["production", "^production"],
+      "outputs": ["{projectRoot}/.next"],
+      "cache": true
+    },
+    "dev": {
+      "executor": "nx:run-script",
+      "options": { "script": "dev" },
+      "cache": false,
+      "persistent": true
+    },
+    "start": {
+      "executor": "nx:run-script",
+      "options": { "script": "start" }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "cache": true
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx tsc --noEmit -p tsconfig.json",
+        "cwd": "apps/face-value"
+      },
+      "cache": true
+    }
+  }
+}
