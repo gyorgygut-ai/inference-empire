@@ -50,6 +50,7 @@ archive/
 
 # Generated files
 **/manifest.json
+*.shortcut
 
 # Flash
 .flash/

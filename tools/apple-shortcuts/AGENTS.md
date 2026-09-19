@@ -14,3 +14,24 @@ macOS/iOS automation via Apple's Shortcuts app.
 - `reminders` — create/query/complete
 - `notes` — create/append/search
 - `calendar` — create/query events
+
+## Artifact Production
+
+Shortcuts are generated and stored in `tools/apple-shortcuts/artifacts/`.
+
+Each shortcut has two versions:
+
+- `<name>_unsigned.shortcut` — raw binary plist, produced by the generator
+- `<name>.shortcut` — signed version, produced by running `shortcuts sign -i <name>_unsigned.shortcut -o <name>.shortcut`
+
+The unsigned version is used for development and version control. The signed version is drag-and-drop ready for the Shortcuts app and does not trigger the "importing unsigned shortcuts not supported" warning.
+
+## Signing
+
+To sign a shortcut:
+
+```bash
+shortcuts sign -i tools/apple-shortcuts/artifacts/<name>_unsigned.shortcut -o tools/apple-shortcuts/artifacts/<name>.shortcut
+```
+
+The signed `.shortcut` file is the one you drag into the Shortcuts app.

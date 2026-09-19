@@ -6,6 +6,13 @@
   "targets": {
     "lint": { "executor": "@nx/eslint:lint" },
     "test-unit": { "executor": "@nx/vitest:test" },
-    "build": { "executor": "@nx/js:tsc" }
+    "build": { "executor": "@nx/js:tsc" },
+    "sign": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "shortcuts sign -i artifacts/test-time-notification_unsigned.shortcut -o artifacts/test-time-notification.shortcut",
+        "cwd": "tools/apple-shortcuts"
+      }
+    }
   }
 }
