@@ -26,6 +26,15 @@ Each shortcut has two versions:
 
 The unsigned version is used for development and version control. The signed version is drag-and-drop ready for the Shortcuts app and does not trigger the "importing unsigned shortcuts not supported" warning.
 
+## Dirigera Shortcuts
+
+Created for testing the IKEA Dirigera hub API:
+
+- `dirigera-list-devices_unsigned.shortcut` — lists all connected devices via GET `/v1/devices`
+- `dirigera-toggle-plug_unsigned.shortcut` — toggles Plug 1 (`dee49759-bb38-4a48-a048-b193d5128dbf_1`) on/off via GET/PATCH `/v1/devices/{deviceId}`
+
+Both shortcuts hardcode the auth token and use the "Get Contents of URL" action.
+
 ## Signing
 
 To sign a shortcut:
