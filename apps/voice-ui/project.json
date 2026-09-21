@@ -1,0 +1,49 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "voice-ui",
+  "projectType": "application",
+  "sourceRoot": "apps/voice-ui/src",
+  "tags": ["type:app", "scope:client"],
+  "targets": {
+    "build": {
+      "executor": "@nx/next:build",
+      "options": {
+        "outputPath": "{projectRoot}/.next"
+      },
+      "inputs": ["production", "^production"],
+      "outputs": ["{projectRoot}/.next"],
+      "cache": true
+    },
+    "dev": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node server.mjs",
+        "cwd": "apps/voice-ui"
+      },
+      "cache": false,
+      "persistent": true
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "inputs": ["default", "{workspaceRoot}/eslint.config.mjs"],
+      "cache": true
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsc --noEmit",
+        "cwd": "apps/voice-ui"
+      },
+      "cache": true
+    },
+    "deploy": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "echo 'voice-ui: no host yet'",
+        "cwd": "apps/voice-ui"
+      },
+      "dependsOn": ["^deploy", "build"],
+      "cache": false
+    }
+  }
+}

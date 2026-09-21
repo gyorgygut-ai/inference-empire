@@ -55,7 +55,7 @@ def _bake_models():
     WhisperModel("small", device="cpu", compute_type="int8")
 
     try:
-        TTS = importlib.import_module("TTS.api").TTS
+        from TTS.api import TTS
     except ImportError:
         TTS = None
 
@@ -66,7 +66,7 @@ def _bake_models():
 image = (
     modal.Image.debian_slim(python_version="3.11")
     .apt_install("ffmpeg", "libsndfile1")
-    .pip_install(*CHAT_IMAGE_PIP_DEPS)
+    .pip_install(*CHAT_IMAGE_PIP_DEPS, "websockets>=12.0")
     .env(
         {
             # Model caches live on the persistent Volume mounted at MODEL_MOUNT.
@@ -80,7 +80,7 @@ image = (
         }
     )
     .add_local_dir(VOICES_DIR, "/voices/reference_voices")
-    .add_local_python_source("workers.services", "workers.voice")
+    .add_local_python_source("apps", "apps.gpu_workers")
 )
 
 
@@ -656,9 +656,24 @@ class VoiceChatWorker:
     def generate_web(self, item: VoiceChatInput) -> dict:
         return generate(self.pipeline, **item.model_dump())
 
-    @modal.asgi_app()
-    def app(self):
-        return build_web_app(self.pipeline)
+
+# --------------------------------------------------------------------------
+# WebSocket server — @modal.asgi_app uses gRPC which doesn't support
+# WebSocket protocol upgrades. Real-time voice uses Beam instead.
+# --------------------------------------------------------------------------
+@app.function(
+    image=image,
+    gpu="L4",
+    memory=32768,
+    timeout=3600,
+    scaledown_window=60,
+)
+@modal.asgi_app()
+def ws_server():
+    """Return ASGI app for Modal web server proxy."""
+    pipeline = VoiceChatPipeline()
+    pipeline.voices = pipeline._load_voices()
+    return build_web_app(pipeline)
 
 
 def build_web_app(pipeline: VoiceChatPipeline):
@@ -666,7 +681,11 @@ def build_web_app(pipeline: VoiceChatPipeline):
 
     web = FastAPI()
 
-    @web.websocket("/v1/realtime")
+    @web.get("/")
+    async def health():
+        return {"status": "ok", "voices": len(pipeline.voices)}
+
+    @web.websocket("/ws")
     async def ws_endpoint(websocket: WebSocket):
         # Select the `realtime` subprotocol so clients that request it (the
         # OpenAI Realtime SDK, Node >=22 global WebSocket) don't reject the
@@ -693,4 +712,25 @@ def build_web_app(pipeline: VoiceChatPipeline):
         except WebSocketDisconnect:
             print("[OK] websocket disconnected", flush=True)
 
-    return web
+    # Patch the ASGI app to fix Modal SDK serialization crash.
+    #
+    # Modal SDK 1.5.5 crashes on ``websocket.close`` events where ``code``
+    # is ``None`` — the SDK tries to construct ``WebsocketClose(code=None)``
+    # which rejects ``None`` as a non-integer for the ``code`` field.
+    #
+    # We intercept the ASGI ``send`` callable so every close event gets
+    # ``code=1000`` instead of ``None``.
+    original_app = web
+
+    async def patched_asgi(scope, receive, send):
+        async def patched_send(message):
+            if (
+                message.get("type") == "websocket.close"
+                and message.get("code") is None
+            ):
+                message = {**message, "code": 1000}
+            await send(message)
+
+        await original_app(scope, receive, patched_send)
+
+    return patched_asgi

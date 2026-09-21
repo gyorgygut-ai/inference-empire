@@ -40,8 +40,8 @@ test = [
 ]
 
 [tool.setuptools.packages.find]
-where = ["workers"]
-include = ["workers*"]
+where = [".", "workers"]
+include = ["workers*", "apps*", "apps.*"]
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
