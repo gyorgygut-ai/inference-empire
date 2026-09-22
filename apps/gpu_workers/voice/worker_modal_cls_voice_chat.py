@@ -658,8 +658,8 @@ class VoiceChatWorker:
 
 
 # --------------------------------------------------------------------------
-# WebSocket server — @modal.asgi_app uses gRPC which doesn't support
-# WebSocket protocol upgrades. Real-time voice uses Beam instead.
+# WebSocket server — @modal.asgi_app supports WebSocket connections.
+# Exposes the OpenAI Realtime-compatible route at /ws.
 # --------------------------------------------------------------------------
 @app.function(
     image=image,
@@ -685,12 +685,10 @@ def build_web_app(pipeline: VoiceChatPipeline):
     async def health():
         return {"status": "ok", "voices": len(pipeline.voices)}
 
-    @web.websocket("/ws")
+    @web.websocket("/v1/realtime")
     async def ws_endpoint(websocket: WebSocket):
-        # Select the `realtime` subprotocol so clients that request it (the
-        # OpenAI Realtime SDK, Node >=22 global WebSocket) don't reject the
-        # handshake with "Server sent no subprotocol".
-        await websocket.accept(subprotocol="realtime")
+        # Accept websocket connection (Modal handles subprotocols internally)
+        await websocket.accept()
         # Optional Bearer auth (Proxy + Bearer strategy)
         auth = websocket.headers.get("authorization", "")
         expected = os.environ.get("WORKER_TOKEN")
@@ -709,24 +707,34 @@ def build_web_app(pipeline: VoiceChatPipeline):
                 except Exception:  # noqa: BLE001, S112
                     continue
                 await session.handle_event(event)
-        except WebSocketDisconnect:
-            print("[OK] websocket disconnected", flush=True)
+        except (WebSocketDisconnect, RuntimeError) as e:
+            if isinstance(e, WebSocketDisconnect):
+                print("[OK] websocket disconnected by client", flush=True)
+            else:
+                print(f"[OK] websocket ended: {e}", flush=True)
+        except Exception as e:  # noqa: BLE001
+            print(f"[ERR] websocket error: {type(e).__name__}: {e}", flush=True)
+        finally:
+            # CRITICAL: Always send valid close code to prevent Modal SDK crash
+            # when upstream generates websocket.close with code=None
+            try:
+                from starlette.websockets import WebSocketState
+                if websocket.client_state == WebSocketState.CONNECTED:
+                    await websocket.close(code=1000)
+            except Exception:  # noqa: BLE001, S110
+                pass
 
     # Patch the ASGI app to fix Modal SDK serialization crash.
-    #
     # Modal SDK 1.5.5 crashes on ``websocket.close`` events where ``code``
-    # is ``None`` — the SDK tries to construct ``WebsocketClose(code=None)``
-    # which rejects ``None`` as a non-integer for the ``code`` field.
-    #
-    # We intercept the ASGI ``send`` callable so every close event gets
-    # ``code=1000`` instead of ``None``.
+    # is ``None`` — it constructs ``WebsocketClose(code=None)`` which rejects
+    # ``None`` as a non-integer. Normalize all close/disconnect messages.
     original_app = web
 
     async def patched_asgi(scope, receive, send):
         async def patched_send(message):
             if (
-                message.get("type") == "websocket.close"
-                and message.get("code") is None
+                message.get("type") in ("websocket.close", "websocket.disconnect")
+                and not isinstance(message.get("code"), int)
             ):
                 message = {**message, "code": 1000}
             await send(message)
