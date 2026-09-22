@@ -4,7 +4,7 @@ from types import SimpleNamespace
 
 from fastapi.testclient import TestClient
 
-import apps.gpu_workers.voice.worker_beam_asgi_realtime_voice_chatterbox as worker_mod
+import apps.gpu_workers.voice.worker_beam_asgi_voice_chatterbox as worker_mod
 
 
 class FakeChatterbox:

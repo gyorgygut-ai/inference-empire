@@ -658,8 +658,8 @@ class VoiceChatWorker:
 
 
 # --------------------------------------------------------------------------
-# WebSocket server — @modal.asgi_app supports WebSocket connections.
-# Exposes the OpenAI Realtime-compatible route at /ws.
+# WebSocket server — @modal.asgi_app uses gRPC which doesn't support
+# WebSocket protocol upgrades. Real-time voice uses Beam instead.
 # --------------------------------------------------------------------------
 @app.function(
     image=image,
@@ -685,10 +685,12 @@ def build_web_app(pipeline: VoiceChatPipeline):
     async def health():
         return {"status": "ok", "voices": len(pipeline.voices)}
 
-    @web.websocket("/v1/realtime")
+    @web.websocket("/ws")
     async def ws_endpoint(websocket: WebSocket):
-        # Accept websocket connection (Modal handles subprotocols internally)
-        await websocket.accept()
+        # Select the `realtime` subprotocol so clients that request it (the
+        # OpenAI Realtime SDK, Node >=22 global WebSocket) don't reject the
+        # handshake with "Server sent no subprotocol".
+        await websocket.accept(subprotocol="realtime")
         # Optional Bearer auth (Proxy + Bearer strategy)
         auth = websocket.headers.get("authorization", "")
         expected = os.environ.get("WORKER_TOKEN")

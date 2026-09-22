@@ -1,4 +1,4 @@
-"""Beam.cloud @asgi Chatterbox TTS worker — OpenAI-compatible audio endpoint.
+"""Beam.cloud @asgi Chatterbox TTS worker -- OpenAI-compatible audio endpoint.
 
 Exposes the OpenAI TTS surface that OpenWebUI (and other clients) speak:
 

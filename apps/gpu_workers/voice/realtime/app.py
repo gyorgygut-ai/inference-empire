@@ -11,7 +11,7 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from apps.gpu_workers.voice.realtime.session import Session
 
 
-def build_app(models: dict, voices_config: dict | None, default_voice: str = "GutAI"):
+def build_app(models: dict, voices_config: dict | None, default_voice: str = "GutAI", available_voices: list[str] | None = None):
     """Build the FastAPI app exposing ``/v1/realtime``.
 
     Shared by the Beam worker (``realtime_voice_qwen.worker``) and the local
@@ -21,12 +21,21 @@ def build_app(models: dict, voices_config: dict | None, default_voice: str = "Gu
 
     @app.websocket("/v1/realtime")
     async def realtime_ws(websocket: WebSocket):
-        await websocket.accept()
+        # Optional Bearer auth (Proxy + Bearer strategy)
+        import os
+        auth = websocket.headers.get("authorization", "")
+        expected = os.environ.get("WORKER_TOKEN")
+        if expected and not auth.endswith(expected):
+            await websocket.close(code=1008)
+            return
+        
+        await websocket.accept(subprotocol="realtime")
         session = Session(
             models,
             send=websocket.send_text,
             voices_config=voices_config,
             default_voice=default_voice,
+            available_voices=available_voices,
         )
         await session.start()
         try:

@@ -111,7 +111,14 @@ def build_app(models: dict, voices_config: dict | None, default_voice: str = "Gu
     """Build the FastAPI app exposing ``/v1/realtime`` (see ``realtime/app.py``)."""
     from apps.gpu_workers.voice.realtime.app import build_app as _build
 
-    return _build(models, voices_config, default_voice)
+    # Get available voices from the TTS model if available
+    available_voices = None
+    if "tts" in models and hasattr(models["tts"], "voices"):
+        available_voices = models["tts"].voices()
+    elif "tts" in models and hasattr(models["tts"], "voice_ids"):
+        available_voices = models["tts"].voice_ids()
+    
+    return _build(models, voices_config, default_voice, available_voices)
 
 
 @asgi(

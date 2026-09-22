@@ -33,11 +33,12 @@ def _new_id(prefix: str) -> str:
 
 
 class Session:
-    def __init__(self, models: dict, send, voices_config: dict | None = None, default_voice: str = "GutAI") -> None:
+    def __init__(self, models: dict, send, voices_config: dict | None = None, default_voice: str = "GutAI", available_voices: list[str] | None = None) -> None:
         self._models = models
         self._send = send
         self._voices_config = voices_config
         self._default_voice = default_voice
+        self._available_voices = available_voices or []
         self._voice = default_voice
         self._last_language: str | None = None
         self._loop: asyncio.AbstractEventLoop | None = None
@@ -93,17 +94,45 @@ class Session:
             if self._history and self._history[0].get("role") == "system"
             else ""
         )
-        await self._emit(
-            Event.session_created(
-                {
-                    "id": "session_1",
-                    "model": "voice-worker",
-                    "voice": self._voice,
-                    "modalities": ["text", "audio"],
-                    "instructions": instructions,
-                }
-            )
-        )
+        # Build available voices/languages for the session.created event
+        # to match the Modal worker's protocol
+        available_voices = [{"id": v, "label": v} for v in self._available_voices]
+        available_languages = [
+            {"code": "en", "label": "English"},
+            {"code": "hu", "label": "Hungarian"},
+        ]
+        
+        session_dict = {
+            "id": "session_1",
+            "model": "voice-worker",
+            "voice": self._voice,
+            "language": "en",
+            "modalities": ["text", "audio"],
+            "instructions": instructions,
+            "available_voices": available_voices,
+            "available_languages": available_languages,
+            "input_audio_format": "pcm16",
+            "output_audio_format": "pcm16",
+            "input_audio_transcription": {"model": "whisper-1"},
+            "turn_detection": {
+                "type": "server_vad",
+                "threshold": 0.5,
+                "silence_duration_ms": 500,
+                "prefix_padding_ms": 200,
+            },
+            "tools": [],
+            "tool_choice": "none",
+            "temperature": 0.7,
+        }
+        
+        await self._emit(Event.session_created(session_dict))
+        
+        # Emit conversation.created to match Modal worker behavior
+        # The OpenAI SDK expects this event
+        await self._emit({
+            "type": "conversation.created",
+            "conversation": {"id": "conv_1", "item": [], "model": "voice-worker"},
+        })
 
     # -- session config (voice + persona) --------------------------------
     async def _apply_session(self, session: dict) -> None:
@@ -311,5 +340,11 @@ class Session:
             self._active_turn = None
 
     # -- helpers ----------------------------------------------------------
-    async def _emit(self, ev: Event) -> None:
-        await self._send(ev.to_json())
+    async def _emit(self, ev) -> None:
+        if isinstance(ev, dict):
+            # Raw dict event (for compatibility with Modal worker events)
+            import json
+            await self._send(json.dumps(ev))
+        else:
+            # Event object
+            await self._send(ev.to_json())
