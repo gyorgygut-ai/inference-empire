@@ -3,7 +3,6 @@ import { useChat } from "./chat-context"
 import {
   ThreadPrimitive,
   MessagePrimitive,
-  SuggestionPrimitive,
   AuiIf,
 } from "@assistant-ui/react"
 import Composer from "./composer"
@@ -22,22 +21,16 @@ export default function Thread({ outcomes, serverOnline }: ThreadProps) {
       <ThreadPrimitive.Viewport className="flex-1 overflow-y-auto">
         <AuiIf condition={(s) => s.thread.isEmpty}>
           <div className="p-4 space-y-2">
-            <ThreadPrimitive.Suggestions>
-              {() =>
-              outcomes.map((outcome) => (
-                <SuggestionPrimitive.Trigger
-                  key={outcome.id}
-                  send={true}
-                  onClick={() => setSelectedOutcomeId(outcome.id)}
-                  className="w-full text-left px-3 py-2 rounded border border-gray-200 hover:bg-gray-50"
-                >
-                  <SuggestionPrimitive.Title>
-                    {outcome.title}
-                  </SuggestionPrimitive.Title>
-                </SuggestionPrimitive.Trigger>
-              ))
-            }
-            </ThreadPrimitive.Suggestions>
+            {outcomes.map((outcome) => (
+              <button
+                key={outcome.id}
+                type="button"
+                className="w-full text-left px-3 py-2 rounded border border-gray-200 hover:bg-gray-50"
+                onClick={() => setSelectedOutcomeId(outcome.id)}
+              >
+                {outcome.title}
+              </button>
+            ))}
           </div>
         </AuiIf>
 
