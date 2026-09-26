@@ -53,11 +53,8 @@ function createAdapter(selectedOutcomeId: string | null): ChatModelAdapter {
         return { content: [{ type: "text" as const, text: "No message found" }] }
       }
 
-      // Extract outcomeId from message text (sent by SuggestionPrimitive or stored in context)
-      const textContent = lastUser.content.find((c) => c.type === "text") as
-        | { text: string }
-        | undefined
-      const outcomeId = textContent?.text || selectedOutcomeId
+      // Outcome ID comes from chat context (set by SuggestionPrimitive onClick)
+      const outcomeId = selectedOutcomeId
 
       if (!outcomeId) {
         return { content: [{ type: "text" as const, text: "No outcome selected" }] }

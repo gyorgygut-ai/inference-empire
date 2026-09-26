@@ -7,6 +7,7 @@ import {
   AuiIf,
 } from "@assistant-ui/react"
 import Composer from "./composer"
+import { Image } from "./elements/image"
 
 type ThreadProps = {
   outcomes: { id: string; title: string }[]
@@ -20,12 +21,13 @@ export default function Thread({ outcomes, serverOnline }: ThreadProps) {
     <ThreadPrimitive.Root className="flex flex-col h-full">
       <ThreadPrimitive.Viewport className="flex-1 overflow-y-auto">
         <AuiIf condition={(s) => s.thread.isEmpty}>
-          <ThreadPrimitive.Suggestions className="p-4 space-y-2">
-            {() =>
+          <div className="p-4 space-y-2">
+            <ThreadPrimitive.Suggestions>
+              {() =>
               outcomes.map((outcome) => (
                 <SuggestionPrimitive.Trigger
                   key={outcome.id}
-                  send={{ text: outcome.id }}
+                  send={true}
                   onClick={() => setSelectedOutcomeId(outcome.id)}
                   className="w-full text-left px-3 py-2 rounded border border-gray-200 hover:bg-gray-50"
                 >
@@ -35,7 +37,8 @@ export default function Thread({ outcomes, serverOnline }: ThreadProps) {
                 </SuggestionPrimitive.Trigger>
               ))
             }
-          </ThreadPrimitive.Suggestions>
+            </ThreadPrimitive.Suggestions>
+          </div>
         </AuiIf>
 
         <ThreadPrimitive.Messages>
@@ -44,10 +47,7 @@ export default function Thread({ outcomes, serverOnline }: ThreadProps) {
               <MessagePrimitive.Content
                 components={{
                   Text: ({ text }) => <p>{text}</p>,
-                  Image: ({ image }) => (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={image} alt="Generated" className="max-w-full rounded" />
-                  ),
+                  Image,
                 }}
               />
             </MessagePrimitive.Root>
