@@ -3,7 +3,7 @@ import { runCommand } from '../run-command';
 import type { RuffExecutorSchema } from './schema';
 
 export function buildCommand(family: string): string {
-  return `uvx ruff check apps/gpu-workers/${family} --line-length 100`;
+  return `uvx ruff check apps/${family} --line-length 100`;
 }
 
 const runExecutor: PromiseExecutor<RuffExecutorSchema> = async (

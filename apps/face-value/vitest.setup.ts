@@ -17,3 +17,7 @@ class ResizeObserver {
 }
 
 global.ResizeObserver = ResizeObserver as unknown as typeof globalThis.ResizeObserver
+
+global.HTMLElement.prototype.scrollTo = () => {}
+global.HTMLDivElement.prototype.scrollTo = () => {}
+global.Element.prototype.scrollTo = () => {}

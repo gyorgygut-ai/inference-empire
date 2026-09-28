@@ -54,13 +54,13 @@
 ### Inference Backend
 
 - **Worker router (flux2)** — `POST /queue` with `{ input: Flux2Klein9BInput }` + `Authorization: Bearer <token>` → `{ task_id }` (202), then `GET /task/:task_id` with auth → `{ status: "BUSY"|"REJECTED"|"DONE", output?: Flux2Klein9BOutput }`. Poll every 3s, max 5 min.
-- **Provider routing** — flux2 worker-router internally routes to Modal/Flash/Beam providers based on `providers.generated.json` (written by `worker-router:build-manifest` reading `dist/apps/gpu-workers-flux2/contract.json`). face-value never calls providers directly.
+- **Provider routing** — flux2 worker-router internally routes to Modal/Flash/Beam providers based on `providers.generated.json` (written by `worker-router:build-manifest` reading `dist/apps/flux2/contract.json`). face-value never calls providers directly.
 - **Auth token** generated at build time, injected into `dist/apps/worker-router/contract.json`.
-- **Model**: `flux_2_klein_9b_q6p.ckpt` (~7.3GB) — hosted on `gpu-workers-flux2/` provider backend. Deployment managed separately via Nx chain.
+- **Model**: `flux_2_klein_9b_q6p.ckpt` (~7.3GB) — hosted on `flux2/` provider backend. Deployment managed separately via Nx chain.
 
 ### Security
 
-- TODO: oh the irony
+- Cloudflare Access JWT gate in `proxy.ts` via `jose` against CF certs, redirect on invalid token; no-op without CF env vars. Origin stays private behind CF.
 
 ### Caching
 
@@ -92,16 +92,32 @@
 
 ## assistant-ui
 
-- Chat interface replaces form UI. No LLM involved.
-- Runtime: `useLocalRuntime` bridges to existing Server Action (`requestOutcome` in `app/actions.ts`). No API routes.
-- Primitives: `ThreadPrimitive`, `ComposerPrimitive`, `AttachmentPrimitive`, `SuggestionPrimitive`, `AuiIf`.
-- Outcomes rendered as `SuggestionPrimitive` items in thread.
-- Image upload via `AttachmentPrimitive` in composer after outcome selection.
-- Generated image rendered as `ImageMessagePart` in assistant message, with download action.
+**Non-negotiables**:
+
+- Chat interface guides user step by step
+- Continous chat stream. No LLM. No chat message input.
+- `useLocalRuntime` bridges to existing Server Action
 - Error and loading states shown as system/running messages in thread.
-- Pre-send validation: send button disabled until outcome selected + image attached.
-- Multi-turn: previous image persists as visible attachment in composer across turns.
-- Model fallback handled by external Cloudflare gateway proxy. This app calls gateway; no fallback logic here.
+- Multi-turn: previous image reusable via reuse button in composer across turns
 - BE contract canonical in `dist/apps/worker-router/contract.json`, read at build time via server-only `router-config.ts`. This repo's `schema.ts` mirrors the canonical contract.
-- Styling: assistant-ui registry components (`thread` + `image`, plus `attachment`, `file`, `tooltip-icon-button`, shadcn ui set) vendored manually into `components/` + `hooks/`; LLM-only elements trimmed. Project uses Tailwind v4.
-- Layout: full-width chat by default. At `lg` breakpoint → 2-column: left 2/3 (solid bg, hero img), right 1/3 (chat). Tailwind grid on page wrapper.
+
+**Layout**:
+
+- full-width chat by default.
+- > `lg`: 2-column: left 2/3 (solid bg, hero img), right 1/3 (chat)
+- assistant-ui registry components (`thread` + `image`, plus `attachment`, `file`, `tooltip-icon-button`, shadcn ui set); LLM-only elements trimmed
+
+**Step 1: Select an outcome**:
+
+- Outcomes rendered as buttons from server `{id, title}`
+- Selecting an outcome presents step 2 as a new message
+
+**Step 2: Upload a reference image**:
+
+- Image upload via `AttachmentPrimitive` in composer
+- Selected image displayed in chat
+
+**Step 3: Ready to generate**:
+
+- Generate button appears
+- Can become disabled if previous selections change

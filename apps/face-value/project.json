@@ -40,6 +40,13 @@
         "cwd": "apps/face-value"
       },
       "cache": true
+    },
+    "test-unit": {
+      "executor": "nx:run-script",
+      "options": {
+        "script": "test:run"
+      },
+      "cache": true
     }
   }
 }

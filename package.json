@@ -4,7 +4,7 @@
   "private": true,
   "workspaces": [
     "apps/*",
-    "apps/gpu-workers/*",
+    "apps/*",
     "packages/contracts",
     "packages/worker-router-client",
     "tools/*"
@@ -16,7 +16,8 @@
     "test-unit": "nx run-many -t test-unit",
     "test-e2e": "nx run-many -t test-e2e",
     "lint": "nx run-many -t lint",
-    "generate": "nx run cli:generate"
+    "generate": "nx run cli:generate",
+    "py-check": "uv run ruff check . && uv run ty check . && uv run vulture ."
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.22.0",

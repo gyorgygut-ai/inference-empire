@@ -1,0 +1,56 @@
+{
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "name": "vision",
+  "projectType": "application",
+  "sourceRoot": "apps/vision",
+  "tags": ["type:app", "scope:worker", "model:vision"],
+  "targets": {
+    "test-unit": {
+      "executor": "@inference/workspace-plugin:pytest",
+      "options": { "family": "vision", "mode": "unit" },
+      "inputs": ["default"],
+      "cache": true
+    },
+    "test-e2e": {
+      "executor": "@inference/workspace-plugin:pytest",
+      "options": { "family": "vision", "mode": "e2e" },
+      "cache": false
+    },
+    "lint": {
+      "executor": "@inference/workspace-plugin:ruff",
+      "options": { "family": "vision" },
+      "cache": true
+    },
+    "typecheck": {
+      "executor": "@inference/workspace-plugin:ty",
+      "options": { "family": "vision" },
+      "cache": true
+    },
+    "verify-deploy-gate": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "uv run python -c \"from apps.vision._shared_small_vision import IMAGE_PIP_DEPS; print('\\n'.join(IMAGE_PIP_DEPS))\" | uv pip compile --python-version 3.11 -",
+        "cwd": "."
+      },
+      "cache": true
+    },
+    "deploy-modal": {
+      "executor": "nx:run-commands",
+      "options": { "command": "uv run --locked modal deploy vision/worker_modal_cls_small_vision.py", "cwd": "." },
+      "dependsOn": ["verify-deploy-gate"],
+      "cache": false
+    },
+    "deploy-beam": {
+      "executor": "nx:run-commands",
+      "options": { "command": "echo 'Beam deploys on dispatch.put(); see AGENTS.md'", "cwd": "." },
+      "dependsOn": ["verify-deploy-gate"],
+      "cache": false
+    },
+    "deploy-flash": {
+      "executor": "nx:run-commands",
+      "options": { "command": "echo 'flash deploy --name vision; see AGENTS.md'", "cwd": "." },
+      "dependsOn": ["verify-deploy-gate"],
+      "cache": false
+    }
+  }
+}

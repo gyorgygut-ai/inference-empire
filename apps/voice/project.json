@@ -1,0 +1,50 @@
+{
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "name": "voice",
+  "projectType": "application",
+  "sourceRoot": "apps/voice",
+  "tags": ["type:app", "scope:worker", "model:voice"],
+  "targets": {
+    "test-unit": {
+      "executor": "@inference/workspace-plugin:pytest",
+      "options": { "family": "voice", "mode": "unit" },
+      "inputs": ["default"],
+      "cache": true
+    },
+    "test-e2e": {
+      "executor": "@inference/workspace-plugin:pytest",
+      "options": { "family": "voice", "mode": "e2e" },
+      "cache": false
+    },
+    "lint": {
+      "executor": "@inference/workspace-plugin:ruff",
+      "options": { "family": "voice" },
+      "cache": true
+    },
+    "typecheck": {
+      "executor": "@inference/workspace-plugin:ty",
+      "options": { "family": "voice" },
+      "cache": true
+    },
+    "verify-deploy-gate": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "uv run python -c \"from apps.voice._shared_voice_chat import REALTIME_IMAGE_PIP_DEPS; print('\\n'.join(REALTIME_IMAGE_PIP_DEPS))\" | uv pip compile --python-version 3.11 - && uv run python -c \"from apps.voice._shared_voice_chat import CHATTERBOX_IMAGE_PIP_DEPS; print('\\n'.join(CHATTERBOX_IMAGE_PIP_DEPS))\" | uv pip compile --python-version 3.11 - && uv run python -c \"from apps.voice._shared_voice_chat import OPENVOICE_IMAGE_PIP_DEPS; print('\\n'.join(OPENVOICE_IMAGE_PIP_DEPS))\" | uv pip compile --python-version 3.11 - && uv run python -c \"from apps.voice._shared_voice_chat import QWEN_IMAGE_PIP_DEPS; print('\\n'.join(QWEN_IMAGE_PIP_DEPS))\" | uv pip compile --python-version 3.10 - && uv run python -c \"from apps.voice._shared_voice_chat import CHAT_IMAGE_PIP_DEPS; print('\\n'.join(CHAT_IMAGE_PIP_DEPS))\" | uv pip compile --python-version 3.11 -",
+        "cwd": "."
+      },
+      "cache": true
+    },
+    "deploy-beam": {
+      "executor": "nx:run-commands",
+      "options": { "command": "echo 'Beam ASGI voice deploys via beam; see AGENTS.md'", "cwd": "." },
+      "dependsOn": ["verify-deploy-gate"],
+      "cache": false
+    },
+    "deploy-flash": {
+      "executor": "nx:run-commands",
+      "options": { "command": "echo 'flash deploy --name voice; see AGENTS.md'", "cwd": "." },
+      "dependsOn": ["verify-deploy-gate"],
+      "cache": false
+    }
+  }
+}

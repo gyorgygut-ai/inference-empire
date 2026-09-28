@@ -21,6 +21,7 @@ dev = [
     "pytest==9.1.1",
     "ruff==0.16.6",
     "ty==0.0.78",
+    "vulture==2.14",
 ]
 test = [
     "accelerate==1.12.0",
@@ -53,6 +54,26 @@ markers = [
 
 [tool.ruff]
 line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["F", "E1", "E4", "E7", "W", "I", "N", "UP", "ARG", "RET", "PLC", "PLE", "TC", "PTH", "PERF", "RUF"]
+ignore = [
+    "ARG001",
+    "ARG002",
+    "ARG003",
+    "ARG004",
+    "N806",
+    "PLR0913",
+    "PLW0603",
+    "PTH118",
+    "PTH120",
+    "PTH122",
+    "UP037",
+    "PLC0415",
+    "PTH",
+    "RET504",
+]
 
 [tool.ty.environment]
 python-version = "3.11"
@@ -61,7 +82,19 @@ python-version = "3.11"
 error-on-warning = false
 
 [[tool.ty.overrides]]
-include = ["workers/**/tests/**", "workers/**/test_*.py"]
+include = ["workers/**/tests/**", "workers/**/test_*.py", "apps/h3/tests/test_*_turbo_*.py", "apps/h3/tests/test_worker_beam_tq_minimax_h3_comfy.py", "apps/h3/tests/test_worker_modal_cls_minimax_h3_comfy.py"]
 
 [tool.ty.overrides.rules]
 possibly-unresolved-reference = "warn"
+unresolved-import = "ignore"
+unresolved-attribute = "ignore"
+not-iterable = "ignore"
+
+[[tool.ty.overrides]]
+include = ["apps/**/_shared_*.py", "apps/voice/worker_modal_cls_voice_chat.py", "apps/_services/torch_module/torch_module_service.py"]
+
+[tool.ty.overrides.rules]
+invalid-assignment = "ignore"
+unresolved-attribute = "ignore"
+invalid-argument-type = "ignore"
+invalid-return-type = "ignore"

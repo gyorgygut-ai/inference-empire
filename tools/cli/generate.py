@@ -64,7 +64,7 @@ def _looks_like_base64(value: str) -> bool:
     try:
         base64.b64decode(s, validate=True)
         return True
-    except Exception:  # noqa: BLE001
+    except Exception:
         return False
 
 
@@ -296,7 +296,7 @@ def invoke_modal(worker_module, good: dict[str, Any]):
     worker_file = worker_module.__file__
     if worker_file is None:
         raise ValueError("Could not determine worker file path")
-    with open(worker_file, "r") as f:
+    with open(worker_file) as f:
         lines = f.readlines()
     app_name = None
     class_name = None
@@ -527,7 +527,7 @@ def main() -> int:
 
     try:
         worker_module = load_worker_module(worker_path)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         print(f"Error loading worker module: {exc}", file=sys.stderr)
         return 1
 
@@ -542,7 +542,7 @@ def main() -> int:
             out = invoke_asgi(worker_module, good)
         else:
             raise ValueError(f"Unsupported provider: {provider}")
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         print(f"\n[\033[31mERR\033[0m] Worker invocation failed: {exc}", file=sys.stderr)
         # Print the exception details
         import traceback

@@ -1,159 +1,159 @@
 "use client"
-import { useMemo } from "react"
-import { AssistantRuntimeProvider, useLocalRuntime, AuiConfig, Suggestions, SimpleImageAttachmentAdapter, type ChatModelAdapter } from "@assistant-ui/react"
-import { Thread } from "@/components/assistant-ui/elements/thread.aui"
-import { ChatProvider, useChat } from "./chat-context"
-import OutcomeWelcome from "./outcome-welcome"
-import { requestOutcome, type ActionResult } from "@/app/actions"
 
-function getErrorMessage(error: string): string {
-  switch (error) {
-    case "SERVER_TIMEOUT":
-      return "Server timed out. Please try again."
-    case "OUTCOME_MISSING":
-    case "OUTCOME_INVALID":
-      return "Invalid outcome. Please select one."
-    case "INPUT_IMAGE_MISSING":
-      return "Please upload an image."
-    case "INPUT_IMAGE_TOO_LARGE":
-      return "Image too large. Please use a smaller file."
-    case "INPUT_IMAGE_TYPE_NOT_ALLOWED":
-      return "Invalid image format. Please use PNG or JPG."
-    default:
-      return "Something went wrong. Please try again."
-  }
+import { useMemo, useRef, useState } from "react"
+import {
+  AssistantRuntimeProvider,
+  AttachmentPrimitive,
+  ComposerPrimitive,
+  CompositeAttachmentAdapter,
+  MessagePrimitive,
+  SimpleImageAttachmentAdapter,
+  ThreadPrimitive,
+  useAuiState,
+  useLocalRuntime,
+  type ChatModelAdapter,
+  type ChatModelRunOptions,
+  type ThreadUserMessage,
+} from "@assistant-ui/react"
+import { requestOutcome } from "@/app/actions"
+import { vocabulary } from "@/app/vocabulary"
+import {
+  fileFromAttachment,
+  submitFlow,
+  urlToFile,
+} from "./chat-adapter"
+import { step2Prompt } from "./chat-flow"
+
+interface OutcomeOption {
+  id: string;
+  title: string;
 }
 
-function buildFormData(imageData: string | undefined, outcomeId: string): FormData {
-  const formData = new FormData()
-  formData.append("outcomeId", outcomeId)
-
-  if (imageData) {
-    const commaIdx = imageData.indexOf(",")
-    const base64Data = commaIdx > 0 ? imageData.slice(commaIdx + 1) : imageData
-    const mimeTypeMatch = imageData.match(/^data:([^;]+);/)
-    const mimeType = mimeTypeMatch ? mimeTypeMatch[1] : "image/png"
-    const byteCharacters = atob(base64Data)
-    const byteArrays: number[][] = []
-    for (let offset = 0; offset < byteCharacters.length; offset += 512) {
-      const slice = byteCharacters.slice(offset, offset + 512)
-      byteArrays.push(Array.from(slice, (c) => c.charCodeAt(0)))
-    }
-    const blob = new Blob(byteArrays.map(arr => new Uint8Array(arr)), { type: mimeType })
-    formData.append("image", blob, "image.png")
+function ComposerStatus({ selectedId }: { selectedId: string | null }) {
+  const isRunning = useAuiState((s) => s.thread.isRunning)
+  const attachments = useAuiState((s) => s.thread.composer.attachments)
+  if (isRunning) {
+    return <p>{vocabulary.image.generating}</p>
   }
-
-  return formData
+  if (!selectedId) {
+    return <p>{vocabulary.outcomePicker.missingSelection}</p>
+  }
+  if (attachments.length === 0) {
+    return <p>{vocabulary.outcomePicker.initialAttach}</p>
+  }
+  return null
 }
 
-function resolvePromptToId(text: string | null, outcomes: readonly { id: string, title: string }[]): string | null {
-  if (!text) {
-    return null
-  }
-  const match = outcomes.find((o) => o.id === text || o.title === text)
-  return match ? match.id : text
-}
+export default function ChatClient({ outcomes }: { outcomes: OutcomeOption[] }) {
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [lastImageUrl, setLastImageUrl] = useState<string | null>(null)
+  const selectedRef = useRef<string | null>(null)
 
-function resolveOutcomeId(
-  messages: readonly { role: string, content: readonly { type: string, text?: string }[] }[],
-  outcomes: readonly { id: string, title: string }[],
-  fallback: string | null,
-): string | null {
-  const lastUser = [...messages].reverse().find((m) => m.role === "user")
-  const textPart = lastUser?.content.find((c) => c.type === "text" && c.text?.trim())
-  const text = textPart?.text?.trim() ?? null
-  if (text) {
-    const match = outcomes.find((o) => o.id === text || o.title === text)
-    if (match) {
-      return match.id
-    }
-    return text
-  }
-  return resolvePromptToId(fallback, outcomes)
-}
-
-function resolveImageData(messages: readonly { role: string, content: readonly { type: string, image?: string }[] }[]): string | undefined {
-  const reversed = [...messages].reverse()
-  for (const m of reversed) {
-    if (m.role !== "user") {
-      continue
-    }
-    const found = m.content.find((c) => c.type === "image" && c.image) as { image: string } | undefined
-    if (found?.image) {
-      return found.image
-    }
-  }
-  return undefined
-}
-
-function createAdapter(selectedOutcomeId: string | null, outcomes: readonly { id: string, title: string }[], onImage: (data: string) => void): ChatModelAdapter {
-  return {
-    async run({ messages }) {
-      const lastUser = [...messages].reverse().find((m) => m.role === "user")
-      if (!lastUser) {
-        return { content: [{ type: "text" as const, text: "No message found" }] }
-      }
-
-      const outcomeId = resolveOutcomeId(messages, outcomes, selectedOutcomeId)
-
-      if (!outcomeId) {
-        return { content: [{ type: "text" as const, text: "No outcome selected" }] }
-      }
-
-      const imageData = resolveImageData(messages)
-      if (imageData) {
-        onImage(imageData)
-      }
-
-      try {
-        const formData = buildFormData(imageData, outcomeId)
-        const result: ActionResult = await requestOutcome(null, formData)
-
-        if ("imageUrl" in result) {
-          return {
-            content: [{ type: "image" as const, image: result.imageUrl }],
-          }
+  const chatModel = useMemo<ChatModelAdapter>(
+    () => ({
+      run: async ({ messages }: ChatModelRunOptions) => {
+        const outcomeId = selectedRef.current
+        const users = messages.filter((m): m is ThreadUserMessage => m.role === "user")
+        const attachment = users[users.length - 1]?.attachments[0]
+        const file = attachment ? await fileFromAttachment(attachment) : null
+        const mapped = await submitFlow(outcomeId, file, (fd) => requestOutcome(null, fd))
+        if (mapped.imageUrl) {
+          setLastImageUrl(mapped.imageUrl)
         }
-        return {
-          content: [{ type: "text" as const, text: getErrorMessage(result.error) }],
-        }
-      } catch {
-        return {
-          content: [{ type: "text" as const, text: "Failed to generate image" }],
-        }
-      }
-    },
-  }
-}
-
-function ChatRuntime({ outcomes }: { outcomes: { id: string, title: string }[] }) {
-  const { selectedOutcomeId, setLastImageData } = useChat()
-  const adapter = useMemo(() => createAdapter(selectedOutcomeId, outcomes, setLastImageData), [selectedOutcomeId, outcomes, setLastImageData])
-  const runtime = useLocalRuntime(adapter, {
-    initialMessages: [],
-    adapters: {
-      attachments: new SimpleImageAttachmentAdapter(),
-    },
-  })
-  const config = useMemo(() => AuiConfig({
-    suggestions: Suggestions(outcomes.map((o) => ({ title: o.title, label: o.title, prompt: o.title }))),
-  }), [outcomes])
-
-  return (
-    <AssistantRuntimeProvider runtime={runtime} config={config}>
-      <Thread components={{ Welcome: OutcomeWelcome }} />
-    </AssistantRuntimeProvider>
+        return { content: mapped.content }
+      },
+    }),
+    [],
   )
-}
 
-export default function ChatClient({
-  outcomes,
-}: {
-  outcomes: { id: string, title: string }[]
-}) {
+  const attachmentAdapter = useMemo(
+    () => new CompositeAttachmentAdapter([new SimpleImageAttachmentAdapter()]),
+    [],
+  )
+
+  const runtime = useLocalRuntime(chatModel, { adapters: { attachments: attachmentAdapter } })
+
+  function selectOutcome(outcome: OutcomeOption) {
+    selectedRef.current = outcome.id
+    setSelectedId(outcome.id)
+    runtime.thread.append({
+      role: "user",
+      content: [{ type: "text", text: `Selected outcome: ${outcome.title}` }],
+    })
+    runtime.thread.append({
+      role: "assistant",
+      content: [{ type: "text", text: step2Prompt(outcome) }],
+    })
+  }
+
+  async function reuseLastImage() {
+    if (!lastImageUrl) {
+      return
+    }
+    const file = await urlToFile(lastImageUrl, "previous.png")
+    await runtime.thread.composer.addAttachment(file)
+  }
+
   return (
-    <ChatProvider>
-      <ChatRuntime outcomes={outcomes} />
-    </ChatProvider>
+    <AssistantRuntimeProvider runtime={runtime}>
+      <div className="flex flex-col h-full">
+        <div>
+          <h2>{vocabulary.outcomePicker.heading}</h2>
+          {outcomes.length === 0 ? (
+            <p>{vocabulary.outcomePicker.missingSelection}</p>
+          ) : (
+            <div>
+              {outcomes.map((outcome) => (
+                <button
+                  key={outcome.id}
+                  type="button"
+                  aria-pressed={selectedId === outcome.id}
+                  onClick={() => selectOutcome(outcome)}
+                >
+                  {outcome.title}
+                </button>
+              ))}
+            </div>
+          )}
+          <p>{selectedId ? vocabulary.outcomePicker.selectedHint : vocabulary.outcomePicker.initialPick}</p>
+        </div>
+        <ThreadPrimitive.Root className="flex-1 overflow-hidden">
+          <ThreadPrimitive.Viewport className="h-full overflow-y-auto">
+            <ThreadPrimitive.Empty>
+              <p>{vocabulary.thread.welcome}</p>
+              <p>{vocabulary.outcomePicker.initialAttach}</p>
+            </ThreadPrimitive.Empty>
+            <ThreadPrimitive.Messages>
+              {() => (
+                <MessagePrimitive.Root>
+                  <MessagePrimitive.Content />
+                </MessagePrimitive.Root>
+              )}
+            </ThreadPrimitive.Messages>
+          </ThreadPrimitive.Viewport>
+          <ThreadPrimitive.ScrollToBottom>{vocabulary.thread.scrollToBottom}</ThreadPrimitive.ScrollToBottom>
+        </ThreadPrimitive.Root>
+        {lastImageUrl && <a href={lastImageUrl} download>{vocabulary.image.download}</a>}
+        <ComposerPrimitive.Root>
+          <ComposerPrimitive.Attachments>
+            {() => (
+              <AttachmentPrimitive.Root>
+                <AttachmentPrimitive.unstable_Thumb />
+                <AttachmentPrimitive.Name />
+                <AttachmentPrimitive.Remove>{vocabulary.attachment.removeFile}</AttachmentPrimitive.Remove>
+              </AttachmentPrimitive.Root>
+            )}
+          </ComposerPrimitive.Attachments>
+          <ComposerPrimitive.AddAttachment>{vocabulary.composer.addAttachment}</ComposerPrimitive.AddAttachment>
+          {lastImageUrl && (
+            <button type="button" onClick={reuseLastImage}>
+              {vocabulary.composer.reusePrevious}
+            </button>
+          )}
+          <ComposerPrimitive.Send>{vocabulary.composer.generate}</ComposerPrimitive.Send>
+        </ComposerPrimitive.Root>
+        <ComposerStatus selectedId={selectedId} />
+      </div>
+    </AssistantRuntimeProvider>
   )
 }
