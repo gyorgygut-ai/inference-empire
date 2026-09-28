@@ -3,27 +3,43 @@
   "name": "flux2",
   "projectType": "application",
   "sourceRoot": "apps/flux2",
-  "tags": ["type:app", "scope:worker", "model:flux2"],
+  "tags": [
+    "type:app",
+    "scope:worker",
+    "model:flux2"
+  ],
   "targets": {
     "test-unit": {
       "executor": "@inference/workspace-plugin:pytest",
-      "options": { "family": "flux2", "mode": "unit" },
-      "inputs": ["default"],
+      "options": {
+        "family": "flux2",
+        "mode": "unit"
+      },
+      "inputs": [
+        "default"
+      ],
       "cache": true
     },
     "test-e2e": {
       "executor": "@inference/workspace-plugin:pytest",
-      "options": { "family": "flux2", "mode": "e2e" },
+      "options": {
+        "family": "flux2",
+        "mode": "e2e"
+      },
       "cache": false
     },
     "lint": {
       "executor": "@inference/workspace-plugin:ruff",
-      "options": { "family": "flux2" },
+      "options": {
+        "family": "flux2"
+      },
       "cache": true
     },
     "typecheck": {
       "executor": "@inference/workspace-plugin:ty",
-      "options": { "family": "flux2" },
+      "options": {
+        "family": "flux2"
+      },
       "cache": true
     },
     "verify-deploy-gate": {
@@ -36,27 +52,45 @@
     },
     "deploy-modal": {
       "executor": "nx:run-commands",
-      "options": { "command": "uv run --locked modal deploy flux2/worker_modal_cls_flux2_klein9b.py && node scripts/modal-output.mjs", "cwd": "." },
-      "dependsOn": ["verify-deploy-gate"],
+      "options": {
+        "command": "uv run --locked modal deploy flux2/worker_modal_cls_flux2_klein9b.py && node scripts/modal-output.mjs",
+        "cwd": "."
+      },
+      "dependsOn": [
+        "verify-deploy-gate"
+      ],
       "cache": false,
-      "outputs": ["{workspaceRoot}/dist/apps/flux2"]
+      "outputs": [
+        "{workspaceRoot}/dist/apps/flux2"
+      ]
     },
     "deploy-beam": {
       "executor": "nx:run-commands",
-      "options": { "command": "node scripts/deploy-beam.mjs", "cwd": "." },
-      "dependsOn": ["verify-deploy-gate"],
+      "options": {
+        "command": "node scripts/deploy-beam.mjs",
+        "cwd": "."
+      },
+      "dependsOn": [
+        "verify-deploy-gate"
+      ],
       "cache": false,
-      "outputs": ["{workspaceRoot}/dist/apps/flux2"]
+      "outputs": [
+        "{workspaceRoot}/dist/apps/flux2"
+      ]
     },
     "deploy-flash": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "uv run --locked python scripts/deploy-flash.py && node scripts/flash-output.mjs",
+        "command": "echo 'flash deploy disabled'",
         "cwd": "."
       },
-      "dependsOn": ["verify-deploy-gate"],
+      "dependsOn": [
+        "verify-deploy-gate"
+      ],
       "cache": false,
-      "outputs": ["{workspaceRoot}/dist/apps/flux2"]
+      "outputs": [
+        "{workspaceRoot}/dist/apps/flux2"
+      ]
     }
   }
 }

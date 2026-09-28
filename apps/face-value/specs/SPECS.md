@@ -110,7 +110,7 @@
 **Message 1: Select an outcome**:
 
 - Message: vocabulary.steps.outcome.message
-- Outcomes rendered as buttons from server `{id, title}`
+- Outcomes rendered from server `{id, title}`
 
 **Message 2: Upload a reference image**:
 

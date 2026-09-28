@@ -1,0 +1,1 @@
+export { vocabulary, type Vocabulary } from "./en";

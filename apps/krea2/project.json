@@ -3,27 +3,43 @@
   "name": "krea2",
   "projectType": "application",
   "sourceRoot": "apps/krea2",
-  "tags": ["type:app", "scope:worker", "model:krea2"],
+  "tags": [
+    "type:app",
+    "scope:worker",
+    "model:krea2"
+  ],
   "targets": {
     "test-unit": {
       "executor": "@inference/workspace-plugin:pytest",
-      "options": { "family": "krea2", "mode": "unit" },
-      "inputs": ["default"],
+      "options": {
+        "family": "krea2",
+        "mode": "unit"
+      },
+      "inputs": [
+        "default"
+      ],
       "cache": true
     },
     "test-e2e": {
       "executor": "@inference/workspace-plugin:pytest",
-      "options": { "family": "krea2", "mode": "e2e" },
+      "options": {
+        "family": "krea2",
+        "mode": "e2e"
+      },
       "cache": false
     },
     "lint": {
       "executor": "@inference/workspace-plugin:ruff",
-      "options": { "family": "krea2" },
+      "options": {
+        "family": "krea2"
+      },
       "cache": true
     },
     "typecheck": {
       "executor": "@inference/workspace-plugin:ty",
-      "options": { "family": "krea2" },
+      "options": {
+        "family": "krea2"
+      },
       "cache": true
     },
     "verify-deploy-gate": {
@@ -36,20 +52,35 @@
     },
     "deploy-modal": {
       "executor": "nx:run-commands",
-      "options": { "command": "uv run --locked modal deploy krea2/worker_modal_cls_krea2_ref2img.py", "cwd": "." },
-      "dependsOn": ["verify-deploy-gate"],
+      "options": {
+        "command": "uv run --locked modal deploy krea2/worker_modal_cls_krea2_ref2img.py",
+        "cwd": "."
+      },
+      "dependsOn": [
+        "verify-deploy-gate"
+      ],
       "cache": false
     },
     "deploy-beam": {
       "executor": "nx:run-commands",
-      "options": { "command": "echo 'Beam deploys on dispatch.put(); see AGENTS.md'", "cwd": "." },
-      "dependsOn": ["verify-deploy-gate"],
+      "options": {
+        "command": "echo 'Beam deploys on dispatch.put(); see AGENTS.md'",
+        "cwd": "."
+      },
+      "dependsOn": [
+        "verify-deploy-gate"
+      ],
       "cache": false
     },
     "deploy-flash": {
       "executor": "nx:run-commands",
-      "options": { "command": "echo 'flash deploy --name krea2; see AGENTS.md'", "cwd": "." },
-      "dependsOn": ["verify-deploy-gate"],
+      "options": {
+        "command": "echo 'flash deploy disabled'",
+        "cwd": "."
+      },
+      "dependsOn": [
+        "verify-deploy-gate"
+      ],
       "cache": false
     }
   }

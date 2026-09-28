@@ -6,9 +6,9 @@ from PIL import Image
 from pydantic import ValidationError
 
 import apps.krea2.worker_beam_tq_krea2_ref2img as worker_mod
-from apps._services.inference.image_pipe_fake import FakeImagePipe
-from apps._services.torch_module.torch_module_fake import FakeTorchModule
 from apps.krea2._shared_krea2_ref2img import Krea2Ref2ImgInput, Krea2Ref2ImgOutput, do_inference
+from apps.krea2.fakes.image_pipe_fake import FakeImagePipe
+from apps.krea2.fakes.torch_module_fake import FakeTorchModule
 
 
 def _png_bytes(img):

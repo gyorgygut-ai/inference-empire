@@ -6,7 +6,6 @@ from PIL import Image
 from pydantic import ValidationError
 
 import apps.vision.worker_beam_tq_small_vision as worker_mod
-from apps._services.inference.vision_fake import FakeVisionModel, FakeVisionProcessor
 from apps.vision._shared_small_vision import (
     SmallVisionInput,
     SmallVisionOutput,
@@ -14,6 +13,7 @@ from apps.vision._shared_small_vision import (
     do_inference,
     resolve_analyze_prompt,
 )
+from apps.vision.fakes.vision_fake import FakeVisionModel, FakeVisionProcessor
 
 
 def _image_b64():

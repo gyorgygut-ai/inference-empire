@@ -5,13 +5,13 @@ import pytest
 from pydantic import ValidationError
 
 import apps.h3_fl2va.worker_modal_cls_minimax_h3_fl2va as worker_mod
-from apps._services.inference.video_pipe_fake import FakeVideoPipe
-from apps._services.write_video_audio.write_video_audio_fake import FakeWriteVideoAudio
 from apps.h3_fl2va._shared_minimax_h3_turbo_fl2va import (
     MiniMaxH3TurboFl2vaInput,
     MiniMaxH3TurboFl2vaOutput,
     do_inference,
 )
+from apps.h3_fl2va.fakes.video_pipe_fake import FakeVideoPipe
+from apps.h3_fl2va.fakes.write_video_audio_fake import FakeWriteVideoAudio
 
 
 def _pipe():
