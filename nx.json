@@ -122,6 +122,16 @@
         "{workspaceRoot}/eslint.config.mjs",
         "{workspaceRoot}/tools/eslint-rules/**/*"
       ]
+    },
+    "@nx/next:build": {
+      "cache": true,
+      "dependsOn": [
+        "^build"
+      ],
+      "inputs": [
+        "production",
+        "^production"
+      ]
     }
   },
   "plugins": [
@@ -133,5 +143,14 @@
     "@nx/eslint"
   ],
   "nxCloudAccessToken": "",
-  "useInferencePlugins": false
+  "useInferencePlugins": false,
+  "analytics": true,
+  "generators": {
+    "@nx/next": {
+      "application": {
+        "style": "css",
+        "linter": "eslint"
+      }
+    }
+  }
 }

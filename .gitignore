@@ -85,3 +85,9 @@ node_modules
 
 vitest.config.*.timestamp*.next/
 node_modules/
+
+# Next.js
+.next
+out
+
+vitest.config.*.timestamp*

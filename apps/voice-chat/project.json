@@ -1,0 +1,49 @@
+{
+  "name": "voice-chat",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/voice-chat",
+  "projectType": "application",
+  "tags": [
+    "type:app",
+    "scope:client"
+  ],
+  "targets": {
+    "build": {
+      "executor": "@nx/next:build",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "defaultConfiguration": "production",
+      "options": {
+        "outputPath": "dist/apps/voice-chat"
+      },
+      "configurations": {
+        "development": {
+          "outputPath": "apps/voice-chat"
+        },
+        "production": {}
+      }
+    },
+    "serve": {
+      "executor": "@nx/next:server",
+      "defaultConfiguration": "development",
+      "options": {
+        "buildTarget": "voice-chat:build",
+        "dev": true
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "voice-chat:build:development",
+          "dev": true
+        },
+        "production": {
+          "buildTarget": "voice-chat:build:production",
+          "dev": false
+        }
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}
