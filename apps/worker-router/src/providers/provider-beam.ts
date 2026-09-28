@@ -1,4 +1,4 @@
-import { Status } from './create-provider'
+import { Status, type Env } from './create-provider'
 
 export const beamProvider = {
   encodeTaskId(originalTaskId: string): string {
@@ -8,20 +8,20 @@ export const beamProvider = {
     const [provider, originalTaskId] = atob(encoded).split(':')
     return { provider, originalTaskId }
   },
-  async pushToTaskQueue(prompt: string): Promise<{ task_id: string }> {
-    const response = await fetch(`${process.env.BEAM_API_URL}/queues/default`, {
+  async pushToTaskQueue(prompt: string, env: Env): Promise<{ task_id: string }> {
+    const response = await fetch(`${env.BEAM_API_URL}/queues/default`, {
       method: 'POST',
-      headers: { 'Authorization': `Bearer ${process.env.BEAM_TOKEN}`, 'Content-Type': 'application/json' },
+      headers: { 'Authorization': `Bearer ${env.BEAM_TOKEN}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ prompt, model: 'flux2' })
     })
-    const { task_id } = await response.json()
-    return { task_id }
+    const result: { task_id: string } = await response.json()
+    return { task_id: result.task_id }
   },
-  async fetchTaskStatus(taskId: string): Promise<{ status: Status; output?: unknown }> {
-    const response = await fetch(`${process.env.BEAM_API_URL}/queues/default/${taskId}`, {
-      headers: { 'Authorization': `Bearer ${process.env.BEAM_TOKEN}` }
+  async fetchTaskStatus(taskId: string, env: Env): Promise<{ status: Status; output?: unknown }> {
+    const response = await fetch(`${env.BEAM_API_URL}/queues/default/${taskId}`, {
+      headers: { 'Authorization': `Bearer ${env.BEAM_TOKEN}` }
     })
-    const result = await response.json()
+    const result: { status: string } = await response.json()
     return {
       status: beamProvider.mapTaskStatusToResponse(result.status),
       output: result

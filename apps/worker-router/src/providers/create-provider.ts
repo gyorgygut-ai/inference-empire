@@ -10,11 +10,21 @@ export const enum Status {
   CANCELLED = 'cancelled'
 }
 
+export interface Env {
+  MODAL_API_URL: string
+  MODAL_TOKEN: string
+  BEAM_API_URL: string
+  BEAM_TOKEN: string
+  FLASH_API_URL: string
+  FLASH_TOKEN: string
+  AUTH_TOKEN: string
+}
+
 export interface Provider {
   encodeTaskId(originalTaskId: string): string
   decodeTaskId(encoded: string): { provider: string; originalTaskId: string }
-  pushToTaskQueue(prompt: string): Promise<{ task_id: string }>
-  fetchTaskStatus(taskId: string): Promise<{ status: Status; output?: unknown }>
+  pushToTaskQueue(prompt: string, env: Env): Promise<{ task_id: string }>
+  fetchTaskStatus(taskId: string, env: Env): Promise<{ status: Status; output?: unknown }>
   mapTaskStatusToResponse(providerStatus: string): Status
 }
 
