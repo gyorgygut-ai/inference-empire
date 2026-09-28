@@ -7,13 +7,10 @@
   "tags": ["type:app", "scope:router"],
   "targets": {
     "build": {
-      "executor": "@nx/vite:build",
-      "inputs": ["default", "^default"],
-      "options": {
-        "outputPath": "dist/apps/worker-router",
-        "main": "src/index.ts",
-        "entryPoints": ["src/index.ts"]
-      }
+      "inputs": ["default", "^production"],
+      "executor": "nx:run-script",
+      "options": { "script": "build" },
+      "cache": true
     },
     "dev": {
       "executor": "@nx/vite:dev-server",
