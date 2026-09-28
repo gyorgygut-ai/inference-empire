@@ -17,39 +17,46 @@ export function ChatClient({ outcomes }: { outcomes: { id: string; title: string
 function InnerChat({ outcomes }: { outcomes: { id: string; title: string }[] }) {
   const aui = useAui()
   const messages = useAuiState((s) => s.thread.messages)
+  const threadReady = useAuiState((s) => {
+    const t = s.thread as unknown as { id?: string }
+    return !!t.id
+  })
   const [selectedOutcome, setSelectedOutcome] = useState<string | null>(null)
   const [referenceFile, setReferenceFile] = useState<File | null>(null)
   const [generating, setGenerating] = useState(false)
 
   useEffect(() => {
-    if (messages.length === 0) {
-      aui.thread.append({
-        role: "assistant",
-        content: [{ type: "text", text: vocabulary.steps.outcome.message }]
-      })
-    }
-  }, [messages.length, aui.thread])
+    if (!threadReady || messages.length !== 0) { return }
+    aui.thread.append({
+      role: "assistant",
+      content: [{ type: "text", text: vocabulary.steps.outcome.message }]
+    })
+  }, [threadReady, messages.length])
 
   useEffect(() => {
-    if (selectedOutcome && !messages.find((m) => (m.content?.[0] as unknown as { text?: string })?.text?.includes(vocabulary.steps.reference.message))) {
+    if (!threadReady || !selectedOutcome) { return }
+    const exists = messages.find((m) => (m.content?.[0] as unknown as { text?: string })?.text?.includes(vocabulary.steps.reference.message))
+    if (!exists) {
       aui.thread.append({
         role: "assistant",
         content: [{ type: "text", text: vocabulary.steps.reference.message }]
       })
     }
-  }, [selectedOutcome, aui.thread, messages])
+  }, [threadReady, selectedOutcome, messages])
 
   useEffect(() => {
-    if (referenceFile && !messages.find((m) => (m.content?.[0] as unknown as { text?: string })?.text?.includes(vocabulary.steps.generate.label))) {
+    if (!threadReady || !referenceFile) { return }
+    const exists = messages.find((m) => (m.content?.[0] as unknown as { text?: string })?.text?.includes(vocabulary.steps.generate.label))
+    if (!exists) {
       aui.thread.append({
         role: "assistant",
         content: [{ type: "text", text: "Ready to generate" }]
       })
     }
-  }, [referenceFile, aui.thread, messages])
+  }, [threadReady, referenceFile, messages])
 
   const handleGenerate = async () => {
-    if (!selectedOutcome || !referenceFile) {
+    if (!threadReady || !selectedOutcome || !referenceFile) {
       return
     }
     setGenerating(true)
@@ -84,7 +91,7 @@ function InnerChat({ outcomes }: { outcomes: { id: string; title: string }[] }) 
         {selectedOutcome && (
           <input type="file" accept="image/*" onChange={(e) => setReferenceFile(e.target.files?.[0] || null)} />
         )}
-        <button disabled={!selectedOutcome || !referenceFile || generating} onClick={handleGenerate} className="mt-2 px-4 py-2 bg-primary text-white rounded">
+        <button disabled={!selectedOutcome || !referenceFile || generating || !threadReady} onClick={handleGenerate} className="mt-2 px-4 py-2 bg-primary text-white rounded">
           {vocabulary.steps.generate.label}
         </button>
       </div>
