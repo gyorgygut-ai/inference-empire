@@ -1,16 +1,24 @@
 {
   "name": "worker-router",
-  "version": "0.0.1",
-  "private": true,
+  "version": "0.1.0",
   "type": "module",
+  "private": true,
+  "main": "./src/index.ts",
   "scripts": {
-    "test-unit": "vitest run"
-  },
-  "devDependencies": {
-    "typescript": "^5.8.0",
-    "vitest": "^4.1.11"
+    "build": "tsc",
+    "dev": "wrangler dev",
+    "test": "echo no tests yet",
+    "lint": "echo no linter yet"
   },
   "dependencies": {
-    "@inference/types": "^0.1.0"
+    "itty-router": "^5.0.24"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.0.0",
+    "typescript": "^5.0.0",
+    "wrangler": "^3.0.0",
+    "vite": "^5.0.0",
+    "@nx/vite": "^23.2.1",
+    "vitest": "^1.0.0"
   }
 }
