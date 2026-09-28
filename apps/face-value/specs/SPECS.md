@@ -60,16 +60,7 @@
 
 ### Security
 
-- Cloudflare Access JWT gate in `proxy.ts` via `jose` against CF certs, redirect on invalid token; no-op without CF env vars. Origin stays private behind CF.
-
-### Caching
-
-- Same reference image + outcome combo cached in-memory (`app/inference-cache.ts`), lost on restart
-- Cache key: sha256(reference image) + outcome id
-
-### Abuse Prevention
-
-- In-memory cache eliminates duplicate inference calls
+- Cloudflare Access JWT gate in `proxy.ts` against CF certs, redirect on invalid token; no-op without CF env vars. Origin stays private behind CF.
 
 ### Error States
 
@@ -90,7 +81,7 @@
 
 [API Typescript schema](./types/schema.ts) — types retained for contract parity. No longer used at runtime.
 
-## assistant-ui
+## assistant-ui thread
 
 **Non-negotiables**:
 

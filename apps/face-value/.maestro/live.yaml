@@ -1,0 +1,7 @@
+url: http://localhost:3000
+---
+- launchApp
+- extendedWaitUntil:
+    visible: "Select an outcome"
+    timeout: 10000
+- assertTrue: "document.readyState === 'complete'"

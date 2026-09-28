@@ -1,11 +1,11 @@
-import { getPublicOutcomes } from "@/outcomes";
-import { ChatClient } from "@/components/assistant-ui/chat-client";
-import type { Outcome } from "@/outcomes";
+import { getPublicOutcomes } from "@/outcomes"
+import { ChatClient } from "@/components/assistant-ui/chat-client"
+import type { Outcome } from "@/outcomes"
 
-export const dynamic = "force-dynamic";
+export const dynamic = "force-dynamic"
 
 export default async function Home() {
-  const outcomes = getPublicOutcomes() as Outcome[];
+  const outcomes = getPublicOutcomes() as Outcome[]
 
   return (
     <main className="min-h-screen bg-background flex">
@@ -31,5 +31,5 @@ export default async function Home() {
         </div>
       </div>
     </main>
-  );
+  )
 }
