@@ -146,7 +146,7 @@ def resolve_media_value(value: Any, md_dir: Path, field: str = "media") -> Any:
 def _repo_root() -> Path:
     """Repo root anchored at this file, independent of cwd.
 
-    This file lives at tools/cli/generate.py, three levels below the root.
+    This file lives at tools/worker-cli-client/generate.py, three levels below the root.
     """
     return Path(__file__).resolve().parent.parent.parent
 
@@ -154,16 +154,13 @@ def _repo_root() -> Path:
 def find_contract(contract_name: str) -> Path | None:
     """Find the contract JSON whose title matches contract_name.
 
-    Canonical source is packages/contracts; workers/ is a fallback for
-    contracts not yet promoted (e.g. tiny_sd).
+    Canonical source is apps/*/contracts/.
     """
-    roots = [_repo_root() / "packages" / "contracts", _repo_root() / "workers"]
+    roots = [_repo_root() / "apps"]
     for root in roots:
         if not root.is_dir():
             continue
-        for json_path in sorted(root.rglob("contracts/*.json")) + sorted(
-            (root / "src").rglob("*.json") if (root / "src").is_dir() else []
-        ):
+        for json_path in sorted(root.rglob("*/contracts/*.json")):
             try:
                 data = json.loads(json_path.read_text())
             except (OSError, ValueError):
@@ -175,17 +172,10 @@ def find_contract(contract_name: str) -> Path | None:
 
 
 def resolve_family_dir(contract_path: Path, slug: str) -> Path | None:
-    """Return the workers/<family> dir owning this contract.
-
-    Contracts under workers/ already sit beside their workers. Centralized
-    contracts under packages/contracts/ resolve via the same-named copy in
-    the workers tree (every promoted slug keeps one).
-    """
+    """Return the apps/<family> dir owning this contract."""
     candidate = contract_path.parent.parent
     if list(candidate.glob("worker_*.py")):
         return candidate
-    for json_path in sorted((_repo_root() / "workers").rglob(f"contracts/{slug}.json")):
-        return json_path.parent.parent
     return None
 
 

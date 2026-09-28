@@ -2,99 +2,203 @@
 
 import { useEffect, useState } from "react"
 import { RuntimeProvider } from "./runtime-provider"
-import { useAui, useAuiState } from "@assistant-ui/react"
+import {
+  useAui,
+  useAuiState,
+  ThreadPrimitive,
+  MessagePrimitive,
+  ComposerPrimitive,
+  AttachmentPrimitive,
+} from "@assistant-ui/react"
+import { ImageIcon, XIcon } from "lucide-react"
 import { vocabulary } from "@/lib/vocabulary"
 import { generateImage } from "@/app/actions/generate"
+import type { PublicOutcome } from "@/outcomes"
+import { MessageOutcomeSelect } from "./messages/MessageOutcomeSelect"
+import { MessageUploadReference } from "./messages/MessageUploadReference"
+import { MessageRequestInference } from "./messages/MessageRequestInference"
+import { MessageBusy } from "./messages/MessageBusy"
+import { MessageRejected } from "./messages/MessageRejected"
+import { MessageDone } from "./messages/MessageDone"
 
-export function ChatClient({ outcomes }: { outcomes: { id: string; title: string }[] }) {
+export function ChatClient({ outcomes }: { outcomes: PublicOutcome[] }) {
   return (
-    <RuntimeProvider>
-      <InnerChat outcomes={outcomes} />
-    </RuntimeProvider>
+    <RuntimeProvider
+      suggestions={outcomes}
+      childrenFn={() => <NonNegotiableRootAssistantUiComponent outcomes={outcomes} />}
+    />
   )
 }
 
-function InnerChat({ outcomes }: { outcomes: { id: string; title: string }[] }) {
+export function NonNegotiableRootAssistantUiComponent({
+  outcomes,
+}: {
+  outcomes: PublicOutcome[]
+}) {
   const aui = useAui()
   const messages = useAuiState((s) => s.thread.messages)
-  const threadReady = useAuiState((s) => {
-    const t = s.thread as unknown as { id?: string }
-    return !!t.id
-  })
-  const [selectedOutcome, setSelectedOutcome] = useState<string | null>(null)
-  const [referenceFile, setReferenceFile] = useState<File | null>(null)
+  const threadReady = useAuiState((s) => !s.thread.isLoading)
+  const attachments = useAuiState((s) => s.thread.composer.attachments)
+  const [selectedOutcome, setSelectedOutcome] = useState<PublicOutcome | null>(null)
   const [generating, setGenerating] = useState(false)
+  const [result, setResult] = useState<string | null>(null)
+
+  const referenceFile = attachments.find((a) => a.type === "image" && a.file)?.file ?? null
 
   useEffect(() => {
     if (!threadReady || messages.length !== 0) { return }
     aui.thread.append({
       role: "assistant",
-      content: [{ type: "text", text: vocabulary.steps.outcome.message }]
+      content: [{ type: "text", text: vocabulary.messages.selectOutcome }],
+      metadata: { custom: { type: "select-outcome" } },
     })
-  }, [threadReady, messages.length])
+  }, [threadReady, messages.length, aui])
 
-  useEffect(() => {
-    if (!threadReady || !selectedOutcome) { return }
-    const exists = messages.find((m) => (m.content?.[0] as unknown as { text?: string })?.text?.includes(vocabulary.steps.reference.message))
+  const handleSelectOutcome = (id: string) => {
+    if (!threadReady) { return }
+    const outcome = outcomes.find((o) => o.id === id) ?? null
+    setSelectedOutcome(outcome)
+    setResult(null)
+    const exists = messages.some(
+      (m) => (m.metadata as { custom?: { type?: string } } | undefined)?.custom?.type === "upload-reference",
+    )
     if (!exists) {
       aui.thread.append({
         role: "assistant",
-        content: [{ type: "text", text: vocabulary.steps.reference.message }]
+        content: [{ type: "text", text: vocabulary.messages.uploadReference }],
+        metadata: { custom: { type: "upload-reference" } },
       })
     }
-  }, [threadReady, selectedOutcome, messages])
-
-  useEffect(() => {
-    if (!threadReady || !referenceFile) { return }
-    const exists = messages.find((m) => (m.content?.[0] as unknown as { text?: string })?.text?.includes(vocabulary.steps.generate.label))
-    if (!exists) {
-      aui.thread.append({
-        role: "assistant",
-        content: [{ type: "text", text: "Ready to generate" }]
-      })
-    }
-  }, [threadReady, referenceFile, messages])
+  }
 
   const handleGenerate = async () => {
-    if (!threadReady || !selectedOutcome || !referenceFile) {
-      return
-    }
+    if (!selectedOutcome || !referenceFile || generating) { return }
     setGenerating(true)
-    aui.thread.append({ role: "assistant", content: [{ type: "text", text: "Generating…" }] })
+    aui.thread.append({
+      role: "assistant",
+      content: [{ type: "text", text: vocabulary.messages.busy }],
+      metadata: { custom: { type: "busy" } },
+    })
     try {
-      const result = await generateImage(selectedOutcome, referenceFile)
+      const res = await generateImage(selectedOutcome.id, referenceFile)
+      setResult(res.dataUrl)
       aui.thread.append({
         role: "assistant",
-        content: [{ type: "image", image: result.dataUrl }]
+        content: [{ type: "text", text: vocabulary.messages.done }],
+        metadata: { custom: { type: "done" } },
       })
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : "Error"
-      aui.thread.append({ role: "assistant", content: [{ type: "text", text: msg }] })
+    } catch {
+      aui.thread.append({
+        role: "assistant",
+        content: [{ type: "text", text: vocabulary.messages.rejected }],
+        metadata: { custom: { type: "rejected" } },
+      })
     } finally {
       setGenerating(false)
     }
   }
 
   return (
-    <div className="h-full flex flex-col">
-      <div />
-      <div className="p-4 border-t">
-        {!selectedOutcome && (
-          <div className="flex gap-2 flex-wrap">
-            {outcomes.map((o) => (
-              <button key={o.id} onClick={() => setSelectedOutcome(o.id)} className="px-3 py-1 rounded border">
-                {o.title}
-              </button>
-            ))}
-          </div>
-        )}
-        {selectedOutcome && (
-          <input type="file" accept="image/*" onChange={(e) => setReferenceFile(e.target.files?.[0] || null)} />
-        )}
-        <button disabled={!selectedOutcome || !referenceFile || generating || !threadReady} onClick={handleGenerate} className="mt-2 px-4 py-2 bg-primary text-white rounded">
-          {vocabulary.steps.generate.label}
-        </button>
-      </div>
-    </div>
+    <ThreadPrimitive.Root className="h-full flex flex-col">
+      <ThreadPrimitive.Viewport className="flex-1 overflow-y-auto">
+        <ThreadPrimitive.Messages>
+          {({ message }) => {
+            const meta = message.metadata as { custom?: { type?: string } } | undefined
+            if (meta?.custom?.type === "select-outcome") {
+              return (
+                <MessageOutcomeSelect
+                  outcomes={outcomes}
+                  selectedId={selectedOutcome?.id ?? null}
+                  onSelect={handleSelectOutcome}
+                />
+              )
+            }
+            if (meta?.custom?.type === "upload-reference") {
+              return <MessageUploadReference />
+            }
+            if (meta?.custom?.type === "request-inference") {
+              return (
+                <MessageRequestInference
+                  generating={generating}
+                  canGenerate={!!selectedOutcome && !!referenceFile}
+                  onGenerate={handleGenerate}
+                />
+              )
+            }
+            if (meta?.custom?.type === "busy" && selectedOutcome) {
+              return <MessageBusy width={selectedOutcome.width} height={selectedOutcome.height} />
+            }
+            if (meta?.custom?.type === "rejected") {
+              return <MessageRejected />
+            }
+            if (meta?.custom?.type === "done" && result && selectedOutcome) {
+              return (
+                <MessageDone image={result} width={selectedOutcome.width} height={selectedOutcome.height} />
+              )
+            }
+            return (
+              <MessagePrimitive.Root className="mb-4">
+                <MessagePrimitive.Parts
+                  components={{
+                    Text: ({ text }) => <p className="mb-2">{text}</p>,
+                  }}
+                />
+                <MessagePrimitive.Error />
+              </MessagePrimitive.Root>
+            )
+          }}
+        </ThreadPrimitive.Messages>
+      </ThreadPrimitive.Viewport>
+      <UploadComposer />
+    </ThreadPrimitive.Root>
+  )
+}
+
+function UploadComposer() {
+  const aui = useAui()
+  const attachments = useAuiState((s) => s.thread.composer.attachments)
+  const messages = useAuiState((s) => s.thread.messages)
+
+  useEffect(() => {
+    const picked = attachments.some((a) => a.type === "image" && a.file)
+    if (!picked) { return }
+    const exists = messages.some(
+      (m) => (m.metadata as { custom?: { type?: string } } | undefined)?.custom?.type === "request-inference",
+    )
+    if (!exists) {
+      aui.thread.append({
+        role: "assistant",
+        content: [{ type: "text", text: vocabulary.messages.requestInference }],
+        metadata: { custom: { type: "request-inference" } },
+      })
+    }
+  }, [attachments, messages, aui])
+
+  return (
+    <ComposerPrimitive.AttachmentDropzone className="rounded-xl border-2 border-dashed border-border data-[dragging]:border-primary data-[dragging]:bg-primary/5">
+      <ComposerPrimitive.Root className="p-2">
+        <ComposerPrimitive.Attachments>
+          {({ attachment }) => {
+            if (attachment.type !== "image") { return null }
+            return (
+              <AttachmentPrimitive.Root className="flex items-center gap-2 rounded-lg border p-2">
+                <AttachmentPrimitive.unstable_Thumb className="flex size-10 items-center justify-center overflow-hidden rounded bg-muted text-xs">
+                  <ImageIcon className="size-4" />
+                </AttachmentPrimitive.unstable_Thumb>
+                <span className="min-w-0 flex-1 truncate text-sm">
+                  <AttachmentPrimitive.Name />
+                </span>
+                <AttachmentPrimitive.Remove className="ml-auto rounded-full p-1 hover:bg-muted">
+                  <XIcon className="size-3" />
+                </AttachmentPrimitive.Remove>
+              </AttachmentPrimitive.Root>
+            )
+          }}
+        </ComposerPrimitive.Attachments>
+        <ComposerPrimitive.AddAttachment className="mt-2 inline-block cursor-pointer rounded border px-3 py-1 text-sm hover:bg-muted">
+          {vocabulary.messages.uploadReference}
+        </ComposerPrimitive.AddAttachment>
+      </ComposerPrimitive.Root>
+    </ComposerPrimitive.AttachmentDropzone>
   )
 }

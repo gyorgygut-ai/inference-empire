@@ -11,8 +11,7 @@
       "{workspaceRoot}/package.json"
     ],
     "contracts": [
-      "{workspaceRoot}/workers/*/contracts/*.json",
-      "{workspaceRoot}/packages/contracts/**/*.json"
+      "{workspaceRoot}/apps/*/contracts/*.json"
     ],
     "production": [
       "!{projectRoot}/**/*.spec.ts",

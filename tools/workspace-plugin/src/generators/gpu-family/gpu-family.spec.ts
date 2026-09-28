@@ -16,7 +16,7 @@ describe('gpu-family generator', () => {
     expect(tree.exists('apps/gpu-workers/demo_fam/_shared_demo_fam.py')).toBe(true);
     expect(tree.exists('apps/gpu-workers/demo_fam/tests/__init__.py')).toBe(true);
     expect(tree.exists('apps/gpu-workers/demo_fam/tests/test_demo_fam.py')).toBe(true);
-    expect(tree.exists('packages/contracts/src/demo-fam.json')).toBe(true);
+    expect(tree.exists('apps/demo-fam/contracts/demo-fam.json')).toBe(true);
     expect(tree.exists('apps/gpu-workers/demo_fam/project.json')).toBe(true);
     const project = JSON.parse(
       tree.read('apps/gpu-workers/demo_fam/project.json', 'utf-8')

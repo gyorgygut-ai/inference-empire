@@ -1,21 +1,21 @@
 {
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "name": "cli",
+  "name": "worker-cli-client",
   "projectType": "application",
-  "sourceRoot": "tools/cli",
-  "tags": ["type:tool", "scope:cli"],
+  "sourceRoot": "tools/worker-cli-client",
+  "tags": ["type:tool", "scope:worker-cli-client"],
   "targets": {
     "generate": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "uv run --locked python tools/cli/generate.py",
+        "command": "uv run --locked python tools/worker-cli-client/generate.py",
         "cwd": "."
       },
       "cache": false
     },
     "lint": {
       "executor": "nx:run-commands",
-        "options": { "command": "uvx ruff check tools/cli/generate.py --line-length 100", "cwd": "." },
+        "options": { "command": "uvx ruff check tools/worker-cli-client/generate.py --line-length 100", "cwd": "." },
       "cache": true
     }
   }

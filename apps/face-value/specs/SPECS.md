@@ -36,7 +36,7 @@
   - Upon response, serves generated image or error message to client
 - **Markdown + Frontmatter**:
   - Each outcome is a .md file in /outcomes
-  - Frontmatter: (id, title, width, height, prompt)
+  - Frontmatter: (id, title, order, width, height), body = prompt
   - Never exposed to client as is, id and title for display only
 - **Proper Data Handling**:
   - Where data is dynamic, the "empty, 1, many data" cases should be handled
@@ -79,39 +79,55 @@
 
 ### Legacy API Contract — RunPod (deprecated)
 
-[API Typescript schema](./types/schema.ts) — types retained for contract parity. No longer used at runtime.
-
-## assistant-ui thread
-
-**Non-negotiables**:
-
-- Chat interface guides user step by step
-- Continous chat stream. No LLM. No chat message input.
-- `useLocalRuntime` bridges to existing Server Action
-- Error and loading states shown as system/running messages in thread.
-- Multi-turn: previous image reusable via reuse button in composer across turns
-- BE contract canonical in `dist/apps/worker-router/contract.json`, read at build time via server-only `router-config.ts`. This repo's `schema.ts` mirrors the canonical contract.
+[API Typescript schema](../app/inference-api/schema.ts) — types retained for contract parity. No longer used at runtime.
 
 **Layout**:
 
 - full-width chat by default.
 - > `lg`: 2-column: left 2/3 (solid bg, hero img), right 1/3 (chat)
+
+## assistant-ui thread
+
+**Non-negotiables**:
+
+- Progressive chat stream. No LLM. No chat message input.
+- `useLocalRuntime` bridges to existing Server Action
+- Each step is just a new message in the thread
+- Each message encapsulated in a `Message**` component
+- Multi-turn: previous outcome and ref. image can be changed in the original message
+- BE contract canonical in `dist/apps/worker-router/contract.json`, read at build time via server-only `router-config.ts`. This repo's `schema.ts` mirrors the canonical contract.
 - assistant-ui registry components (`thread` + `image`, plus `attachment`, `file`, `tooltip-icon-button`, shadcn ui set); LLM-only elements trimmed
 
-**Message 1: Select an outcome**:
+**Critical**:
+  - This is NOT a wizard - old messages still rendered after new appended
+  - Each new message gets pushed into the thread as task in previous msg completes
 
-- Message: vocabulary.steps.outcome.message
-- Outcomes rendered from server `{id, title}`
+**1. message: `MessageOutcomeSelect`**:
 
-**Message 2: Upload a reference image**:
+- Message: vocabulary.messages.selectOutcome
+- Outcomes rendered from server `{id, title}`, `SuggestionPrimitive`
 
-- Pushed to thread when outcome selected, but only once
-- Message: vocabulary.steps.reference.message
-- Image upload via `AttachmentPrimitive` in composer
-- Selected image displayed in chat
+**message: `MessageUploadReference`**:
 
-**Message 3: Generate**:
+- Message: vocabulary.messages.uploadReference
+- Image upload via `AttachmentPrimitive` in message
+- Selected image displayed in chat, removable
 
-- Pushed to thread when reference image gets selected
-- Generate button: vocabulary.steps.generate.label
+**message: `MessageRequestInference`**:
+
+- Button: vocabulary.messages.requestInference
 - Can become disabled as previous selections change
+
+**message: `MessageBusy`**:
+
+- Message: vocabulary.messages.busy
+- Content: image placeholder skeleton 
+
+**message: `MessageRejected`**:
+
+- Message: vocabulary.messages.rejected
+
+**message: `MessageDone`**:
+
+- Message: vocabulary.messages.done
+- Content: the generated image (`Attachment`)

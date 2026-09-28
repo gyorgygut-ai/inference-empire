@@ -1,6 +1,6 @@
 """Seed model volumes from worker-declared deps. No deploy, no inference.
 
-Usage: uv run --locked python tools/seed-volumes.py [--provider modal|beam|all] [--only tiny_sd,flux2] [--dry-run]
+Usage: uv run --locked python tools/seed-volumes/seed-volumes.py [--provider modal|beam|all] [--only tiny_sd,flux2] [--dry-run]
 """
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ import warnings
 from pathlib import Path
 from typing import NoReturn
 
-WORKDIR = Path(__file__).resolve().parent.parent
+WORKDIR = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(WORKDIR))
 
 from dotenv import load_dotenv  # noqa: E402

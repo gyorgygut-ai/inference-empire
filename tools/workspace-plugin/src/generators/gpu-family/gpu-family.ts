@@ -28,7 +28,7 @@ export async function gpuFamilyGenerator(tree: Tree, options: GpuFamilyGenerator
   });
   await formatFiles(tree);
   logger.info(
-    `Scaffolded family "${family}". Next: fill packages/contracts/src/${contract}.json, ` +
+    `Scaffolded family "${family}". Next: fill apps/${family}/contracts/${contract}.json, ` +
       `implement apps/${family}/, run "npx nx run types:generate".`
   );
 }

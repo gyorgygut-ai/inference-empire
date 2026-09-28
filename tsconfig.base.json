@@ -7,9 +7,6 @@
     "strict": true,
     "skipLibCheck": true,
     "paths": {
-      "@inference/contracts": [
-        "packages/contracts/src/index.ts"
-      ],
       "@inference/types": [
         "packages/types/src/index.ts"
       ],

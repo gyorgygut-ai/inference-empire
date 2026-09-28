@@ -96,7 +96,7 @@ unresolved-attribute = "ignore"
 not-iterable = "ignore"
 
 [[tool.ty.overrides]]
-include = ["apps/**/_shared_*.py", "packages/media/**/*.py", "packages/storage/**/*.py", "tools/seed-volumes.py"]
+include = ["apps/**/_shared_*.py", "packages/media/**/*.py", "packages/storage/**/*.py", "tools/seed-volumes/seed-volumes.py"]
 
 [tool.ty.overrides.rules]
 invalid-assignment = "ignore"

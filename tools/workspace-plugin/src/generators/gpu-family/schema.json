@@ -13,7 +13,7 @@
     },
     "contract": {
       "type": "string",
-      "description": "Contract basename in packages/contracts/src/ (defaults to family with dashes)"
+      "description": "Contract basename in apps/<family>/contracts/ (defaults to family with dashes)"
     },
     "pythonVersion": {
       "type": "string",

@@ -4,8 +4,6 @@
   "private": true,
   "workspaces": [
     "apps/*",
-    "apps/*",
-    "packages/contracts",
     "packages/worker-router-client",
     "tools/*"
   ],
@@ -16,7 +14,7 @@
     "test-unit": "nx run-many -t test-unit",
     "test-e2e": "nx run-many -t test-e2e",
     "lint": "nx run-many -t lint",
-    "generate": "nx run cli:generate",
+    "generate": "nx run worker-cli-client:generate",
     "py-check": "uv run --locked --group test ruff check . && uv run --locked --group test ty check . && uv run --locked --group test vulture ."
   },
   "devDependencies": {
@@ -67,6 +65,7 @@
     "node": ">=20"
   },
   "dependencies": {
+    "@assistant-ui/react": "^0.15.18",
     "next": "~16.1.6",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"

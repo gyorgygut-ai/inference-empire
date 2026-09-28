@@ -25,7 +25,7 @@ export async function postQueue(input: RequestPayload, config: InferenceConfig, 
     body: JSON.stringify({ input })
   })
   if (!res.ok) {
-    throw new Error(`queue failed: ${res.status}`)
+    throw new Error(`QUEUE_HTTP_${res.status}`)
   }
   const body = await res.json()
   return (body as { task_id: string }).task_id
@@ -36,7 +36,7 @@ async function getStatus(taskId: string, config: InferenceConfig, fetchImpl: typ
     headers: { Authorization: `Bearer ${config.token}` }
   })
   if (!res.ok) {
-    throw new Error(`status failed: ${res.status}`)
+    throw new Error(`QUEUE_HTTP_${res.status}`)
   }
   return (await res.json()) as { status: string; output?: Flux2Klein9BOutput }
 }
@@ -49,9 +49,9 @@ export async function pollQueue(taskId: string, config: InferenceConfig, fetchIm
       return { output: result.output as Flux2Klein9BOutput }
     }
     if (result.status === "REJECTED") {
-      throw new Error("inference rejected")
+      throw new Error("REJECTED")
     }
     await sleep(config.pollIntervalMillis)
   }
-  throw new Error("timeout")
+  throw new Error("SERVER_TIMEOUT")
 }

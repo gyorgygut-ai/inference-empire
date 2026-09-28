@@ -28,10 +28,17 @@ const outcomeCache = new Map<string, Outcome>(
     })
 )
 
-export function getPublicOutcomes() {
+export type PublicOutcome = {
+  id: string
+  title: string
+  width: number
+  height: number
+}
+
+export function getPublicOutcomes(): PublicOutcome[] {
   return Array.from(outcomeCache.values())
     .sort((a, b) => a.order - b.order)
-    .map(({ id, title }) => ({ id, title }))
+    .map(({ id, title, width, height }) => ({ id, title, width: width ?? 512, height: height ?? 768 }))
 }
 
 export function getInferenceOutcome(id: string): Outcome | null {

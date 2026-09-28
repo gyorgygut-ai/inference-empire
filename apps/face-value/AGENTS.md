@@ -26,7 +26,9 @@
 
 - [Specifications](./specs/SPECS.md)
 
-**Coding Rules**:
+**Critical Rules**:
+
+- `useAui()` / `useAuiState()` MUST NEVER be called at component render time in any component inside `RuntimeProvider`. In React 19 / Next.js, hooks run during render. `RuntimeProvider` mounts AFTER child components are rendered, so `useAui()` throws "empty thread" error. ALWAYS wrap calls inside `useEffect`, or better yet, put `useAui()` calls at module level OUTSIDE the component (before `function InnerChat()`), or use `useLayoutEffect`.
 
 - No kindergarten level code comments; adults write clean code
 - Any code change only while keeping requirements, old or new, intact

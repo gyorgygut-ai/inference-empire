@@ -16,7 +16,7 @@ This is a monorepo for all my custom inference related code.
 - `npm run test-e2e` — run live e2e tests (costs GPU/provider calls).
 - `npm run lint` — lint everything.
 - `npm run build` — build everything.
-- `npm run generate` — run the worker prompt generator (`nx run cli:generate`, code in `tools/cli/generate.py`).
+- `npm run generate` — run the worker prompt generator (`nx run worker-cli-client:generate`, code in `tools/worker-cli-client/generate.py`).
 - `npx nx run <project>:<target>` — run one target, e.g. `npx nx run chat-ui:build`.
 - `npx nx show projects` — list all projects (source of truth, never hardcode).
 - `npx nx show project <name>` — targets, executors and tags for one project.

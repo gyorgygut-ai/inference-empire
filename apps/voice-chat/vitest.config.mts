@@ -8,7 +8,6 @@ export default defineConfig(() => ({
   plugins: [react()],
   resolve: {
     alias: {
-      '@inference/contracts': join(import.meta.dirname, '../../packages/contracts/src/index.ts'),
       '@inference/types': join(import.meta.dirname, '../../packages/types/src/index.ts'),
       '@inference/workspace-plugin': join(import.meta.dirname, '../.././tools/workspace-plugin/src/index.ts'),
     },
