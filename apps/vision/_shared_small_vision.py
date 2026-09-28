@@ -9,7 +9,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, field_validator
 
-from apps._services.media.validation import validate_image_b64
+from packages.media.validation import validate_image_b64
 
 REPO_ID = "Qwen/Qwen2-VL-2B-Instruct"
 MAX_NEW_TOKENS = 512

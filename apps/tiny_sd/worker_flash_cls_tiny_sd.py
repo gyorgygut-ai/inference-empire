@@ -12,7 +12,7 @@ from apps.tiny_sd._shared_tiny_sd import (
 )
 
 if TYPE_CHECKING:
-    from apps._services.storage.storage import Storage
+    from packages.storage.storage import Storage
 
 
 def generate(storage: Storage, pipe, torch_module, **kwargs) -> dict:

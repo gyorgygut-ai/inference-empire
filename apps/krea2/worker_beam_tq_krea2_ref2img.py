@@ -13,7 +13,7 @@ from apps.krea2._shared_krea2_ref2img import (
 )
 
 if TYPE_CHECKING:
-    from apps._services.storage.storage import Storage
+    from packages.storage.storage import Storage
 
 
 CACHE_PATH = "./hf-cache"

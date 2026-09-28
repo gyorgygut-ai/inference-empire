@@ -3,7 +3,7 @@ import io
 
 import pytest
 
-from apps._services.media.validation import (
+from packages.media.validation import (
     validate_image_b64,
     validate_media_b64,
 )
@@ -54,7 +54,7 @@ def test_happy_path_returns_raw_b64():
 
 
 def test_pixel_cap_enforced(monkeypatch):
-    import apps._services.media.validation as v
+    import packages.media.validation as v
 
     monkeypatch.setattr(v, "MAX_IMAGE_PIXELS", 1)
     with pytest.raises(ValueError, match=r"exceeds .* px cap"):
@@ -72,7 +72,7 @@ def test_media_b64_rejects_path():
 
 
 def test_media_byte_cap_enforced(monkeypatch):
-    import apps._services.media.validation as v
+    import packages.media.validation as v
 
     monkeypatch.setattr(v, "MAX_MEDIA_B64_BYTES", 10)
     blob = base64.b64encode(b"x" * 64).decode()

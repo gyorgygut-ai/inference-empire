@@ -12,7 +12,7 @@ from apps.flux2._shared_flux2_klein9b import (
 )
 
 if TYPE_CHECKING:
-    from apps._services.storage.storage import Storage
+    from packages.storage.storage import Storage
 
 
 def generate(storage: Storage, pipe, torch_module, **kwargs) -> dict:

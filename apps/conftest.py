@@ -1,6 +1,6 @@
 import pytest
 
-from apps._services.storage.r2_storage_fake import FakeR2Storage
+from packages.storage.r2_storage_fake import FakeR2Storage
 
 
 @pytest.fixture

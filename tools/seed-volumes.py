@@ -1,6 +1,6 @@
 """Seed model volumes from worker-declared deps. No deploy, no inference.
 
-Usage: uv run --locked python workers/seed-volumes.py [--provider modal|beam|all] [--only tiny_sd,flux2] [--dry-run]
+Usage: uv run --locked python tools/seed-volumes.py [--provider modal|beam|all] [--only tiny_sd,flux2] [--dry-run]
 """
 from __future__ import annotations
 
@@ -94,7 +94,7 @@ def shared_repos(family: str, directory: Path) -> set[str]:
     repos: set[str] = set()
     for f in sorted(directory.glob("_shared_*.py")):
         try:
-            m = importlib.import_module(f"workers.{family}.{f.stem}")
+            m = importlib.import_module(f"apps.{family}.{f.stem}")
         except Exception as e:
             print(f"WARN import {f.stem}: {e}")
             continue
@@ -168,7 +168,7 @@ def main() -> int:
             shutil.rmtree(stale, ignore_errors=True)
 
     plan: dict[tuple[str, str], set[str]] = {}
-    for wf in sorted((WORKDIR / "workers").glob("*/worker_*.py")):
+    for wf in sorted((WORKDIR / "apps").glob("*/worker_*.py")):
         if wf.parent.name == "voice" or (only and wf.parent.name not in only and wf.stem not in only):
             continue
         provider = next((p for tag, p in PROVIDER_OF if tag in wf.name), None)

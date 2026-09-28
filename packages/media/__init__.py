@@ -1,4 +1,4 @@
-from apps._services.media.validation import (
+from packages.media.validation import (
     looks_like_path,
     strip_data_url,
     validate_image_b64,

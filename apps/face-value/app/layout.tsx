@@ -1,6 +1,5 @@
 import type { Metadata } from "next"
 import "./globals.css"
-import { TooltipProvider } from "@/components/assistant-ui/elements/tooltip"
 
 export const metadata: Metadata = {
   title: "Face Value",
@@ -12,9 +11,7 @@ export default function RootLayout({ children }: Readonly<{
 }>) {
   return (
     <html lang="en">
-      <body>
-        <TooltipProvider>{children}</TooltipProvider>
-      </body>
+      <body>{children}</body>
     </html>
   )
 }

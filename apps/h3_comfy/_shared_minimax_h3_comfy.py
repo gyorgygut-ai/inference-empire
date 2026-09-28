@@ -8,10 +8,10 @@ from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, field_validator
 
-from apps._services.media.validation import validate_image_b64
+from packages.media.validation import validate_image_b64
 
 if TYPE_CHECKING:
-    from apps._services.storage.storage import Storage
+    from packages.storage.storage import Storage
 
 MODEL_FILES = {
     "unet_name": "minimax_h3_fl2va_pruned_int8_convrot.safetensors",

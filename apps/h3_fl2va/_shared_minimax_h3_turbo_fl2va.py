@@ -9,11 +9,11 @@ from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, field_validator
 
-from apps._services.media.validation import validate_image_b64
+from packages.media.validation import validate_image_b64
 
 if TYPE_CHECKING:
 
-    from apps._services.storage.storage import Storage
+    from packages.storage.storage import Storage
 
 BASE_REPO = "MiniMax/MiniMax-H3"
 TEXT_ENCODER = "FL2VA/text_encoder/model*.safetensors"
@@ -239,10 +239,20 @@ def pipe_factory():
     return load_pipeline()[0]
 
 def load_dependencies(cache_dir=None):
-    from apps._services.storage.r2_storage import R2Storage
-    from apps._services.write_video_audio.write_video_audio_service import (
-        WriteVideoAudioService,
-    )
+    from packages.storage.r2_storage import R2Storage
 
     storage = R2Storage()
-    return storage, pipe_factory(), WriteVideoAudioService()
+    return storage, pipe_factory(), _WriteVideoAudioService()
+
+
+class _WriteVideoAudioService:
+    def __call__(self, video, audio, output_path, fps, audio_sample_rate):
+        from diffsynth.utils.data.audio_video import write_video_audio as diffsynth_write
+
+        return diffsynth_write(
+            video=video,
+            audio=audio,
+            output_path=output_path,
+            fps=fps,
+            audio_sample_rate=audio_sample_rate,
+        )

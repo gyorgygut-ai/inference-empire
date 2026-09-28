@@ -8,12 +8,12 @@ from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, field_validator
 
-from apps._services.media.validation import validate_image_b64
+from packages.media.validation import validate_image_b64
 
 if TYPE_CHECKING:
     from diffusers import Flux2KleinPipeline
 
-    from apps._services.storage.storage import Storage
+    from packages.storage.storage import Storage
 
 MODEL_ID = "Disty0/FLUX.2-klein-9B-SDNQ-4bit-dynamic-svd-r32"
 _MAX_WIDTH = 2560
@@ -193,8 +193,22 @@ def pipe_factory() -> Flux2KleinPipeline:
 
 def load_dependencies():
     """Load all dependencies for flux2-klein9b worker."""
-    from apps._services.storage.r2_storage import R2Storage
-    from apps._services.torch_module.torch_module_service import TorchModuleService
+    from packages.storage.r2_storage import R2Storage
 
     storage = R2Storage()
-    return storage, pipe_factory(), TorchModuleService()
+    return storage, pipe_factory(), _TorchModuleService()
+
+
+class _TorchModuleService:
+    def __init__(self):
+        import torch.distributed as dist
+
+        def _dist_unavailable() -> bool:
+            return False
+
+        dist.is_available = _dist_unavailable
+
+    def __getattr__(self, name: str):
+        import torch
+
+        return getattr(torch, name)

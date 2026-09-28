@@ -1,11 +1,9 @@
 "use server"
 
 import sharp from "sharp"
-import { createHash } from "crypto"
 import { postQueue, pollQueue, type InferenceConfig, type Flux2Klein9BInput } from "@/app/inference-api/api"
 import { workerRouterConfig } from "@/app/inference-api/router-config"
 import { getInferenceOutcome } from "@/outcomes"
-import { getFromCache, setCache } from "@/app/inference-cache"
 
 const MAX_IMAGE_SIZE = 512 * 512 * 1024 // 512KB
 const MAX_DIMENSION = 512
@@ -15,12 +13,6 @@ const inferenceConfig: InferenceConfig = {
   token: workerRouterConfig.token,
   maxPollMillis: 300_000,
   pollIntervalMillis: 3000,
-}
-
-function makeCacheKey(imageBase64: string, outcomeId: string): string {
-  return createHash("sha256")
-    .update(imageBase64 + outcomeId)
-    .digest("hex")
 }
 
 export async function runInference(imageBase64: string, outcomeId: string): Promise<{ url: string } | { error: string }> {
@@ -44,13 +36,6 @@ export async function runInference(imageBase64: string, outcomeId: string): Prom
     return { error: "Failed to process image." }
   }
 
-  // Check cache
-  const cacheKey = makeCacheKey(resizedBase64, outcomeId)
-  const cached = getFromCache(cacheKey)
-  if (cached) {
-    return { url: cached.artifact.presigned_url }
-  }
-
   // Get outcome
   const outcome = getInferenceOutcome(outcomeId)
   if (!outcome) {
@@ -68,8 +53,6 @@ export async function runInference(imageBase64: string, outcomeId: string): Prom
   try {
     const taskId = await postQueue(input, inferenceConfig)
     const result = await pollQueue(taskId, inferenceConfig)
-
-    setCache(cacheKey, result.output)
 
     return { url: result.output.artifact.presigned_url }
   } catch {
