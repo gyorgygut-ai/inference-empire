@@ -1,178 +1,119 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { useAui } from "@assistant-ui/react";
+import { useCallback, useMemo } from "react";
+import { useAui, useAuiState } from "@assistant-ui/react";
 import { useChat } from "./chat-context";
+import { useInferenceRuntime } from "./chat-adapter";
 import { vocabulary } from "@/app/vocabulary";
 import type { Outcome } from "@/outcomes";
 
-type FlowPhase =
-  | { phase: "OUTCOME_SELECTION" }
-  | { phase: "IMAGE_UPLOAD"; outcomeId: string }
-  | { phase: "GENERATING"; outcomeId: string; imageBase64: string }
-  | { phase: "GENERATED"; lastOutcomeId: string; lastImageBase64: string }
-  | { phase: "ERROR"; message: string };
-
 export function useChatFlow(outcomes: Outcome[]) {
-  const { selectedOutcomeId, setSelectedOutcomeId, lastImageData, setLastImageData, hasAttachment, setHasAttachment } = useChat();
+  const {
+    selectedOutcomeId,
+    setSelectedOutcomeId,
+    lastImageData,
+    setLastImageData,
+    hasAttachment,
+    setHasAttachment,
+  } = useChat();
+  const { triggerInference } = useInferenceRuntime();
   const aui = useAui();
-  const [phase, setPhase] = useState<FlowPhase>({ phase: "OUTCOME_SELECTION" });
-  const [hasShownWelcome, setHasShownWelcome] = useState(false);
+  const messages = useAuiState((s) => s.thread.messages);
+  const isRunning = useAuiState((s) => s.thread.isRunning);
 
-  const pushAssistantMessage = useCallback(
-    (content: string | { type: "image"; image: string; filename?: string }) => {
-      const parts = typeof content === "string"
-        ? [{ type: "text" as const, text: content }]
-        : [content];
+  const handleOutcomeSelect = useCallback((outcomeId: string) => {
+    if (outcomeId === selectedOutcomeId) return;
+    const outcome = outcomes.find((o) => o.id === outcomeId);
+    if (!outcome) return;
 
-      aui.thread.append({
-        role: "assistant",
-        content: parts,
-      });
-    },
-    [aui]
-  );
-
-  const pushSystemMessage = useCallback(
-    (text: string) => {
-      aui.thread.append({
-        role: "system",
-        content: [{ type: "text", text }],
-      });
-    },
-    [aui]
-  );
-
-  const pushLoadingMessage = useCallback(() => {
+    aui.thread.append({
+      role: "user",
+      content: [{ type: "text", text: outcome.title }],
+    });
     aui.thread.append({
       role: "assistant",
-      content: [{ type: "text", text: "Generating..." }],
+      content: [{ type: "text", text: vocabulary.steps.reference.message }],
     });
-  }, [aui]);
+    setSelectedOutcomeId(outcomeId);
+    setHasAttachment(false);
+    setLastImageData(null);
+  }, [selectedOutcomeId, outcomes, aui, setSelectedOutcomeId, setHasAttachment, setLastImageData]);
 
-  useEffect(() => {
-    if (!hasShownWelcome) {
-      pushAssistantMessage(vocabulary.steps.outcome.message);
-      setHasShownWelcome(true);
-    }
-  }, [hasShownWelcome, pushAssistantMessage]);
-
-  useEffect(() => {
-    if (selectedOutcomeId && phase.phase === "OUTCOME_SELECTION") {
-      pushAssistantMessage(vocabulary.steps.reference.message);
-      setPhase({ phase: "IMAGE_UPLOAD", outcomeId: selectedOutcomeId });
-    }
-  }, [selectedOutcomeId, phase.phase, pushAssistantMessage]);
-
-  useEffect(() => {
-    if (hasAttachment && phase.phase === "IMAGE_UPLOAD" && lastImageData) {
-      pushAssistantMessage(vocabulary.steps.generate.label);
-      setPhase({ phase: "GENERATING", outcomeId: phase.outcomeId, imageBase64: lastImageData });
-    }
-  }, [hasAttachment, phase.phase, lastImageData, pushAssistantMessage]);
-
-  const handleOutcomeSelect = useCallback(
-    (outcomeId: string) => {
-      if (outcomeId === selectedOutcomeId) return;
-      setSelectedOutcomeId(outcomeId);
+  const handleAttachmentChange = useCallback((file: File | null) => {
+    if (!file) {
       setHasAttachment(false);
       setLastImageData(null);
-    },
-    [selectedOutcomeId, setSelectedOutcomeId, setHasAttachment, setLastImageData]
-  );
+      return;
+    }
+    if (file.size > 512 * 1024) {
+      aui.thread.append({ role: "system", content: [{ type: "text", text: "Image exceeds 512KB limit." }] });
+      return;
+    }
+    if (!file.type.startsWith("image/")) {
+      aui.thread.append({ role: "system", content: [{ type: "text", text: "Please select an image file." }] });
+      return;
+    }
 
-  const handleAttachmentChange = useCallback(
-    (file: File | null) => {
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const base64 = reader.result as string;
-          setLastImageData(base64);
-          setHasAttachment(true);
-        };
-        reader.readAsDataURL(file);
-      } else {
-        setHasAttachment(false);
-        setLastImageData(null);
-      }
-    },
-    [setHasAttachment, setLastImageData]
-  );
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64 = reader.result as string;
+      aui.thread.append({ role: "user", content: [{ type: "image", image: base64 }] });
+      aui.thread.append({
+        role: "assistant",
+        content: [{ type: "text", text: vocabulary.steps.generate.label }],
+      });
+      setLastImageData(base64);
+      setHasAttachment(true);
+    };
+    reader.readAsDataURL(file);
+  }, [setHasAttachment, setLastImageData, aui]);
 
   const handleReuseImage = useCallback(() => {
-    if (lastImageData && selectedOutcomeId) {
-      setHasAttachment(true);
-    }
-  }, [lastImageData, selectedOutcomeId, setHasAttachment]);
+    if (!lastImageData || !selectedOutcomeId) return;
+    aui.thread.append({ role: "user", content: [{ type: "image", image: lastImageData }] });
+    aui.thread.append({
+      role: "assistant",
+      content: [{ type: "text", text: vocabulary.steps.generate.label }],
+    });
+    setHasAttachment(true);
+  }, [lastImageData, selectedOutcomeId, setHasAttachment, aui]);
 
   const handleGenerate = useCallback(async () => {
-    if (phase.phase !== "GENERATING") return;
+    if (!selectedOutcomeId || !lastImageData) return;
+    await triggerInference();
+  }, [selectedOutcomeId, lastImageData, triggerInference]);
 
-    pushLoadingMessage();
+  const lastAssistantText = useMemo(() =>
+    messages
+      .filter((m) => m.role === "assistant")
+      .pop()
+      ?.content
+      .filter((c) => c.type === "text")
+      .map((c) => c.text)
+      .join(" ") ?? "",
+    [messages]
+  );
 
-    try {
-      const result = await fetch("/api/inference", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          imageBase64: phase.imageBase64,
-          outcomeId: phase.outcomeId,
-        }),
-      });
-
-      const data = await result.json();
-
-      if (data.error) {
-        setPhase({ phase: "ERROR", message: data.error });
-        pushSystemMessage(data.error);
-      } else if (data.url) {
-        setPhase({
-          phase: "GENERATED",
-          lastOutcomeId: phase.outcomeId,
-          lastImageBase64: phase.imageBase64,
-        });
-        pushAssistantMessage({
-          type: "image",
-          image: data.url,
-          filename: `generated-${phase.outcomeId}.png`,
-        });
-        setSelectedOutcomeId(null);
-        setHasAttachment(false);
-        setLastImageData(null);
-      }
-    } catch {
-      const errorMsg = "Inference failed. Please try again.";
-      setPhase({ phase: "ERROR", message: errorMsg });
-      pushSystemMessage(errorMsg);
-    }
-  }, [phase, pushAssistantMessage, pushSystemMessage, pushLoadingMessage, setSelectedOutcomeId, setHasAttachment, setLastImageData]);
-
-  const handleRetry = useCallback(() => {
-    if (phase.phase === "ERROR") {
-      const outcomeId = selectedOutcomeId;
-      if (outcomeId && lastImageData) {
-        setPhase({ phase: "GENERATING", outcomeId, imageBase64: lastImageData });
-      }
-    }
-  }, [phase.phase, selectedOutcomeId, lastImageData]);
-
-  const canGenerate = phase.phase === "GENERATING" || (phase.phase === "IMAGE_UPLOAD" && hasAttachment && lastImageData);
-  const showGenerateButton = phase.phase === "GENERATING" || phase.phase === "IMAGE_UPLOAD" || phase.phase === "GENERATED";
-  const showReuseButton = phase.phase !== "OUTCOME_SELECTION" && lastImageData && !hasAttachment;
+  const showOutcomeSuggestions = !selectedOutcomeId && lastAssistantText === vocabulary.steps.outcome.message;
+  const showAttachmentUpload = selectedOutcomeId && !hasAttachment && lastAssistantText === vocabulary.steps.reference.message;
+  const showGenerateButton = hasAttachment && !!lastImageData && lastAssistantText === vocabulary.steps.generate.label;
+  const showReuseButton = !hasAttachment && !!lastImageData && !!selectedOutcomeId;
+  const isGenerating = isRunning;
 
   return {
-    phase,
-    outcomes,
     selectedOutcomeId,
+    hasAttachment,
+    lastImageData,
     handleOutcomeSelect,
     handleAttachmentChange,
     handleReuseImage,
     handleGenerate,
-    handleRetry,
-    canGenerate,
+    canGenerate: hasAttachment && !!lastImageData && !!selectedOutcomeId,
+    showOutcomeSuggestions,
+    showAttachmentUpload,
     showGenerateButton,
     showReuseButton,
-    lastImageData,
+    isGenerating,
     vocabulary,
   };
 }

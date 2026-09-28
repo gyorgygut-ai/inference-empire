@@ -4,7 +4,7 @@ import { createRemoteJWKSet, jwtVerify } from "jose"
 const CF_ACCESS_AUD = process.env.CF_ACCESS_AUD
 const CF_TEAM_DOMAIN = process.env.CF_TEAM_DOMAIN
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   if (!CF_ACCESS_AUD || !CF_TEAM_DOMAIN) {
     return NextResponse.next()
   }
