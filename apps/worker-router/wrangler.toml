@@ -1,0 +1,8 @@
+name = "worker-router"
+compatibility_date = "2026-09-28"
+
+[env.production]
+compatibility_flags = []
+
+[env.development]
+compatibility_flags = []
