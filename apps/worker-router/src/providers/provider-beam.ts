@@ -8,32 +8,33 @@ export const beamProvider = {
     const [provider, originalTaskId] = atob(encoded).split(':')
     return { provider, originalTaskId }
   },
-  async pushToTaskQueue(prompt: string, env: Env): Promise<{ task_id: string }> {
-    const response = await fetch(`${env.BEAM_API_URL}/queues/default`, {
+  async pushToTaskQueue(input: Record<string, unknown>, env: Env): Promise<{ task_id: string }> {
+    const response = await fetch(`${env.PROVIDER_API_URL}/queues/default`, {
       method: 'POST',
-      headers: { 'Authorization': `Bearer ${env.BEAM_TOKEN}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt, model: 'flux2' })
+      headers: { 'Authorization': `Bearer ${env.PROVIDER_TOKEN}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ input })
     })
     const result: { task_id: string } = await response.json()
     return { task_id: result.task_id }
   },
   async fetchTaskStatus(taskId: string, env: Env): Promise<{ status: Status; output?: unknown }> {
-    const response = await fetch(`${env.BEAM_API_URL}/queues/default/${taskId}`, {
-      headers: { 'Authorization': `Bearer ${env.BEAM_TOKEN}` }
+    const response = await fetch(`${env.PROVIDER_API_URL}/queues/default/${taskId}`, {
+      headers: { 'Authorization': `Bearer ${env.PROVIDER_TOKEN}` }
     })
-    const result: { status: string } = await response.json()
+    const result: { status: string; output?: unknown } = await response.json()
     return {
-      status: beamProvider.mapTaskStatusToResponse(result.status),
-      output: result
+      status: mapTaskStatusToResponse(result.status),
+      output: result.output
     }
-  },
-  mapTaskStatusToResponse(providerStatus: string): Status {
-    const mapping: Record<string, Status> = {
-      'COMPLETED': Status.COMPLETED,
-      'FAILED': Status.FAILED,
-      'RUNNING': Status.PROCESSING,
-      'PENDING': Status.PENDING
-    }
-    return mapping[providerStatus] || Status.PENDING
   }
+}
+
+function mapTaskStatusToResponse(providerStatus: string): Status {
+  const mapping: Record<string, Status> = {
+    'COMPLETED': Status.COMPLETED,
+    'FAILED': Status.FAILED,
+    'RUNNING': Status.PROCESSING,
+    'PENDING': Status.PENDING
+  }
+  return mapping[providerStatus] || Status.PENDING
 }

@@ -1,4 +1,6 @@
 {
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "name": "worker-router",
   "root": "apps/worker-router",
   "sourceRoot": "apps/worker-router/src",
   "projectType": "application",
@@ -31,6 +33,14 @@
       "inputs": ["default", "{workspaceRoot}/eslint.config.mjs"],
       "options": {}
     },
+    "build-manifest": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "echo 'worker-router manifest is generated per-deployment by deploy-worker scripts'",
+        "cwd": "apps/worker-router"
+      },
+      "cache": true
+    },
     "deploy": {
       "executor": "nx:run-commands",
       "options": {
@@ -39,13 +49,14 @@
       },
       "dependsOn": ["build"]
     },
-    "deploy-staging": {
+    "deploy-worker": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "wrangler deploy --env staging",
+        "command": "node scripts/deploy-worker.mjs --contract-path {contractPath} --worker-name {workerName} --provider-type {providerType} --provider-token {providerToken} --provider-api-url {providerApiUrl} --provider-app-name {providerAppName}",
         "cwd": "apps/worker-router"
       },
-      "dependsOn": ["build"]
+      "dependsOn": ["build"],
+      "cache": false
     }
   }
 }

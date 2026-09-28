@@ -17,7 +17,7 @@ type Prebaked =
 interface Input {
   baseUrl: string
   token: string
-  prompt: string
+  input: Record<string, unknown>
   pollIntervalMs: number
   timeoutMs: number
   responses: Prebaked[]
@@ -69,43 +69,34 @@ function config(input: Input): Config {
 
 describe("inferWithPolling", () => {
   test("rejects-immediately", async () => {
-    // setup
     const input = fixture<Input>("rejects-immediately", "input.json")
     const expected = fixture<ExpectedError>("rejects-immediately", "expected.json")
     const fetcher = new PrebakedFetch(input.responses)
 
-    // act
-    const act = inferWithPolling<unknown>(input.prompt, config(input), fetcher.fetch)
+    const act = inferWithPolling<unknown>(input.input, config(input), fetcher.fetch)
 
-    // assert
     await expect(act).rejects.toThrow(expected.error)
     expect(fetcher.requests()).toEqual(expected.requests)
   })
 
   test("completes-immediately", async () => {
-    // setup
     const input = fixture<Input>("completes-immediately", "input.json")
     const expected = fixture<ExpectedResult>("completes-immediately", "expected.json")
     const fetcher = new PrebakedFetch(input.responses)
 
-    // act
-    const output = await inferWithPolling<unknown>(input.prompt, config(input), fetcher.fetch)
+    const output = await inferWithPolling<unknown>(input.input, config(input), fetcher.fetch)
 
-    // assert
     expect(output).toEqual(expected.output)
     expect(fetcher.requests()).toEqual(expected.requests)
   })
 
   test("completes-on-fifth-invocation", async () => {
-    // setup
     const input = fixture<Input>("completes-on-fifth-invocation", "input.json")
     const expected = fixture<ExpectedResult>("completes-on-fifth-invocation", "expected.json")
     const fetcher = new PrebakedFetch(input.responses)
 
-    // act
-    const output = await inferWithPolling<unknown>(input.prompt, config(input), fetcher.fetch)
+    const output = await inferWithPolling<unknown>(input.input, config(input), fetcher.fetch)
 
-    // assert
     expect(output).toEqual(expected.output)
     expect(fetcher.requests()).toEqual(expected.requests)
   })

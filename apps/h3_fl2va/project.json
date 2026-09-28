@@ -37,13 +37,22 @@
     "deploy-modal": {
       "executor": "nx:run-commands",
       "options": { "command": "echo 'uv run --locked modal deploy h3_fl2va/worker_modal_cls_*.py (turbo_fl2va)'", "cwd": "." },
-      "dependsOn": ["verify-deploy-gate"],
+      "dependsOn": ["verify-deploy-gate", "deploy-worker"],
       "cache": false
     },
     "deploy-beam": {
       "executor": "nx:run-commands",
       "options": { "command": "echo 'Beam deploys on dispatch.put(); see AGENTS.md'", "cwd": "." },
-      "dependsOn": ["verify-deploy-gate"],
+      "dependsOn": ["verify-deploy-gate", "deploy-worker"],
+      "cache": false
+    },
+    "deploy-worker": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node deploy-worker.mjs",
+        "cwd": "apps/h3_fl2va"
+      },
+      "dependsOn": ["worker-router:build"],
       "cache": false
     }
   }

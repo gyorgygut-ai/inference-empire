@@ -1,7 +1,7 @@
 {
   "baseUrl": "https://router.test/",
   "token": "test-token",
-  "prompt": "a cat wearing a hat",
+  "input": { "prompt": "a cat wearing a hat" },
   "pollIntervalMs": 0,
   "timeoutMs": 1000,
   "responses": [

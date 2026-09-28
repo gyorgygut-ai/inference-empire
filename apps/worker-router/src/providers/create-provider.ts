@@ -11,21 +11,19 @@ export const enum Status {
 }
 
 export interface Env {
-  MODAL_API_URL: string
-  MODAL_TOKEN: string
-  BEAM_API_URL: string
-  BEAM_TOKEN: string
-  FLASH_API_URL: string
-  FLASH_TOKEN: string
   AUTH_TOKEN: string
+  PROVIDER_TYPE: 'modal' | 'beam' | 'flash'
+  PROVIDER_API_URL: string
+  PROVIDER_TOKEN: string
+  PROVIDER_APP_NAME?: string
+  PROVIDER_ENDPOINT_NAME?: string
 }
 
 export interface Provider {
   encodeTaskId(originalTaskId: string): string
   decodeTaskId(encoded: string): { provider: string; originalTaskId: string }
-  pushToTaskQueue(prompt: string, env: Env): Promise<{ task_id: string }>
+  pushToTaskQueue(input: Record<string, unknown>, env: Env): Promise<{ task_id: string }>
   fetchTaskStatus(taskId: string, env: Env): Promise<{ status: Status; output?: unknown }>
-  mapTaskStatusToResponse(providerStatus: string): Status
 }
 
 const providers: Record<string, Provider> = {
@@ -34,10 +32,10 @@ const providers: Record<string, Provider> = {
   flash: flashProvider
 }
 
-export default function createProvider({ name }: { name: string }): Provider {
-  const p = providers[name]
+export default function createProvider({ provider, appName, endpointName }: { provider: string; appName?: string; endpointName?: string }): Provider {
+  const p = providers[provider]
   if (!p) {
-    throw new Error(`Unknown provider: ${name}`)
+    throw new Error(`Unknown provider: ${provider}`)
   }
   return p
 }

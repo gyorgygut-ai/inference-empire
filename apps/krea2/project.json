@@ -57,7 +57,8 @@
         "cwd": "."
       },
       "dependsOn": [
-        "verify-deploy-gate"
+        "verify-deploy-gate",
+        "deploy-worker"
       ],
       "cache": false
     },
@@ -68,7 +69,8 @@
         "cwd": "."
       },
       "dependsOn": [
-        "verify-deploy-gate"
+        "verify-deploy-gate",
+        "deploy-worker"
       ],
       "cache": false
     },
@@ -79,7 +81,19 @@
         "cwd": "."
       },
       "dependsOn": [
-        "verify-deploy-gate"
+        "verify-deploy-gate",
+        "deploy-worker"
+      ],
+      "cache": false
+    },
+    "deploy-worker": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node deploy-worker.mjs",
+        "cwd": "apps/krea2"
+      },
+      "dependsOn": [
+        "worker-router:build"
       ],
       "cache": false
     }

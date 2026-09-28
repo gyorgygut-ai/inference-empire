@@ -37,13 +37,22 @@
     "deploy-modal": {
       "executor": "nx:run-commands",
       "options": { "command": "echo 'uv run --locked modal deploy h3_comfy/worker_modal_cls_*.py (comfy)'", "cwd": "." },
-      "dependsOn": ["verify-deploy-gate"],
+      "dependsOn": ["verify-deploy-gate", "deploy-worker"],
       "cache": false
     },
     "deploy-beam": {
       "executor": "nx:run-commands",
       "options": { "command": "echo 'Beam deploys on dispatch.put(); see AGENTS.md'", "cwd": "." },
-      "dependsOn": ["verify-deploy-gate"],
+      "dependsOn": ["verify-deploy-gate", "deploy-worker"],
+      "cache": false
+    },
+    "deploy-worker": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node deploy-worker.mjs",
+        "cwd": "apps/h3_comfy"
+      },
+      "dependsOn": ["worker-router:build"],
       "cache": false
     }
   }

@@ -10,7 +10,7 @@ const MAX_DIMENSION = 512
 
 const inferenceConfig: InferenceConfig = {
   baseUrl: workerRouterConfig.baseUrl,
-  token: workerRouterConfig.token,
+  token: workerRouterConfig.authToken,
   maxPollMillis: 300_000,
   pollIntervalMillis: 3000,
 }

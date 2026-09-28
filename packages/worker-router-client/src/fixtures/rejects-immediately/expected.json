@@ -1,6 +1,6 @@
 {
   "error": "connection refused",
   "requests": [
-    "https://router.test/infer"
+    "https://router.test/queue"
   ]
 }
