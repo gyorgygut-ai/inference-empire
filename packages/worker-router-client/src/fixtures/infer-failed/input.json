@@ -1,0 +1,11 @@
+{
+  "baseUrl": "https://router.test/",
+  "token": "test-token",
+  "prompt": "a cat wearing a hat",
+  "pollIntervalMs": 0,
+  "timeoutMs": 1000,
+  "responses": [
+    { "status": 200, "body": { "task_id": "bW9kYWw6YWJj" } },
+    { "status": 200, "body": { "status": "failed" } }
+  ]
+}

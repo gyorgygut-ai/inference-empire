@@ -1,0 +1,6 @@
+{
+  "output": { "url": "https://cdn.example/x.png" },
+  "requests": [
+    "https://router.test/inquire?taskId=bW9kYWw6YWJj"
+  ]
+}
