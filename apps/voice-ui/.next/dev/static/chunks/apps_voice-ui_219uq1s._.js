@@ -1,5 +1,0 @@
-(globalThis["TURBOPACK_CHUNK_LISTS"] || (globalThis["TURBOPACK_CHUNK_LISTS"] = [])).push({
-    script: typeof document === "object" ? document.currentScript : undefined,
-    chunks: ["static/chunks/[root-of-the-server]__1005_-p._.css","static/chunks/_18c6ssy._.js","static/chunks/apps_voice-ui_src_1h3q92d._.js","static/chunks/apps_voice-ui_src_13n3mkg._.js","static/chunks/node_modules_@assistant-ui_core_dist_04fx31s._.js","static/chunks/node_modules_@assistant-ui_react_dist_1s11w0v._.js","static/chunks/node_modules_@assistant-ui_tap_dist_0jzfmul._.js","static/chunks/node_modules_@assistant-ui_store_dist_0bv7jj0._.js","static/chunks/node_modules_@base-ui_react_0pjt3_f._.js","static/chunks/node_modules_assistant-stream_dist_0uzmjeo._.js","static/chunks/node_modules_micromark-core-commonmark_dev_lib_2079wuz._.js","static/chunks/node_modules_@radix-ui_1--7slg._.js","static/chunks/node_modules_0xq82hk._.js","static/chunks/1hv6_next_dist_compiled_buffer_index_0394onv.js","static/chunks/node_modules_@assistant-ui_react-markdown_styles_dot_1vmgjrz.css"],
-    source: "entry"
-});

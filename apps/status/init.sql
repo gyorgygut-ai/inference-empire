@@ -1,4 +1,0 @@
-CREATE TABLE IF NOT EXISTS status (
-    key VARCHAR(255) PRIMARY KEY,
-    value BLOB NOT NULL
-);

@@ -1,1 +1,0 @@
-{"coords": {"invokeUrl": "https://beam.test", "taskApi": "https://beam-task.test"}, "secrets": {"basicToken": "basic-1", "bearerToken": "bearer-1"}, "id": "b-1", "response": {"status": "FAILED"}}

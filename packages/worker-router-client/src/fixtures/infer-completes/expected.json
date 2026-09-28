@@ -1,8 +1,0 @@
-{
-  "output": { "url": "https://cdn.example/x.png" },
-  "requests": [
-    "https://router.test/infer",
-    "https://router.test/inquire?taskId=bW9kYWw6YWJj",
-    "https://router.test/inquire?taskId=bW9kYWw6YWJj"
-  ]
-}

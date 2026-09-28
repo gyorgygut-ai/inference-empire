@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs"
 import { join } from "node:path"
 import { describe, test, expect } from "vitest"
-import { postQueue, pollQueue, pingRouter } from "../api"
+import { postQueue, pollQueue } from "../api"
 import { createFetchStub } from "./stubs/fetch-stub"
 
 const fixturesDir = join(import.meta.dirname, "fixtures")
@@ -62,25 +62,5 @@ describe("pollQueue", () => {
       expect((e as Error).message).toBe(expected.error)
     }
     expect(thrown).toBe(true)
-  })
-})
-
-describe("pingRouter", () => {
-  test("ping/reachable", async () => {
-    const input = readInput<{ config: object }>("ping/reachable/input.json")
-    const expected = readExpected<boolean>("ping/reachable/expected.json")
-    const responses = readExpected<Array<{ body?: unknown; status?: number }>>("ping/reachable/stubs/responses.json")
-    const stub = createFetchStub(responses)
-    const result = await pingRouter(input.config as never, stub)
-    expect(result).toBe(expected)
-  })
-
-  test("ping/unreachable", async () => {
-    const input = readInput<{ config: object }>("ping/unreachable/input.json")
-    const expected = readExpected<boolean>("ping/unreachable/expected.json")
-    const responses = readExpected<Array<{ body?: unknown; status?: number }>>("ping/unreachable/stubs/responses.json")
-    const stub = createFetchStub(responses)
-    const result = await pingRouter(input.config as never, stub)
-    expect(result).toBe(expected)
   })
 })

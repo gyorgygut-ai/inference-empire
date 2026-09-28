@@ -1,6 +1,0 @@
-{
-  "error": "Unauthorized",
-  "requests": [
-    "https://router.test/infer"
-  ]
-}

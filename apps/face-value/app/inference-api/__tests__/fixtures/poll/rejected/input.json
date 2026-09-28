@@ -4,7 +4,6 @@
     "baseUrl": "http://test",
     "token": "secret",
     "maxPollMillis": 10000,
-    "pollIntervalMillis": 100,
-    "pingTimeout": 1000
+    "pollIntervalMillis": 100
   }
 }

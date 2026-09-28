@@ -1,1 +1,0 @@
-{"url": "https://flash.test/run", "method": "POST", "auth": "Bearer key-1", "body": {"input": {"prompt": "a red square"}}}

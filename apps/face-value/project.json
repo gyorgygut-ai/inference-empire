@@ -4,14 +4,14 @@
   "projectType": "application",
   "sourceRoot": "apps/face-value",
   "tags": ["type:app", "scope:client"],
-  "implicitDependencies": ["worker-router"],
+  "implicitDependencies": [],
   "targets": {
     "build": {
-      "executor": "@nx/next:build",
+      "executor": "nx:run-script",
       "options": {
-        "outputPath": "{projectRoot}/.next"
+        "script": "build"
       },
-      "dependsOn": ["build-manifest", { "projects": ["worker-router"], "target": "build-manifest" }],
+      "dependsOn": ["build-manifest"],
       "inputs": ["production", "^production"],
       "outputs": ["{projectRoot}/.next"],
       "cache": true
@@ -28,6 +28,9 @@
     },
     "lint": {
       "executor": "@nx/eslint:lint",
+      "options": {
+        "exclude": ["{projectRoot}/.next/**"]
+      },
       "cache": true
     },
     "typecheck": {

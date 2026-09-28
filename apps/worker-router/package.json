@@ -7,7 +7,7 @@
   "scripts": {
     "build": "tsc",
     "dev": "wrangler dev",
-    "test": "echo no tests yet",
+    "test": "vitest run",
     "lint": "echo no linter yet"
   },
   "dependencies": {

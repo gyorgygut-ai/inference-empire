@@ -17,7 +17,6 @@
 - Select an outcome
 - Submit posts to `worker-router-flux2` `/queue`, polls `/task/:id` until DONE, returns generated image
 - Generated image displayed inline, downloadable
-- Access gated behind Cloudflare Access email OTP
 
 ## Key Decisions
 
@@ -25,13 +24,8 @@
 
 - **Server Components**: static shell, outcome prompts server-only. [Server and Client Components](https://nextjs.org/docs/app/getting-started/server-and-client-components)
 - **Server Actions**: reference image submit + Flux call, no API routes. [Server Actions and Mutations](https://nextjs.org/docs/app/building-your-application/data-fetching/server-actions-and-mutations)
-- **useActionState**: form state, errors, pending. [useActionState](https://react.dev/reference/react/useActionState)
-- **useFormStatus**: disable submit while generating. [useFormStatus](https://react.dev/reference/react-dom/hooks/useFormStatus)
-- **useOptimistic**: instant placeholder, swap on result. [useOptimistic](https://react.dev/reference/react/useOptimistic)
-- **proxy.ts**: CF JWT verification, blocks origin bypass. [Next.js 16 Blog](https://nextjs.org/blog/next-16)
-- **fetch cache**: same reference image + outcome cached forever, abuse prevention. [Caching](https://nextjs.org/docs/app/building-your-application/caching)
+- **In-memory cache**: same reference image + outcome served without re-inference, abuse prevention. [Caching](https://nextjs.org/docs/app/building-your-application/caching)
 - **React Compiler**: zero manual memoization. [React Compiler](https://react.dev/learn/react-compiler)
-- **Async cookies**: await cookies() for CF auth header. [Sync Dynamic APIs](https://nextjs.org/docs/messages/sync-dynamic-apis)
 
 ### Business Logic
 
@@ -44,9 +38,6 @@
   - Each outcome is a .md file in /outcomes
   - Frontmatter: (id, title, width, height, prompt)
   - Never exposed to client as is, id and title for display only
-- ~~**No CSS Styles, Almost**:~~ POSTPONED for assistant-ui chat
-  - ~~Sloppy styling for that authentic early-2000s aesthetic~~
-  - ~~Some control of appearance can, and should be achieved via semantic elements~~
 - **Proper Data Handling**:
   - Where data is dynamic, the "empty, 1, many data" cases should be handled
   - Same goes for loading, success, error states at the minimum
@@ -54,24 +45,11 @@
   - User uploads their own image
   - Resized to max 512×512 on server before sending to inference server
   - Sent as base64
+  - Server validates type, size, format before sending to inference server
 
 ### Styling and Layout
 
-- Zero CSS, native semantic HTML elements only
-- Hero `<img>` intrinsic width controls layout
-- `❌` emoji for error
-- `<button disabled>` + text swap for loading
-
-### Image Generation Form
-
-- `useActionState` — JS-enhanced, degrades to full POST
-- `<select>` in form
-- Native: `accept`, `required`
-- Server: type, size, format validation
-- File → base64 → BE
-- Request-time rendered page + server action; health ping at render (1000ms, fail-open) — submit enabled by default, disabled + `❌ Server offline` when ping fails
-- Result `<img />`
-- `<a download>` for download
+- Tailwind v4 + assistant-ui registry components (see assistant-ui section)
 
 ### Inference Backend
 
@@ -80,35 +58,26 @@
 - **Auth token** generated at build time, injected into `dist/apps/worker-router/contract.json`.
 - **Model**: `flux_2_klein_9b_q6p.ckpt` (~7.3GB) — hosted on `gpu-workers-flux2/` provider backend. Deployment managed separately via Nx chain.
 
-### Auth
-
-- ~~Cloudflare Access email OTP in front of the domain~~
-- ~~CF JWT verified in `proxy.ts` via `jose` against CF public certs~~
-- ~~Origin URL kept private — CF is the only entry point~~
-
 ### Security
 
 - TODO: oh the irony
 
 ### Caching
 
-- Same reference image + outcome combo: `fetch` cache with `revalidate: false`
-- Cache key: reference image hash + outcome id
+- Same reference image + outcome combo cached in-memory (`app/inference-cache.ts`), lost on restart
+- Cache key: sha256(reference image) + outcome id
 
 ### Abuse Prevention
 
-- Fetch cache eliminates duplicate inference calls
-- CF Access gates the app from public access
+- In-memory cache eliminates duplicate inference calls
 
 ### Error States
 
-- Reference image missing → form error, no submission
+- Reference image missing → send blocked by pre-send validation, no submission
 - Reference image exceeds size limit → client-side error before submission
-- Worker-router unreachable (401/404/502) → server error returned to client
-- Health ping fails → submit disabled, `❌ Server offline` shown
-- Worker-router returns REJECTED → error message displayed in result area
-- Timeout after 5 min polling → SERVER_TIMEOUT error
-- CF JWT invalid → redirect to CF Access login
+- Worker-router unreachable (401/404/502) → error text in assistant message
+- Worker-router returns REJECTED → error text in assistant message
+- Timeout after 5 min polling → SERVER_TIMEOUT error text
 
 ### API Contract - Worker Router (flux2)
 
@@ -130,10 +99,9 @@
 - Image upload via `AttachmentPrimitive` in composer after outcome selection.
 - Generated image rendered as `ImageMessagePart` in assistant message, with download action.
 - Error and loading states shown as system/running messages in thread.
-- Server offline → disabled composer + system message.
 - Pre-send validation: send button disabled until outcome selected + image attached.
 - Multi-turn: previous image persists as visible attachment in composer across turns.
 - Model fallback handled by external Cloudflare gateway proxy. This app calls gateway; no fallback logic here.
-- BE contract canonical in `inference-tooling` repo (beam + modal workers). Runpod flash out of service. This repo's `schema.ts` mirrors canonical contract.
-- Styling: assistant-ui registry components (`npx assistant-ui@latest add thread`, `npx assistant-ui@latest add image`). Project uses Tailwind v4.
+- BE contract canonical in `dist/apps/worker-router/contract.json`, read at build time via server-only `router-config.ts`. This repo's `schema.ts` mirrors the canonical contract.
+- Styling: assistant-ui registry components (`thread` + `image`, plus `attachment`, `file`, `tooltip-icon-button`, shadcn ui set) vendored manually into `components/` + `hooks/`; LLM-only elements trimmed. Project uses Tailwind v4.
 - Layout: full-width chat by default. At `lg` breakpoint → 2-column: left 2/3 (solid bg, hero img), right 1/3 (chat). Tailwind grid on page wrapper.

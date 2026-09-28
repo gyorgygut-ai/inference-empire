@@ -1,2 +1,2 @@
-export { infer, poll } from "./client"
+export { inferWithPolling } from "./client"
 export type { Config } from "./client"

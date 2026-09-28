@@ -8,18 +8,16 @@
 - `requestOutcome` Server Action exists in `app/actions.ts` (image processing, inference call)
 - Basic assistant-ui structure: `chat-client.tsx`, `thread.tsx`, `composer.tsx`
 - Outcome loading via `getPublicOutcomes()`
-- Server online/offline detection via `pingInference()`
 - Chat context for `selectedOutcomeId` and `hasAttachment`
 
 ### Broken / Missing
 1. **Mock adapter** in `chat-client.tsx` (lines 6-17) — returns static text + 1x1 pixel GIF, never calls `requestOutcome`
 2. **Plain `<button>` elements** for outcomes in `thread.tsx` (lines 24-31) instead of `SuggestionPrimitive`
 3. **Custom image renderer** in `thread.tsx` (lines 42-45) instead of registry `Image` component with `Image.Actions`
-4. **No server-offline system message** in thread
-5. **No error/loading states** as system messages
-6. **No attachment persistence** across turns
-7. **No `SuggestionPrimitive`** — outcomes are plain buttons with no aui integration
-8. **No registry components** — `npx assistant-ui@latest add thread/image` never run
+4. **No error/loading states** as system messages
+5. **No attachment persistence** across turns
+6. **No `SuggestionPrimitive`** — outcomes are plain buttons with no aui integration
+7. **No registry components** — `npx assistant-ui@latest add thread/image` never run
 
 ---
 
@@ -33,7 +31,6 @@
 | 4 | Generated image rendering | `ImageMessagePart` directly in assistant message. No tool-call chrome. |
 | 5 | Multi-turn support | Yes. Re-select outcomes, re-upload, same or different outcome. |
 | 6 | BE contract location | Canonical in `inference-tooling`. Runtime bridge uses `useLocalRuntime` calling `requestOutcome`. |
-| A | Server offline state | Disabled composer. System message `❌ Server offline` in thread. |
 | B | Error/loading states | Status messages in chat (system messages for errors, running status for loading). |
 | C | Pre-send validation | Send button disabled until outcome selected + image attached. |
 | D | Previous image persistence | Keep last attachment visible in composer between turns. |
@@ -57,7 +54,6 @@ Replace mock adapter (lines 6-17) with real `useLocalRuntime` bridge to `request
 - Replace plain `<button>` elements (lines 24-31) with `SuggestionPrimitive` items
 - Run `npx assistant-ui@latest add thread` and integrate registry Thread component
 - Replace custom `Image` component (lines 42-45) with registry Image component + `Image.Actions` for download
-- Add server-offline system message when `!serverOnline` and thread is empty
 - Implement error/loading states as system/running messages in thread
 
 ### `app/components/assistant-ui/composer.tsx`
@@ -106,37 +102,32 @@ These commands scaffold registry components that provide:
 - Send message → image attaches to user message
 - After generation completes, new turn opens with same image still attached
 
-### TC-4: Composer disabled when server offline
-- `serverOnline = false` → composer disabled
-- System message `❌ Server offline` appears in thread
-- No sends possible
-
-### TC-5: Send button disabled until valid
+### TC-4: Send button disabled until valid
 - No outcome selected → disabled
 - Outcome selected, no image → disabled
 - Outcome selected + image attached → enabled
 
-### TC-6: Image rendering with download
+### TC-5: Image rendering with download
 - Successful generation → assistant message contains `ImageMessagePart`
 - Image displayed via registry `Image` component
 - `Image.Actions` provides download button (no custom `<a download>`)
 - No base64 encoding in URL (uses `presigned_url`)
 
-### TC-7: Error state as system message
+### TC-6: Error state as system message
 - Server Action returns error (timeout, invalid outcome, etc.)
 - Error rendered as system message in thread
 - No image rendered
 
-### TC-8: Loading state
+### TC-7: Loading state
 - After send, assistant message shows running/pending status
 - Loading indicator replaces completed state
 
-### TC-9: Multi-turn re-generation
+### TC-8: Multi-turn re-generation
 - Select outcome, upload image, generate
 - In next turn, select different outcome with same image → new image generated
 - In next turn, upload new image (previous image replaced) → new image generated
 
-### TC-10: Server Action contract
+### TC-9: Server Action contract
 - `requestOutcome` returns `{ imageUrl: string }` not `{ imageBase64: string }`
 - `schema.ts` `artifact` is `{ presigned_url: string }` not `string`
 - Response from gateway matches canonical `inference-tooling` contract
@@ -147,12 +138,11 @@ These commands scaffold registry components that provide:
 
 | # | Task | File | Description |
 |---|------|------|-------------|
-| 1 | Scaffold assistant-ui registry components | — | `cd apps/face-value && npx assistant-ui@latest add thread` + `npx assistant-ui@latest add image` |
+| ~~1~~ | ~~Scaffold assistant-ui registry components~~ | — | ~~Done: registry `thread` + `image` (+ `attachment`, `file`, `tooltip-icon-button`, shadcn `button`/`skeleton`/`tooltip`/`dialog`/`avatar`) vendored into `components/` + `hooks/`; LLM-only elements trimmed~~ |
 | 2 | Replace mock adapter with real Server Action bridge | `chat-client.tsx` | Remove mock adapter (lines 6-17). Implement `useLocalRuntime` adapter that calls `requestOutcome` with FormData |
 | 3 | Replace plain buttons with `SuggestionPrimitive` | `thread.tsx` | Replace outcome `<button>` elements (lines 24-31) with `SuggestionPrimitive` items wired to chat context |
-| 4 | Replace custom image with registry `Image` component | `thread.tsx` | Replace custom `Image` component (lines 42-45) with registry Image + `Image.Actions` for download |
-| 5 | Add server-offline system message | `chat-client.tsx` / `thread.tsx` | When `!serverOnline`, show system message `❌ Server offline` in thread + disable composer |
-| 6 | Implement error/loading as system messages | `chat-client.tsx` / `thread.tsx` | Server Action errors → system messages in thread; loading → running status during generation |
+| ~~4~~ | ~~Replace custom image with registry `Image` component~~ | — | ~~Done: hand-rolled `elements/image.tsx` deleted; registry `Image` + `Image.Actions` render assistant image parts~~ |
+| 5 | Implement error/loading as system messages | `chat-client.tsx` / `thread.tsx` | Server Action errors → system messages in thread; loading → running status during generation |
 
 ---
 
@@ -167,7 +157,7 @@ These commands scaffold registry components that provide:
 
 - Focus on UI/behavior tests: component rendering, state transitions, primitive interactions
 - Use Vitest + React Testing Library (per TODO.md)
-- Test each component in isolation: thread (empty/with-messages/offline), composer (disabled/enabled), adapter (success/error)
+- Test each component in isolation: thread (empty/with-messages), composer (disabled/enabled), adapter (success/error)
 - Server Action tests in `app/__tests__/actions.test.ts` (if tests exist)
 
 ## Notes / Trade-offs
@@ -176,5 +166,4 @@ These commands scaffold registry components that provide:
 - **Mock adapter replaced** — initial adapter implementation may log messages for debugging before calling Server Action
 - **Registry components** — `npx assistant-ui@latest add` scaffolds pre-styled components; may need Tailwind config adjustments
 - **Multi-turn state** — attachment persistence tracked in chat context, not in assistant-ui internal state
-- **Server offline** — `pingInference()` at render time, results passed as props to `ChatClient`
 - **No LLM** — adapter does not use AI SDK; it calls Server Action directly and returns static message parts

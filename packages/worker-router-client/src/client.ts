@@ -90,22 +90,13 @@ async function tick<T>(
   return tick<T>(taskId, config, fetchImpl, deadline, signal)
 }
 
-export async function poll<T>(
-  taskId: string,
-  config: Config,
-  fetchImpl: typeof fetch,
-  signal?: AbortSignal
-): Promise<T> {
-  return tick<T>(taskId, config, fetchImpl, Date.now() + config.timeoutMs, signal)
-}
-
-export async function infer<T>(
+export async function inferWithPolling<T>(
   prompt: string,
   config: Config,
-  fetchImpl: typeof fetch,
+  fetchImpl: typeof fetch = fetch,
   signal?: AbortSignal
 ): Promise<T> {
   const taskId = await submit(prompt, config, fetchImpl, signal)
 
-  return poll<T>(taskId, config, fetchImpl, signal)
+  return tick<T>(taskId, config, fetchImpl, Date.now() + config.timeoutMs, signal)
 }

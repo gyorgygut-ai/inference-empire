@@ -1,1 +1,0 @@
-{"coords": {"beam": null, "flash": {"baseUrl": "https://flash.test"}, "modal": {"baseUrl": "https://modal.test"}}, "secrets": {"beam": {"basicToken": "basic-1", "bearerToken": "bearer-1"}, "flash": {"apiKey": "key-1"}, "modal": {"wrapperToken": "wrap-1"}}, "pinned": "beam"}

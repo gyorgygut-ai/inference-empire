@@ -1,8 +1,13 @@
 import { readFileSync } from "node:fs"
 import { join } from "node:path"
-import { describe, test, expect } from "vitest"
+import { describe, test, expect, beforeEach } from "vitest"
 import { runOutcomeWithDeps } from "@/app/actions"
+import { clearInferenceCache } from "@/app/inference-cache"
 import { createOutcomeStub, type OutcomeInput } from "./stubs/outcomes-stub"
+
+beforeEach(() => {
+  clearInferenceCache()
+})
 
 const fixturesDir = join(import.meta.dirname, "fixtures")
 
@@ -94,5 +99,22 @@ describe("inference", () => {
       () => { throw new Error(stubs.inference.error) }
     )
     expect((result as { error: string }).error).toBe(expected.error)
+  })
+
+  test("cache/duplicate-inference-called-once", async () => {
+    const input = read<{ fileName: string; fileType: string; fileSize: number; outcomeId: string }>("success/inference/input.json")
+    const stubs = read<{ outcomes: Record<string, OutcomeInput>; inference: { output: { artifact: { presigned_url: string } } } }>("success/inference/stubs/composite.json")
+    const outcomeMap: Record<string, OutcomeInput | null> = { "valid-outcome": stubs.outcomes["valid-outcome"] }
+    let calls = 0
+    function countingInference() {
+      calls += 1
+      return Promise.resolve(stubs.inference)
+    }
+    const first = makeFormData(input)
+    const second = makeFormData(input)
+    const firstResult = await runOutcomeWithDeps(null, first, createOutcomeStub(outcomeMap), async () => Buffer.from("mock"), countingInference)
+    const secondResult = await runOutcomeWithDeps(null, second, createOutcomeStub(outcomeMap), async () => Buffer.from("mock"), countingInference)
+    expect(firstResult).toEqual(secondResult)
+    expect(calls).toBe(1)
   })
 })

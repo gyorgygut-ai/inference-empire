@@ -3,6 +3,7 @@
 import { MAX_FILE_SIZE, ALLOWED_IMAGE_TYPES } from "@/constants"
 import { getInferenceOutcome } from "@/outcomes"
 import { runInferenceWithPolling, type Flux2Klein9BInput, type Flux2Klein9BOutput } from "./inference-api"
+import { cacheKeyForImage, getCachedImage, setCachedImage } from "./inference-cache"
 import { ActionError } from './types'
 import sharp from "sharp"
 
@@ -53,6 +54,11 @@ export async function runOutcomeWithDeps(
   }
 
   const resizedImage = await resizeFn(file)
+  const cacheKey = cacheKeyForImage(resizedImage, outcomeId)
+  const cached = getCachedImage(cacheKey)
+  if (cached) {
+    return cached
+  }
 
   try {
     const response = await runInferenceFn({
@@ -60,7 +66,9 @@ export async function runOutcomeWithDeps(
       input_image: resizedImage.toString("base64"),
     })
 
-    return { imageUrl: response.output.artifact.presigned_url }
+    const result: ActionResult = { imageUrl: response.output.artifact.presigned_url }
+    setCachedImage(cacheKey, result)
+    return result
   } catch {
     return { error: ActionError.SERVER_TIMEOUT }
   }

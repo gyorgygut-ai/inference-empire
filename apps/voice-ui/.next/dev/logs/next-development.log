@@ -1,3 +1,0 @@
-{"timestamp":"00:00:00.720","source":"Server","level":"LOG","message":"> Ready on http://localhost:3000 (Next dev; /api/realtime -> wss://gyorgy-gutai--voice-chat-worker-ws-server.modal.run/ws)"}
-{"timestamp":"00:00:08.562","source":"Server","level":"ERROR","message":"(node:18723) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.\n(Use `node --trace-deprecation ...` to show where the warning was created)"}
-{"timestamp":"00:00:11.571","source":"Server","level":"LOG","message":"○ Compiling / ..."}

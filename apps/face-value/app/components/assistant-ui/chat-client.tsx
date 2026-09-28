@@ -1,7 +1,9 @@
 "use client"
-import { AssistantRuntimeProvider, useLocalRuntime, type ChatModelAdapter } from "@assistant-ui/react"
-import Thread from "./thread"
+import { useMemo } from "react"
+import { AssistantRuntimeProvider, useLocalRuntime, AuiConfig, Suggestions, SimpleImageAttachmentAdapter, type ChatModelAdapter } from "@assistant-ui/react"
+import { Thread } from "@/components/assistant-ui/elements/thread.aui"
 import { ChatProvider, useChat } from "./chat-context"
+import OutcomeWelcome from "./outcome-welcome"
 import { requestOutcome, type ActionResult } from "@/app/actions"
 
 function getErrorMessage(error: string): string {
@@ -27,7 +29,6 @@ function buildFormData(imageData: string | undefined, outcomeId: string): FormDa
   formData.append("outcomeId", outcomeId)
 
   if (imageData) {
-    // Handle data URL: data:image/...;base64,...
     const commaIdx = imageData.indexOf(",")
     const base64Data = commaIdx > 0 ? imageData.slice(commaIdx + 1) : imageData
     const mimeTypeMatch = imageData.match(/^data:([^;]+);/)
@@ -45,7 +46,47 @@ function buildFormData(imageData: string | undefined, outcomeId: string): FormDa
   return formData
 }
 
-function createAdapter(selectedOutcomeId: string | null): ChatModelAdapter {
+function resolvePromptToId(text: string | null, outcomes: readonly { id: string, title: string }[]): string | null {
+  if (!text) {
+    return null
+  }
+  const match = outcomes.find((o) => o.id === text || o.title === text)
+  return match ? match.id : text
+}
+
+function resolveOutcomeId(
+  messages: readonly { role: string, content: readonly { type: string, text?: string }[] }[],
+  outcomes: readonly { id: string, title: string }[],
+  fallback: string | null,
+): string | null {
+  const lastUser = [...messages].reverse().find((m) => m.role === "user")
+  const textPart = lastUser?.content.find((c) => c.type === "text" && c.text?.trim())
+  const text = textPart?.text?.trim() ?? null
+  if (text) {
+    const match = outcomes.find((o) => o.id === text || o.title === text)
+    if (match) {
+      return match.id
+    }
+    return text
+  }
+  return resolvePromptToId(fallback, outcomes)
+}
+
+function resolveImageData(messages: readonly { role: string, content: readonly { type: string, image?: string }[] }[]): string | undefined {
+  const reversed = [...messages].reverse()
+  for (const m of reversed) {
+    if (m.role !== "user") {
+      continue
+    }
+    const found = m.content.find((c) => c.type === "image" && c.image) as { image: string } | undefined
+    if (found?.image) {
+      return found.image
+    }
+  }
+  return undefined
+}
+
+function createAdapter(selectedOutcomeId: string | null, outcomes: readonly { id: string, title: string }[], onImage: (data: string) => void): ChatModelAdapter {
   return {
     async run({ messages }) {
       const lastUser = [...messages].reverse().find((m) => m.role === "user")
@@ -53,18 +94,16 @@ function createAdapter(selectedOutcomeId: string | null): ChatModelAdapter {
         return { content: [{ type: "text" as const, text: "No message found" }] }
       }
 
-      // Outcome ID comes from chat context (set by SuggestionPrimitive onClick)
-      const outcomeId = selectedOutcomeId
+      const outcomeId = resolveOutcomeId(messages, outcomes, selectedOutcomeId)
 
       if (!outcomeId) {
         return { content: [{ type: "text" as const, text: "No outcome selected" }] }
       }
 
-      // Extract image from message attachments
-      const imageContent = lastUser.content.find(
-        (c) => c.type === "image",
-      ) as { image: string } | undefined
-      const imageData = imageContent?.image
+      const imageData = resolveImageData(messages)
+      if (imageData) {
+        onImage(imageData)
+      }
 
       try {
         const formData = buildFormData(imageData, outcomeId)
@@ -87,34 +126,34 @@ function createAdapter(selectedOutcomeId: string | null): ChatModelAdapter {
   }
 }
 
-export default function ChatClient({
-  outcomes,
-  serverOnline,
-}: {
-  outcomes: { id: string; title: string }[]
-  serverOnline: boolean
-}) {
-  const { selectedOutcomeId } = useChat()
-  const adapter = createAdapter(selectedOutcomeId)
-
+function ChatRuntime({ outcomes }: { outcomes: { id: string, title: string }[] }) {
+  const { selectedOutcomeId, setLastImageData } = useChat()
+  const adapter = useMemo(() => createAdapter(selectedOutcomeId, outcomes, setLastImageData), [selectedOutcomeId, outcomes, setLastImageData])
   const runtime = useLocalRuntime(adapter, {
-    initialMessages: serverOnline
-      ? []
-      : [
-          {
-            id: "offline",
-            role: "system" as const,
-            content: [{ type: "text" as const, text: "❌ Server offline" }],
-            createdAt: new Date(),
-          },
-        ],
+    initialMessages: [],
+    adapters: {
+      attachments: new SimpleImageAttachmentAdapter(),
+    },
   })
+  const config = useMemo(() => AuiConfig({
+    suggestions: Suggestions(outcomes.map((o) => ({ title: o.title, label: o.title, prompt: o.title }))),
+  }), [outcomes])
 
   return (
+    <AssistantRuntimeProvider runtime={runtime} config={config}>
+      <Thread components={{ Welcome: OutcomeWelcome }} />
+    </AssistantRuntimeProvider>
+  )
+}
+
+export default function ChatClient({
+  outcomes,
+}: {
+  outcomes: { id: string, title: string }[]
+}) {
+  return (
     <ChatProvider>
-      <AssistantRuntimeProvider runtime={runtime}>
-        <Thread outcomes={outcomes} serverOnline={serverOnline} />
-      </AssistantRuntimeProvider>
+      <ChatRuntime outcomes={outcomes} />
     </ChatProvider>
   )
 }

@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs"
 import { join } from "node:path"
 import { describe, test, expect } from "vitest"
-import { infer, poll } from "./client"
+import { inferWithPolling } from "./client"
 import type { Config } from "./client"
 
 const fixturesDir = join(import.meta.dirname, "fixtures")
@@ -10,19 +10,17 @@ function fixture<T>(dir: string, name: string): T {
   return JSON.parse(readFileSync(join(fixturesDir, dir, name), "utf-8")) as T
 }
 
-interface QueuedResponse {
-  status: number
-  body: unknown
-}
+type Prebaked =
+  | { status: number; body: unknown }
+  | { reject: string }
 
 interface Input {
   baseUrl: string
   token: string
-  prompt?: string
-  taskId?: string
+  prompt: string
   pollIntervalMs: number
   timeoutMs: number
-  responses: QueuedResponse[]
+  responses: Prebaked[]
 }
 
 interface ExpectedResult {
@@ -32,20 +30,24 @@ interface ExpectedResult {
 
 interface ExpectedError {
   error: string
-  requests?: string[]
+  requests: string[]
 }
 
-class QueuedFetch {
+class PrebakedFetch {
   private seen: string[] = []
 
-  constructor(private queue: QueuedResponse[]) {}
+  constructor(private queue: Prebaked[]) {}
 
   fetch: typeof fetch = async (input) => {
     this.seen.push(String(input))
 
     const next = this.queue.shift()
     if (!next) {
-      throw new Error("QueuedFetch exhausted")
+      throw new Error("PrebakedFetch exhausted")
+    }
+
+    if ("reject" in next) {
+      throw new Error(next.reject)
     }
 
     return new Response(JSON.stringify(next.body), { status: next.status })
@@ -65,75 +67,46 @@ function config(input: Input): Config {
   }
 }
 
-describe("infer", () => {
-  test("infer-completes", async () => {
+describe("inferWithPolling", () => {
+  test("rejects-immediately", async () => {
     // setup
-    const input = fixture<Input>("infer-completes", "input.json")
-    const expected = fixture<ExpectedResult>("infer-completes", "expected.json")
-    const stub = new QueuedFetch(input.responses)
+    const input = fixture<Input>("rejects-immediately", "input.json")
+    const expected = fixture<ExpectedError>("rejects-immediately", "expected.json")
+    const fetcher = new PrebakedFetch(input.responses)
 
     // act
-    const output = await infer<unknown>(input.prompt!, config(input), stub.fetch)
+    const act = inferWithPolling<unknown>(input.prompt, config(input), fetcher.fetch)
+
+    // assert
+    await expect(act).rejects.toThrow(expected.error)
+    expect(fetcher.requests()).toEqual(expected.requests)
+  })
+
+  test("completes-immediately", async () => {
+    // setup
+    const input = fixture<Input>("completes-immediately", "input.json")
+    const expected = fixture<ExpectedResult>("completes-immediately", "expected.json")
+    const fetcher = new PrebakedFetch(input.responses)
+
+    // act
+    const output = await inferWithPolling<unknown>(input.prompt, config(input), fetcher.fetch)
 
     // assert
     expect(output).toEqual(expected.output)
-    expect(stub.requests()).toEqual(expected.requests)
+    expect(fetcher.requests()).toEqual(expected.requests)
   })
 
-  test("infer-failed", async () => {
+  test("completes-on-fifth-invocation", async () => {
     // setup
-    const input = fixture<Input>("infer-failed", "input.json")
-    const expected = fixture<ExpectedError>("infer-failed", "expected.json")
-    const stub = new QueuedFetch(input.responses)
+    const input = fixture<Input>("completes-on-fifth-invocation", "input.json")
+    const expected = fixture<ExpectedResult>("completes-on-fifth-invocation", "expected.json")
+    const fetcher = new PrebakedFetch(input.responses)
 
     // act
-    const act = infer<unknown>(input.prompt!, config(input), stub.fetch)
-
-    // assert
-    await expect(act).rejects.toThrow(expected.error)
-    expect(stub.requests()).toEqual(expected.requests)
-  })
-
-  test("infer-timeout", async () => {
-    // setup
-    const input = fixture<Input>("infer-timeout", "input.json")
-    const expected = fixture<ExpectedError>("infer-timeout", "expected.json")
-    const stub = new QueuedFetch(input.responses)
-
-    // act
-    const act = infer<unknown>(input.prompt!, config(input), stub.fetch)
-
-    // assert
-    await expect(act).rejects.toThrow(expected.error)
-  })
-
-  test("unauthorized", async () => {
-    // setup
-    const input = fixture<Input>("unauthorized", "input.json")
-    const expected = fixture<ExpectedError>("unauthorized", "expected.json")
-    const stub = new QueuedFetch(input.responses)
-
-    // act
-    const act = infer<unknown>(input.prompt!, config(input), stub.fetch)
-
-    // assert
-    await expect(act).rejects.toThrow(expected.error)
-    expect(stub.requests()).toEqual(expected.requests)
-  })
-})
-
-describe("poll", () => {
-  test("poll-resume", async () => {
-    // setup
-    const input = fixture<Input>("poll-resume", "input.json")
-    const expected = fixture<ExpectedResult>("poll-resume", "expected.json")
-    const stub = new QueuedFetch(input.responses)
-
-    // act
-    const output = await poll<unknown>(input.taskId!, config(input), stub.fetch)
+    const output = await inferWithPolling<unknown>(input.prompt, config(input), fetcher.fetch)
 
     // assert
     expect(output).toEqual(expected.output)
-    expect(stub.requests()).toEqual(expected.requests)
+    expect(fetcher.requests()).toEqual(expected.requests)
   })
 })

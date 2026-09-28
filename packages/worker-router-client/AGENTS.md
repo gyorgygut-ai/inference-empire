@@ -7,10 +7,10 @@
 - Client for worker-router: `POST /infer`, `GET /inquire`
 - One call in, result out — submit and poll encapsulated
 - Config is the value bag only: base URL, token, poll interval, timeout
-- Dependencies are separate arguments: `fetchImpl`, optional `AbortSignal`
+- Dependencies are separate arguments: `fetchImpl`, which defaults to global `fetch`, and optional `AbortSignal`
 - Polls until terminal or timeout — terminal wire values are `completed | failed | cancelled`
 - Task IDs are opaque — pass them back, never decode
-- No env reads, no module state, no singleton, no global `fetch`
+- No env reads, no module state, no singleton, no global `fetch` read behind the caller's back
 - Code must be minimal, simple and stupid — no magic, no `any`, no ifs without `{}`, no semis
 
 ### Golden Rules

@@ -1,1 +1,0 @@
-{"url": "https://modal.test/submit", "method": "POST", "auth": "Bearer wrap-1", "body": {"input": {"prompt": "a red square"}}}

@@ -1,16 +1,11 @@
-import { defineConfig, globalIgnores } from "eslint/config"
-import nextVitals from "eslint-config-next/core-web-vitals"
-import nextTs from "eslint-config-next/typescript"
+import js from '@eslint/js'
 
-const eslintConfig = defineConfig([
-  ...nextVitals,
-  ...nextTs,
-  globalIgnores(["dist/**", "worker-configuration.d.ts"]),
+export default [
+  js.configs.recommended,
   {
     rules: {
-      semi: ["error", "never"]
+      'no-console': 'warn',
+      'no-unused-vars': 'warn'
     }
   }
-])
-
-export default eslintConfig
+]

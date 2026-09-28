@@ -83,11 +83,15 @@ node_modules
 **/.env.local
 **/.dev.vars
 
-vitest.config.*.timestamp*.next/
+vitest.config.*.timestamp*
 node_modules/
 
 # Next.js
 .next
 out
 
-vitest.config.*.timestamp*
+# Cloudflare Workers
+.wrangler/
+
+# TypeScript
+*.tsbuildinfo
