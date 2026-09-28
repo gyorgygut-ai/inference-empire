@@ -1,9 +1,0 @@
-{
-  "input": { "prompt": "a red square", "width": 1024, "height": 1024 },
-  "config": {
-    "baseUrl": "http://test",
-    "token": "secret",
-    "maxPollMillis": 300000,
-    "pollIntervalMillis": 3000
-  }
-}

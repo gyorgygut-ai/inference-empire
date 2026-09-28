@@ -1,82 +1,78 @@
 "use server"
 
-import { MAX_FILE_SIZE, ALLOWED_IMAGE_TYPES } from "@/constants"
-import { getInferenceOutcome } from "@/outcomes"
-import { runInferenceWithPolling, type Flux2Klein9BInput, type Flux2Klein9BOutput } from "./inference-api"
-import { cacheKeyForImage, getCachedImage, setCachedImage } from "./inference-cache"
-import { ActionError } from './types'
 import sharp from "sharp"
+import { createHash } from "crypto"
+import { postQueue, pollQueue, type InferenceConfig, type Flux2Klein9BInput } from "@/app/inference-api/api"
+import { workerRouterConfig } from "@/app/inference-api/router-config"
+import { getInferenceOutcome } from "@/outcomes"
+import { getFromCache, setCache } from "@/app/inference-cache"
 
-export type ActionResult = { imageUrl: string } | { error: ActionError };
+const MAX_IMAGE_SIZE = 512 * 512 * 1024 // 512KB
+const MAX_DIMENSION = 512
 
-interface OutcomeInput {
-  prompt: string
-  width?: number
-  height?: number
+const inferenceConfig: InferenceConfig = {
+  baseUrl: workerRouterConfig.baseUrl,
+  token: workerRouterConfig.token,
+  maxPollMillis: 300_000,
+  pollIntervalMillis: 3000,
 }
 
-async function resizeImage(file: File): Promise<Buffer> {
-  const buffer = await file.arrayBuffer()
-  return sharp(Buffer.from(buffer))
-    .resize(512, 512, { fit: "inside" })
-    .toBuffer()
+function makeCacheKey(imageBase64: string, outcomeId: string): string {
+  return createHash("sha256")
+    .update(imageBase64 + outcomeId)
+    .digest("hex")
 }
 
-export async function runOutcomeWithDeps(
-  _prev: ActionResult | null,
-  formData: FormData,
-  getOutcomeFn: (id: string) => OutcomeInput | null,
-  resizeFn: (file: File) => Promise<Buffer>,
-  runInferenceFn: (input: Flux2Klein9BInput) => Promise<{ output: Flux2Klein9BOutput }>
-): Promise<ActionResult> {
-  const file = formData.get("image")
+export async function runInference(imageBase64: string, outcomeId: string): Promise<{ url: string } | { error: string }> {
+  // Validate
+  const base64Data = imageBase64.split(",")[1] ?? imageBase64
+  const buffer = Buffer.from(base64Data, "base64")
 
-  if (!(file instanceof File) || file.size === 0) {
-    return { error: ActionError.INPUT_IMAGE_MISSING }
+  if (buffer.length > MAX_IMAGE_SIZE) {
+    return { error: "Image exceeds size limit." }
   }
 
-  if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
-    return { error: ActionError.INPUT_IMAGE_TYPE_NOT_ALLOWED }
+  // Resize to max 512x512
+  let resizedBase64: string
+  try {
+    const resized = await sharp(buffer)
+      .resize(MAX_DIMENSION, MAX_DIMENSION, { fit: "inside", withoutEnlargement: true })
+      .jpeg({ quality: 80 })
+      .toBuffer()
+    resizedBase64 = resized.toString("base64")
+  } catch {
+    return { error: "Failed to process image." }
   }
 
-  if (file.size > MAX_FILE_SIZE) {
-    return { error: ActionError.INPUT_IMAGE_TOO_LARGE }
-  }
-
-  const outcomeId = formData.get("outcomeId")
-  if (typeof outcomeId !== "string" || !outcomeId) {
-    return { error: ActionError.OUTCOME_MISSING }
-  }
-
-  const outcome = getOutcomeFn(outcomeId)
-  if (!outcome) {
-    return { error: ActionError.OUTCOME_INVALID }
-  }
-
-  const resizedImage = await resizeFn(file)
-  const cacheKey = cacheKeyForImage(resizedImage, outcomeId)
-  const cached = getCachedImage(cacheKey)
+  // Check cache
+  const cacheKey = makeCacheKey(resizedBase64, outcomeId)
+  const cached = getFromCache(cacheKey)
   if (cached) {
-    return cached
+    return { url: cached.artifact.presigned_url }
+  }
+
+  // Get outcome
+  const outcome = getInferenceOutcome(outcomeId)
+  if (!outcome) {
+    return { error: "Invalid outcome selected." }
+  }
+
+  // Run inference
+  const input: Flux2Klein9BInput = {
+    prompt: outcome.prompt,
+    width: outcome.width,
+    height: outcome.height,
+    input_image: resizedBase64,
   }
 
   try {
-    const response = await runInferenceFn({
-      ...outcome,
-      input_image: resizedImage.toString("base64"),
-    })
+    const taskId = await postQueue(input, inferenceConfig)
+    const result = await pollQueue(taskId, inferenceConfig)
 
-    const result: ActionResult = { imageUrl: response.output.artifact.presigned_url }
-    setCachedImage(cacheKey, result)
-    return result
+    setCache(cacheKey, result.output)
+
+    return { url: result.output.artifact.presigned_url }
   } catch {
-    return { error: ActionError.SERVER_TIMEOUT }
+    return { error: "Inference failed. Please try again." }
   }
-}
-
-export async function requestOutcome(
-  _prev: ActionResult | null,
-  formData: FormData,
-): Promise<ActionResult> {
-  return runOutcomeWithDeps(_prev, formData, getInferenceOutcome, resizeImage, runInferenceWithPolling)
 }

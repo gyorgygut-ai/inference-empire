@@ -1,6 +1,6 @@
 import type { Flux2Klein9BInput, Flux2Klein9BOutput } from "./schema"
-import { routerConfig } from "./router-config"
 
+export type { Flux2Klein9BInput, Flux2Klein9BOutput }
 export type RequestPayload = Flux2Klein9BInput
 export type ResponsePayload = Flux2Klein9BOutput
 
@@ -54,15 +54,4 @@ export async function pollQueue(taskId: string, config: InferenceConfig, fetchIm
     await sleep(config.pollIntervalMillis)
   }
   throw new Error("timeout")
-}
-
-const defaultConfig: InferenceConfig = {
-  ...routerConfig,
-  maxPollMillis: 300_000,
-  pollIntervalMillis: 3000
-}
-
-export async function runInferenceWithPolling(input: RequestPayload): Promise<{ output: Flux2Klein9BOutput }> {
-  const taskId = await postQueue(input, defaultConfig)
-  return pollQueue(taskId, defaultConfig)
 }

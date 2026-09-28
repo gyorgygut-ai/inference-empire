@@ -1,4 +1,0 @@
-[
-  { "status": 200, "body": { "status": "BUSY" } },
-  { "status": 200, "body": { "status": "REJECTED" } }
-]

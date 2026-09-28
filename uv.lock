@@ -520,6 +520,8 @@ dependencies = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "numpy" },
+    { name = "pillow" },
     { name = "pytest" },
     { name = "ruff" },
     { name = "ty" },
@@ -533,8 +535,6 @@ test = [
     { name = "faster-qwen3-tts" },
     { name = "faster-whisper" },
     { name = "huggingface-hub" },
-    { name = "numpy" },
-    { name = "pillow" },
     { name = "safetensors" },
     { name = "soundfile" },
     { name = "torch" },
@@ -553,6 +553,8 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "numpy", specifier = "==2.4.6" },
+    { name = "pillow", specifier = "==12.3.0" },
     { name = "pytest", specifier = "==9.1.1" },
     { name = "ruff", specifier = "==0.16.6" },
     { name = "ty", specifier = "==0.0.78" },
@@ -566,8 +568,6 @@ test = [
     { name = "faster-qwen3-tts", specifier = "==0.3.2" },
     { name = "faster-whisper", specifier = "==1.2.1" },
     { name = "huggingface-hub", specifier = "==0.36.2" },
-    { name = "numpy", specifier = "==2.4.6" },
-    { name = "pillow", specifier = "==12.3.0" },
     { name = "safetensors", specifier = "==0.8.0" },
     { name = "soundfile", specifier = "==0.14.0" },
     { name = "torch", specifier = "==2.14.0" },

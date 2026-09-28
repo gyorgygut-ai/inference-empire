@@ -1,8 +1,0 @@
-{
-  "outcomes": {
-    "valid-outcome": { "prompt": "test prompt", "width": 1024, "height": 1024 }
-  },
-  "inference": {
-    "error": "timeout"
-  }
-}

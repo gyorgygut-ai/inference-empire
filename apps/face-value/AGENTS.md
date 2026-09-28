@@ -33,6 +33,7 @@
 - If user request directly contradicts any of the former, raise it boldly
 - No direct editing of generated files, npm packages or OpenAPI specs
 - ESLint rules are non-negotiable; all code must pass linting
+- Terminology lib, helpers banned - use domain naming
 
 **Versioning and Commits**:
 

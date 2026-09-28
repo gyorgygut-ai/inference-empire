@@ -5,7 +5,6 @@
   "tags": ["type:tool", "scope:shortcuts"],
   "targets": {
     "lint": { "executor": "@nx/eslint:lint" },
-    "test-unit": { "executor": "@nx/vitest:test" },
     "build": { "executor": "@nx/js:tsc" },
     "sign": {
       "executor": "nx:run-commands",

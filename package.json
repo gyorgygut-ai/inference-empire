@@ -17,7 +17,7 @@
     "test-e2e": "nx run-many -t test-e2e",
     "lint": "nx run-many -t lint",
     "generate": "nx run cli:generate",
-    "py-check": "uv run ruff check . && uv run ty check . && uv run vulture ."
+    "py-check": "uv run --locked --group test ruff check . && uv run --locked --group test ty check . && uv run --locked --group test vulture ."
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.22.0",

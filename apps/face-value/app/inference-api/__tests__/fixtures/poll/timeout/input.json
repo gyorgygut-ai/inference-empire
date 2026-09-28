@@ -1,9 +1,0 @@
-{
-  "taskId": "t-1",
-  "config": {
-    "baseUrl": "http://test",
-    "token": "secret",
-    "maxPollMillis": 500,
-    "pollIntervalMillis": 100
-  }
-}

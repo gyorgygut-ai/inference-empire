@@ -1,0 +1,3 @@
+# Non-Flash workers
+worker_beam_*.py
+worker_modal_*.py

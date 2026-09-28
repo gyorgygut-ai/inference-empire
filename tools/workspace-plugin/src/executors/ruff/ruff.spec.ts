@@ -14,7 +14,7 @@ const context: ExecutorContext = {
 describe('Ruff Executor', () => {
   it('builds the lint command', () => {
     expect(buildCommand('tiny_sd')).toBe(
-      'uvx ruff check apps/gpu-workers/tiny_sd --line-length 100'
+      'uvx ruff check apps/tiny_sd --line-length 100'
     );
   });
 

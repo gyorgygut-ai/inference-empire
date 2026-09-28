@@ -1,9 +1,9 @@
 import fs from "fs"
 import path from "path"
 import matter from "gray-matter"
-import type { RequestPayload } from "@/app/inference-api"
+import type { Flux2Klein9BInput } from "@/app/inference-api/schema"
 
-export type Outcome = Pick<RequestPayload, "prompt" | "width" | "height"> & {
+export type Outcome = Pick<Flux2Klein9BInput, "prompt" | "width" | "height"> & {
   id: string
   title: string
   order: number

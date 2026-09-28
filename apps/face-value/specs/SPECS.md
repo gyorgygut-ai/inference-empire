@@ -107,17 +107,20 @@
 - > `lg`: 2-column: left 2/3 (solid bg, hero img), right 1/3 (chat)
 - assistant-ui registry components (`thread` + `image`, plus `attachment`, `file`, `tooltip-icon-button`, shadcn ui set); LLM-only elements trimmed
 
-**Step 1: Select an outcome**:
+**Message 1: Select an outcome**:
 
+- Message: vocabulary.steps.outcome.message
 - Outcomes rendered as buttons from server `{id, title}`
-- Selecting an outcome presents step 2 as a new message
 
-**Step 2: Upload a reference image**:
+**Message 2: Upload a reference image**:
 
+- Pushed to thread when outcome selected, but only once
+- Message: vocabulary.steps.reference.message
 - Image upload via `AttachmentPrimitive` in composer
 - Selected image displayed in chat
 
-**Step 3: Ready to generate**:
+**Message 3: Generate**:
 
-- Generate button appears
-- Can become disabled if previous selections change
+- Pushed to thread when reference image gets selected
+- Generate button: vocabulary.steps.generate.label
+- Can become disabled as previous selections change
