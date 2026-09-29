@@ -51,7 +51,8 @@
     "deploy-env": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "node scripts/push-router-env.mjs"
+        "command": "node scripts/push-router-env.mjs",
+        "cwd": "apps/face-value"
       },
       "dependsOn": ["flux2:deploy-worker"],
       "cache": false
@@ -59,7 +60,8 @@
     "deploy": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "vercel deploy --prod --yes --token=$VERCEL_TOKEN"
+        "command": "vercel deploy --prod --yes --token=$VERCEL_TOKEN",
+        "cwd": "apps/face-value"
       },
       "dependsOn": ["deploy-env"],
       "cache": false
