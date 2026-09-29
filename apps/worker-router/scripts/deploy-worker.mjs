@@ -70,5 +70,6 @@ writeFileSync(join(distDir, 'contract.json'), JSON.stringify({
   input: routerInput.input,
   output: routerInput.output,
 }, null, 2))
+writeFileSync(join(distDir, '.router-token'), authToken, 'utf-8')
 process.stdout.write(`wrote dist/apps/${flavour}/contract.json (worker: ${workerUrl})\n`)
 process.stdout.write(`${flavour.toUpperCase()}_ROUTER_TOKEN=${authToken} (store in env for client builds; will not be shown again)\n`)

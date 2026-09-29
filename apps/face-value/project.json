@@ -11,7 +11,7 @@
       "options": {
         "script": "build"
       },
-      "dependsOn": ["flux2:deploy-worker", "worker-router-client:build"],
+      "dependsOn": ["flux2:deploy-worker"],
       "inputs": ["production", "^production"],
       "outputs": ["{projectRoot}/.next"],
       "cache": true
@@ -39,7 +39,6 @@
         "command": "npx tsc --noEmit -p tsconfig.json",
         "cwd": "apps/face-value"
       },
-      "dependsOn": ["worker-router-client:build"],
       "cache": true
     },
     "test-unit": {
@@ -48,6 +47,22 @@
         "script": "test:run"
       },
       "cache": true
+    },
+    "deploy-env": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node scripts/push-router-env.mjs"
+      },
+      "dependsOn": ["flux2:deploy-worker"],
+      "cache": false
+    },
+    "deploy": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "vercel deploy --prod --yes --token=$VERCEL_TOKEN"
+      },
+      "dependsOn": ["deploy-env"],
+      "cache": false
     }
   }
 }

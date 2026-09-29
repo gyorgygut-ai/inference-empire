@@ -12,6 +12,9 @@
       ],
       "@inference/workspace-plugin": [
         "./tools/workspace-plugin/src/index.ts"
+      ],
+      "@inference/worker-router-client": [
+        "./packages/worker-router-client/src/index.ts"
       ]
     }
   }
