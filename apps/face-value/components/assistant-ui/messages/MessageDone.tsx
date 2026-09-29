@@ -1,6 +1,7 @@
 "use client"
 
 import { MessagePrimitive } from "@assistant-ui/react"
+import Image from "next/image"
 import { vocabulary } from "@/lib/vocabulary"
 
 export function MessageDone({
@@ -19,7 +20,12 @@ export function MessageDone({
         style={{ aspectRatio: `${width} / ${height}` }}
         className="w-full overflow-hidden rounded-lg"
       >
-        <img src={image} alt="Generated" className="h-full w-full object-cover" />
+        <Image
+          src={image}
+          alt="Generated"
+          className="h-full w-full object-cover"
+          style={{ width, height }}
+        />
       </figure>
       <a href={image} download="generated.png" className="mt-2 inline-block text-sm underline">
         Download
