@@ -11,7 +11,7 @@
         "{options.outputPath}"
       ],
       "options": {
-        "outputPath": "dist/packages/worker-router-client",
+        "outputPath": "packages/worker-router-client/dist",
         "main": "packages/worker-router-client/src/index.ts",
         "tsConfig": "packages/worker-router-client/tsconfig.lib.json",
         "assets": [

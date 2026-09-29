@@ -28,6 +28,7 @@
     "sharp": "^0.34.3",
     "tailwind-merge": "^2.5.2",
     "tw-shimmer": "^0.4.13",
+    "@inference/worker-router-client": "*",
     "zustand": "^5.0.15"
   },
   "devDependencies": {

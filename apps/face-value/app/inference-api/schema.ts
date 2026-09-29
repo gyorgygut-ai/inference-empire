@@ -1,4 +1,4 @@
-/* This file was auto-generated from the inference contract. Do not edit directly. */
+/* Generated from dist/apps/flux2/contract.json (.input/.output, emitted by flux2-router-worker deploy). Do not edit directly. */
 
 export interface Flux2Klein9BInput {
   prompt: string;

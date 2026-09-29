@@ -1,4 +1,4 @@
-# worker-router-client
+# @inference/worker-router-client
 
 This library was generated with [Nx](https://nx.dev).
 

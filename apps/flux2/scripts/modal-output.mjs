@@ -1,4 +1,4 @@
-import { readFileSync, mkdirSync, writeFileSync } from "node:fs"
+import { readFileSync, mkdirSync, writeFileSync, existsSync } from "node:fs"
 import { join, dirname } from "node:path"
 import { fileURLToPath } from "node:url"
 
@@ -10,10 +10,15 @@ if (!appMatch) throw new Error("no modal.App in flux2 worker")
 
 const app = appMatch[1]
 const cls = clsMatch ? clsMatch[1] : "FluxKleinWorker"
-const out = join(root, "dist", "apps", "gpu-workers-flux2")
+const out = join(root, "dist", "apps", "flux2")
 mkdirSync(out, { recursive: true })
-writeFileSync(join(out, "contract.json"), JSON.stringify({
-  url: `https://${app}--queue-api.modal.run`,
-  app, cls
+const providerPath = join(out, "provider.json")
+const prev = existsSync(providerPath) ? JSON.parse(readFileSync(providerPath, "utf-8")) : {}
+writeFileSync(providerPath, JSON.stringify({
+  ...prev,
+  modal: {
+    url: `https://${app}--queue-api.modal.run`,
+    app, cls
+  }
 }, null, 2))
-console.log(`wrote dist/apps/flux2/contract.json (app: ${app}, cls: ${cls})`)
+console.log(`wrote dist/apps/flux2/provider.json (modal app: ${app}, cls: ${cls})`)

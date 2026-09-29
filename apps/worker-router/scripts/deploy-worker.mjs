@@ -5,6 +5,8 @@ import { fileURLToPath } from 'node:url'
 import { execSync } from 'node:child_process'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
+const routerDir = join(__dirname, '..')
+const workspaceRoot = join(__dirname, '..', '..', '..')
 const args = process.argv.slice(2)
 const parseArg = (key) => {
   const idx = args.indexOf(`--${key}`)
@@ -18,21 +20,23 @@ const providerToken = parseArg('provider-token') || ''
 const providerApiUrl = parseArg('provider-api-url') || ''
 const providerAppName = parseArg('provider-app-name') || ''
 const providerEndpointName = parseArg('provider-endpoint-name') || ''
+const beamApiUrl = parseArg('beam-api-url') || ''
+const beamTaskApi = parseArg('beam-task-api') || ''
 
 if (!contractPath) throw new Error('--contract-path is required')
-if (!providerToken) throw new Error('--provider-token is required')
 
-const contract = JSON.parse(readFileSync(contractPath, 'utf-8'))
+const routerInput = JSON.parse(readFileSync(contractPath, 'utf-8'))
 const authToken = randomUUID()
 
 const varsLines = [
-  `AUTH_TOKEN = "${authToken}"`,
   `PROVIDER_TYPE = "${providerType}"`,
   `PROVIDER_API_URL = "${providerApiUrl}"`,
   `PROVIDER_TOKEN = "${providerToken}"`,
 ]
 if (providerAppName) varsLines.push(`PROVIDER_APP_NAME = "${providerAppName}"`)
 if (providerEndpointName) varsLines.push(`PROVIDER_ENDPOINT_NAME = "${providerEndpointName}"`)
+if (beamApiUrl) varsLines.push(`BEAM_API_URL = "${beamApiUrl}"`)
+if (beamTaskApi) varsLines.push(`BEAM_TASK_API = "${beamTaskApi}"`)
 
 const wranglerToml = `name = "${workerName}"
 compatibility_date = "2026-09-28"
@@ -42,16 +46,29 @@ compatibility_flags = []
 ${varsLines.join('\n')}
 `
 
-writeFileSync('wrangler.toml', wranglerToml)
+const tomlPath = join(routerDir, 'wrangler.toml')
+writeFileSync(tomlPath, wranglerToml)
+let workerUrl = ''
 try {
-  execSync('wrangler deploy', { stdio: 'inherit', cwd: join(__dirname, '..') })
+  const out = execSync('wrangler deploy', { encoding: 'utf-8', cwd: routerDir })
+  process.stdout.write(out)
+  const match = out.match(/https:\/\/\S+\.workers\.dev/)
+  if (!match) throw new Error('worker URL not found in wrangler output')
+  workerUrl = match[0]
+  execSync('wrangler secret put AUTH_TOKEN', { input: authToken, encoding: 'utf-8', cwd: routerDir, stdio: ['pipe', 'inherit', 'inherit'] })
 } finally {
-  unlinkSync('wrangler.toml')
+  unlinkSync(tomlPath)
 }
 
-const distDir = join(__dirname, '..', '..', 'dist', 'apps', workerName.replace(/-router-worker$/, ''))
+const flavour = workerName.replace(/-router-worker$/, '')
+const distDir = join(workspaceRoot, 'dist', 'apps', flavour)
 mkdirSync(distDir, { recursive: true })
 writeFileSync(join(distDir, 'contract.json'), JSON.stringify({
-  ...contract,
-  authToken
+  workerName,
+  workerUrl,
+  contractName: routerInput.contractName || flavour,
+  input: routerInput.input,
+  output: routerInput.output,
 }, null, 2))
+process.stdout.write(`wrote dist/apps/${flavour}/contract.json (worker: ${workerUrl})\n`)
+process.stdout.write(`${flavour.toUpperCase()}_ROUTER_TOKEN=${authToken} (store in env for client builds; will not be shown again)\n`)

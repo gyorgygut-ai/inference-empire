@@ -2,8 +2,9 @@
 
 import { createHash } from "crypto"
 import sharp from "sharp"
+import { inferWithPolling } from "@inference/worker-router-client"
+import type { Flux2Klein9BOutput } from "@/app/inference-api/schema"
 import { workerRouterConfig } from "@/app/inference-api/router-config"
-import { postQueue, pollQueue } from "@/app/inference-api/api"
 import { getInferenceOutcome } from "@/outcomes"
 import { vocabulary } from "@/lib/vocabulary"
 
@@ -47,16 +48,13 @@ export async function generateImage(outcomeId: string, imageFile: File) {
     input_image: base64,
   }
 
-  const config = {
-    baseUrl: workerRouterConfig.baseUrl,
-    token: workerRouterConfig.authToken,
-    maxPollMillis: 5 * 60 * 1000,
-    pollIntervalMillis: 3000,
-  }
-
   try {
-    const taskId = await postQueue(input, config)
-    const { output } = await pollQueue(taskId, config)
+    const output = await inferWithPolling<Flux2Klein9BOutput>(input, {
+      baseUrl: workerRouterConfig.baseUrl,
+      token: workerRouterConfig.authToken,
+      pollIntervalMs: 3000,
+      timeoutMs: 5 * 60 * 1000,
+    })
     const res = await fetch(output.artifact.presigned_url)
     if (!res.ok) { throw new Error(vocabulary.feedback.workerError) }
     const arrayBuffer = await res.arrayBuffer()
@@ -66,7 +64,7 @@ export async function generateImage(outcomeId: string, imageFile: File) {
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : ""
     if (msg.includes("REJECTED")) { throw new Error(vocabulary.feedback.rejected) }
-    if (msg.includes("SERVER_TIMEOUT")) { throw new Error(vocabulary.feedback.timeout) }
+    if (msg.includes("timeout after")) { throw new Error(vocabulary.feedback.timeout) }
     throw new Error(vocabulary.feedback.workerError)
   }
 }

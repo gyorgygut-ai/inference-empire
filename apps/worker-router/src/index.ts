@@ -7,6 +7,8 @@ export interface Env {
   PROVIDER_API_URL: string
   PROVIDER_APP_NAME?: string
   PROVIDER_ENDPOINT_NAME?: string
+  BEAM_API_URL?: string
+  BEAM_TASK_API?: string
 }
 
 export default {

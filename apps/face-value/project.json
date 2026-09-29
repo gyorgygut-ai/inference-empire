@@ -11,7 +11,7 @@
       "options": {
         "script": "build"
       },
-      "dependsOn": ["build-manifest"],
+      "dependsOn": ["flux2:deploy-worker", "worker-router-client:build"],
       "inputs": ["production", "^production"],
       "outputs": ["{projectRoot}/.next"],
       "cache": true
@@ -39,6 +39,7 @@
         "command": "npx tsc --noEmit -p tsconfig.json",
         "cwd": "apps/face-value"
       },
+      "dependsOn": ["worker-router-client:build"],
       "cache": true
     },
     "test-unit": {

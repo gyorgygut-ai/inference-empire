@@ -30,7 +30,8 @@
 ### Business Logic
 
 - **Magic Encapsulated**:
-  - `worker-router-flux2` URL and auth token derived from `dist/apps/worker-router/contract.json` at build time via server-only `router-config.ts`, never exposed to client
+  - `worker-router-flux2` URL derived from `dist/apps/flux2/contract.json` (`workerUrl`, emitted by `flux2:deploy-worker`) at build time via server-only `router-config.ts`, never exposed to client
+  - Auth token never written to disk: Cloudflare secret on the worker side, `FLUX2_ROUTER_TOKEN` build env on the face-value side
   - Client sends reference image + selected outcome id upon submit to Server Action
   - Server Action posts outcome prompt + reference image to `worker-router-flux2` `/queue`, polls `/task/:id` until DONE or timeout (max 5 min, poll interval 3s)
   - Upon response, serves generated image or error message to client
@@ -54,8 +55,8 @@
 ### Inference Backend
 
 - **Worker router (flux2)** — `POST /queue` with `{ input: Flux2Klein9BInput }` + `Authorization: Bearer <token>` → `{ task_id }` (202), then `GET /task/:task_id` with auth → `{ status: "BUSY"|"REJECTED"|"DONE", output?: Flux2Klein9BOutput }`. Poll every 3s, max 5 min.
-- **Provider routing** — flux2 worker-router internally routes to Modal/Flash/Beam providers based on `providers.generated.json` (written by `worker-router:build-manifest` reading `dist/apps/flux2/contract.json`). face-value never calls providers directly.
-- **Auth token** generated at build time, injected into `dist/apps/worker-router/contract.json`.
+- **Provider routing** — flux2 worker-router internally routes to Modal/Flash/Beam providers from private `dist/apps/flux2/provider.json` (merged `{modal, beam, flash}` entries, beam bundled dormant). face-value never calls providers directly and never sees provider URLs.
+- **Auth token** generated at deploy time, set as Cloudflare secret on the worker, passed to face-value builds via `FLUX2_ROUTER_TOKEN` env. Never in `dist`.
 - **Model**: `flux_2_klein_9b_q6p.ckpt` (~7.3GB) — hosted on `flux2/` provider backend. Deployment managed separately via Nx chain.
 
 ### Security
@@ -95,7 +96,7 @@
 - Each step is just a new message in the thread
 - Each message encapsulated in a `Message**` component
 - Multi-turn: previous outcome and ref. image can be changed in the original message
-- BE contract canonical in `dist/apps/worker-router/contract.json`, read at build time via server-only `router-config.ts`. This repo's `schema.ts` mirrors the canonical contract.
+- BE contract canonical in `dist/apps/flux2/contract.json` (`{workerName, workerUrl, contractName, input, output}`, emitted by `flux2:deploy-worker`), read at build time via server-only `router-config.ts`. `schema.ts` is generated from that file's `.input`/`.output` only. Requests go through `@inference/worker-router-client: inferWithPolling`.
 - assistant-ui registry components (`thread` + `image`, plus `attachment`, `file`, `tooltip-icon-button`, shadcn ui set); LLM-only elements trimmed
 
 **Critical**:
