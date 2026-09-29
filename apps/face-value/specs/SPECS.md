@@ -54,9 +54,10 @@
 
 ### Inference Backend
 
-- **Worker router (flux2)** — `POST /queue` with `{ input: Flux2Klein9BInput }` + `Authorization: Bearer <token>` → `{ task_id }` (202), then `GET /task/:task_id` with auth → `{ status: "BUSY"|"REJECTED"|"DONE", output?: Flux2Klein9BOutput }`. Poll every 3s, max 5 min.
+- **Worker router (flux2)** — `POST /queue` with `{ input: Flux2Klein9BInput }` + `Authorization: Bearer <token>` → `{ task_id }` (202), then `GET /task/:task_id` with auth → `{ status: "BUSY"|"REJECTED"|"DONE", output?: Flux2Klein9BOutput }`. Poll every 3s, max 50s (Vercel Hobby function cap).
 - **Provider routing** — flux2 worker-router internally routes to Modal/Flash/Beam providers from private `dist/apps/flux2/provider.json` (merged `{modal, beam, flash}` entries, beam bundled dormant). face-value never calls providers directly and never sees provider URLs.
 - **Auth token** generated at deploy time, set as Cloudflare secret on the worker, passed to face-value builds via `FLUX2_ROUTER_TOKEN` env. Never in `dist`.
+- **Vercel (Hobby)** — Root Directory `apps/face-value`. Worker URL via `FLUX2_ROUTER_URL` env (`router-config.ts` uses it first, `dist` contract file only as local fallback). Inference budget 50s (`timeoutMs: 50 * 1000`, 3s poll) under the 60s function cap; slow GPU runs surface as timeout errors. Node pinned via `engines: 22.x`.
 - **Model**: `flux_2_klein_9b_q6p.ckpt` (~7.3GB) — hosted on `flux2/` provider backend. Deployment managed separately via Nx chain.
 
 ### Security
@@ -69,7 +70,7 @@
 - Reference image exceeds size limit → client-side error before submission
 - Worker-router unreachable (401/404/502) → error text in assistant message
 - Worker-router returns REJECTED → error text in assistant message
-- Timeout after 5 min polling → SERVER_TIMEOUT error text
+- Timeout after 50s polling → SERVER_TIMEOUT error text
 
 ### API Contract - Worker Router (flux2)
 

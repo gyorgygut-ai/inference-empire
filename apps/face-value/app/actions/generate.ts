@@ -53,7 +53,7 @@ export async function generateImage(outcomeId: string, imageFile: File) {
       baseUrl: workerRouterConfig.baseUrl,
       token: workerRouterConfig.authToken,
       pollIntervalMs: 3000,
-      timeoutMs: 5 * 60 * 1000,
+      timeoutMs: 50 * 1000,
     })
     const res = await fetch(output.artifact.presigned_url)
     if (!res.ok) { throw new Error(vocabulary.feedback.workerError) }
