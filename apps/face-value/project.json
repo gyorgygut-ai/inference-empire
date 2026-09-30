@@ -4,7 +4,7 @@
   "projectType": "application",
   "sourceRoot": "apps/face-value",
   "tags": ["type:app", "scope:client"],
-  "implicitDependencies": [],
+  "implicitDependencies": ["flux2"],
   "targets": {
     "build": {
       "executor": "nx:run-script",
@@ -54,8 +54,8 @@
     "deploy-env": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "node scripts/push-router-env.mjs",
-        "cwd": "apps/face-value"
+        "command": "node apps/face-value/scripts/push-router-env.mjs",
+        "cwd": "."
       },
       "dependsOn": ["flux2:deploy-worker"],
       "cache": false
@@ -63,8 +63,8 @@
     "deploy": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "node scripts/deploy.mjs",
-        "cwd": "apps/face-value"
+        "command": "node apps/face-value/scripts/deploy.mjs",
+        "cwd": "."
       },
       "dependsOn": ["deploy-env"],
       "cache": false
