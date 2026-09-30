@@ -41,6 +41,7 @@ if (beamTaskApi) varsLines.push(`BEAM_TASK_API = "${beamTaskApi}"`)
 const wranglerToml = `name = "${workerName}"
 compatibility_date = "2026-09-28"
 compatibility_flags = []
+main = "src/index.ts"
 
 [vars]
 ${varsLines.join('\n')}
