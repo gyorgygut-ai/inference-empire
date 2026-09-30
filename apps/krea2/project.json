@@ -53,7 +53,7 @@
     "deploy-modal": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "uv run --locked modal deploy apps/krea2/worker_modal_cls_krea2_ref2img.py && node apps/krea2/scripts/modal-output.mjs",
+        "command": "PYTHONPATH=\"$PWD\" uv run --locked modal deploy apps/krea2/worker_modal_cls_krea2_ref2img.py && node apps/krea2/scripts/modal-output.mjs",
         "cwd": "."
       },
       "dependsOn": [

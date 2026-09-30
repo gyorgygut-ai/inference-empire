@@ -53,7 +53,7 @@
     "deploy-modal": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "uv run --locked modal deploy apps/flux2/worker_modal_cls_flux2_klein9b.py && node apps/flux2/scripts/modal-output.mjs",
+        "command": "PYTHONPATH=\"$PWD\" uv run --locked modal deploy apps/flux2/worker_modal_cls_flux2_klein9b.py && node apps/flux2/scripts/modal-output.mjs",
         "cwd": "."
       },
       "dependsOn": [

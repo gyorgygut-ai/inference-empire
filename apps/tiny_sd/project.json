@@ -53,7 +53,7 @@
     "deploy-modal": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "uv run --locked modal deploy apps/tiny_sd/worker_modal_cls_tiny_sd.py && node apps/tiny_sd/scripts/modal-output.mjs",
+        "command": "PYTHONPATH=\"$PWD\" uv run --locked modal deploy apps/tiny_sd/worker_modal_cls_tiny_sd.py && node apps/tiny_sd/scripts/modal-output.mjs",
         "cwd": "."
       },
       "dependsOn": [

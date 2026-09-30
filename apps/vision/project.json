@@ -53,7 +53,7 @@
     "deploy-modal": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "uv run --locked modal deploy apps/vision/worker_modal_cls_small_vision.py && node apps/vision/scripts/modal-output.mjs",
+        "command": "PYTHONPATH=\"$PWD\" uv run --locked modal deploy apps/vision/worker_modal_cls_small_vision.py && node apps/vision/scripts/modal-output.mjs",
         "cwd": "."
       },
       "dependsOn": [
