@@ -55,10 +55,15 @@ const tomlPath = join(cfgDir, 'wrangler.toml')
 writeFileSync(tomlPath, wranglerToml)
 let workerUrl = ''
 try {
-  const out = execSync(`wrangler deploy --config "${tomlPath}"`, { encoding: 'utf-8', cwd: routerDir })
+  const out = execSync(`wrangler deploy --config "${tomlPath}" 2>&1`, { encoding: 'utf-8', cwd: routerDir, maxBuffer: 10 * 1024 * 1024 })
   process.stdout.write(out)
-  const match = out.match(/https:\/\/\S+\.workers\.dev/)
-  if (!match) throw new Error('worker URL not found in wrangler output')
+  const match = out.match(/https:\/\/[A-Za-z0-9-]+\.[A-Za-z0-9-]+\.workers\.dev/)
+  if (!match) {
+    const logPath = join(workspaceRoot, 'dist', `wrangler-output-${workerName}.log`)
+    mkdirSync(join(workspaceRoot, 'dist'), { recursive: true })
+    writeFileSync(logPath, out, 'utf-8')
+    throw new Error(`worker URL not found in wrangler output (full output kept at ${logPath})`)
+  }
   workerUrl = match[0]
   execSync(`wrangler secret put AUTH_TOKEN --config "${tomlPath}"`, { input: authToken, encoding: 'utf-8', cwd: routerDir, stdio: ['pipe', 'inherit', 'inherit'] })
 } finally {
