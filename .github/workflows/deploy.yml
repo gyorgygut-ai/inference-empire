@@ -29,6 +29,15 @@ jobs:
         env:
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      - name: Write worker .env file
+        run: |
+          printf 'HF_TOKEN=%s\nR2_ACCESS_KEY=%s\nR2_SECRET_KEY=%s\nR2_ENDPOINT=%s\nR2_BUCKET=%s\n' "$HF_TOKEN" "$R2_ACCESS_KEY" "$R2_SECRET_KEY" "$R2_ENDPOINT" "$R2_BUCKET" > .env
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          R2_ACCESS_KEY: ${{ secrets.R2_ACCESS_KEY }}
+          R2_SECRET_KEY: ${{ secrets.R2_SECRET_KEY }}
+          R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
       - run: npx nx affected -t test-unit,lint,typecheck,verify-deploy-gate --base=origin/main~1
       - run: npx nx affected -t deploy --base=origin/main~1
       - run: npx nx run face-value:deploy
