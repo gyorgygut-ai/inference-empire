@@ -13,7 +13,7 @@ const context: ExecutorContext = {
 
 describe('Ty Executor', () => {
   it('builds the typecheck command', () => {
-    expect(buildCommand('tiny_sd')).toBe('uvx ty check apps/tiny_sd');
+    expect(buildCommand('tiny_sd')).toBe('uv run --locked ty check apps/tiny_sd');
   });
 
   it('fails without a family', async () => {
