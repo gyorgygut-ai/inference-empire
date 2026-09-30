@@ -9,6 +9,9 @@ import { mkdtempSync } from 'node:fs'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const routerDir = join(__dirname, '..')
 const workspaceRoot = join(__dirname, '..', '..', '..')
+// Pinned root binary: apps/worker-router carries its own nested wrangler v3
+// for `wrangler dev`; deploys must use the tested v4 from the workspace root.
+const wranglerBin = join(workspaceRoot, 'node_modules', '.bin', 'wrangler')
 const args = process.argv.slice(2)
 const parseArg = (key) => {
   const idx = args.indexOf(`--${key}`)
@@ -55,7 +58,7 @@ const tomlPath = join(cfgDir, 'wrangler.toml')
 writeFileSync(tomlPath, wranglerToml)
 let workerUrl = ''
 try {
-  const out = execSync(`wrangler deploy --config "${tomlPath}" 2>&1`, { encoding: 'utf-8', cwd: routerDir, maxBuffer: 10 * 1024 * 1024 })
+  const out = execSync(`"${wranglerBin}" deploy --config "${tomlPath}" 2>&1`, { encoding: 'utf-8', cwd: routerDir, maxBuffer: 10 * 1024 * 1024 })
   process.stdout.write(out)
   const match = out.match(/https:\/\/[A-Za-z0-9-]+\.[A-Za-z0-9-]+\.workers\.dev/)
   if (!match) {
@@ -65,7 +68,7 @@ try {
     throw new Error(`worker URL not found in wrangler output (full output kept at ${logPath})`)
   }
   workerUrl = match[0]
-  execSync(`wrangler secret put AUTH_TOKEN --config "${tomlPath}"`, { input: authToken, encoding: 'utf-8', cwd: routerDir, stdio: ['pipe', 'inherit', 'inherit'] })
+  execSync(`"${wranglerBin}" secret put AUTH_TOKEN --config "${tomlPath}"`, { input: authToken, encoding: 'utf-8', cwd: routerDir, stdio: ['pipe', 'inherit', 'inherit'] })
 } finally {
   rmSync(cfgDir, { recursive: true, force: true })
 }
