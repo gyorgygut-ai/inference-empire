@@ -11,16 +11,35 @@ import { readFileSync, existsSync } from "node:fs"
 import { join } from "node:path"
 import { execSync } from "node:child_process"
 
-const VERCEL_TOKEN = process.env.VERCEL_TOKEN
-const VERCEL_ORG_ID = process.env.VERCEL_ORG_ID
-const VERCEL_PROJECT_ID = process.env.VERCEL_PROJECT_ID
+const workspaceRoot = process.cwd()
+const projectRoot = join(workspaceRoot, "apps", "face-value")
 
-if (!VERCEL_TOKEN || !VERCEL_ORG_ID || !VERCEL_PROJECT_ID) {
-  console.log("[push-router-env] Vercel env vars not set; skipping Vercel push (local dev ok)")
-  process.exit(0)
+// Read VERCEL_TOKEN from env vars or vercel CLI
+let VERCEL_TOKEN = process.env.VERCEL_TOKEN
+if (!VERCEL_TOKEN) {
+  try {
+    VERCEL_TOKEN = execSync("vercel token", { encoding: "utf8", stdio: ["pipe", "pipe", "ignore"] }).trim()
+  }
+  catch {
+    console.log("[push-router-env] VERCEL_TOKEN not found in env or vercel CLI; skipping Vercel push (local dev ok)")
+    process.exit(0)
+  }
 }
 
-const workspaceRoot = process.cwd()
+// Read VERCEL_PROJECT_ID from env vars or .vercel/project.json
+let VERCEL_PROJECT_ID = process.env.VERCEL_PROJECT_ID
+if (!VERCEL_PROJECT_ID) {
+  const projectJsonPath = join(projectRoot, ".vercel", "project.json")
+  if (existsSync(projectJsonPath)) {
+    const projectJson = JSON.parse(readFileSync(projectJsonPath, "utf-8"))
+    VERCEL_PROJECT_ID = projectJson.projectId
+  }
+}
+
+if (!VERCEL_PROJECT_ID) {
+  console.log("[push-router-env] VERCEL_PROJECT_ID not found; skipping Vercel push (local dev ok)")
+  process.exit(0)
+}
 const flux2DistDir = join(workspaceRoot, "dist", "apps", "flux2")
 const contractPath = join(flux2DistDir, "contract.json")
 const tokenPath = join(flux2DistDir, ".router-token")
