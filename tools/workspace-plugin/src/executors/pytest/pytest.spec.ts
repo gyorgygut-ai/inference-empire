@@ -14,13 +14,13 @@ const context: ExecutorContext = {
 describe('Pytest Executor', () => {
   it('builds the unit command', () => {
     expect(buildCommand('tiny_sd', 'unit')).toBe(
-      'uv run --locked pytest apps/tiny_sd/tests/ -k "not e2e" -q'
+      'uv run --locked --group test pytest apps/tiny_sd/tests/ -k "not e2e" -q'
     );
   });
 
   it('builds the e2e command', () => {
     expect(buildCommand('tiny_sd', 'e2e')).toBe(
-      'uv run --locked pytest apps/tiny_sd/tests/ -k "e2e" -q'
+      'uv run --locked --group test pytest apps/tiny_sd/tests/ -k "e2e" -q'
     );
   });
 
