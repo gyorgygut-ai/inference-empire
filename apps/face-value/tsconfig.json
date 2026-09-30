@@ -1,6 +1,7 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
+    "baseUrl": ".",
     "target": "ES2017",
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
@@ -20,8 +21,7 @@
       }
     ],
     "paths": {
-      // tsc resolves against the inherited root baseUrl, Turbopack against the project dir — cover both
-      "@/*": ["./apps/face-value/*", "./*"]
+      "@/*": ["./*"]
     }
   },
   "include": [
