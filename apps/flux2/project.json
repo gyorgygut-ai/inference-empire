@@ -53,12 +53,11 @@
     "deploy-modal": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "uv run --locked modal deploy flux2/worker_modal_cls_flux2_klein9b.py && node scripts/modal-output.mjs",
+        "command": "PYTHONPATH=\"$PWD\" uv run --locked modal deploy apps/flux2/worker_modal_cls_flux2_klein9b.py && node apps/flux2/scripts/modal-output.mjs",
         "cwd": "."
       },
       "dependsOn": [
-        "verify-deploy-gate",
-        "deploy-worker"
+        "verify-deploy-gate"
       ],
       "cache": false,
       "outputs": [
@@ -68,12 +67,11 @@
     "deploy-beam": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "node scripts/deploy-beam.mjs",
+        "command": "node apps/flux2/scripts/deploy-beam.mjs",
         "cwd": "."
       },
       "dependsOn": [
-        "verify-deploy-gate",
-        "deploy-worker"
+        "verify-deploy-gate"
       ],
       "cache": false,
       "outputs": [
@@ -87,8 +85,7 @@
         "cwd": "."
       },
       "dependsOn": [
-        "verify-deploy-gate",
-        "deploy-worker"
+        "verify-deploy-gate"
       ],
       "cache": false,
       "outputs": [
@@ -102,7 +99,21 @@
         "cwd": "apps/flux2"
       },
       "dependsOn": [
+        "deploy-modal",
+        "deploy-beam",
+        "deploy-flash",
         "worker-router:build"
+      ],
+      "cache": false
+    },
+    "deploy": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "echo 'flux2 deploy complete (router + providers)'",
+        "cwd": "."
+      },
+      "dependsOn": [
+        "deploy-worker"
       ],
       "cache": false
     }

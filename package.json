@@ -13,9 +13,10 @@
     "deploy:affected": "nx affected -t deploy --base=origin/main",
     "test-unit": "nx run-many -t test-unit",
     "test-e2e": "nx run-many -t test-e2e",
-    "lint": "nx run-many -t lint",
+    "lint": "oxlint",
     "generate": "nx run worker-cli-client:generate",
-    "py-check": "uv run --locked --group test ruff check . && uv run --locked --group test ty check . && uv run --locked --group test vulture ."
+    "py-check": "uv run --locked --group test ruff check . && uv run --locked --group test ty check . && uv run --locked --group test vulture .",
+    "lint:fix": "oxlint --fix"
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.22.0",

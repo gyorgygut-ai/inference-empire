@@ -1,0 +1,26 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn"
+  },
+  "plugins": [
+    "eslint",
+    "typescript",
+    "react",
+    "react-hooks"
+  ],
+  "rules": {
+    "curly": ["error", "all"],
+    "nonblock-statement-body-position": ["error", "beside"],
+    "no-console": "warn",
+    "eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+    "arrow-body-style": ["error", "as-needed"],
+    "object-shorthand": ["error", "always"],
+    "comma-dangle": ["error", "always-multiline"],
+    "react/function-component-definition": ["error", { "namedComponents": "arrow-function" }],
+    "react-hooks/exhaustive-deps": "warn",
+    "typescript/no-floating-promises": "error",
+    "typescript/no-misused-promises": "error"
+  }
+}

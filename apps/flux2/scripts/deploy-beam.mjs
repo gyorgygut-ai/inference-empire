@@ -2,7 +2,7 @@ import { readFileSync, mkdirSync, writeFileSync, existsSync } from "node:fs"
 import { join, dirname } from "node:path"
 import { fileURLToPath } from "node:url"
 
-const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..")
+const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..")
 const yaml = readFileSync(join(root, "apps/flux2/beam.yaml"), "utf-8")
 const match = yaml.match(/^project:\s*(.+)$/m)
 if (!match) throw new Error("no project in flux2/beam.yaml")

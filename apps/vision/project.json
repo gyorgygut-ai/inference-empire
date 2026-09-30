@@ -53,26 +53,30 @@
     "deploy-modal": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "uv run --locked modal deploy vision/worker_modal_cls_small_vision.py",
+        "command": "PYTHONPATH=\"$PWD\" uv run --locked modal deploy apps/vision/worker_modal_cls_small_vision.py && node apps/vision/scripts/modal-output.mjs",
         "cwd": "."
       },
       "dependsOn": [
-        "verify-deploy-gate",
-        "deploy-worker"
+        "verify-deploy-gate"
       ],
-      "cache": false
+      "cache": false,
+      "outputs": [
+        "{workspaceRoot}/dist/apps/vision"
+      ]
     },
     "deploy-beam": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "echo 'Beam deploys on dispatch.put(); see AGENTS.md'",
+        "command": "node apps/vision/scripts/deploy-beam.mjs",
         "cwd": "."
       },
       "dependsOn": [
-        "verify-deploy-gate",
-        "deploy-worker"
+        "verify-deploy-gate"
       ],
-      "cache": false
+      "cache": false,
+      "outputs": [
+        "{workspaceRoot}/dist/apps/vision"
+      ]
     },
     "deploy-flash": {
       "executor": "nx:run-commands",
@@ -81,10 +85,12 @@
         "cwd": "."
       },
       "dependsOn": [
-        "verify-deploy-gate",
-        "deploy-worker"
+        "verify-deploy-gate"
       ],
-      "cache": false
+      "cache": false,
+      "outputs": [
+        "{workspaceRoot}/dist/apps/vision"
+      ]
     },
     "deploy-worker": {
       "executor": "nx:run-commands",
@@ -93,7 +99,21 @@
         "cwd": "apps/vision"
       },
       "dependsOn": [
+        "deploy-modal",
+        "deploy-beam",
+        "deploy-flash",
         "worker-router:build"
+      ],
+      "cache": false
+    },
+    "deploy": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "echo 'vision deploy complete (router + providers)'",
+        "cwd": "."
+      },
+      "dependsOn": [
+        "deploy-worker"
       ],
       "cache": false
     }

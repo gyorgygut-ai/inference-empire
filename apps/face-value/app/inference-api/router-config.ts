@@ -20,4 +20,7 @@ function loadConfig(): { baseUrl: string; authToken: string } {
   return _config
 }
 
-export const workerRouterConfig = loadConfig()
+export const workerRouterConfig = {
+  get baseUrl(): string { return loadConfig().baseUrl },
+  get authToken(): string { return loadConfig().authToken },
+}

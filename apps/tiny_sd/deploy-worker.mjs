@@ -1,26 +1,47 @@
 import { execSync } from 'node:child_process'
-import { readFileSync, existsSync } from 'node:fs'
+import { readFileSync, existsSync, writeFileSync, mkdtempSync, rmSync } from 'node:fs'
 import { join, dirname } from 'node:path'
+import { tmpdir } from 'node:os'
 import { fileURLToPath } from 'node:url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const root = join(__dirname, '..')
-const contractPath = join(root, 'dist', 'apps', 'tiny_sd', 'contract.json')
+const workspaceRoot = join(__dirname, '..', '..')
+const providerPath = join(workspaceRoot, 'dist', 'apps', 'tiny_sd', 'provider.json')
+const schemasPath = join(workspaceRoot, 'apps', 'tiny_sd', 'contracts', 'tiny_sd.json')
 
-if (!existsSync(contractPath)) {
-  process.exit(0)
+if (!existsSync(providerPath)) {
+  console.error('[deploy-worker] provider.json not found; run tiny_sd provider deploys first')
+  process.exit(1)
 }
 
-const contract = JSON.parse(readFileSync(contractPath, 'utf-8'))
-const providerType = contract.provider?.type || 'modal'
-const providerApiUrl = contract.provider?.url || contract.provider?.apiUrl || ''
-const providerAppName = contract.provider?.app || contract.app || ''
+const providers = JSON.parse(readFileSync(providerPath, 'utf-8'))
+const schemas = JSON.parse(readFileSync(schemasPath, 'utf-8'))
+const modal = providers.modal || {}
+const beam = providers.beam || {}
 
-execSync(`node ../../../worker-router/scripts/deploy-worker.mjs \\
-  --contract-path "${contractPath}" \\
-  --worker-name "tiny-sd-router-worker" \\
-  --provider-type "${providerType}" \\
-  --provider-token "" \\
-  --provider-api-url "${providerApiUrl}" \\
-  --provider-app-name "${providerAppName}" \\
-  --provider-endpoint-name ""`, { cwd: root, stdio: 'inherit' })
+const tmp = mkdtempSync(join(tmpdir(), 'tiny-sd-router-input-'))
+const routerInputPath = join(tmp, 'router-input.json')
+try {
+  writeFileSync(routerInputPath, JSON.stringify({
+    contractName: 'tiny_sd',
+    input: schemas.input,
+    output: schemas.output,
+  }, null, 2))
+  const deployScript = join(workspaceRoot, 'apps', 'worker-router', 'scripts', 'deploy-worker.mjs')
+  execSync(`node "${deployScript}" \\
+    --contract-path "${routerInputPath}" \\
+    --worker-name "tiny-sd-router-worker" \\
+    --provider-type "modal" \\
+    --provider-token "" \\
+    --provider-api-url "${modal.url || ''}" \\
+    --provider-app-name "${modal.app || ''}" \\
+    --provider-endpoint-name "" \\
+    --beam-api-url "${beam.url || ''}" \\
+    --beam-task-api "${beam.taskApi || ''}"`, {
+    cwd: root,
+    stdio: 'inherit'
+  })
+} finally {
+  rmSync(tmp, { recursive: true, force: true })
+}

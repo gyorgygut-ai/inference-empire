@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import sys, os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+
 import threading
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -33,7 +36,7 @@ def generate(storage: Storage, pipe, torch_module, **kwargs) -> dict:
         raise RuntimeError(f"inference failed: {e}") from e
 
 
-dotenv_secret = modal.Secret.from_dotenv(str(Path(__file__).parent.parent / ".env"))
+dotenv_secret = modal.Secret.from_dotenv(str(Path(__file__).parent.parent.parent / ".env"))
 hf_cache_vol = modal.Volume.from_name("hf-cache", create_if_missing=True)
 
 
@@ -47,7 +50,6 @@ image = (
             "HF_HUB_ENABLE_HF_TRANSFER": "1",
         }
     )
-    .add_local_python_source("workers.services", "workers.tiny_sd")
 )
 
 

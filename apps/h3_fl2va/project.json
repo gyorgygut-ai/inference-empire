@@ -3,27 +3,43 @@
   "name": "h3_fl2va",
   "projectType": "application",
   "sourceRoot": "apps/h3_fl2va",
-  "tags": ["type:app", "scope:worker", "model:h3-fl2va"],
+  "tags": [
+    "type:app",
+    "scope:worker",
+    "model:h3-fl2va"
+  ],
   "targets": {
     "test-unit": {
       "executor": "@inference/workspace-plugin:pytest",
-      "options": { "family": "h3_fl2va", "mode": "unit" },
-      "inputs": ["default"],
+      "options": {
+        "family": "h3_fl2va",
+        "mode": "unit"
+      },
+      "inputs": [
+        "default"
+      ],
       "cache": true
     },
     "test-e2e": {
       "executor": "@inference/workspace-plugin:pytest",
-      "options": { "family": "h3_fl2va", "mode": "e2e" },
+      "options": {
+        "family": "h3_fl2va",
+        "mode": "e2e"
+      },
       "cache": false
     },
     "lint": {
       "executor": "@inference/workspace-plugin:ruff",
-      "options": { "family": "h3_fl2va" },
+      "options": {
+        "family": "h3_fl2va"
+      },
       "cache": true
     },
     "typecheck": {
       "executor": "@inference/workspace-plugin:ty",
-      "options": { "family": "h3_fl2va" },
+      "options": {
+        "family": "h3_fl2va"
+      },
       "cache": true
     },
     "verify-deploy-gate": {
@@ -36,15 +52,31 @@
     },
     "deploy-modal": {
       "executor": "nx:run-commands",
-      "options": { "command": "echo 'uv run --locked modal deploy h3_fl2va/worker_modal_cls_*.py (turbo_fl2va)'", "cwd": "." },
-      "dependsOn": ["verify-deploy-gate", "deploy-worker"],
-      "cache": false
+      "options": {
+        "command": "PYTHONPATH=\"$PWD\" uv run --locked modal deploy apps/h3_fl2va/worker_modal_cls_minimax_h3_fl2va.py && node apps/h3_fl2va/scripts/modal-output.mjs",
+        "cwd": "."
+      },
+      "dependsOn": [
+        "verify-deploy-gate"
+      ],
+      "cache": false,
+      "outputs": [
+        "{workspaceRoot}/dist/apps/h3_fl2va"
+      ]
     },
     "deploy-beam": {
       "executor": "nx:run-commands",
-      "options": { "command": "echo 'Beam deploys on dispatch.put(); see AGENTS.md'", "cwd": "." },
-      "dependsOn": ["verify-deploy-gate", "deploy-worker"],
-      "cache": false
+      "options": {
+        "command": "node apps/h3_fl2va/scripts/deploy-beam.mjs",
+        "cwd": "."
+      },
+      "dependsOn": [
+        "verify-deploy-gate"
+      ],
+      "cache": false,
+      "outputs": [
+        "{workspaceRoot}/dist/apps/h3_fl2va"
+      ]
     },
     "deploy-worker": {
       "executor": "nx:run-commands",
@@ -52,7 +84,22 @@
         "command": "node deploy-worker.mjs",
         "cwd": "apps/h3_fl2va"
       },
-      "dependsOn": ["worker-router:build"],
+      "dependsOn": [
+        "deploy-modal",
+        "deploy-beam",
+        "worker-router:build"
+      ],
+      "cache": false
+    },
+    "deploy": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "echo 'h3_fl2va deploy complete (router + providers)'",
+        "cwd": "."
+      },
+      "dependsOn": [
+        "deploy-worker"
+      ],
       "cache": false
     }
   }

@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import sys, os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+
 import threading
 import time
 from pathlib import Path
@@ -33,7 +36,7 @@ def generate(storage: Storage, pipe, runtime_dir, torch_module, **kwargs) -> dic
         raise RuntimeError(f"inference failed: {e}") from e
 
 
-dotenv_secret = modal.Secret.from_dotenv(str(Path(__file__).parent.parent / ".env"))
+dotenv_secret = modal.Secret.from_dotenv(str(Path(__file__).parent.parent.parent / ".env"))
 hf_cache_vol = modal.Volume.from_name("hf-cache", create_if_missing=True)
 
 
@@ -48,7 +51,6 @@ image = (
             "PYTORCH_NVML_BASED_CUDA_CHECK": "0",
         }
     )
-    .add_local_python_source("workers.services", "workers.krea2")
 )
 
 

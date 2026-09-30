@@ -4,21 +4,24 @@
   "projectType": "application",
   "sourceRoot": "apps/face-value",
   "tags": ["type:app", "scope:client"],
-  "implicitDependencies": [],
+  "implicitDependencies": ["flux2"],
   "targets": {
     "build": {
       "executor": "nx:run-script",
       "options": {
         "script": "build"
       },
-      "dependsOn": ["flux2:deploy-worker"],
       "inputs": ["production", "^production"],
       "outputs": ["{projectRoot}/.next"],
       "cache": true
     },
     "dev": {
-      "executor": "nx:run-script",
-      "options": { "script": "dev" },
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node scripts/dev-with-router.mjs",
+        "cwd": "apps/face-value"
+      },
+      "dependsOn": ["flux2:deploy-worker"],
       "cache": false,
       "persistent": true
     },
@@ -51,8 +54,8 @@
     "deploy-env": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "node scripts/push-router-env.mjs",
-        "cwd": "apps/face-value"
+        "command": "node apps/face-value/scripts/push-router-env.mjs",
+        "cwd": "."
       },
       "dependsOn": ["flux2:deploy-worker"],
       "cache": false
@@ -60,8 +63,8 @@
     "deploy": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "vercel deploy --prod --yes --token=$VERCEL_TOKEN",
-        "cwd": "apps/face-value"
+        "command": "node apps/face-value/scripts/deploy.mjs",
+        "cwd": "."
       },
       "dependsOn": ["deploy-env"],
       "cache": false
