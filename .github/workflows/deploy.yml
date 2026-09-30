@@ -28,5 +28,6 @@ jobs:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       - run: npx nx affected -t test-unit,lint,typecheck,verify-deploy-gate --base=origin/main~1
       - run: npx nx affected -t deploy --base=origin/main~1
+      - run: npx nx run face-value:deploy
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
