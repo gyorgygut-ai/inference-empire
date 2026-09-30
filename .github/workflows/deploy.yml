@@ -26,7 +26,7 @@ jobs:
         env:
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      - run: npx nx affected -t test-unit,lint,typecheck,verify-deploy-gate --base=origin/main~1
-      - run: npm run deploy:affected
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+- run: npx nx affected -t test-unit,lint,typecheck,verify-deploy-gate --base=origin/main~1
+- run: npx nx affected -t deploy --base=origin/main~1
+  env:
+    VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
