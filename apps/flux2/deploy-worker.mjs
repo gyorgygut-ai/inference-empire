@@ -11,8 +11,8 @@ const providerPath = join(workspaceRoot, 'dist', 'apps', 'flux2', 'provider.json
 const schemasPath = join(workspaceRoot, 'apps', 'flux2', 'contracts', 'flux2_klein9b.json')
 
 if (!existsSync(providerPath)) {
-  console.log('[deploy-worker] provider.json not found, skipping (provider deploy has not run yet)')
-  process.exit(0)
+  console.error('[deploy-worker] provider.json not found; run flux2 provider deploys first')
+  process.exit(1)
 }
 
 const providers = JSON.parse(readFileSync(providerPath, 'utf-8'))

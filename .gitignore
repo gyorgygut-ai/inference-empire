@@ -11,6 +11,7 @@ downloads/
 eggs/
 .eggs/
 lib/
+!apps/face-value/lib/
 lib64/
 parts/
 sdist/
@@ -95,3 +96,4 @@ out
 
 # TypeScript
 *.tsbuildinfo
+.vercel

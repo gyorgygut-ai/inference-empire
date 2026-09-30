@@ -53,26 +53,30 @@
     "deploy-modal": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "uv run --locked modal deploy krea2/worker_modal_cls_krea2_ref2img.py",
+        "command": "uv run --locked modal deploy apps/krea2/worker_modal_cls_krea2_ref2img.py && node apps/krea2/scripts/modal-output.mjs",
         "cwd": "."
       },
       "dependsOn": [
-        "verify-deploy-gate",
-        "deploy-worker"
+        "verify-deploy-gate"
       ],
-      "cache": false
+      "cache": false,
+      "outputs": [
+        "{workspaceRoot}/dist/apps/krea2"
+      ]
     },
     "deploy-beam": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "echo 'Beam deploys on dispatch.put(); see AGENTS.md'",
+        "command": "node apps/krea2/scripts/deploy-beam.mjs",
         "cwd": "."
       },
       "dependsOn": [
-        "verify-deploy-gate",
-        "deploy-worker"
+        "verify-deploy-gate"
       ],
-      "cache": false
+      "cache": false,
+      "outputs": [
+        "{workspaceRoot}/dist/apps/krea2"
+      ]
     },
     "deploy-flash": {
       "executor": "nx:run-commands",
@@ -81,10 +85,12 @@
         "cwd": "."
       },
       "dependsOn": [
-        "verify-deploy-gate",
-        "deploy-worker"
+        "verify-deploy-gate"
       ],
-      "cache": false
+      "cache": false,
+      "outputs": [
+        "{workspaceRoot}/dist/apps/krea2"
+      ]
     },
     "deploy-worker": {
       "executor": "nx:run-commands",
@@ -93,7 +99,21 @@
         "cwd": "apps/krea2"
       },
       "dependsOn": [
+        "deploy-modal",
+        "deploy-beam",
+        "deploy-flash",
         "worker-router:build"
+      ],
+      "cache": false
+    },
+    "deploy": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "echo 'krea2 deploy complete (router + providers)'",
+        "cwd": "."
+      },
+      "dependsOn": [
+        "deploy-worker"
       ],
       "cache": false
     }

@@ -11,14 +11,17 @@
       "options": {
         "script": "build"
       },
-      "dependsOn": ["flux2:deploy-worker"],
       "inputs": ["production", "^production"],
       "outputs": ["{projectRoot}/.next"],
       "cache": true
     },
     "dev": {
-      "executor": "nx:run-script",
-      "options": { "script": "dev" },
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node scripts/dev-with-router.mjs",
+        "cwd": "apps/face-value"
+      },
+      "dependsOn": ["flux2:deploy-worker"],
       "cache": false,
       "persistent": true
     },
@@ -60,7 +63,7 @@
     "deploy": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "vercel deploy --prod --yes --token=$VERCEL_TOKEN",
+        "command": "node scripts/deploy.mjs",
         "cwd": "apps/face-value"
       },
       "dependsOn": ["deploy-env"],

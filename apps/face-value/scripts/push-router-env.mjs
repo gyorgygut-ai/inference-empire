@@ -14,16 +14,24 @@ import { execSync } from "node:child_process"
 const workspaceRoot = process.cwd()
 const projectRoot = join(workspaceRoot, "apps", "face-value")
 
-// Read VERCEL_TOKEN from env vars or vercel CLI
+// Read VERCEL_TOKEN from env vars or Vercel CLI auth config
 let VERCEL_TOKEN = process.env.VERCEL_TOKEN
 if (!VERCEL_TOKEN) {
-  try {
-    VERCEL_TOKEN = execSync("vercel token", { encoding: "utf8", stdio: ["pipe", "pipe", "ignore"] }).trim()
+  const authPath = process.platform === "darwin"
+    ? join(process.env.HOME, "Library", "Application Support", "com.vercel.cli", "auth.json")
+    : join(process.env.HOME, ".vercel", "auth.json")
+  if (existsSync(authPath)) {
+    try {
+      const authConfig = JSON.parse(readFileSync(authPath, "utf-8"))
+      VERCEL_TOKEN = authConfig.token
+    }
+    catch { /* ignore */ }
   }
-  catch {
-    console.log("[push-router-env] VERCEL_TOKEN not found in env or vercel CLI; skipping Vercel push (local dev ok)")
-    process.exit(0)
-  }
+}
+
+if (!VERCEL_TOKEN) {
+  console.log("[push-router-env] VERCEL_TOKEN not found; skipping Vercel push (local dev ok)")
+  process.exit(0)
 }
 
 // Read VERCEL_PROJECT_ID from env vars or .vercel/project.json
