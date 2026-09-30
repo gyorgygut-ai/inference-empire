@@ -3,27 +3,43 @@
   "name": "h3_comfy",
   "projectType": "application",
   "sourceRoot": "apps/h3_comfy",
-  "tags": ["type:app", "scope:worker", "model:h3-comfy"],
+  "tags": [
+    "type:app",
+    "scope:worker",
+    "model:h3-comfy"
+  ],
   "targets": {
     "test-unit": {
       "executor": "@inference/workspace-plugin:pytest",
-      "options": { "family": "h3_comfy", "mode": "unit" },
-      "inputs": ["default"],
+      "options": {
+        "family": "h3_comfy",
+        "mode": "unit"
+      },
+      "inputs": [
+        "default"
+      ],
       "cache": true
     },
     "test-e2e": {
       "executor": "@inference/workspace-plugin:pytest",
-      "options": { "family": "h3_comfy", "mode": "e2e" },
+      "options": {
+        "family": "h3_comfy",
+        "mode": "e2e"
+      },
       "cache": false
     },
     "lint": {
       "executor": "@inference/workspace-plugin:ruff",
-      "options": { "family": "h3_comfy" },
+      "options": {
+        "family": "h3_comfy"
+      },
       "cache": true
     },
     "typecheck": {
       "executor": "@inference/workspace-plugin:ty",
-      "options": { "family": "h3_comfy" },
+      "options": {
+        "family": "h3_comfy"
+      },
       "cache": true
     },
     "verify-deploy-gate": {
@@ -36,17 +52,31 @@
     },
     "deploy-modal": {
       "executor": "nx:run-commands",
-      "options": { "command": "uv run --locked modal deploy apps/h3_comfy/worker_modal_cls_minimax_h3_comfy.py && node apps/h3_comfy/scripts/modal-output.mjs", "cwd": "." },
-      "dependsOn": ["verify-deploy-gate"],
+      "options": {
+        "command": "PYTHONPATH=\"$PWD\" uv run --locked modal deploy apps/h3_comfy/worker_modal_cls_minimax_h3_comfy.py && node apps/h3_comfy/scripts/modal-output.mjs",
+        "cwd": "."
+      },
+      "dependsOn": [
+        "verify-deploy-gate"
+      ],
       "cache": false,
-      "outputs": ["{workspaceRoot}/dist/apps/h3_comfy"]
+      "outputs": [
+        "{workspaceRoot}/dist/apps/h3_comfy"
+      ]
     },
     "deploy-beam": {
       "executor": "nx:run-commands",
-      "options": { "command": "node apps/h3_comfy/scripts/deploy-beam.mjs", "cwd": "." },
-      "dependsOn": ["verify-deploy-gate"],
+      "options": {
+        "command": "node apps/h3_comfy/scripts/deploy-beam.mjs",
+        "cwd": "."
+      },
+      "dependsOn": [
+        "verify-deploy-gate"
+      ],
       "cache": false,
-      "outputs": ["{workspaceRoot}/dist/apps/h3_comfy"]
+      "outputs": [
+        "{workspaceRoot}/dist/apps/h3_comfy"
+      ]
     },
     "deploy-worker": {
       "executor": "nx:run-commands",
@@ -54,7 +84,11 @@
         "command": "node deploy-worker.mjs",
         "cwd": "apps/h3_comfy"
       },
-      "dependsOn": ["deploy-modal", "deploy-beam", "worker-router:build"],
+      "dependsOn": [
+        "deploy-modal",
+        "deploy-beam",
+        "worker-router:build"
+      ],
       "cache": false
     },
     "deploy": {
@@ -63,7 +97,9 @@
         "command": "echo 'h3_comfy deploy complete (router + providers)'",
         "cwd": "."
       },
-      "dependsOn": ["deploy-worker"],
+      "dependsOn": [
+        "deploy-worker"
+      ],
       "cache": false
     }
   }
