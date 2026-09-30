@@ -1,8 +1,10 @@
-import { readFileSync, writeFileSync, mkdirSync, unlinkSync } from 'node:fs'
+import { readFileSync, writeFileSync, mkdirSync, rmSync } from 'node:fs'
 import { join, dirname, resolve } from 'node:path'
 import { randomUUID } from 'node:crypto'
 import { fileURLToPath } from 'node:url'
 import { execSync } from 'node:child_process'
+import { tmpdir } from 'node:os'
+import { mkdtempSync } from 'node:fs'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const routerDir = join(__dirname, '..')
@@ -41,24 +43,26 @@ if (beamTaskApi) varsLines.push(`BEAM_TASK_API = "${beamTaskApi}"`)
 const wranglerToml = `name = "${workerName}"
 compatibility_date = "2026-09-28"
 compatibility_flags = []
-main = "src/index.ts"
+main = "${join(routerDir, 'src', 'index.ts')}"
 
 [vars]
 ${varsLines.join('\n')}
 `
 
-const tomlPath = join(routerDir, 'wrangler.toml')
+// Isolated config per invocation: parallel family deploys must not share one wrangler.toml
+const cfgDir = mkdtempSync(join(tmpdir(), `${workerName}-wrangler-`))
+const tomlPath = join(cfgDir, 'wrangler.toml')
 writeFileSync(tomlPath, wranglerToml)
 let workerUrl = ''
 try {
-  const out = execSync('wrangler deploy', { encoding: 'utf-8', cwd: routerDir })
+  const out = execSync(`wrangler deploy --config "${tomlPath}"`, { encoding: 'utf-8', cwd: routerDir })
   process.stdout.write(out)
   const match = out.match(/https:\/\/\S+\.workers\.dev/)
   if (!match) throw new Error('worker URL not found in wrangler output')
   workerUrl = match[0]
-  execSync('wrangler secret put AUTH_TOKEN', { input: authToken, encoding: 'utf-8', cwd: routerDir, stdio: ['pipe', 'inherit', 'inherit'] })
+  execSync(`wrangler secret put AUTH_TOKEN --config "${tomlPath}"`, { input: authToken, encoding: 'utf-8', cwd: routerDir, stdio: ['pipe', 'inherit', 'inherit'] })
 } finally {
-  unlinkSync(tomlPath)
+  rmSync(cfgDir, { recursive: true, force: true })
 }
 
 const flavour = workerName.replace(/-router-worker$/, '')
