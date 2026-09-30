@@ -36,15 +36,17 @@
     },
     "deploy-modal": {
       "executor": "nx:run-commands",
-      "options": { "command": "echo 'uv run --locked modal deploy h3_ref2va/worker_modal_cls_*.py (turbo_ref2va)'", "cwd": "." },
-      "dependsOn": ["verify-deploy-gate", "deploy-worker"],
-      "cache": false
+      "options": { "command": "uv run --locked modal deploy apps/h3_ref2va/worker_modal_cls_minimax_h3_ref2va.py && node apps/h3_ref2va/scripts/modal-output.mjs", "cwd": "." },
+      "dependsOn": ["verify-deploy-gate"],
+      "cache": false,
+      "outputs": ["{workspaceRoot}/dist/apps/h3_ref2va"]
     },
     "deploy-beam": {
       "executor": "nx:run-commands",
-      "options": { "command": "echo 'Beam deploys on dispatch.put(); see AGENTS.md'", "cwd": "." },
-      "dependsOn": ["verify-deploy-gate", "deploy-worker"],
-      "cache": false
+      "options": { "command": "node apps/h3_ref2va/scripts/deploy-beam.mjs", "cwd": "." },
+      "dependsOn": ["verify-deploy-gate"],
+      "cache": false,
+      "outputs": ["{workspaceRoot}/dist/apps/h3_ref2va"]
     },
     "deploy-worker": {
       "executor": "nx:run-commands",
@@ -52,7 +54,16 @@
         "command": "node deploy-worker.mjs",
         "cwd": "apps/h3_ref2va"
       },
-      "dependsOn": ["worker-router:build"],
+      "dependsOn": ["deploy-modal", "deploy-beam", "worker-router:build"],
+      "cache": false
+    },
+    "deploy": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "echo 'h3_ref2va deploy complete (router + providers)'",
+        "cwd": "."
+      },
+      "dependsOn": ["deploy-worker"],
       "cache": false
     }
   }

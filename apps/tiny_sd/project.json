@@ -53,31 +53,29 @@
     "deploy-modal": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "uv run --locked modal deploy tiny_sd/worker_modal_cls_tiny_sd.py && node scripts/modal-output.mjs",
+        "command": "uv run --locked modal deploy apps/tiny_sd/worker_modal_cls_tiny_sd.py && node apps/tiny_sd/scripts/modal-output.mjs",
         "cwd": "."
       },
       "dependsOn": [
-        "verify-deploy-gate",
-        "deploy-worker"
+        "verify-deploy-gate"
       ],
       "cache": false,
       "outputs": [
-        "{workspaceRoot}/dist/apps/tiny-sd"
+        "{workspaceRoot}/dist/apps/tiny_sd"
       ]
     },
     "deploy-beam": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "node scripts/deploy-beam.mjs",
+        "command": "node apps/tiny_sd/scripts/deploy-beam.mjs",
         "cwd": "."
       },
       "dependsOn": [
-        "verify-deploy-gate",
-        "deploy-worker"
+        "verify-deploy-gate"
       ],
       "cache": false,
       "outputs": [
-        "{workspaceRoot}/dist/apps/tiny-sd"
+        "{workspaceRoot}/dist/apps/tiny_sd"
       ]
     },
     "deploy-flash": {
@@ -87,12 +85,11 @@
         "cwd": "."
       },
       "dependsOn": [
-        "verify-deploy-gate",
-        "deploy-worker"
+        "verify-deploy-gate"
       ],
       "cache": false,
       "outputs": [
-        "{workspaceRoot}/dist/apps/tiny-sd"
+        "{workspaceRoot}/dist/apps/tiny_sd"
       ]
     },
     "deploy-worker": {
@@ -102,7 +99,21 @@
         "cwd": "apps/tiny_sd"
       },
       "dependsOn": [
+        "deploy-modal",
+        "deploy-beam",
+        "deploy-flash",
         "worker-router:build"
+      ],
+      "cache": false
+    },
+    "deploy": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "echo 'tiny_sd deploy complete (router + providers)'",
+        "cwd": "."
+      },
+      "dependsOn": [
+        "deploy-worker"
       ],
       "cache": false
     }

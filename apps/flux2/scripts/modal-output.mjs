@@ -2,7 +2,7 @@ import { readFileSync, mkdirSync, writeFileSync, existsSync } from "node:fs"
 import { join, dirname } from "node:path"
 import { fileURLToPath } from "node:url"
 
-const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..")
+const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..")
 const py = readFileSync(join(root, "apps/flux2/worker_modal_cls_flux2_klein9b.py"), "utf-8")
 const appMatch = py.match(/modal\.App\("([^"]+)"\)/)
 const clsMatch = py.match(/class\s+(\w+).*(?=generate)/s)
