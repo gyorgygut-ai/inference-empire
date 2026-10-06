@@ -1,0 +1,46 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "assistant-ui-media",
+  "projectType": "application",
+  "sourceRoot": "apps/assistant-ui-media",
+  "tags": ["type:app", "scope:client"],
+  "implicitDependencies": ["flux2"],
+  "targets": {
+    "build": {
+      "executor": "nx:run-script",
+      "options": {
+        "script": "build"
+      },
+      "inputs": ["production", "^production"],
+      "outputs": ["{projectRoot}/.next"],
+      "cache": true
+    },
+    "dev": {
+      "executor": "nx:run-script",
+      "options": {
+        "script": "dev"
+      },
+      "cache": false,
+      "persistent": true
+    },
+    "start": {
+      "executor": "nx:run-script",
+      "options": { "script": "start" }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx tsc --noEmit -p tsconfig.json",
+        "cwd": "apps/assistant-ui-media"
+      },
+      "cache": true
+    },
+    "test-unit": {
+      "executor": "nx:run-script",
+      "options": {
+        "script": "test:run"
+      },
+      "cache": true
+    }
+  }
+}
