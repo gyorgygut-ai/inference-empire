@@ -18,5 +18,5 @@ def _image_b64():
 
 
 def test_good_input_returns_contract():
-    out = worker_function.Qwen2VLVisionWorker().analyze(image_base64=_image_b64())
+    out = worker_function.Qwen2VLVisionWorker().generate(image_base64=_image_b64())
     assert SmallVisionOutput.model_validate(out).model_dump() == out

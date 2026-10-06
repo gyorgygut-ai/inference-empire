@@ -6,6 +6,6 @@
   "timeoutMs": 1000,
   "responses": [
     { "status": 200, "body": { "task_id": "bW9kYWw6YWJj" } },
-    { "status": 200, "body": { "status": "DONE", "output": { "url": "https://cdn.example/x.png" } } }
+    { "status": 200, "body": { "status": "completed", "output": { "url": "https://cdn.example/x.png" } } }
   ]
 }

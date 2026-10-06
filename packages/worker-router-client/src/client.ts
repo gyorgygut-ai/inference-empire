@@ -5,7 +5,7 @@ export interface Config {
   timeoutMs: number
 }
 
-const TERMINAL = ["DONE", "REJECTED"]
+const TERMINAL = ["failed", "cancelled"]
 
 function base(config: Config): string {
   return config.baseUrl.replace(/\/+$/, "")
@@ -38,7 +38,7 @@ async function originalError(response: Response): Promise<Error> {
 }
 
 async function submit(input: Record<string, unknown>, config: Config, fetchImpl: typeof fetch, signal?: AbortSignal): Promise<string> {
-  const response = await fetchImpl(`${base(config)}/queue`, {
+  const response = await fetchImpl(`${base(config)}/infer`, {
     method: "POST",
     headers: headers(config),
     body: JSON.stringify({ input }),
@@ -61,13 +61,13 @@ async function tick<T>(
   if (Date.now() >= deadline) {
     throw new Error(`timeout after ${config.timeoutMs}ms`)
   }
-  const url = `${base(config)}/task/${encodeURIComponent(taskId)}`
+  const url = `${base(config)}/inquire?id=${encodeURIComponent(taskId)}`
   const response = await fetchImpl(url, { headers: headers(config), signal })
   if (!response.ok) {
     throw await originalError(response)
   }
   const body = (await response.json()) as { status: string; output?: unknown }
-  if (body.status === "DONE") {
+  if (body.status === "completed") {
     return body.output as T
   }
   if (TERMINAL.includes(body.status)) {

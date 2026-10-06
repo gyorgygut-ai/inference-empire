@@ -1,14 +1,8 @@
 import { Router } from 'itty-router'
 import { type Env } from './index'
-import createProvider from './providers/create-provider'
-
-const ROUTER_STATUS: Record<string, string> = {
-  pending: 'BUSY',
-  processing: 'BUSY',
-  completed: 'DONE',
-  failed: 'REJECTED',
-  cancelled: 'REJECTED'
-}
+import createProvider, { isProviderName, type ProviderConfigs, type ProviderName } from './providers/create-provider'
+import { pickTaskHandler } from './pick-task-handler'
+import { decodeTaskId, encodeTaskId } from './task-id'
 
 export const router = Router()
 
@@ -20,8 +14,7 @@ router.all('*', async (request: Request, env: Env) => {
       headers: { 'Content-Type': 'application/json' }
     })
   }
-  const token = authHeader.substring(7)
-  if (token !== env.AUTH_TOKEN) {
+  if (authHeader.substring(7) !== env.AUTH_TOKEN) {
     return new Response(JSON.stringify({ error: 'Invalid token' }), {
       status: 401,
       headers: { 'Content-Type': 'application/json' }
@@ -29,30 +22,34 @@ router.all('*', async (request: Request, env: Env) => {
   }
 })
 
-router.post('/queue', async (request: Request, env: Env) => {
+router.post('/infer', async (request: Request, env: Env) => {
   const body = await request.json() as { input: Record<string, unknown> }
-  const { input } = body
-  const provider = createProvider({
-    provider: env.PROVIDER_TYPE,
-    appName: env.PROVIDER_APP_NAME,
-    endpointName: env.PROVIDER_ENDPOINT_NAME
-  })
-  const { task_id } = await provider.pushToTaskQueue(input, env)
-  return new Response(JSON.stringify({ task_id }), {
+  const name = pickTaskHandler()
+  const provider = createProvider(name)
+  const { task_id } = await provider.pushToTaskQueue(body.input, resolveConfig(name, env))
+  return new Response(JSON.stringify({ task_id: encodeTaskId(name, task_id) }), {
     headers: { 'Content-Type': 'application/json' }
   })
 })
 
-router.get('/task/:id', async (request: Request & { params: { id: string } }, env: Env) => {
-  const { id: taskId } = request.params
-  const provider = createProvider({
-    provider: env.PROVIDER_TYPE,
-    appName: env.PROVIDER_APP_NAME,
-    endpointName: env.PROVIDER_ENDPOINT_NAME
-  })
-  const result = await provider.fetchTaskStatus(taskId, env)
-  const status = ROUTER_STATUS[result.status] || 'BUSY'
-  const response: { status: string; output?: unknown } = { status }
+router.get('/inquire', async (request: Request, env: Env) => {
+  const id = new URL(request.url).searchParams.get('id')
+  if (!id) {
+    return new Response(JSON.stringify({ error: 'Missing id' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' }
+    })
+  }
+  const { provider: name, originalTaskId } = decodeTaskId(id)
+  if (!isProviderName(name)) {
+    return new Response(JSON.stringify({ error: 'Unknown provider' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' }
+    })
+  }
+  const provider = createProvider(name)
+  const result = await provider.fetchTaskStatus(originalTaskId, resolveConfig(name, env))
+  const response: { status: string; output?: unknown } = { status: result.status }
   if (result.status === 'completed') {
     response.output = result.output
   }
@@ -60,3 +57,15 @@ router.get('/task/:id', async (request: Request & { params: { id: string } }, en
     headers: { 'Content-Type': 'application/json' }
   })
 })
+
+router.all('*', async () => {
+  return new Response(JSON.stringify({ error: 'Not Found' }), {
+    status: 404,
+    headers: { 'Content-Type': 'application/json' }
+  })
+})
+
+function resolveConfig<K extends ProviderName>(name: K, env: Env): ProviderConfigs[K] {
+  const providers = JSON.parse(env.PROVIDERS) as ProviderConfigs
+  return providers[name]
+}

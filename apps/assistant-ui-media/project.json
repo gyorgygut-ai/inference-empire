@@ -4,7 +4,7 @@
   "projectType": "application",
   "sourceRoot": "apps/assistant-ui-media",
   "tags": ["type:app", "scope:client"],
-  "implicitDependencies": ["flux2", "krea2"],
+  "implicitDependencies": ["flux2", "krea2", "worker-router"],
   "targets": {
     "build": {
       "executor": "nx:run-script",
@@ -18,13 +18,16 @@
     "dev": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "node scripts/dev-with-router.mjs",
-        "cwd": "apps/assistant-ui-media"
+        "command": "node scripts/serve.mjs",
+        "cwd": "apps/assistant-ui-media",
+        "env": {
+          "FLUX2_ROUTER_URL": "http://127.0.0.1:8787",
+          "FLUX2_ROUTER_TOKEN": "dev-local-router-token",
+          "KREA2_ROUTER_URL": "http://127.0.0.1:8788",
+          "KREA2_ROUTER_TOKEN": "dev-local-router-token"
+        }
       },
-      "dependsOn": [
-        { "projects": "flux2", "target": "serve-router" },
-        { "projects": "krea2", "target": "serve-router" }
-      ],
+      "dependsOn": ["worker-router:flux2", "worker-router:krea2"],
       "cache": false,
       "persistent": true
     },

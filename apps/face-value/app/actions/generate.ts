@@ -63,7 +63,7 @@ export async function generateImage(outcomeId: string, imageFile: File) {
     return value
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : ""
-    if (msg.includes("REJECTED")) { throw new Error(vocabulary.feedback.rejected) }
+    if (msg.includes("failed") || msg.includes("cancelled")) { throw new Error(vocabulary.feedback.rejected) }
     if (msg.includes("timeout after")) { throw new Error(vocabulary.feedback.timeout) }
     throw new Error(vocabulary.feedback.workerError)
   }

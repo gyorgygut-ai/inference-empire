@@ -2,10 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 import os
-import sys
 import threading
-
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 from pathlib import Path
 
@@ -45,6 +42,8 @@ image = (
     .pip_install(*IMAGE_PIP_DEPS)
     .run_commands(f"pip install --no-deps {CHATTERBOX_TTS_NO_DEPS}")
     .env({"HF_HOME": MODEL_MOUNT, "HF_HUB_ENABLE_HF_TRANSFER": "1"})
+    .add_local_python_source("apps", "apps")
+    .add_local_python_source("packages", "packages")
 )
 
 

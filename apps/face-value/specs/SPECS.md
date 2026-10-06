@@ -30,7 +30,7 @@
 ### Business Logic
 
 - **Magic Encapsulated**:
-  - `worker-router-flux2` URL derived from `dist/apps/flux2/contract.json` (`workerUrl`, emitted by `flux2:deploy-worker`) at build time via server-only `router-config.ts`, never exposed to client
+  - `worker-router-flux2` URL derived from `dist/apps/flux2/contract.json` (`workerUrl`, emitted by `flux2-router:deploy`) at build time via server-only `router-config.ts`, never exposed to client
   - Auth token never written to disk: Cloudflare secret on the worker side, `FLUX2_ROUTER_TOKEN` build env on the face-value side
   - Client sends reference image + selected outcome id upon submit to Server Action
   - Server Action posts outcome prompt + reference image to `worker-router-flux2` `/queue`, polls `/task/:id` until DONE or timeout (max 5 min, poll interval 3s)
@@ -97,7 +97,7 @@
 - Each step is just a new message in the thread
 - Each message encapsulated in a `Message**` component
 - Multi-turn: previous outcome and ref. image can be changed in the original message
-- BE contract canonical in `dist/apps/flux2/contract.json` (`{workerName, workerUrl, contractName, input, output}`, emitted by `flux2:deploy-worker`), read at build time via server-only `router-config.ts`. `schema.ts` is generated from that file's `.input`/`.output` only. Requests go through `@inference/worker-router-client: inferWithPolling`.
+- BE contract canonical in `dist/apps/flux2/contract.json` (`{workerName, workerUrl, contractName, input, output}`, emitted by `flux2-router:deploy`), read at build time via server-only `router-config.ts`. `schema.ts` is generated from that file's `.input`/`.output` only. Requests go through `@inference/worker-router-client: inferWithPolling`.
 - assistant-ui registry components (`thread` + `image`, plus `attachment`, `file`, `tooltip-icon-button`, shadcn ui set); LLM-only elements trimmed
 
 **Critical**:

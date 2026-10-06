@@ -1,4 +1,9 @@
 {
+  "providers": {
+    "modal": {
+      "url": "https://gyorgy-gutai--minimax-h3-fl2va-worker-bridge.modal.run"
+    }
+  },
   "input": {
     "title": "MiniMaxH3TurboFl2vaInput",
     "required": [

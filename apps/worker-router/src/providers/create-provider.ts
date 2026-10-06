@@ -10,34 +10,47 @@ export const enum Status {
   CANCELLED = 'cancelled'
 }
 
-export interface Env {
-  AUTH_TOKEN: string
-  PROVIDER_TYPE: 'modal' | 'beam' | 'flash'
-  PROVIDER_API_URL: string
-  PROVIDER_TOKEN: string
-  PROVIDER_APP_NAME?: string
-  PROVIDER_ENDPOINT_NAME?: string
-  BEAM_API_URL?: string
-  BEAM_TASK_API?: string
+export interface ModalConfig {
+  url: string
+  proxyKey: string
+  proxySecret: string
 }
 
-export interface Provider {
+export interface BeamConfig {
+  url: string
+  taskApi: string
+}
+
+export interface FlashConfig {
+  url: string
+  endpointName: string
+}
+
+export interface ProviderConfigs {
+  modal: ModalConfig
+  beam: BeamConfig
+  flash: FlashConfig
+}
+
+export type ProviderName = keyof ProviderConfigs
+
+export interface Provider<K extends ProviderName> {
   encodeTaskId(originalTaskId: string): string
   decodeTaskId(encoded: string): { provider: string; originalTaskId: string }
-  pushToTaskQueue(input: Record<string, unknown>, env: Env): Promise<{ task_id: string }>
-  fetchTaskStatus(taskId: string, env: Env): Promise<{ status: Status; output?: unknown }>
+  pushToTaskQueue(input: Record<string, unknown>, config: ProviderConfigs[K]): Promise<{ task_id: string }>
+  fetchTaskStatus(taskId: string, config: ProviderConfigs[K]): Promise<{ status: Status; output?: unknown }>
 }
 
-const providers: Record<string, Provider> = {
+const providers: { [K in ProviderName]: Provider<K> } = {
   modal: modalProvider,
   beam: beamProvider,
   flash: flashProvider
 }
 
-export default function createProvider({ provider, appName, endpointName }: { provider: string; appName?: string; endpointName?: string }): Provider {
-  const p = providers[provider]
-  if (!p) {
-    throw new Error(`Unknown provider: ${provider}`)
-  }
-  return p
+export function isProviderName(value: string): value is ProviderName {
+  return value === 'modal' || value === 'beam' || value === 'flash'
+}
+
+export default function createProvider<K extends ProviderName>(name: K): Provider<K> {
+  return providers[name]
 }

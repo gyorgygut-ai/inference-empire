@@ -1,8 +1,5 @@
 from __future__ import annotations
 
-import sys, os
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-
 import threading
 from typing import TYPE_CHECKING
 
@@ -14,6 +11,7 @@ from apps.h3_fl2va._shared_minimax_h3_turbo_fl2va import (
     do_inference,
     load_dependencies,
 )
+from packages.modal_bridge import attach_bridge
 
 if TYPE_CHECKING:
     from packages.storage.storage import Storage
@@ -54,6 +52,8 @@ image = (
             "DIFFSYNTH_MODEL_BASE_PATH": "/root/.cache/huggingface/diffsynth",
         }
     )
+    .add_local_python_source("apps", "apps")
+    .add_local_python_source("packages", "packages")
 )
 
 
@@ -90,3 +90,6 @@ class MiniMaxH3Fl2VAWorker:
     def generate(self, **kwargs) -> dict:
         """Validate at boundary, delegate, return output contract."""
         return generate(self.storage, self.pipe, self.write_video_audio, **kwargs)
+
+
+attach_bridge(app, "MiniMaxH3Fl2VAWorker")

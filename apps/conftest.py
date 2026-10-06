@@ -13,7 +13,7 @@ def bucket():
 
 class _FluentMeta(type):
     def __getattr__(cls, name):
-        return lambda *args, **kwargs: _Fluent()
+        return lambda *_, **__: _Fluent()
 
 
 class _Fluent(metaclass=_FluentMeta):
@@ -23,7 +23,7 @@ class _Fluent(metaclass=_FluentMeta):
         pass
 
     def __getattr__(self, name):
-        return lambda *args, **kwargs: self
+        return lambda *_, **__: self
 
 
 class _TaskQueueStub:

@@ -1,4 +1,9 @@
 {
+  "providers": {
+    "modal": {
+      "url": "https://gyorgy-gutai--small-vision-worker-bridge.modal.run"
+    }
+  },
   "input": {
     "title": "SmallVisionInput",
     "required": ["image_base64"],

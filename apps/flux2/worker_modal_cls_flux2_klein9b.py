@@ -1,9 +1,6 @@
 from __future__ import annotations
 
 import os
-import sys
-
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 import threading
 from pathlib import Path
@@ -17,6 +14,7 @@ from apps.flux2._shared_flux2_klein9b import (
     do_inference,
     load_dependencies,
 )
+from packages.modal_bridge import attach_bridge
 
 if TYPE_CHECKING:
     from packages.storage.storage import Storage
@@ -52,6 +50,8 @@ image = (
             "SDNQ_USE_TRITON_MM": "0",
         }
     )
+    .add_local_python_source("apps", "apps")
+    .add_local_python_source("packages", "packages")
 )
 
 
@@ -74,3 +74,6 @@ class FluxKleinWorker:
     def generate(self, **kwargs) -> dict:
         """Validate at boundary, delegate, return output contract."""
         return generate(self.storage, self.pipe, self.torch_module, **kwargs)
+
+
+attach_bridge(app, "FluxKleinWorker")

@@ -39,6 +39,6 @@ class Qwen2VLVisionWorker:
     def __init__(self):
         self.model, self.processor, self.analyze_prompt = load_dependencies()
 
-    def analyze(self, **kwargs) -> dict:
+    def generate(self, **kwargs) -> dict:
         """Validate at boundary, delegate, return output contract."""
         return generate(self.model, self.processor, self.analyze_prompt, **kwargs)

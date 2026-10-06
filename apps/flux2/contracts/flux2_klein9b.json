@@ -1,4 +1,9 @@
 {
+  "providers": {
+    "modal": {
+      "url": "https://gyorgy-gutai--flux2-klein9b-worker-bridge.modal.run"
+    }
+  },
   "input": {
     "title": "Flux2Klein9bInput",
     "required": ["prompt"],

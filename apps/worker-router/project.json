@@ -1,5 +1,5 @@
 {
-  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "name": "worker-router",
   "root": "apps/worker-router",
   "sourceRoot": "apps/worker-router/src",
@@ -13,39 +13,75 @@
       "cache": true
     },
     "dev": {
-      "executor": "@nx/vite:dev-server",
-      "dependsOn": ["build"],
-      "inputs": ["default", "^default"],
+      "executor": "nx:run-commands",
       "options": {
-        "buildTarget": "worker-router:build"
+        "command": "wrangler dev",
+        "cwd": "apps/worker-router"
+      },
+      "continuous": true
+    },
+    "flux2": {
+      "executor": "nx:run-commands",
+      "defaultConfiguration": "serve",
+      "continuous": true,
+      "configurations": {
+        "serve": {
+          "command": "node apps/worker-router/scripts/serve.mjs --router flux2-router",
+          "cwd": "."
+        },
+        "deploy": {
+          "command": "node tools/deploy/deploy-modal.mjs --router flux2-router && node tools/deploy/deploy-beam.mjs --router flux2-router && node tools/deploy/deploy-flash.mjs --router flux2-router && node apps/worker-router/scripts/deploy.mjs --router flux2-router",
+          "cwd": "."
+        }
+      }
+    },
+    "krea2": {
+      "executor": "nx:run-commands",
+      "defaultConfiguration": "serve",
+      "continuous": true,
+      "configurations": {
+        "serve": {
+          "command": "node apps/worker-router/scripts/serve.mjs --router krea2-router",
+          "cwd": "."
+        },
+        "deploy": {
+          "command": "node tools/deploy/deploy-modal.mjs --router krea2-router && node tools/deploy/deploy-beam.mjs --router krea2-router && node tools/deploy/deploy-flash.mjs --router krea2-router && node apps/worker-router/scripts/deploy.mjs --router krea2-router",
+          "cwd": "."
+        }
       }
     },
     "test": {
-      "executor": "@nx/vite:test",
+      "executor": "@nx/vitest:test",
       "inputs": ["default"],
-      "options": {}
+      "options": { "configFile": "apps/worker-router/vitest.config.mts" }
+    },
+    "test-e2e": {
+      "executor": "@nx/vitest:test",
+      "inputs": ["default", "^production"],
+      "options": { "configFile": "apps/worker-router/vitest.e2e.config.mts" },
+      "dependsOn": ["flux2", "krea2"],
+      "cache": false
     },
     "lint": {
       "executor": "@nx/eslint:lint",
       "inputs": ["default", "{workspaceRoot}/eslint.config.mjs"],
       "options": {}
     },
+    "deploy": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "nx run worker-router:flux2:deploy && nx run worker-router:krea2:deploy",
+        "cwd": "."
+      },
+      "cache": false
+    },
     "build-manifest": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "echo 'worker-router manifest is generated per-deployment by deploy-worker scripts'",
+        "command": "echo 'worker-router manifest is generated per-deployment by deploy.mjs'",
         "cwd": "apps/worker-router"
       },
       "cache": true
-    },
-    "deploy-worker": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "node scripts/deploy-worker.mjs --contract-path {contractPath} --worker-name {workerName} --provider-type {providerType} --provider-token {providerToken} --provider-api-url {providerApiUrl} --provider-app-name {providerAppName}",
-        "cwd": "apps/worker-router"
-      },
-      "dependsOn": ["build"],
-      "cache": false
     }
   }
 }

@@ -16,21 +16,26 @@ function parseSize(size: `${number}x${number}` | undefined): {
 }
 
 export async function POST(req: Request) {
-  const { prompt, size, seed } = (await req.json()) as {
+  const { prompt, size, seed, model = "flux2" } = (await req.json()) as {
     prompt?: string;
     size?: `${number}x${number}`;
     seed?: number;
+    model?: "flux2" | "krea2";
   };
   if (!prompt) {
     return Response.json({ error: "Missing prompt" }, { status: 400 });
   }
+  if (model !== "flux2" && model !== "krea2") {
+    return Response.json({ error: "Unknown model" }, { status: 400 });
+  }
 
-  const baseUrl = (process.env.FLUX2_ROUTER_URL || "").replace(/\/+$/, "");
-  const token = process.env.FLUX2_ROUTER_TOKEN || "";
+  const prefix = model === "krea2" ? "KREA2" : "FLUX2";
+  const baseUrl = (process.env[`${prefix}_ROUTER_URL`] || "").replace(/\/+$/, "");
+  const token = process.env[`${prefix}_ROUTER_TOKEN`] || "";
 
   if (!baseUrl || !token) {
     return Response.json(
-      { error: "FLUX2_ROUTER_URL and FLUX2_ROUTER_TOKEN must be configured" },
+      { error: `${prefix}_ROUTER_URL and ${prefix}_ROUTER_TOKEN must be configured` },
       { status: 503 },
     );
   }

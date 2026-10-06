@@ -6,7 +6,10 @@ export default [
     languageOptions: {
       globals: {
         process: 'readonly',
-        Buffer: 'readonly'
+        Buffer: 'readonly',
+        console: 'readonly',
+        fetch: 'readonly',
+        setTimeout: 'readonly'
       }
     },
     rules: {

@@ -53,7 +53,7 @@ const contractPath = join(flux2DistDir, "contract.json")
 const tokenPath = join(flux2DistDir, ".router-token")
 
 if (!existsSync(contractPath) || !existsSync(tokenPath)) {
-  console.error("[push-router-env] flux2 dist files not found; ensure flux2:deploy-worker ran first")
+  console.error("[push-router-env] flux2 dist files not found; ensure flux2-router:deploy ran first")
   process.exit(1)
 }
 

@@ -1,6 +1,6 @@
 name = "worker-router"
 compatibility_date = "2026-09-28"
-compatibility_flags = []
+compatibility_flags = ["nodejs_compat"]
 main = "src/index.ts"
 
 [env.production]

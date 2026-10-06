@@ -1,4 +1,9 @@
 {
+  "providers": {
+    "modal": {
+      "url": "https://gyorgy-gutai--krea2-ref2img-worker-bridge.modal.run"
+    }
+  },
   "input": {
     "title": "Krea2Ref2ImgInput",
     "required": ["prompt"],

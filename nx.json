@@ -77,27 +77,59 @@
       ],
       "cache": true
     },
-    "deploy": {
-      "dependsOn": [
-        "^deploy"
-      ],
-      "cache": false
-    },
     "deploy-modal": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node tools/deploy/deploy-modal.mjs --router {projectName}",
+        "cwd": "."
+      },
       "dependsOn": [
         "verify-deploy-gate"
       ],
       "cache": false
     },
     "deploy-beam": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node tools/deploy/deploy-beam.mjs --router {projectName}",
+        "cwd": "."
+      },
       "dependsOn": [
         "verify-deploy-gate"
       ],
       "cache": false
     },
     "deploy-flash": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node tools/deploy/deploy-flash.mjs --router {projectName}",
+        "cwd": "."
+      },
       "dependsOn": [
         "verify-deploy-gate"
+      ],
+      "cache": false
+    },
+    "serve": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node apps/worker-router/scripts/serve.mjs --router {projectName}",
+        "cwd": "."
+      },
+      "continuous": true,
+      "cache": false
+    },
+    "deploy": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node apps/worker-router/scripts/deploy.mjs --router {projectName}",
+        "cwd": "."
+      },
+      "dependsOn": [
+        "deploy-modal",
+        "deploy-beam",
+        "deploy-flash",
+        "worker-router:build"
       ],
       "cache": false
     },

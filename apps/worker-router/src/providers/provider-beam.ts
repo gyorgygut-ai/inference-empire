@@ -1,6 +1,6 @@
-import { Status, type Env } from './create-provider'
+import { Status, type Provider } from './create-provider'
 
-export const beamProvider = {
+export const beamProvider: Provider<'beam'> = {
   encodeTaskId(originalTaskId: string): string {
     return btoa(`beam:${originalTaskId}`)
   },
@@ -8,19 +8,17 @@ export const beamProvider = {
     const [provider, originalTaskId] = atob(encoded).split(':')
     return { provider, originalTaskId }
   },
-  async pushToTaskQueue(input: Record<string, unknown>, env: Env): Promise<{ task_id: string }> {
-    const response = await fetch(`${env.PROVIDER_API_URL}/queues/default`, {
+  async pushToTaskQueue(input, config) {
+    const response = await fetch(`${config.url}/queues/default`, {
       method: 'POST',
-      headers: { 'Authorization': `Bearer ${env.PROVIDER_TOKEN}`, 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ input })
     })
     const result: { task_id: string } = await response.json()
     return { task_id: result.task_id }
   },
-  async fetchTaskStatus(taskId: string, env: Env): Promise<{ status: Status; output?: unknown }> {
-    const response = await fetch(`${env.PROVIDER_API_URL}/queues/default/${taskId}`, {
-      headers: { 'Authorization': `Bearer ${env.PROVIDER_TOKEN}` }
-    })
+  async fetchTaskStatus(taskId, config) {
+    const response = await fetch(`${config.url}/queues/default/${taskId}`)
     const result: { status: string; output?: unknown } = await response.json()
     return {
       status: mapTaskStatusToResponse(result.status),

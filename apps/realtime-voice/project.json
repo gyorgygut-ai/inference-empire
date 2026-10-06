@@ -34,25 +34,8 @@
       },
       "cache": true
     },
-    "deploy-modal": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "PYTHONPATH=\"$PWD\" uv run --locked modal deploy apps/realtime-voice/worker_modal_cls_realtime_voice_qwen.py && node apps/realtime-voice/scripts/modal-output.mjs",
-        "cwd": "."
-      },
-      "dependsOn": ["verify-deploy-gate"],
-      "cache": false,
-      "outputs": ["{workspaceRoot}/dist/apps/realtime-voice"]
-    },
-    "deploy-beam": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "node apps/realtime-voice/scripts/deploy-beam.mjs",
-        "cwd": "."
-      },
-      "dependsOn": ["verify-deploy-gate"],
-      "cache": false,
-      "outputs": ["{workspaceRoot}/dist/apps/realtime-voice"]
-    }
+    "deploy-modal": {},
+    "deploy-beam": {},
+    "deploy-flash": {}
   }
 }

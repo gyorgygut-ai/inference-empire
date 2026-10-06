@@ -1,9 +1,6 @@
 from __future__ import annotations
 
 import os
-import sys
-
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 import threading
 import time
@@ -18,6 +15,7 @@ from apps.krea2._shared_krea2_ref2img import (
     do_inference,
     load_dependencies,
 )
+from packages.modal_bridge import attach_bridge
 
 if TYPE_CHECKING:
     from packages.storage.storage import Storage
@@ -53,6 +51,8 @@ image = (
             "PYTORCH_NVML_BASED_CUDA_CHECK": "0",
         }
     )
+    .add_local_python_source("apps", "apps")
+    .add_local_python_source("packages", "packages")
 )
 
 
@@ -78,3 +78,6 @@ class Krea2Ref2ImgWorker:
     def generate(self, **kwargs) -> dict:
         """Validate at boundary, delegate, return output contract."""
         return generate(self.storage, self.pipe, self.runtime_dir, self.torch_module, **kwargs)
+
+
+attach_bridge(app, "Krea2Ref2ImgWorker")

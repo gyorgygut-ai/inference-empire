@@ -1,10 +1,5 @@
 from __future__ import annotations
 
-import os
-import sys
-
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-
 import threading
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -17,6 +12,7 @@ from apps.tiny_sd._shared_tiny_sd import (
     do_inference,
     load_dependencies,
 )
+from packages.modal_bridge import attach_bridge
 
 if TYPE_CHECKING:
     from packages.storage.storage import Storage
@@ -52,6 +48,8 @@ image = (
             "HF_HUB_ENABLE_HF_TRANSFER": "1",
         }
     )
+    .add_local_python_source("apps", "apps")
+    .add_local_python_source("packages", "packages")
 )
 
 
@@ -74,3 +72,6 @@ class TinySDWorker:
     def generate(self, **kwargs) -> dict:
         """Validate at boundary, delegate, return output contract."""
         return generate(self.storage, self.pipe, self.torch_module, **kwargs)
+
+
+attach_bridge(app, "TinySDWorker")

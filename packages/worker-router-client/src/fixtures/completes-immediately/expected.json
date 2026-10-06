@@ -1,7 +1,7 @@
 {
   "output": { "url": "https://cdn.example/x.png" },
   "requests": [
-    "https://router.test/queue",
-    "https://router.test/task/bW9kYWw6YWJj"
+    "https://router.test/infer",
+    "https://router.test/inquire?id=bW9kYWw6YWJj"
   ]
 }

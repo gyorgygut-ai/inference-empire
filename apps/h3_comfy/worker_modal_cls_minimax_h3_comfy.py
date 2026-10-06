@@ -1,10 +1,6 @@
 from __future__ import annotations
 
-import sys, os
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-
 import os
-import shutil
 import subprocess
 import threading
 import time
@@ -13,7 +9,12 @@ from typing import TYPE_CHECKING
 import modal
 import requests
 
-from apps.h3_comfy._shared_minimax_h3_comfy import MiniMaxH3ComfyInput, apply_torch_shims, do_inference
+from apps.h3_comfy._shared_minimax_h3_comfy import (
+    MiniMaxH3ComfyInput,
+    apply_torch_shims,
+    do_inference,
+)
+from packages.modal_bridge import attach_bridge
 from packages.storage.r2_storage import R2Storage
 
 if TYPE_CHECKING:
@@ -40,6 +41,8 @@ image = (
             "DIFFSYNTH_MODEL_BASE_PATH": "/root/.cache/huggingface/diffsynth",
         }
     )
+    .add_local_python_source("apps", "apps")
+    .add_local_python_source("packages", "packages")
 )
 
 
@@ -127,3 +130,6 @@ class MiniMaxH3ComfyWorker:
     def generate(self, **kwargs) -> dict:
         """Validate at boundary, delegate, return output contract."""
         return generate(self.storage, self.comfy_base_url, **kwargs)
+
+
+attach_bridge(app, "MiniMaxH3ComfyWorker")

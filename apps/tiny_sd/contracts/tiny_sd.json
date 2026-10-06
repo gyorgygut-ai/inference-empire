@@ -1,4 +1,9 @@
 {
+  "providers": {
+    "modal": {
+      "url": "https://gyorgy-gutai--tiny-sd-worker-bridge.modal.run"
+    }
+  },
   "input": {
     "title": "TinySDInput",
     "required": ["prompt"],

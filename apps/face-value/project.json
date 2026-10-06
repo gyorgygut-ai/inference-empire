@@ -4,7 +4,7 @@
   "projectType": "application",
   "sourceRoot": "apps/face-value",
   "tags": ["type:app", "scope:client"],
-  "implicitDependencies": ["flux2"],
+  "implicitDependencies": ["flux2", "worker-router"],
   "targets": {
     "build": {
       "executor": "nx:run-script",
@@ -18,10 +18,14 @@
     "dev": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "node scripts/dev-with-router.mjs",
-        "cwd": "apps/face-value"
+        "command": "node scripts/serve.mjs",
+        "cwd": "apps/face-value",
+        "env": {
+          "FLUX2_ROUTER_URL": "http://127.0.0.1:8787",
+          "FLUX2_ROUTER_TOKEN": "dev-local-router-token"
+        }
       },
-      "dependsOn": [{ "projects": "flux2", "target": "serve-router" }],
+      "dependsOn": ["worker-router:flux2"],
       "cache": false,
       "persistent": true
     },
@@ -57,7 +61,12 @@
         "command": "node apps/face-value/scripts/push-router-env.mjs",
         "cwd": "."
       },
-      "dependsOn": ["flux2:deploy-worker"],
+      "dependsOn": ["worker-router:deploy"],
+      "inputs": [
+        {
+          "dependentTasksOutputFiles": "{workspaceRoot}/dist/apps/flux2/**"
+        }
+      ],
       "cache": false
     },
     "deploy": {
