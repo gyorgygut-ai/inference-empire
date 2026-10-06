@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import importlib.util
 import os
 import threading
 from pathlib import Path
@@ -66,10 +65,11 @@ class RealtimeVoiceWorker:
         setattr(dist, "is_available", _dist_unavailable)
 
         print("[INIT] loading realtime-voice-qwen models", flush=True)
+        from apps.realtime_voice._shared_realtime_voice_qwen import WhisperSTT, QwenLLM, ChatterboxTTS
         self.models = {
-            "stt": _shared.WhisperSTT(f"{MODEL_MOUNT}/whisper-fw").load(),
-            "llm": _shared.QwenLLM(f"{MODEL_MOUNT}/qwen3-4b").load(),
-            "tts": _shared.ChatterboxTTS().load(),
+            "stt": WhisperSTT(f"{MODEL_MOUNT}/whisper-fw").load(),
+            "llm": QwenLLM(f"{MODEL_MOUNT}/qwen3-4b").load(),
+            "tts": ChatterboxTTS().load(),
         }
         print("[INIT] models loaded", flush=True)
 
@@ -90,9 +90,10 @@ class RealtimeVoiceWorker:
 def web():
     models = load_dependencies()
     if not models:
+        from apps.realtime_voice._shared_realtime_voice_qwen import WhisperSTT, QwenLLM, ChatterboxTTS
         models = {
-            "stt": _shared.WhisperSTT(f"{MODEL_MOUNT}/whisper-fw").load(),
-            "llm": _shared.QwenLLM(f"{MODEL_MOUNT}/qwen3-4b").load(),
-            "tts": _shared.ChatterboxTTS().load(),
+            "stt": WhisperSTT(f"{MODEL_MOUNT}/whisper-fw").load(),
+            "llm": QwenLLM(f"{MODEL_MOUNT}/qwen3-4b").load(),
+            "tts": ChatterboxTTS().load(),
         }
     return build_app(models)

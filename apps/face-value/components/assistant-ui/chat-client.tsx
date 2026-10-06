@@ -10,7 +10,7 @@ import {
   AttachmentPrimitive,
 } from "@assistant-ui/react"
 import { ImageIcon, XIcon } from "lucide-react"
-import { vocabulary } from "@/lib/vocabulary"
+import { vocabulary } from "@/messages/vocabulary"
 import type { PublicOutcome } from "@/outcomes"
 import { useImageGeneration } from "./image-generation"
 import { MessageSwitch } from "./message-switch"

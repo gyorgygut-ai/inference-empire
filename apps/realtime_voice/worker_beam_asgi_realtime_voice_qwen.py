@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-import importlib.util
 import os
 import threading
 import time
-from runpod_flash import Endpoint, GpuGroup
+
+from beam import Image, QueueDepthAutoscaler, Volume, asgi
 
 from apps.realtime_voice._shared_realtime_voice_qwen import (
     IMAGE_PIP_DEPS,
@@ -68,10 +68,11 @@ def load_models():
     try:
         whisper_dir = ensure_whisper(WHISPER_PATH)
         ensure_model(QWEN_PATH, "Qwen/Qwen2.5-3B-Instruct")
+        from apps.realtime_voice._shared_realtime_voice_qwen import WhisperSTT, QwenLLM, ChatterboxTTS
         models = {
-            "stt": _shared.WhisperSTT(whisper_dir).load(),
-            "llm": _shared.QwenLLM(QWEN_PATH).load(),
-            "tts": _shared.ChatterboxTTS().load(),
+            "stt": WhisperSTT(whisper_dir).load(),
+            "llm": QwenLLM(QWEN_PATH).load(),
+            "tts": ChatterboxTTS().load(),
         }
         print(f"[INIT] loaded all models in {time.time() - t0:.1f}s", flush=True)
         return models
@@ -99,7 +100,7 @@ def generate(models: dict, **kwargs) -> dict:
     image=image,
     volumes=[volume],
     on_start=load_models,
-    gpu="RTX4090",
+    gpu="L4",
     cpu=4,
     memory="32Gi",
     concurrent_requests=4,

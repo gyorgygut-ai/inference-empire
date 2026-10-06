@@ -4,7 +4,7 @@ import { useState, useTransition } from "react"
 import { useAui } from "@assistant-ui/react"
 import type { PublicOutcome } from "@/outcomes"
 import { generateImage } from "@/app/actions/generate"
-import { vocabulary } from "@/lib/vocabulary"
+import { vocabulary } from "@/messages/vocabulary"
 
 export function useImageGeneration(
   outcomes: PublicOutcome[],

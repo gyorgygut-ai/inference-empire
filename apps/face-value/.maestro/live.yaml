@@ -2,13 +2,18 @@ url: http://localhost:3000
 ---
 - launchApp
 - extendedWaitUntil:
-    visible: "Select an outcome"
+    visible: "Select an outcome to transform your face"
     timeout: 10000
 - assertTrue: "document.readyState === 'complete'"
 - tapOn: "Your celebrity selfie"
 - tapOn: "Upload a reference image"
-- addMedia:
-    - "./apps/face-value/01-initial.png"
+- evalScript: |
+    const input = document.querySelector('input[type="file"]');
+    const dataTransfer = new DataTransfer();
+    const file = new File([await fetch('./apps/face-value/01-initial.png').then(r => r.arrayBuffer())], '01-initial.png', { type: 'image/png' });
+    dataTransfer.items.add(file);
+    input.files = dataTransfer.files;
+    input.dispatchEvent(new Event('change', { bubbles: true }));
 - extendedWaitUntil:
     visible: "Generate"
     timeout: 5000

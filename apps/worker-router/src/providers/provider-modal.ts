@@ -43,7 +43,8 @@ function mapTaskStatusToResponse(providerStatus: string): Status {
     'failed': Status.FAILED,
     'cancelled': Status.CANCELLED,
     'processing': Status.PROCESSING,
-    'pending': Status.PENDING
+    'pending': Status.PENDING,
+    'rejected': Status.REJECTED
   }
   return mapping[providerStatus] || Status.PENDING
 }

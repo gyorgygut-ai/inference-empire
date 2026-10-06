@@ -7,7 +7,8 @@ export const enum Status {
   PROCESSING = 'processing',
   COMPLETED = 'completed',
   FAILED = 'failed',
-  CANCELLED = 'cancelled'
+  CANCELLED = 'cancelled',
+  REJECTED = 'rejected'
 }
 
 export interface ModalConfig {

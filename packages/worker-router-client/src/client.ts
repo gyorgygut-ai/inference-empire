@@ -5,7 +5,7 @@ export interface Config {
   timeoutMs: number
 }
 
-const TERMINAL = ["failed", "cancelled"]
+const TERMINAL = ["failed", "cancelled", "rejected"]
 
 function base(config: Config): string {
   return config.baseUrl.replace(/\/+$/, "")
