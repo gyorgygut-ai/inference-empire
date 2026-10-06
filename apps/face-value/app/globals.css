@@ -5,15 +5,15 @@
 
 :root {
   --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0.004 285.823);
-  --primary: oklch(0.205 0.006 285.885);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0.001 285.885);
-  --secondary-foreground: oklch(0.205 0.006 285.885);
-  --muted: oklch(0.97 0.001 285.885);
-  --muted-foreground: oklch(0.556 0.004 285.885);
-  --accent: oklch(0.97 0.001 285.885);
-  --accent-foreground: oklch(0.205 0.006 285.885);
+  --foreground: rgb(30, 30, 55);
+  --primary: rgb(142, 30, 162);
+  --primary-foreground: rgb(255, 210, 222);
+  --secondary: rgb(198, 84, 195);
+  --secondary-foreground: rgb(44, 50, 35);
+  --muted: rgb(255, 192, 222);
+  --muted-foreground: rgb(255, 244, 244);
+  --accent: rgb(198, 84, 195);
+  --accent-foreground: rgb(255, 210, 240);
 
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0.004 285.823);
@@ -113,7 +113,7 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
-  --color-surface: var(--muted);
+  --color-surface: oklch(0.97 0.001 285.885);
 }
 
 @layer base {

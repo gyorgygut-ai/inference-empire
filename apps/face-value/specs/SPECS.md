@@ -100,8 +100,9 @@
 - assistant-ui registry components (`thread` + `image`, plus `attachment`, `file`, `tooltip-icon-button`, shadcn ui set); LLM-only elements trimmed
 
 **Critical**:
-  - This is NOT a wizard - old messages still rendered after new appended
-  - Each new message gets pushed into the thread as task in previous msg completes
+
+- This is NOT a wizard - old messages still rendered after new appended
+- Each new message gets pushed into the thread as task in previous msg completes
 
 **1. message: `MessageOutcomeSelect`**:
 
@@ -119,16 +120,16 @@
 - Button: vocabulary.messages.requestInference
 - Can become disabled as previous selections change
 
-**message: `MessageBusy`**:
+**message: `MessageArtifact`**:
 
-- Message: vocabulary.messages.busy
-- Content: image placeholder skeleton 
+- **state: busy**:
+  - Message: vocabulary.messages.busy
+  - Message after 35 seconds: vocabulary.messages.busyForAWhile
+  - Content: placeholder image
 
-**message: `MessageRejected`**:
+- **state: rejected**:
+  - Message: vocabulary.messages.rejected
 
-- Message: vocabulary.messages.rejected
-
-**message: `MessageDone`**:
-
-- Message: vocabulary.messages.done
-- Content: the generated image (`Attachment`)
+- **state: fulfilled**:
+  - Message: vocabulary.messages.fulfilled
+  - Content: generated image

@@ -53,6 +53,8 @@ router.get('/inquire', async (request: Request, env: Env) => {
   if (result.status === 'completed') {
     response.output = result.output
   }
+  console.log('request', request)
+  console.log('response', response)
   return new Response(JSON.stringify(response), {
     headers: { 'Content-Type': 'application/json' }
   })

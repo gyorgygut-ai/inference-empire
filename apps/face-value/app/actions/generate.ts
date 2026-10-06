@@ -48,8 +48,8 @@ export async function generateImage(
     const output = await inferWithPolling<Flux2Klein9BOutput>(input, {
       baseUrl: workerRouterConfig.baseUrl,
       token: workerRouterConfig.authToken,
-      pollIntervalMs: 3000,
-      timeoutMs: 60000 * 3,
+      pollIntervalMs: 5000,
+      timeoutMs: 60000 * 4,
     });
     return { status: "done", presignedUrl: output.artifact.presigned_url };
   } catch {

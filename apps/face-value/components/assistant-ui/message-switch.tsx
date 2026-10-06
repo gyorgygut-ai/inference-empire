@@ -1,16 +1,16 @@
-"use client"
+"use client";
 
-import type { MessageState } from "@assistant-ui/react"
-import type { PublicOutcome } from "@/outcomes"
-import { MessageOutcomeSelect } from "./messages/MessageOutcomeSelect"
-import { MessageUploadReference } from "./messages/MessageUploadReference"
-import { MessageUploadedReference } from "./messages/MessageUploadedReference"
-import { MessageRequestInference } from "./messages/MessageRequestInference"
-import { MessageBusy } from "./messages/MessageBusy"
-import { MessageRejected } from "./messages/MessageRejected"
-import { MessageDone } from "./messages/MessageDone"
+import type { MessageState } from "@assistant-ui/react";
+import type { PublicOutcome } from "@/outcomes";
+import { ChatPhase } from "./chat";
+import { MessageSelectOutcome } from "./messages/MessageSelectOutcome";
+import { MessageUploadReference } from "./messages/MessageUploadReference";
+import { MessageUploadedReference } from "./messages/MessageUploadedReference";
+import { MessageOutcomeSuggestions } from "./messages/MessageOutcomeSuggestions";
+import { MessageRequestInference } from "./messages/MessageRequestInference";
+import { MessageArtifact } from "./messages/MessageArtifact";
 
-export function MessageSwitch({
+export const MessageSwitch = ({
   message,
   outcomes,
   selectedOutcome,
@@ -18,61 +18,54 @@ export function MessageSwitch({
   canGenerate,
   onSelectOutcome,
   onGenerate,
-  result,
+  artifactUrl,
 }: {
-  message: MessageState
-  outcomes: PublicOutcome[]
-  selectedOutcome: PublicOutcome | null
-  isPending: boolean
-  canGenerate: boolean
-  onSelectOutcome: (id: string) => void
-  onGenerate: () => void
-  result: string | null
-}) {
-  const meta = message.metadata as { custom?: { type?: string } } | undefined
-  const type = meta?.custom?.type
+  message: MessageState;
+  outcomes: PublicOutcome[];
+  selectedOutcome: PublicOutcome | null;
+  isPending: boolean;
+  canGenerate: boolean;
+  onSelectOutcome: (id: string) => void;
+  onGenerate: () => void;
+  artifactUrl?: string;
+}) => {
+  const meta = message.metadata as { custom?: { type?: string } } | undefined;
+  const type = meta?.custom?.type;
 
-  if (type === "select-outcome") {
+  if (type === ChatPhase.PROMPT_FOR_OUTCOME) {
     return (
-      <MessageOutcomeSelect
-        outcomes={outcomes}
-        selectedId={selectedOutcome?.id ?? null}
-        onSelect={onSelectOutcome}
-      />
-    )
+      <>
+        <MessageSelectOutcome />
+        <MessageOutcomeSuggestions
+          outcomes={outcomes}
+          disabled={isPending}
+          onSelect={onSelectOutcome}
+          selectedOutcomeId={selectedOutcome?.id}
+        />
+      </>
+    );
   }
-  if (type === "upload-reference") {
-    return <MessageUploadReference />
+  if (type === ChatPhase.PROMPT_FOR_REFERENCE) {
+    return <MessageUploadReference />;
   }
-  if (type === "uploaded-reference") {
-    const attachment = (message.metadata as any)?.attachment
-    return (
-      <MessageUploadedReference 
-        attachment={attachment} 
-        messageId={message.id} 
-      />
-    )
-  }
-  if (type === "request-inference") {
+  if (type === ChatPhase.REQUEST_INFERENCE) {
     return (
       <MessageRequestInference
-        isPending={isPending}
-        canGenerate={canGenerate}
-        onGenerate={onGenerate}
+        onGenerateAction={onGenerate}
+        disabled={isPending || !canGenerate}
       />
-    )
+    );
   }
-  if (type === "busy" && selectedOutcome) {
-    return <MessageBusy width={selectedOutcome.width} height={selectedOutcome.height} />
-  }
-  if (type === "rejected") {
-    return <MessageRejected />
-  }
-  if (type === "done" && result && selectedOutcome) {
+  if ([ChatPhase.INFERENCE_BUSY, ChatPhase.INFERENCE_REJECTED, ChatPhase.INFERENCE_FULFILLED].includes(type as ChatPhase)) {
     return (
-      <MessageDone image={result} width={selectedOutcome.width} height={selectedOutcome.height} />
-    )
+      <MessageArtifact
+        state={type as ChatPhase}
+        image={artifactUrl}
+        width={selectedOutcome?.width}
+        height={selectedOutcome?.height}
+      />
+    );
   }
 
-  return null
-}
+  return null;
+};

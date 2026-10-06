@@ -2,8 +2,8 @@
 id: celebrity-selfie
 order: 1
 width: 512
-height: 768
-title: Your celebrity selfie
+height: 640
+title: Celebrity Selfie
 ---
 
 Highly photorealistic details, natural skin texture.

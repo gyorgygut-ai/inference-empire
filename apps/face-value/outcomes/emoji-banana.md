@@ -2,8 +2,8 @@
 id: emoji-banana
 order: 2
 width: 512
-height: 768
-title: You as the 🍌 emoji
+height: 576
+title: 🍌 Banana Emoji
 ---
 
 Identity Preservation: Use the original face from the reference image. Fully preserve identity, facial features, proportions, and expression; photorealistic, no alterations.

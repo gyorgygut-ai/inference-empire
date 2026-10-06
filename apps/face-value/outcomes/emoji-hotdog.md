@@ -2,8 +2,8 @@
 id: emoji-hotdog
 order: 3
 width: 512
-height: 768
-title: You as the 🌭 emoji
+height: 640
+title: 🌭 Human Hotdog
 ---
 
 Identity Preservation: Use the original face from the reference image. Fully preserve identity, facial features, proportions, and expression; photorealistic, no alterations.
