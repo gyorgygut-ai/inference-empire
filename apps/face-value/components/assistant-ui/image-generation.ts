@@ -46,6 +46,14 @@ export function useImageGeneration(
     startTransition(async () => {
       try {
         const res = await generateImage(selectedOutcome.id, referenceFile)
+        if (res.status === "rejected") {
+          aui.thread.append({
+            role: "assistant",
+            content: [{ type: "text", text: vocabulary.messages.rejected }],
+            metadata: { custom: { type: "rejected" } },
+          })
+          return
+        }
         setResult(res.dataUrl)
         aui.thread.append({
           role: "assistant",

@@ -21,8 +21,7 @@
         "command": "node scripts/serve.mjs",
         "cwd": "apps/face-value",
         "env": {
-          "FLUX2_ROUTER_URL": "http://127.0.0.1:8787",
-          "FLUX2_ROUTER_TOKEN": "dev-local-router-token"
+          "FLUX2_ROUTER_URL": "http://127.0.0.1:8787"
         }
       },
       "dependsOn": ["worker-router:flux2"],

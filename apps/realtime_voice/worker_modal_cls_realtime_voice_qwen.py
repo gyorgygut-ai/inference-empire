@@ -7,25 +7,14 @@ from pathlib import Path
 
 import modal
 
-
-def _load_shared():
-    path = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), "_shared_realtime_voice_qwen.py"
-    )
-    spec = importlib.util.spec_from_file_location("_shared_realtime_voice_qwen", path)
-    assert spec is not None and spec.loader is not None
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    return mod
-
-
-_shared = _load_shared()
-IMAGE_PIP_DEPS = _shared.IMAGE_PIP_DEPS
-CHATTERBOX_TTS_NO_DEPS = _shared.CHATTERBOX_TTS_NO_DEPS
-RealtimeVoiceInput = _shared.RealtimeVoiceInput
-build_app = _shared.build_app
-do_inference = _shared.do_inference
-load_dependencies = _shared.load_dependencies
+from apps.realtime_voice._shared_realtime_voice_qwen import (
+    IMAGE_PIP_DEPS,
+    CHATTERBOX_TTS_NO_DEPS,
+    RealtimeVoiceInput,
+    build_app,
+    do_inference,
+    load_dependencies,
+)
 
 app = modal.App("realtime-voice-qwen-worker")
 

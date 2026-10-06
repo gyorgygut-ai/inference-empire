@@ -105,6 +105,7 @@ invalid-argument-type = "ignore"
 invalid-return-type = "ignore"
 
 [tool.vulture]
+min_confidence = 90
 exclude = [
     ".venv",
     "node_modules",

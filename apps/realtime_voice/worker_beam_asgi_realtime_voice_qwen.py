@@ -4,38 +4,15 @@ import importlib.util
 import os
 import threading
 import time
+from runpod_flash import Endpoint, GpuGroup
 
-try:
-    from beam import Image, QueueDepthAutoscaler, Volume, asgi
-except Exception:  # unit tests without beam credentials
-    from apps.conftest import _Fluent as Image
-    from apps.conftest import _Fluent as QueueDepthAutoscaler
-    from apps.conftest import _Fluent as Volume
-
-    def asgi(**kwargs):
-        def deco(fn):
-            return fn
-
-        return deco
-
-
-def _load_shared():
-    path = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), "_shared_realtime_voice_qwen.py"
-    )
-    spec = importlib.util.spec_from_file_location("_shared_realtime_voice_qwen", path)
-    assert spec is not None and spec.loader is not None
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    return mod
-
-
-_shared = _load_shared()
-IMAGE_PIP_DEPS = _shared.IMAGE_PIP_DEPS
-CHATTERBOX_TTS_NO_DEPS = _shared.CHATTERBOX_TTS_NO_DEPS
-RealtimeVoiceInput = _shared.RealtimeVoiceInput
-build_app = _shared.build_app
-do_inference = _shared.do_inference
+from apps.realtime_voice._shared_realtime_voice_qwen import (
+    IMAGE_PIP_DEPS,
+    CHATTERBOX_TTS_NO_DEPS,
+    RealtimeVoiceInput,
+    build_app,
+    do_inference,
+)
 
 VOLUME_NAME = "models"
 MOUNT_PATH = "/volumes/models"
@@ -120,7 +97,7 @@ def generate(models: dict, **kwargs) -> dict:
 @asgi(
     name="realtime-voice-qwen-worker",
     image=image,
-    volumes=[volume],  # ty: ignore[invalid-argument-type]
+    volumes=[volume],
     on_start=load_models,
     gpu="RTX4090",
     cpu=4,
@@ -131,7 +108,7 @@ def generate(models: dict, **kwargs) -> dict:
     authorized=True,
     checkpoint_enabled=True,
     secrets=["HF_TOKEN"],
-    autoscaler=QueueDepthAutoscaler(max_containers=1, min_containers=0),  # ty: ignore[invalid-argument-type]
+    autoscaler=QueueDepthAutoscaler(max_containers=1, min_containers=0),
 )
 def worker(context):
     models = context.on_start_value

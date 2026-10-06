@@ -22,9 +22,7 @@
         "cwd": "apps/assistant-ui-media",
         "env": {
           "FLUX2_ROUTER_URL": "http://127.0.0.1:8787",
-          "FLUX2_ROUTER_TOKEN": "dev-local-router-token",
-          "KREA2_ROUTER_URL": "http://127.0.0.1:8788",
-          "KREA2_ROUTER_TOKEN": "dev-local-router-token"
+          "KREA2_ROUTER_URL": "http://127.0.0.1:8788"
         }
       },
       "dependsOn": ["worker-router:flux2", "worker-router:krea2"],
