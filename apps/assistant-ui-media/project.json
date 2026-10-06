@@ -16,10 +16,12 @@
       "cache": true
     },
     "dev": {
-      "executor": "nx:run-script",
+      "executor": "nx:run-commands",
       "options": {
-        "script": "dev"
+        "command": "node scripts/dev-with-router.mjs",
+        "cwd": "apps/assistant-ui-media"
       },
+      "dependsOn": ["flux2:deploy-worker"],
       "cache": false,
       "persistent": true
     },

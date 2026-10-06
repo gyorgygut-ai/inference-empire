@@ -1,9 +1,9 @@
+import { inferWithPolling } from "@inference/worker-router-client";
+
 export const maxDuration = 60;
 
 const POLL_INTERVAL_MS = 3000;
 const TIMEOUT_MS = 50 * 1000;
-
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 function parseSize(size: `${number}x${number}` | undefined): {
   width?: number;
@@ -13,16 +13,6 @@ function parseSize(size: `${number}x${number}` | undefined): {
   const match = /^(\d+)x(\d+)$/.exec(size);
   if (!match) return {};
   return { width: Number(match[1]), height: Number(match[2]) };
-}
-
-async function upstreamErrorText(res: Response): Promise<string> {
-  const text = await res.text();
-  try {
-    const body = JSON.parse(text) as { error?: string };
-    return body.error ?? text;
-  } catch {
-    return text;
-  }
 }
 
 export async function POST(req: Request) {
@@ -45,87 +35,49 @@ export async function POST(req: Request) {
     );
   }
 
-  const headers = {
-    Authorization: `Bearer ${token}`,
-    "content-type": "application/json",
-  };
-
-  const queueRes = await fetch(`${baseUrl}/queue`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({
-      input: {
+  let output: { artifact?: { presigned_url?: string } };
+  try {
+    output = await inferWithPolling<{ artifact?: { presigned_url?: string } }>(
+      {
         prompt,
         ...parseSize(size),
         ...(seed !== undefined && { seed }),
       },
-    }),
-  });
-  if (!queueRes.ok) {
-    const message = await upstreamErrorText(queueRes);
-    return Response.json(
-      { error: message || "Inference submit failed" },
-      { status: 502 },
+      {
+        baseUrl,
+        token,
+        pollIntervalMs: POLL_INTERVAL_MS,
+        timeoutMs: TIMEOUT_MS,
+      },
     );
-  }
-  const { task_id: taskId } = (await queueRes.json()) as { task_id: string };
-  if (!taskId) {
-    return Response.json(
-      { error: "Inference submit failed" },
-      { status: 502 },
-    );
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : "Inference failed";
+    if (message.includes("timeout after")) {
+      return Response.json({ error: message }, { status: 504 });
+    }
+    return Response.json({ error: message || "Inference failed" }, { status: 502 });
   }
 
-  const deadline = Date.now() + TIMEOUT_MS;
-  for (;;) {
-    if (Date.now() >= deadline) {
-      return Response.json(
-        { error: `timeout after ${TIMEOUT_MS}ms` },
-        { status: 504 },
-      );
-    }
-    const taskRes = await fetch(
-      `${baseUrl}/task/${encodeURIComponent(taskId)}`,
-      { headers },
+  const presignedUrl = output?.artifact?.presigned_url;
+  if (!presignedUrl) {
+    return Response.json(
+      { error: "Inference completed without artifact" },
+      { status: 502 },
     );
-    if (!taskRes.ok) {
-      const message = await upstreamErrorText(taskRes);
-      return Response.json(
-        { error: message || "Inference poll failed" },
-        { status: 502 },
-      );
-    }
-    const task = (await taskRes.json()) as {
-      status: string;
-      output?: { artifact?: { presigned_url?: string } };
-    };
-    if (task.status === "DONE") {
-      const presignedUrl = task.output?.artifact?.presigned_url;
-      if (!presignedUrl) {
-        return Response.json(
-          { error: "Inference completed without artifact" },
-          { status: 502 },
-        );
-      }
-      const imgRes = await fetch(presignedUrl);
-      if (!imgRes.ok) {
-        return Response.json(
-          { error: "Failed to fetch generated image" },
-          { status: 502 },
-        );
-      }
-      const mimeType =
-        imgRes.headers.get("content-type")?.split(";")[0] || "image/png";
-      const buffer = Buffer.from(await imgRes.arrayBuffer());
-      return Response.json({
-        image: `data:${mimeType};base64,${buffer.toString("base64")}`,
-        mimeType,
-        metadata: {},
-      });
-    }
-    if (task.status === "REJECTED") {
-      return Response.json({ error: "REJECTED" }, { status: 502 });
-    }
-    await sleep(POLL_INTERVAL_MS);
   }
+  const imgRes = await fetch(presignedUrl);
+  if (!imgRes.ok) {
+    return Response.json(
+      { error: "Failed to fetch generated image" },
+      { status: 502 },
+    );
+  }
+  const mimeType =
+    imgRes.headers.get("content-type")?.split(";")[0] || "image/png";
+  const buffer = Buffer.from(await imgRes.arrayBuffer());
+  return Response.json({
+    image: `data:${mimeType};base64,${buffer.toString("base64")}`,
+    mimeType,
+    metadata: {},
+  });
 }

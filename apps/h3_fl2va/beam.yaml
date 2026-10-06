@@ -1,0 +1,3 @@
+# Minimal beam config for tests
+project: minimax-h3-fl2va-test
+python_version: python3.11
