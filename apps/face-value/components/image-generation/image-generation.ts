@@ -21,7 +21,6 @@ export function useImageGeneration(
   const canGenerate = !!selectedOutcome && !!referenceFile;
 
   const onSelectOutcome = (id: string) => {
-    setGenerationResponse(undefined);
     setSelectedOutcome(outcomes.find((o) => o.id === id) ?? null);
 
     const messages = aui.thread.getState().messages;
