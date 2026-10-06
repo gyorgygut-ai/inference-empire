@@ -36,6 +36,7 @@ def attach_bridge(
     reject unauthenticated calls at its edge, before a container starts.
     """
     app_name = app.name
+    assert app_name is not None
 
     @app.function(
         image=modal.Image.debian_slim(python_version="3.11").pip_install(FASTAPI_PIN),

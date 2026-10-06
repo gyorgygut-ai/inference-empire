@@ -8,9 +8,9 @@ import time
 try:
     from beam import Image, QueueDepthAutoscaler, Volume, asgi
 except Exception:  # unit tests without beam credentials
-    from apps.conftest import _Fluent as Image  # type: ignore
-    from apps.conftest import _Fluent as QueueDepthAutoscaler  # type: ignore
-    from apps.conftest import _Fluent as Volume  # type: ignore
+    from apps.conftest import _Fluent as Image
+    from apps.conftest import _Fluent as QueueDepthAutoscaler
+    from apps.conftest import _Fluent as Volume
 
     def asgi(**kwargs):
         def deco(fn):
@@ -120,7 +120,7 @@ def generate(models: dict, **kwargs) -> dict:
 @asgi(
     name="realtime-voice-qwen-worker",
     image=image,
-    volumes=[volume],
+    volumes=[volume],  # ty: ignore[invalid-argument-type]
     on_start=load_models,
     gpu="RTX4090",
     cpu=4,
@@ -131,7 +131,7 @@ def generate(models: dict, **kwargs) -> dict:
     authorized=True,
     checkpoint_enabled=True,
     secrets=["HF_TOKEN"],
-    autoscaler=QueueDepthAutoscaler(max_containers=1, min_containers=0),
+    autoscaler=QueueDepthAutoscaler(max_containers=1, min_containers=0),  # ty: ignore[invalid-argument-type]
 )
 def worker(context):
     models = context.on_start_value
