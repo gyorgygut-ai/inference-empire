@@ -98,6 +98,5 @@ out
 *.tsbuildinfo
 .vercel
 
-# Reference voice audio (local only, never committed)
 apps/realtime-voice/references/*
 !apps/realtime-voice/references/.gitkeep
