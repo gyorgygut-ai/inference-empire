@@ -3,7 +3,6 @@ from __future__ import annotations
 import importlib.util
 import os
 import threading
-
 from pathlib import Path
 
 import modal
