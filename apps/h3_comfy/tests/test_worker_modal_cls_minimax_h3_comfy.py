@@ -137,8 +137,6 @@ def test_ensure_comfy_models_calls_snapshot_download_when_missing(monkeypatch, t
     monkeypatch.setattr(worker_mod, "snapshot_download", fake_snapshot)
     # Make Path(dst).exists() False, Path(src).exists() True to avoid RuntimeError
     monkeypatch.setattr(Path, "exists", lambda _self: True)
-    # Avoid actual copy
-    monkeypatch.setattr(worker_mod.shutil, "copy2", lambda *_a, **_k: None)
     # Run
     worker_mod._ensure_comfy_models()
     assert called.get("repo") == "Comfy-Org/MiniMax-H3"
