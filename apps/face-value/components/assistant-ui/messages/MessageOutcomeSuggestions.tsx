@@ -1,6 +1,7 @@
 "use client";
 
 import { MessagePrimitive } from "@assistant-ui/react";
+import { cn } from "cn";
 import type { PublicOutcome } from "@/outcomes";
 
 export function MessageOutcomeSuggestions({
@@ -32,11 +33,12 @@ export function MessageOutcomeSuggestions({
               disabled={disabled}
               aria-selected={isSelected}
               onClick={() => onSelect(outcomeId)}
-              className={
-                isSelected
-                  ? "px-3 py-2 md:py-1 rounded border bg-secondary text-secondary-foreground disabled:bg-muted disabled:text-muted-foreground text-title"
-                  : "px-3 py-2 md:py-1 rounded border disabled:bg-muted disabled:text-muted-foreground text-title"
-              }
+              className={cn({
+                "px-3 py-2 md:py-1 rounded border text-title": true,
+                "bg-secondary text-secondary-foreground": isSelected,
+                "bg-muted text-muted-foreground": !isSelected && !disabled,
+                "cursor-not-allowed opacity-50": disabled,
+              })}
             >
               {title}
             </button>
