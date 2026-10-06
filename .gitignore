@@ -98,5 +98,5 @@ out
 *.tsbuildinfo
 .vercel
 
-apps/realtime-voice/references/*
-!apps/realtime-voice/references/.gitkeep
+apps/realtime-voice/voices/*
+!apps/realtime-voice/voices/.gitkeep
