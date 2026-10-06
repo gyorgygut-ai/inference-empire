@@ -86,7 +86,7 @@
       },
       "dependsOn": [
         "deploy-modal",
-        "deploy-beam",
+        // "deploy-beam",
         "worker-router:build"
       ],
       "cache": false
