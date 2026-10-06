@@ -105,3 +105,44 @@ def test_load_dependencies_mocked(monkeypatch):
     assert beam_mod.load_dependencies() is models
     monkeypatch.setattr(modal_mod, "load_dependencies", fake_load)
     assert modal_mod.load_dependencies() is models
+
+
+class _StubWav:
+    def squeeze(self):
+        return self
+
+    def cpu(self):
+        return self
+
+    def numpy(self):
+        import numpy as np
+
+        return np.zeros(2400, dtype=np.float32)
+
+
+class _StubBuiltinModel:
+    def __init__(self):
+        self.prompts = []
+
+    def generate(self, text, audio_prompt_path=None):
+        self.prompts.append(audio_prompt_path)
+        return _StubWav()
+
+
+def test_tts_empty_dir_uses_builtin_voice(tmp_path):
+    assert shared.DEFAULT_VOICE == "gyorgy"
+    assert RealtimeVoiceInput(audio=_audio_b64()).voice == "gyorgy"
+    tts = shared.ChatterboxTTS(reference_dir=str(tmp_path))
+    tts.model = _StubBuiltinModel()
+    pcm = tts.generate("hi", voice="gyorgy")
+    assert len(pcm) > 0
+    assert tts.model.prompts == [None]
+
+
+def test_tts_unknown_voice_uses_builtin_voice(tmp_path):
+    (tmp_path / "gyorgy.wav").write_bytes(b"RIFFstub")
+    tts = shared.ChatterboxTTS(reference_dir=str(tmp_path))
+    tts.model = _StubBuiltinModel()
+    pcm = tts.generate("hi", voice="nope")
+    assert len(pcm) > 0
+    assert tts.model.prompts == [None]

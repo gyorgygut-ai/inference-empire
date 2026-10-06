@@ -5,7 +5,7 @@
     "properties": {
       "audio": { "type": "string", "description": "Base64 pcm16 mono audio input" },
       "sample_rate": { "type": "integer", "default": 24000 },
-      "voice": { "type": "string", "default": "GutAI" },
+      "voice": { "type": "string", "default": "gyorgy" },
       "language": { "type": "string", "default": "en" }
     }
   },

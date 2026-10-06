@@ -12,7 +12,7 @@ from pydantic import BaseModel, ConfigDict, Field
 SAMPLE_RATE_IN = 24000
 SAMPLE_RATE_OUT = 24000
 TTS_SR = 24000
-DEFAULT_VOICE = "GutAI"
+DEFAULT_VOICE = "gyorgy"
 SUPPORTED_LANGUAGES = {"en": "English", "hu": "Hungarian"}
 
 # Single source of truth for ALL provider image pip deps (beam/modal).
@@ -58,7 +58,7 @@ class RealtimeVoiceInput(BaseModel):
     model_config = ConfigDict(title="RealtimeVoiceInput")
     audio: str
     sample_rate: int = Field(default=24000)
-    voice: str = Field(default="GutAI")
+    voice: str = Field(default=DEFAULT_VOICE)
     language: str = Field(default="en")
 
 
@@ -204,26 +204,40 @@ class ChatterboxTTS:
             perth.PerthImplicitWatermarker = perth.DummyWatermarker
         tts_mod = importlib.import_module("chatterbox.tts")
         self.model = tts_mod.ChatterboxTTS.from_pretrained(device=self.device)
+        import os
+
+        try:
+            voices = sorted(f[:-4] for f in os.listdir(self.reference_dir) if f.endswith(".wav"))
+        except OSError:
+            voices = []
+        if voices:
+            print(f"[INIT] voices: {','.join(voices)}", flush=True)
+        else:
+            print(f"[WARN] no reference voices in {self.reference_dir}", flush=True)
         return self
 
-    def _voice_path(self, voice: str) -> str:
+    def _voice_path(self, voice: str) -> str | None:
         import os
 
         path = os.path.join(self.reference_dir, f"{voice}.wav")
         if not os.path.exists(path):
-            raise KeyError(f"unknown voice: {voice}")
+            return None
         return path
 
-    def generate(self, text: str, voice: str = "GutAI") -> bytes:
+    def generate(self, text: str, voice: str = DEFAULT_VOICE) -> bytes:
         if self.model is None:
             raise RuntimeError("Chatterbox not loaded; call load() first")
         ref = self._voice_path(voice)
         with self._lock:
-            wav = self.model.generate(text, audio_prompt_path=ref)
+            if ref is None:
+                print(f"[WARN] voice '{voice}' missing; built-in voice", flush=True)
+                wav = self.model.generate(text)
+            else:
+                wav = self.model.generate(text, audio_prompt_path=ref)
         arr = np.asarray(wav.squeeze().cpu().numpy(), dtype=np.float32)
         return float_to_pcm16(arr)
 
-    def stream(self, text: str, voice: str = "GutAI", cancel=None, chunk_size: int = 4096):
+    def stream(self, text: str, voice: str = DEFAULT_VOICE, cancel=None, chunk_size: int = 4096):
         pcm = self.generate(text, voice=voice)
         for i in range(0, len(pcm), chunk_size):
             if cancel is not None and cancel.is_set():
@@ -268,7 +282,7 @@ def do_inference(models: dict, req: RealtimeVoiceInput) -> RealtimeVoiceOutput:
 
 
 def handle_webrtc_audio(
-    models: dict, sample_rate: int, audio: np.ndarray, voice: str = "GutAI"
+    models: dict, sample_rate: int, audio: np.ndarray, voice: str = DEFAULT_VOICE
 ) -> tuple[int, np.ndarray]:
     """FastRTC ReplyOnPause handler: (sr, ndarray) -> (24k, ndarray)."""
     print(f"[REQ] webrtc sr={sample_rate} n={len(audio)}", flush=True)
@@ -301,7 +315,7 @@ def handle_webrtc_audio(
         raise
 
 
-def build_app(models: dict, default_voice: str = "GutAI"):
+def build_app(models: dict, default_voice: str = DEFAULT_VOICE):
     """Build FastAPI app with contract POST + headless FastRTC WebRTC mount."""
     from fastapi import FastAPI
 
