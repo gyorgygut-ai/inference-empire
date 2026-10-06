@@ -33,9 +33,9 @@
       "options": { "script": "start" }
     },
     "lint": {
-      "executor": "@nx/eslint:lint",
+      "executor": "nx:run-script",
       "options": {
-        "exclude": ["{projectRoot}/.next/**", "{projectRoot}/.vercel/**"]
+        "script": "lint"
       },
       "cache": true
     },

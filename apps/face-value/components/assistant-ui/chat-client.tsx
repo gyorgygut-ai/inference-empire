@@ -65,7 +65,6 @@ export function RootAssistantUiComponent({
           )}
         </ThreadPrimitive.Messages>
       </ThreadPrimitive.Viewport>
-      <UploadComposer />
     </ThreadPrimitive.Root>
   )
 }

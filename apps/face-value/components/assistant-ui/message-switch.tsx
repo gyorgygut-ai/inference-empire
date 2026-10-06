@@ -4,6 +4,7 @@ import type { MessageState } from "@assistant-ui/react"
 import type { PublicOutcome } from "@/outcomes"
 import { MessageOutcomeSelect } from "./messages/MessageOutcomeSelect"
 import { MessageUploadReference } from "./messages/MessageUploadReference"
+import { MessageUploadedReference } from "./messages/MessageUploadedReference"
 import { MessageRequestInference } from "./messages/MessageRequestInference"
 import { MessageBusy } from "./messages/MessageBusy"
 import { MessageRejected } from "./messages/MessageRejected"
@@ -42,6 +43,15 @@ export function MessageSwitch({
   }
   if (type === "upload-reference") {
     return <MessageUploadReference />
+  }
+  if (type === "uploaded-reference") {
+    const attachment = (message.metadata as any)?.attachment
+    return (
+      <MessageUploadedReference 
+        attachment={attachment} 
+        messageId={message.id} 
+      />
+    )
   }
   if (type === "request-inference") {
     return (
