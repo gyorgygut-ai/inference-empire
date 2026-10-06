@@ -1,0 +1,40 @@
+{
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "name": "realtime-voice",
+  "projectType": "application",
+  "sourceRoot": "apps/realtime-voice",
+  "tags": ["type:app", "scope:worker", "model:realtime-voice"],
+  "targets": {
+    "test-unit": {
+      "executor": "@inference/workspace-plugin:pytest",
+      "options": { "family": "realtime-voice", "mode": "unit" },
+      "inputs": ["default"],
+      "cache": true
+    },
+    "test-e2e": {
+      "executor": "@inference/workspace-plugin:pytest",
+      "options": { "family": "realtime-voice", "mode": "e2e" },
+      "cache": false
+    },
+    "lint": {
+      "executor": "@inference/workspace-plugin:ruff",
+      "options": { "family": "realtime-voice" },
+      "cache": true
+    },
+    "typecheck": {
+      "executor": "@inference/workspace-plugin:ty",
+      "options": { "family": "realtime-voice" },
+      "cache": true
+    },
+    "deploy-modal": {
+      "executor": "nx:run-commands",
+      "options": { "command": "uv run --locked modal deploy apps/realtime-voice/worker_modal_cls_realtime_voice_qwen.py", "cwd": "." },
+      "cache": false
+    },
+    "deploy-beam": {
+      "executor": "nx:run-commands",
+      "options": { "command": "echo 'Beam deploys on dispatch.put(); see AGENTS.md'", "cwd": "." },
+      "cache": false
+    }
+  }
+}
