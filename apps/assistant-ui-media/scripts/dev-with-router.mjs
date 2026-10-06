@@ -4,27 +4,34 @@ import { join } from "node:path"
 import { spawnSync } from "node:child_process"
 
 const workspaceRoot = join(import.meta.dirname, "..", "..")
-const contractPath = join(workspaceRoot, "dist", "apps", "flux2", "contract.json")
-const tokenPath = join(workspaceRoot, "dist", "apps", "flux2", ".router-token")
+const flux2Descriptor = join(workspaceRoot, "dist", "apps", "flux2", ".router.local.json")
+const krea2Descriptor = join(workspaceRoot, "dist", "apps", "krea2", ".router.local.json")
 
-if (!existsSync(contractPath) || !existsSync(tokenPath)) {
-  console.error("[dev-with-router] flux2 dist files not found; ensure flux2:deploy-worker ran first")
-  process.exit(1)
+function readDescriptor(path, waitMs) {
+  const deadline = Date.now() + waitMs
+  while (!existsSync(path)) {
+    if (Date.now() > deadline) {
+      console.error(`[dev-with-router] ${path} not found; ensure the matching serve-router is running`)
+      process.exit(1)
+    }
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 250)
+  }
+  return JSON.parse(readFileSync(path, "utf-8"))
 }
 
-const contract = JSON.parse(readFileSync(contractPath, "utf-8"))
-const workerUrl = contract.workerUrl || ""
-const authToken = readFileSync(tokenPath, "utf-8").trim()
-
-if (!workerUrl || !authToken) {
-  console.error("[dev-with-router] empty workerUrl or authToken in flux2 dist")
-  process.exit(1)
-}
-
-console.log(`[dev-with-router] router: ${workerUrl}`)
+const flux2 = readDescriptor(flux2Descriptor, 30000)
+const krea2 = readDescriptor(krea2Descriptor, 30000)
+console.log(`[dev-with-router] local flux2 router: ${flux2.url}`)
+console.log(`[dev-with-router] local krea2 router: ${krea2.url}`)
 const res = spawnSync("npx", ["next", "dev"], {
   cwd: join(workspaceRoot, "apps", "assistant-ui-media"),
   stdio: "inherit",
-  env: { ...process.env, FLUX2_ROUTER_URL: workerUrl, FLUX2_ROUTER_TOKEN: authToken },
+  env: {
+    ...process.env,
+    FLUX2_ROUTER_URL: flux2.url,
+    FLUX2_ROUTER_TOKEN: flux2.token,
+    KREA2_ROUTER_URL: krea2.url,
+    KREA2_ROUTER_TOKEN: krea2.token,
+  },
 })
-process.exit(res.status ?? 1)
+process.exit(res.status)

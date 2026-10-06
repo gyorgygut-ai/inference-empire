@@ -106,6 +106,18 @@
       ],
       "cache": false
     },
+    "serve-router": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node serve-router.mjs",
+        "cwd": "apps/flux2"
+      },
+      "dependsOn": [
+        "worker-router:build"
+      ],
+      "continuous": true,
+      "cache": false
+    },
     "deploy": {
       "executor": "nx:run-commands",
       "options": {

@@ -38,14 +38,6 @@
       },
       "cache": true
     },
-    "deploy": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "wrangler deploy --env production",
-        "cwd": "apps/worker-router"
-      },
-      "dependsOn": ["build"]
-    },
     "deploy-worker": {
       "executor": "nx:run-commands",
       "options": {

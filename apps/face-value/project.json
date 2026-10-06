@@ -21,7 +21,7 @@
         "command": "node scripts/dev-with-router.mjs",
         "cwd": "apps/face-value"
       },
-      "dependsOn": ["flux2:deploy-worker"],
+      "dependsOn": [{ "projects": "flux2", "target": "serve-router" }],
       "cache": false,
       "persistent": true
     },
