@@ -12,7 +12,7 @@ const ROUTER_STATUS: Record<string, string> = {
 
 export const router = Router()
 
-router.use('*', async ({ request, env }: { request: Request; env: Env }, next: () => Promise<Response>) => {
+router.all('*', async (request: Request, env: Env) => {
   const authHeader = request.headers.get('Authorization')
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -27,10 +27,9 @@ router.use('*', async ({ request, env }: { request: Request; env: Env }, next: (
       headers: { 'Content-Type': 'application/json' }
     })
   }
-  await next()
 })
 
-router.post('/queue', async ({ request, env }: { request: Request; env: Env }) => {
+router.post('/queue', async (request: Request, env: Env) => {
   const body = await request.json() as { input: Record<string, unknown> }
   const { input } = body
   const provider = createProvider({
@@ -44,8 +43,8 @@ router.post('/queue', async ({ request, env }: { request: Request; env: Env }) =
   })
 })
 
-router.get('/task/:id', async ({ request, env, params }: { request: Request; env: Env; params: { id: string } }) => {
-  const { id: taskId } = params
+router.get('/task/:id', async (request: Request & { params: { id: string } }, env: Env) => {
+  const { id: taskId } = request.params
   const provider = createProvider({
     provider: env.PROVIDER_TYPE,
     appName: env.PROVIDER_APP_NAME,

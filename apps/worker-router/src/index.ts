@@ -14,6 +14,6 @@ export interface Env {
 export default {
   async fetch(request: Request, env: Record<string, string>, _ctx: any) {
     const typedEnv: Env = env as unknown as Env
-    return router.handle(request, typedEnv, _ctx)
+    return router.fetch(request, typedEnv, _ctx)
   }
 }
