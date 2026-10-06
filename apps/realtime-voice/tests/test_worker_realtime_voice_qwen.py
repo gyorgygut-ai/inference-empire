@@ -54,7 +54,7 @@ def _audio_b64():
 
 
 def test_do_inference_requested_with_right_args():
-    req = RealtimeVoiceInput(audio=_audio_b64(), voice="GutAI")
+    req = RealtimeVoiceInput(audio=_audio_b64(), voice="test-voice")
     out = shared.do_inference(_models(), req)
     assert isinstance(out, RealtimeVoiceOutput)
     assert out.transcript == "Hello world"
@@ -62,19 +62,19 @@ def test_do_inference_requested_with_right_args():
 
 
 def test_generate_beam_returns_contract():
-    out = beam_mod.generate(_models(), audio=_audio_b64(), voice="GutAI")
+    out = beam_mod.generate(_models(), audio=_audio_b64(), voice="test-voice")
     assert out["transcript"] == "Hello world"
     assert base64.b64decode(out["audio"])
 
 
 def test_generate_modal_returns_contract():
-    out = modal_mod.generate(_models(), audio=_audio_b64(), voice="GutAI")
+    out = modal_mod.generate(_models(), audio=_audio_b64(), voice="test-voice")
     assert out["transcript"] == "Hello world"
 
 
 def test_generate_rejects_missing_audio():
     with pytest.raises(ValidationError):
-        beam_mod.generate(_models(), voice="GutAI")
+        beam_mod.generate(_models(), voice="test-voice")
 
 
 def test_voice_turn_endpoint_returns_contract():
@@ -82,7 +82,7 @@ def test_voice_turn_endpoint_returns_contract():
 
     app = shared.build_app(_models())
     with TestClient(app) as client:
-        res = client.post("/v1/voice:turn", json={"audio": _audio_b64(), "voice": "GutAI"})
+        res = client.post("/v1/voice:turn", json={"audio": _audio_b64(), "voice": "test-voice"})
         assert res.status_code == 200
         assert res.json()["transcript"] == "Hello world"
 
@@ -129,20 +129,23 @@ class _StubBuiltinModel:
         return _StubWav()
 
 
+def test_voice_required():
+    with pytest.raises(ValidationError):
+        RealtimeVoiceInput(audio=_audio_b64())
+
+
 def test_tts_empty_dir_uses_builtin_voice(tmp_path):
-    assert shared.DEFAULT_VOICE == "gyorgy"
-    assert RealtimeVoiceInput(audio=_audio_b64()).voice == "gyorgy"
     tts = shared.ChatterboxTTS(reference_dir=str(tmp_path))
     tts.model = _StubBuiltinModel()
-    pcm = tts.generate("hi", voice="gyorgy")
+    pcm = tts.generate("hi", voice="test-voice")
     assert len(pcm) > 0
     assert tts.model.prompts == [None]
 
 
 def test_tts_unknown_voice_uses_builtin_voice(tmp_path):
-    (tmp_path / "gyorgy.wav").write_bytes(b"RIFFstub")
+    (tmp_path / "test-voice.wav").write_bytes(b"RIFFstub")
     tts = shared.ChatterboxTTS(reference_dir=str(tmp_path))
     tts.model = _StubBuiltinModel()
-    pcm = tts.generate("hi", voice="nope")
+    pcm = tts.generate("hi", voice="unknown-voice")
     assert len(pcm) > 0
     assert tts.model.prompts == [None]

@@ -12,7 +12,6 @@ from pydantic import BaseModel, ConfigDict, Field
 SAMPLE_RATE_IN = 24000
 SAMPLE_RATE_OUT = 24000
 TTS_SR = 24000
-DEFAULT_VOICE = "gyorgy"
 SUPPORTED_LANGUAGES = {"en": "English", "hu": "Hungarian"}
 
 # Single source of truth for ALL provider image pip deps (beam/modal).
@@ -58,7 +57,7 @@ class RealtimeVoiceInput(BaseModel):
     model_config = ConfigDict(title="RealtimeVoiceInput")
     audio: str
     sample_rate: int = Field(default=24000)
-    voice: str = Field(default=DEFAULT_VOICE)
+    voice: str
     language: str = Field(default="en")
 
 
@@ -224,7 +223,7 @@ class ChatterboxTTS:
             return None
         return path
 
-    def generate(self, text: str, voice: str = DEFAULT_VOICE) -> bytes:
+    def generate(self, text: str, voice: str) -> bytes:
         if self.model is None:
             raise RuntimeError("Chatterbox not loaded; call load() first")
         ref = self._voice_path(voice)
@@ -237,7 +236,7 @@ class ChatterboxTTS:
         arr = np.asarray(wav.squeeze().cpu().numpy(), dtype=np.float32)
         return float_to_pcm16(arr)
 
-    def stream(self, text: str, voice: str = DEFAULT_VOICE, cancel=None, chunk_size: int = 4096):
+    def stream(self, text: str, voice: str, cancel=None, chunk_size: int = 4096):
         pcm = self.generate(text, voice=voice)
         for i in range(0, len(pcm), chunk_size):
             if cancel is not None and cancel.is_set():
@@ -282,7 +281,7 @@ def do_inference(models: dict, req: RealtimeVoiceInput) -> RealtimeVoiceOutput:
 
 
 def handle_webrtc_audio(
-    models: dict, sample_rate: int, audio: np.ndarray, voice: str = DEFAULT_VOICE
+    models: dict, sample_rate: int, audio: np.ndarray
 ) -> tuple[int, np.ndarray]:
     """FastRTC ReplyOnPause handler: (sr, ndarray) -> (24k, ndarray)."""
     print(f"[REQ] webrtc sr={sample_rate} n={len(audio)}", flush=True)
@@ -303,7 +302,7 @@ def handle_webrtc_audio(
         req = RealtimeVoiceInput(
             audio=base64.b64encode(pcm24).decode("ascii"),
             sample_rate=SAMPLE_RATE_IN,
-            voice=voice,
+            voice="",
         )
         out = do_inference(models, req)
         reply_pcm = base64.b64decode(out.audio)
@@ -315,7 +314,7 @@ def handle_webrtc_audio(
         raise
 
 
-def build_app(models: dict, default_voice: str = DEFAULT_VOICE):
+def build_app(models: dict):
     """Build FastAPI app with contract POST + headless FastRTC WebRTC mount."""
     from fastapi import FastAPI
 
@@ -323,7 +322,7 @@ def build_app(models: dict, default_voice: str = DEFAULT_VOICE):
 
     @app.get("/")
     def health():
-        return {"status": "ok", "voice": default_voice}
+        return {"status": "ok"}
 
     @app.post("/v1/voice:turn")
     def voice_turn(item: RealtimeVoiceInput):
@@ -334,7 +333,7 @@ def build_app(models: dict, default_voice: str = DEFAULT_VOICE):
 
         def _reply(audio):
             sr, arr = audio
-            return handle_webrtc_audio(models, sr, arr, default_voice)
+            return handle_webrtc_audio(models, sr, arr)
 
         stream = Stream(
             handler=ReplyOnPause(_reply),
