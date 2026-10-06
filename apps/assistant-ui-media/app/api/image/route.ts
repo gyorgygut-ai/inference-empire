@@ -70,19 +70,8 @@ export async function POST(req: Request) {
       { status: 502 },
     );
   }
-  const imgRes = await fetch(presignedUrl);
-  if (!imgRes.ok) {
-    return Response.json(
-      { error: "Failed to fetch generated image" },
-      { status: 502 },
-    );
-  }
-  const mimeType =
-    imgRes.headers.get("content-type")?.split(";")[0] || "image/png";
-  const buffer = Buffer.from(await imgRes.arrayBuffer());
   return Response.json({
-    image: `data:${mimeType};base64,${buffer.toString("base64")}`,
-    mimeType,
+    image: presignedUrl,
     metadata: {},
   });
 }

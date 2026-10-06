@@ -1,25 +1,19 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import type { ImageMessagePart, MessagePartStatus } from "@assistant-ui/react";
-import { Image } from "@/components/assistant-ui/elements/image";
-
-type ImageView = ImageMessagePart & { status: MessagePartStatus };
 
 export default function Home() {
   const [prompt, setPrompt] = useState("A golden retriever wearing a top hat");
-  const [activePrompt, setActivePrompt] = useState("");
-  const [view, setView] = useState<ImageView | null>(null);
+  const [image, setImage] = useState<string | null>(null);
   const [revisedPrompt, setRevisedPrompt] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const generate = useCallback(async (p: string) => {
     setIsGenerating(true);
-    setActivePrompt(p);
     setError(null);
     setRevisedPrompt(null);
-    setView({ type: "image", image: "", status: { type: "running" } });
+    setImage(null);
     try {
       const res = await fetch("/api/image", {
         method: "POST",
@@ -31,21 +25,12 @@ export default function Home() {
         image: string;
         metadata?: { revisedPrompt?: string };
       };
-      setView({
-        type: "image",
-        image: result.image,
-        status: { type: "complete" },
-      });
+      setImage(result.image);
       if (typeof result.metadata?.revisedPrompt === "string") {
         setRevisedPrompt(result.metadata.revisedPrompt);
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
-      setView({
-        type: "image",
-        image: "",
-        status: { type: "incomplete", reason: "error" },
-      });
     } finally {
       setIsGenerating(false);
     }
@@ -57,9 +42,8 @@ export default function Home() {
         <h1 className="text-xl font-semibold">Image Generation</h1>
         <p className="text-muted-foreground text-sm">
           Calls a server route that submits to the Flux2 router worker
-          (<code>POST /queue</code>, poll <code>GET /task/:id</code>) and
-          renders the result with the <code>@assistant-ui/ui</code> Image
-          component.
+          (<code>POST /infer</code>, poll <code>GET /inquire?id=</code>) and
+          renders the result inline.
         </p>
       </header>
 
@@ -91,19 +75,23 @@ export default function Home() {
         </p>
       )}
 
-      {view && (
+      {isGenerating && (
+        <div className="flex items-center justify-center rounded-lg border p-8 text-muted-foreground">
+          Generating…
+        </div>
+      )}
+
+      {image && (
         <div className="space-y-2">
-          <Image {...view} />
+          <img
+            src={image}
+            alt="Generated"
+            className="w-full rounded-lg border object-contain"
+          />
           {revisedPrompt && (
             <p className="text-muted-foreground text-xs">
               <strong>Revised prompt:</strong> {revisedPrompt}
             </p>
-          )}
-          {view.status.type === "complete" && view.image && (
-            <Image.Actions
-              part={view}
-              onRegenerate={() => generate(activePrompt)}
-            />
           )}
         </div>
       )}

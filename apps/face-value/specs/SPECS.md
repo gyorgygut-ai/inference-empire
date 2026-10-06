@@ -24,7 +24,6 @@
 
 - **Server Components**: static shell, outcome prompts server-only. [Server and Client Components](https://nextjs.org/docs/app/getting-started/server-and-client-components)
 - **Server Actions**: reference image submit + Flux call, no API routes. [Server Actions and Mutations](https://nextjs.org/docs/app/building-your-application/data-fetching/server-actions-and-mutations)
-- **In-memory cache**: same reference image + outcome served without re-inference, abuse prevention. [Caching](https://nextjs.org/docs/app/building-your-application/caching)
 - **React Compiler**: zero manual memoization. [React Compiler](https://react.dev/learn/react-compiler)
 
 ### Business Logic

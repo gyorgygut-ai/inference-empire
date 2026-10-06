@@ -54,7 +54,7 @@ export function useImageGeneration(
           })
           return
         }
-        setResult(res.dataUrl)
+        setResult(res.presignedUrl)
         aui.thread.append({
           role: "assistant",
           content: [{ type: "text", text: vocabulary.messages.done }],
