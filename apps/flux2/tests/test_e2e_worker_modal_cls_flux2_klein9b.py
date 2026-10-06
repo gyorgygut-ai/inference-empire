@@ -1,10 +1,9 @@
 import modal
 
-from apps._artifact_check import artifact_exists
 from apps.flux2._shared_flux2_klein9b import Artifact, Flux2Klein9bOutput
 
 
-def test_good_input_returns_contract_and_artifact():
+def test_good_input_returns_contract_and_artifact(artifact_exists):
     Cls = modal.Cls.from_name("flux2-klein9b-worker", "FluxKleinWorker")
     call = Cls().generate.spawn(prompt="a red square", seed=7)
     out = call.get(timeout=600)

@@ -1,8 +1,7 @@
-from apps._artifact_check import artifact_exists
 from apps.krea2._shared_krea2_ref2img import Artifact, Krea2Ref2ImgOutput
 
 
-def test_good_input_returns_contract_and_artifact():
+def test_good_input_returns_contract_and_artifact(artifact_exists):
     import apps.krea2.worker_beam_tq_krea2_ref2img as worker_mod
 
     task = worker_mod.dispatch.put(prompt="a red square", seed=7)

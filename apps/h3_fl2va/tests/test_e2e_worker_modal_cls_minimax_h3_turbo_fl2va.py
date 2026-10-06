@@ -1,10 +1,9 @@
 import modal
 
-from apps._artifact_check import artifact_exists
 from apps.h3_fl2va._shared_minimax_h3_turbo_fl2va import Artifact, MiniMaxH3TurboFl2vaOutput
 
 
-def test_good_input_returns_contract_and_artifact():
+def test_good_input_returns_contract_and_artifact(artifact_exists):
     Cls = modal.Cls.from_name("minimax-h3-turbo-fl2va-worker", "MiniMaxH3TurboFl2vaWorker")
     call = Cls().generate.spawn(prompt="a cat walking in a garden", seed=7)
     out = call.get(timeout=3600)

@@ -1,8 +1,7 @@
-from apps._artifact_check import artifact_exists
 from apps.h3_fl2va._shared_minimax_h3_turbo_fl2va import Artifact, MiniMaxH3TurboFl2vaOutput
 
 
-def test_good_input_returns_contract_and_artifact():
+def test_good_input_returns_contract_and_artifact(artifact_exists):
     import apps.h3_fl2va.worker_beam_tq_minimax_h3_fl2va as worker_mod
 
     task = worker_mod.dispatch.put(prompt="a cat walking in a garden", seed=7)

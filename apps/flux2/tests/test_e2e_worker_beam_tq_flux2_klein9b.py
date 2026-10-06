@@ -1,8 +1,7 @@
-from apps._artifact_check import artifact_exists
 from apps.flux2._shared_flux2_klein9b import Artifact, Flux2Klein9bOutput
 
 
-def test_good_input_returns_contract_and_artifact():
+def test_good_input_returns_contract_and_artifact(artifact_exists):
     import apps.flux2.worker_beam_tq_flux2_klein9b as worker_mod
 
     task = worker_mod.dispatch.put(prompt="a red square", seed=7)

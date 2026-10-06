@@ -1,6 +1,8 @@
 import sys
 import types
+from typing import Any
 
+import httpx
 import pytest
 
 from packages.storage.r2_storage_fake import FakeR2Storage
@@ -9,6 +11,19 @@ from packages.storage.r2_storage_fake import FakeR2Storage
 @pytest.fixture
 def bucket():
     return FakeR2Storage()
+
+
+def _artifact_exists(url: str, timeout: int = 30) -> bool:
+    try:
+        response = httpx.get(url, timeout=timeout)
+        return response.status_code == 200 and len(response.content) > 0
+    except httpx.HTTPError:
+        return False
+
+
+@pytest.fixture
+def artifact_exists():
+    return _artifact_exists
 
 
 class _FluentMeta(type):
@@ -47,7 +62,7 @@ def _task_queue_stub(**kwargs):
 
 
 def _install_beam_stub():
-    mod = types.ModuleType("beam")
+    mod: Any = types.ModuleType("beam")
     mod.Image = _Fluent
     mod.QueueDepthAutoscaler = _Fluent
     mod.Volume = _Fluent
