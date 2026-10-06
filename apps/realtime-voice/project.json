@@ -26,15 +26,33 @@
       "options": { "family": "realtime-voice" },
       "cache": true
     },
+    "verify-deploy-gate": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "uv run python -c \"import importlib.util; spec=importlib.util.spec_from_file_location('m','apps/realtime-voice/_shared_realtime_voice_qwen.py'); m=importlib.util.module_from_spec(spec); spec.loader.exec_module(m); print('\\n'.join(m.IMAGE_PIP_DEPS))\" | uv pip compile --python-version 3.10 -",
+        "cwd": "."
+      },
+      "cache": true
+    },
     "deploy-modal": {
       "executor": "nx:run-commands",
-      "options": { "command": "uv run --locked modal deploy apps/realtime-voice/worker_modal_cls_realtime_voice_qwen.py", "cwd": "." },
-      "cache": false
+      "options": {
+        "command": "PYTHONPATH=\"$PWD\" uv run --locked modal deploy apps/realtime-voice/worker_modal_cls_realtime_voice_qwen.py && node apps/realtime-voice/scripts/modal-output.mjs",
+        "cwd": "."
+      },
+      "dependsOn": ["verify-deploy-gate"],
+      "cache": false,
+      "outputs": ["{workspaceRoot}/dist/apps/realtime-voice"]
     },
     "deploy-beam": {
       "executor": "nx:run-commands",
-      "options": { "command": "echo 'Beam deploys on dispatch.put(); see AGENTS.md'", "cwd": "." },
-      "cache": false
+      "options": {
+        "command": "node apps/realtime-voice/scripts/deploy-beam.mjs",
+        "cwd": "."
+      },
+      "dependsOn": ["verify-deploy-gate"],
+      "cache": false,
+      "outputs": ["{workspaceRoot}/dist/apps/realtime-voice"]
     }
   }
 }

@@ -1,1 +1,21 @@
-{}
+{
+  "input": {
+    "title": "RealtimeVoiceInput",
+    "required": ["audio"],
+    "properties": {
+      "audio": { "type": "string", "description": "Base64 pcm16 mono audio input" },
+      "sample_rate": { "type": "integer", "default": 24000 },
+      "voice": { "type": "string", "default": "GutAI" },
+      "language": { "type": "string", "default": "en" }
+    }
+  },
+  "output": {
+    "title": "RealtimeVoiceOutput",
+    "required": ["audio", "transcript"],
+    "properties": {
+      "audio": { "type": "string", "description": "Base64 pcm16 mono reply audio" },
+      "transcript": { "type": "string" },
+      "sample_rate": { "type": "integer", "default": 24000 }
+    }
+  }
+}
