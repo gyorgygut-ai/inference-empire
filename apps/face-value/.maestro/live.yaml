@@ -5,3 +5,33 @@ url: http://localhost:3000
     visible: "Select an outcome"
     timeout: 10000
 - assertTrue: "document.readyState === 'complete'"
+- tapOn: "Your celebrity selfie"
+- tapOn: "Upload a reference image"
+- addMedia:
+    - "./apps/face-value/01-initial.png"
+- extendedWaitUntil:
+    visible: "Generate"
+    timeout: 5000
+- tapOn: "Generate"
+- extendedWaitUntil:
+    visible: "Generating…"
+    timeout: 5000
+- repeat:
+    times: 10
+    commands:
+      - evalScript: |
+          const ps = Array.from(document.querySelectorAll('p'));
+          output.done = ps.some(p => p.textContent.includes('Done'));
+          output.rejected = ps.some(p => p.textContent.includes('Generation rejected'));
+      - waitForAnimationToEnd:
+          timeout: 3000
+- runFlow:
+    when:
+      true: ${output.done === true}
+    commands:
+      - assertVisible: "Download"
+- runFlow:
+    when:
+      true: ${output.rejected === true}
+    commands:
+      - assertVisible: "Generation rejected"
