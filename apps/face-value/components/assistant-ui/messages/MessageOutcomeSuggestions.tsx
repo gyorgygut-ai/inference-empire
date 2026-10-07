@@ -4,7 +4,7 @@ import { MessagePrimitive } from "@assistant-ui/react";
 import { cn } from "cn";
 import type { PublicOutcome } from "@/outcomes";
 
-export function MessageOutcomeSuggestions({
+export const MessageOutcomeSuggestions = ({
   outcomes,
   onSelect,
   disabled,
@@ -14,7 +14,7 @@ export function MessageOutcomeSuggestions({
   outcomes: PublicOutcome[];
   onSelect: (id: string) => void;
   selectedOutcomeId?: PublicOutcome["id"];
-}) {
+}) => {
   return (
     <MessagePrimitive.Root className="mb-6 animate-in fade-in-50 slide-in-from-bottom-2 duration-400">
       <div

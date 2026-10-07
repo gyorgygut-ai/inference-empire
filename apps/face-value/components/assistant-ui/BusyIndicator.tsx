@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { vocabulary } from "@/messages/vocabulary";
 
 export const BusyIndicator = ({
   label,
@@ -12,11 +11,11 @@ export const BusyIndicator = ({
   labelAfterAWhile: string;
   thresholdMs?: number;
 }) => {
-  const [isBusy, setIsBusy] = useState(false);
+  const [_isBusy, setIsBusy] = useState(false);
   const [showAfterAWhile, setShowAfterAWhile] = useState(false);
 
   useEffect(() => {
-    if (!isBusy) {
+    if (!_isBusy) {
       return;
     }
 

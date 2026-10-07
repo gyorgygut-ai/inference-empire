@@ -1,11 +1,11 @@
 "use client";
 
 import type { MessageState } from "@assistant-ui/react";
+import React from "react";
 import type { PublicOutcome } from "@/outcomes";
 import { ChatPhase } from "./chat";
 import { MessageSelectOutcome } from "./messages/MessageSelectOutcome";
 import { MessageUploadReference } from "./messages/MessageUploadReference";
-import { MessageUploadedReference } from "./messages/MessageUploadedReference";
 import { MessageOutcomeSuggestions } from "./messages/MessageOutcomeSuggestions";
 import { MessageRequestInference } from "./messages/MessageRequestInference";
 import { MessageArtifact } from "./messages/MessageArtifact";

@@ -3,7 +3,7 @@ import { ChatClient } from "@/components/assistant-ui/chat-client";
 
 export const dynamic = "force-dynamic";
 
-export default async function Home() {
+const Home = async () => {
   return (
     <main className="min-h-screen bg-background flex">
       <aside className="hidden md:flex md:w-2/3 bg-sidebar border-r border-border" />
@@ -12,4 +12,6 @@ export default async function Home() {
       </div>
     </main>
   );
-}
+};
+
+export default Home;

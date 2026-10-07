@@ -12,11 +12,11 @@ import { vocabulary } from "@/messages/vocabulary";
 import { cn } from "../../styles/class-names";
 import type { PublicOutcome } from "@/outcomes";
 
-export function UploadComposer({
-  selectedOutcomeId,
+export const UploadComposer = ({
+  _selectedOutcomeId,
 }: {
-  selectedOutcomeId?: PublicOutcome["id"];
-}) {
+  _selectedOutcomeId?: PublicOutcome["id"];
+}) => {
   const aui = useAui();
   const messages = useAuiState((s) => s.thread.messages);
   const attachments = useAuiState((s) => s.thread.composer.attachments);

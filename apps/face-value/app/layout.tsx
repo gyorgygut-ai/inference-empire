@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+import React from "react";
 import "./globals.css"
 
 export const metadata: Metadata = {
@@ -6,10 +7,12 @@ export const metadata: Metadata = {
   description: "AI face transformation",
 }
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+const RootLayout = ({ children }: Readonly<{ children: React.ReactNode }>) => {
   return (
     <html lang="en" className="h-full">
       <body className="h-full">{children}</body>
     </html>
-  )
-}
+  );
+};
+
+export default RootLayout;
