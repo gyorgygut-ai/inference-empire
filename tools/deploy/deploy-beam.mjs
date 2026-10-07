@@ -33,12 +33,20 @@ if (worker.startsWith("worker_beam_tq_")) {
     stdout = execSync(`beam deploy ${handler} --json`, { cwd: root, encoding: "utf-8", maxBuffer: 1024 * 1024 })
   } catch (err) {
     const detail = (err.stdout || err.stderr || "").toString().trim()
-    console.error(`Beam deploy failed: ${detail || err.message}`)
-    process.exit(1)
+    // Check if it's a context error - if so, skip Beam deployment (don't fail the chain)
+    if (detail.includes("Context 'default' does not exist") || detail.includes("Let's try setting it up")) {
+      console.warn("[deploy-beam] Beam context not available, skipping Beam deployment")
+      beam = { url: "", taskApi: "https://api.beam.cloud" }
+    } else {
+      console.error(`Beam deploy failed: ${detail || err.message}`)
+      process.exit(1)
+    }
   }
-  const clean = stdout.replace(/\\u001b\\[[0-9;?]*[A-Za-z]/g, "")
-  const output = JSON.parse(clean.slice(clean.indexOf("{"), clean.lastIndexOf("}") + 1))
-  beam = { url: output.invoke_url, taskApi: "https://api.beam.cloud" }
+  if (stdout) {
+    const clean = stdout.replace(/\\u001b\\[[0-9;?]*[A-Za-z]/g, "")
+    const output = JSON.parse(clean.slice(clean.indexOf("{"), clean.lastIndexOf("}") + 1))
+    beam = { url: output.invoke_url, taskApi: "https://api.beam.cloud" }
+  }
 } else {
   const source = readFileSync(join(familyDir, worker), "utf-8")
   const match = source.match(/name="([^"]+)"/)
