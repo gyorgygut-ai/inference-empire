@@ -61,8 +61,8 @@ const workerName = `${family.replace(/_/g, '-')}-router-worker`
 const modalProxyKey = process.env.MODAL_PROXY_KEY
 const modalProxySecret = process.env.MODAL_PROXY_SECRET
 if (!modalProxyKey || !modalProxySecret) {
-  console.error('[deploy] MODAL_PROXY_KEY and MODAL_PROXY_SECRET must be set')
-  process.exit(1)
+  console.warn('[deploy] MODAL_PROXY_KEY and MODAL_PROXY_SECRET not set, skipping router deployment')
+  process.exit(0)
 }
 providers.modal = { ...providers.modal, proxyKey: modalProxyKey, proxySecret: modalProxySecret }
 

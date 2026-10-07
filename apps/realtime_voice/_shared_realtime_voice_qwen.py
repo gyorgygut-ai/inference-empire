@@ -39,6 +39,7 @@ IMAGE_PIP_DEPS: list[str] = [
     "transformers==5.2.0",
     "torch==2.6.0",
     "torchaudio==2.6.0",
+    "accelerate==1.14.0",
     "bitsandbytes==0.50.2",
     "librosa==0.11.0",
     "diffusers==0.29.0",
@@ -114,16 +115,21 @@ def _patch_torch_dist() -> None:
 
 
 def ensure_whisper_dir(local_dir: str) -> str:
-    """Download faster-whisper-large-v3 into local_dir unless populated."""
+    """Download faster-whisper-large-v3 into local_dir unless complete.
+
+    Completeness is model.bin itself: faster-whisper's HF cache layout nests
+    snapshots, so a non-empty dir is not proof of a loadable model.
+    """
     import os
 
-    if os.path.isdir(local_dir) and any(os.scandir(local_dir)):
+    if os.path.isfile(os.path.join(local_dir, "model.bin")):
         return local_dir
     from faster_whisper import download_model
 
     os.makedirs(local_dir, exist_ok=True)
     print("[INIT] downloading faster-whisper-large-v3", flush=True)
-    return download_model("large-v3", cache_dir=local_dir)
+    download_model("large-v3", output_dir=local_dir)
+    return local_dir
 
 
 def ensure_hf_model(local_dir: str, repo_id: str) -> None:

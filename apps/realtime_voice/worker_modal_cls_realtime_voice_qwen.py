@@ -31,7 +31,9 @@ QWEN_PATH = f"{MODEL_MOUNT}/{QWEN_DIR_NAME}"
 REFERENCE_DIR = f"{MODEL_MOUNT}/{REFERENCE_VOICES_DIR_NAME}"
 
 image = (
-    modal.Image.debian_slim(python_version="3.10")
+    modal.Image.from_registry(
+        "nvidia/cuda:12.1.0-cudnn8-runtime-ubuntu22.04", add_python="3.10"
+    )
     .apt_install("ffmpeg", "libsndfile1")
     .pip_install(*IMAGE_PIP_DEPS)
     .run_commands(f"pip install --no-deps {CHATTERBOX_TTS_NO_DEPS}")

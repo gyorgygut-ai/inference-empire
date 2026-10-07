@@ -17,6 +17,8 @@
     "@assistant-ui/react": "^0.15.18",
     "@assistant-ui/react-ai-sdk": "^1.4.9",
     "@assistant-ui/react-markdown": "^0.14.17",
+    "@inference/worker-router-client": "*",
+    "@tanstack/ai-react": "^0.30.0",
     "assistant-stream": "^0.3.45",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.4.0",
@@ -31,10 +33,9 @@
     "sharp": "^0.34.3",
     "tailwind-merge": "^2.5.2",
     "tw-shimmer": "^0.4.13",
-    "@inference/worker-router-client": "*",
     "zustand": "^5.0.15"
   },
-"devDependencies": {
+  "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^22",
     "@types/ramda": "^0.30.0",

@@ -63,7 +63,7 @@ def generate(models: dict, **kwargs) -> dict:
     image=image,
     volumes=[volume],
     on_start=load_models,
-    gpu="L4",
+    gpu="RTX4090",
     cpu=4,
     memory="32Gi",
     concurrent_requests=1,
