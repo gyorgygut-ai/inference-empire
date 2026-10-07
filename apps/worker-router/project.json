@@ -67,10 +67,31 @@
       "inputs": ["default", "{workspaceRoot}/eslint.config.mjs"],
       "options": {}
     },
-    "deploy": {
+    // Flash disabled temporarily
+    "flux2-deploy": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "nx run worker-router:flux2:deploy && nx run worker-router:krea2:deploy",
+        "command": "node tools/deploy/deploy-modal.mjs --router flux2-router && node tools/deploy/deploy-beam.mjs --router flux2-router && node apps/worker-router/scripts/deploy.mjs --router flux2-router",
+        "cwd": "."
+      },
+      "outputs": ["{workspaceRoot}/dist/apps/flux2/**"],
+      "cache": false
+    },
+    // Flash disabled temporarily
+    "krea2-deploy": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node tools/deploy/deploy-modal.mjs --router krea2-router && node tools/deploy/deploy-beam.mjs --router krea2-router && node apps/worker-router/scripts/deploy.mjs --router krea2-router",
+        "cwd": "."
+      },
+      "outputs": ["{workspaceRoot}/dist/apps/krea2/**"],
+      "cache": false
+    },
+    "deploy": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["flux2-deploy", "krea2-deploy"],
+      "options": {
+        "command": "echo 'worker-router deployment complete'",
         "cwd": "."
       },
       "cache": false

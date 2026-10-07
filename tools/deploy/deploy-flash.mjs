@@ -24,7 +24,7 @@ if (workers.length !== 1) {
 }
 
 const name = family.replace(/_/g, "-")
-const result = spawnSync("flash", ["deploy", "--name", name], { cwd: root, encoding: "utf-8" })
+const result = spawnSync("flash", ["deploy", "--app", name], { cwd: familyDir, encoding: "utf-8" })
 if (result.status !== 0) {
   process.stderr.write(result.stderr || "")
   console.error(`[deploy-flash] flash deploy failed for ${family}`)

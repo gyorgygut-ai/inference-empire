@@ -60,11 +60,10 @@
         "command": "node apps/face-value/scripts/push-router-env.mjs",
         "cwd": "."
       },
-      "dependsOn": ["worker-router:deploy"],
+      "dependsOn": ["worker-router:flux2-deploy", "worker-router:krea2-deploy"],
       "inputs": [
-        {
-          "dependentTasksOutputFiles": "{workspaceRoot}/dist/apps/flux2/**"
-        }
+        "{workspaceRoot}/dist/apps/flux2/**",
+        "{workspaceRoot}/dist/apps/krea2/**"
       ],
       "cache": false
     },

@@ -40,10 +40,24 @@ const providerPath = join(workspaceRoot, 'dist', 'apps', family, 'provider.json'
 const dynamicProviders = existsSync(providerPath) ? JSON.parse(readFileSync(providerPath, 'utf-8')) : {}
 const providers = { ...dynamicProviders, ...(contract.providers || {}) }
 
-const workerName = `${family.replace(/_/g, '-')}-router-worker`
-const authToken = randomUUID()
+// Resolve the token FIRST for idempotency
+const distDir = join(workspaceRoot, 'dist', 'apps', family)
+mkdirSync(distDir, { recursive: true })
 
-// The Worker authenticates to the Modal bridge with a Modal proxy token (wk-/ws- pair).
+const existingContractPath = join(distDir, 'contract.json')
+let authToken
+if (existsSync(existingContractPath)) {
+  const existing = JSON.parse(readFileSync(existingContractPath, 'utf-8'))
+  if (existing.contractName === contractName && JSON.stringify(existing.input) === JSON.stringify(contract.input)) {
+    authToken = readFileSync(join(distDir, '.router-token'), 'utf-8').trim()
+  } else {
+    authToken = randomUUID()
+  }
+} else {
+  authToken = randomUUID()
+}
+
+const workerName = `${family.replace(/_/g, '-')}-router-worker`
 const modalProxyKey = process.env.MODAL_PROXY_KEY
 const modalProxySecret = process.env.MODAL_PROXY_SECRET
 if (!modalProxyKey || !modalProxySecret) {
@@ -83,18 +97,10 @@ try {
     throw new Error(`worker URL not found in wrangler output (full output kept at ${logPath})`)
   }
   workerUrl = match[0]
-  execFileSync(wranglerBin, ['secret', 'put', 'AUTH_TOKEN', '--config', tomlPath], {
-    input: authToken,
-    encoding: 'utf-8',
-    cwd: routerDir,
-    stdio: ['pipe', 'inherit', 'inherit']
-  })
 } finally {
   rmSync(cfgDir, { recursive: true, force: true })
 }
 
-const distDir = join(workspaceRoot, 'dist', 'apps', family)
-mkdirSync(distDir, { recursive: true })
 writeFileSync(join(distDir, 'contract.json'), JSON.stringify({
   workerName,
   workerUrl,

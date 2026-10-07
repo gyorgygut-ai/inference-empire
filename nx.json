@@ -119,20 +119,6 @@
       "continuous": true,
       "cache": false
     },
-    "deploy": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "node apps/worker-router/scripts/deploy.mjs --router {projectName}",
-        "cwd": "."
-      },
-      "dependsOn": [
-        "deploy-modal",
-        "deploy-beam",
-        "deploy-flash",
-        "worker-router:build"
-      ],
-      "cache": false
-    },
     "@nx/js:tsc": {
       "cache": true,
       "dependsOn": [

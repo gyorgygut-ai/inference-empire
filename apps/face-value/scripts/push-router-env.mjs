@@ -7,7 +7,7 @@
  * Exit 0 if Vercel env vars absent (local dev).
  */
 
-import { readFileSync, existsSync } from "node:fs"
+import { readFileSync, writeFileSync, existsSync } from "node:fs"
 import { join } from "node:path"
 import { execSync } from "node:child_process"
 
@@ -53,7 +53,7 @@ const contractPath = join(flux2DistDir, "contract.json")
 const tokenPath = join(flux2DistDir, ".router-token")
 
 if (!existsSync(contractPath) || !existsSync(tokenPath)) {
-  console.error("[push-router-env] flux2 dist files not found; ensure flux2-router:deploy ran first")
+  console.error("[push-router-env] flux2 dist files not found; ensure worker-router:flux2-deploy ran first")
   process.exit(1)
 }
 
@@ -87,18 +87,23 @@ function vercelFetch(path, method = "GET", body = null) {
   return JSON.parse(output)
 }
 
+const syncedTokenPath = join(flux2DistDir, '.vercel-synced-token')
+const syncedToken = existsSync(syncedTokenPath) ? readFileSync(syncedTokenPath, 'utf-8').trim() : null
+
+if (syncedToken === authToken) {
+  console.log(`[push-router-env] Env vars already synced for current router token; skipping Vercel push`)
+  process.exit(0)
+}
+
 try {
-  // Fetch existing envs
   const { envs: existing = [] } = vercelFetch("")
   const existingMap = new Map(existing.map(e => [e.key, e]))
 
   for (const env of envs) {
     const existingEnv = existingMap.get(env.key)
-    // Delete if exists (to change value/sensitivity)
     if (existingEnv) {
       vercelFetch(`/${existingEnv.id}`, "DELETE")
     }
-    // Create new (sensitive: true)
     vercelFetch("", "POST", {
       key: env.key,
       value: env.value,
@@ -107,6 +112,7 @@ try {
     })
     console.log(`[push-router-env] Upserted ${env.key} → Vercel (production+preview)`)
   }
+  writeFileSync(syncedTokenPath, authToken, 'utf-8')
 }
 catch (err) {
   console.error("[push-router-env] Failed to push env vars:", err.message)
