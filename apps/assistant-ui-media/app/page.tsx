@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useState } from "react";
+import { useCallback, useState } from "react";
 
 const Home = () => {
   const [prompt, setPrompt] = useState("A golden retriever wearing a top hat");
