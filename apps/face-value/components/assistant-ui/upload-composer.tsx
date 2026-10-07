@@ -13,9 +13,9 @@ import { cn } from "../../styles/class-names";
 import type { PublicOutcome } from "@/outcomes";
 
 export const UploadComposer = ({
-  _selectedOutcomeId,
+  selectedOutcomeId,
 }: {
-  _selectedOutcomeId?: PublicOutcome["id"];
+  selectedOutcomeId?: PublicOutcome["id"];
 }) => {
   const aui = useAui();
   const messages = useAuiState((s) => s.thread.messages);

@@ -7,12 +7,10 @@ export const metadata: Metadata = {
   description: "AI face transformation",
 }
 
-const RootLayout = ({ children }: Readonly<{ children: React.ReactNode }>) => {
-  return (
-    <html lang="en" className="h-full">
-      <body className="h-full">{children}</body>
-    </html>
-  );
-};
+const RootLayout = ({ children }: Readonly<{ children: React.ReactNode }>) => (
+  <html lang="en" className="h-full">
+    <body className="h-full">{children}</body>
+  </html>
+);
 
 export default RootLayout;

@@ -11,11 +11,11 @@ export const BusyIndicator = ({
   labelAfterAWhile: string;
   thresholdMs?: number;
 }) => {
-  const [_isBusy, setIsBusy] = useState(false);
+  const [isBusy] = useState(false);
   const [showAfterAWhile, setShowAfterAWhile] = useState(false);
 
   useEffect(() => {
-    if (!_isBusy) {
+    if (!isBusy) {
       return;
     }
 

@@ -16,13 +16,13 @@ const Adapter: ChatModelAdapter = {
 
 const attachmentAdapter = new SimpleImageAttachmentAdapter();
 
-export function RuntimeProvider({
+export const RuntimeProvider = ({
   childrenFn,
   suggestions,
 }: {
   childrenFn: () => ReactNode;
   suggestions: { id: string; title: string }[];
-}) {
+}) => {
   const runtime = useLocalRuntime(Adapter, {
     adapters: {
       attachments: attachmentAdapter,
@@ -37,7 +37,7 @@ export function RuntimeProvider({
       <ChildrenFnWrapper fn={childrenFn} />
     </AssistantRuntimeProvider>
   );
-}
+};
 
 function ChildrenFnWrapper({ fn }: { fn: () => ReactNode }) {
   return fn();

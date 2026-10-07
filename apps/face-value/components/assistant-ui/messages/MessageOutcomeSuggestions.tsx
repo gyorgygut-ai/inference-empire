@@ -14,9 +14,8 @@ export const MessageOutcomeSuggestions = ({
   outcomes: PublicOutcome[];
   onSelect: (id: string) => void;
   selectedOutcomeId?: PublicOutcome["id"];
-}) => {
-  return (
-    <MessagePrimitive.Root className="mb-6 animate-in fade-in-50 slide-in-from-bottom-2 duration-400">
+}) => (
+  <MessagePrimitive.Root className="mb-6 animate-in fade-in-50 slide-in-from-bottom-2 duration-400">
       <div
         role="listbox"
         aria-label="Outcomes"
