@@ -61,12 +61,20 @@ def _task_queue_stub(**kwargs):
     return deco
 
 
+def _asgi_stub(**kwargs):
+    def deco(fn):
+        return fn
+
+    return deco
+
+
 def _install_beam_stub():
     mod: Any = types.ModuleType("beam")
     mod.Image = _Fluent
     mod.QueueDepthAutoscaler = _Fluent
     mod.Volume = _Fluent
     mod.task_queue = _task_queue_stub
+    mod.asgi = _asgi_stub
     sys.modules["beam"] = mod
 
 

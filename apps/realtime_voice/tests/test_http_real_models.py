@@ -5,15 +5,16 @@ Run: uv run --locked pytest apps/realtime_voice/tests/test_http_real_models.py -
 from __future__ import annotations
 
 import base64
+
 import numpy as np
 import pytest
 from fastapi.testclient import TestClient
 
 from apps.realtime_voice._shared_realtime_voice_qwen import (
-    RealtimeVoiceInput,
     RealtimeVoiceOutput,
     build_app,
 )
+
 
 def _load_fixture_audio_b64():
     import wave
@@ -29,9 +30,9 @@ def test_http_voice_turn_endpoint_returns_contract():
     """POST /v1/voice:turn with real models returns 200 + valid contract output."""
     try:
         from apps.realtime_voice._shared_realtime_voice_qwen import (
-            WhisperSTT,
-            QwenLLM,
             ChatterboxTTS,
+            QwenLLM,
+            WhisperSTT,
         )
         whisper = WhisperSTT(model_path="openai/whisper-base.en", device="cuda", compute_type="int8")
         whisper.load()

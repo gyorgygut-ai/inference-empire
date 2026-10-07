@@ -5,18 +5,18 @@ Run: uv run --locked pytest apps/realtime_voice/tests/test_full_real_inference.p
 from __future__ import annotations
 
 import base64
+
 import numpy as np
 import pytest
 
 from apps.realtime_voice._shared_realtime_voice_qwen import (
-    RealtimeVoiceInput,
-    RealtimeVoiceOutput,
-    do_inference,
-    WhisperSTT,
-    QwenLLM,
     ChatterboxTTS,
+    QwenLLM,
+    RealtimeVoiceOutput,
+    WhisperSTT,
     float_to_pcm16,
 )
+
 
 def _load_fixture_audio():
     """Load the fixture WAV and return base64-encoded PCM16."""
@@ -67,6 +67,7 @@ def test_full_pipeline_raises_on_empty_transcript():
     """Validate that do_inference raises RuntimeError when STT returns empty text."""
     try:
         import numpy as np
+
         from apps.realtime_voice._shared_realtime_voice_qwen import WhisperSTT
 
         whisper = WhisperSTT(model_path="openai/whisper-base.en", device="cuda", compute_type="int8")

@@ -1,23 +1,28 @@
 from __future__ import annotations
 
-import os
 import threading
-import time
 
 from beam import Image, QueueDepthAutoscaler, Volume, asgi
 
 from apps.realtime_voice._shared_realtime_voice_qwen import (
-    IMAGE_PIP_DEPS,
     CHATTERBOX_TTS_NO_DEPS,
+    IMAGE_PIP_DEPS,
+    QWEN_DIR_NAME,
+    REFERENCE_VOICES_DIR_NAME,
+    WHISPER_DIR_NAME,
     RealtimeVoiceInput,
     build_app,
     do_inference,
 )
+from apps.realtime_voice._shared_realtime_voice_qwen import (
+    load_dependencies as shared_load_dependencies,
+)
 
 VOLUME_NAME = "models"
 MOUNT_PATH = "/volumes/models"
-WHISPER_PATH = f"{MOUNT_PATH}/whisper-fw"
-QWEN_PATH = f"{MOUNT_PATH}/qwen3-4b"
+WHISPER_PATH = f"{MOUNT_PATH}/{WHISPER_DIR_NAME}"
+QWEN_PATH = f"{MOUNT_PATH}/{QWEN_DIR_NAME}"
+REFERENCE_DIR = f"{MOUNT_PATH}/{REFERENCE_VOICES_DIR_NAME}"
 
 image = (
     Image(
@@ -35,50 +40,8 @@ volume = Volume(name=VOLUME_NAME, mount_path=MOUNT_PATH)
 _INFERENCE_LOCK = threading.Lock()
 
 
-def ensure_model(local_dir: str, repo_id: str) -> None:
-    if os.path.isdir(local_dir) and any(os.scandir(local_dir)):
-        return
-    from huggingface_hub import snapshot_download
-
-    os.makedirs(local_dir, exist_ok=True)
-    print(f"[INIT] downloading {repo_id} -> {local_dir}", flush=True)
-    snapshot_download(repo_id=repo_id, local_dir=local_dir, local_dir_use_symlinks=False)
-
-
-def ensure_whisper(local_dir: str) -> str:
-    if os.path.isdir(local_dir) and any(os.scandir(local_dir)):
-        return local_dir
-    from faster_whisper import download_model
-
-    os.makedirs(local_dir, exist_ok=True)
-    print("[INIT] downloading faster-whisper-large-v3", flush=True)
-    return download_model("large-v3", cache_dir=local_dir)
-
-
 def load_models():
-    import torch.distributed as dist
-
-    def _dist_unavailable() -> bool:
-        return False
-
-    setattr(dist, "is_available", _dist_unavailable)
-    import hf_xet  # noqa: F401
-
-    t0 = time.time()
-    try:
-        whisper_dir = ensure_whisper(WHISPER_PATH)
-        ensure_model(QWEN_PATH, "Qwen/Qwen2.5-3B-Instruct")
-        from apps.realtime_voice._shared_realtime_voice_qwen import WhisperSTT, QwenLLM, ChatterboxTTS
-        models = {
-            "stt": WhisperSTT(whisper_dir).load(),
-            "llm": QwenLLM(QWEN_PATH).load(),
-            "tts": ChatterboxTTS().load(),
-        }
-        print(f"[INIT] loaded all models in {time.time() - t0:.1f}s", flush=True)
-        return models
-    except Exception as e:
-        print(f"[ERR] {type(e).__name__}: {e}", flush=True)
-        raise
+    return shared_load_dependencies(WHISPER_PATH, QWEN_PATH, REFERENCE_DIR)
 
 
 def load_dependencies():
@@ -103,7 +66,7 @@ def generate(models: dict, **kwargs) -> dict:
     gpu="L4",
     cpu=4,
     memory="32Gi",
-    concurrent_requests=4,
+    concurrent_requests=1,
     keep_warm_seconds=10,
     timeout=-1,
     authorized=True,

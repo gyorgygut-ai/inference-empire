@@ -2,51 +2,30 @@ from __future__ import annotations
 
 import os
 import threading
-import time
+
 from runpod_flash import Endpoint, GpuGroup
 
 from apps.realtime_voice._shared_realtime_voice_qwen import (
     IMAGE_PIP_DEPS,
+    QWEN_DIR_NAME,
+    WHISPER_DIR_NAME,
     RealtimeVoiceInput,
     do_inference,
-    WhisperSTT,
-    QwenLLM,
-    ChatterboxTTS,
+    handle_webrtc_audio,
+)
+from apps.realtime_voice._shared_realtime_voice_qwen import (
+    load_dependencies as shared_load_dependencies,
 )
 
 HF_HOME = os.getenv("HF_HOME", "/runpod-volume/huggingface-cache")
-WHISPER_PATH = f"{HF_HOME}/whisper-fw"
-QWEN_PATH = f"{HF_HOME}/qwen3-4b"
+WHISPER_PATH = f"{HF_HOME}/{WHISPER_DIR_NAME}"
+QWEN_PATH = f"{HF_HOME}/{QWEN_DIR_NAME}"
 REFERENCE_DIR = "/runpod-volume/models/reference_voices"
 
 
-def _patch_torch_dist() -> None:
-    import torch.distributed as dist
-
-    def _dist_unavailable() -> bool:
-        return False
-
-    setattr(dist, "is_available", _dist_unavailable)
-
-
-def ensure_whisper(local_dir: str) -> str:
-    if os.path.isdir(local_dir) and any(os.scandir(local_dir)):
-        return local_dir
-    from faster_whisper import download_model
-
-    os.makedirs(local_dir, exist_ok=True)
-    print("[INIT] downloading faster-whisper-large-v3", flush=True)
-    return download_model("large-v3", cache_dir=local_dir)
-
-
-def ensure_model(local_dir: str, repo_id: str) -> None:
-    if os.path.isdir(local_dir) and any(os.scandir(local_dir)):
-        return
-    from huggingface_hub import snapshot_download
-
-    os.makedirs(local_dir, exist_ok=True)
-    print(f"[INIT] downloading {repo_id} -> {local_dir}", flush=True)
-    snapshot_download(repo_id=repo_id, local_dir=local_dir, local_dir_use_symlinks=False)
+def load_models() -> dict:
+    """Flash loader: delegates to shared single-source loader."""
+    return shared_load_dependencies(WHISPER_PATH, QWEN_PATH, REFERENCE_DIR)
 
 
 @Endpoint(
@@ -71,21 +50,7 @@ class RealtimeVoiceWorker:
         self._lock = threading.Lock()
 
     def _load_models(self) -> dict:
-        _patch_torch_dist()
-        t0 = time.time()
-        try:
-            whisper_dir = ensure_whisper(WHISPER_PATH)
-            ensure_model(QWEN_PATH, "Qwen/Qwen2.5-3B-Instruct")
-            models = {
-                "stt": WhisperSTT(whisper_dir).load(),
-                "llm": QwenLLM(QWEN_PATH).load(),
-                "tts": ChatterboxTTS(reference_dir=REFERENCE_DIR).load(),
-            }
-            print(f"[INIT] loaded all models in {time.time() - t0:.1f}s", flush=True)
-            return models
-        except Exception as e:
-            print(f"[ERR] load_models failed: {type(e).__name__}: {e}", flush=True)
-            raise
+        return load_models()
 
     def generate(self, **kwargs) -> dict:
         if self._models is None:
@@ -100,3 +65,21 @@ class RealtimeVoiceWorker:
         except Exception as e:
             print(f"[ERR] {type(e).__name__}: {e}", flush=True)
             raise RuntimeError(f"inference failed: {e}") from e
+
+    def generate_webrtc(self, sample_rate: int, audio) -> tuple[int, object]:
+        """WebRTC parity with shared handler (Beam/Modal ASGI path)."""
+        if self._models is None:
+            with self._lock:
+                if self._models is None:
+                    self._models = self._load_models()
+        try:
+            with self._lock:
+                return handle_webrtc_audio(self._models, sample_rate, audio)
+        except Exception as e:
+            print(f"[ERR] {type(e).__name__}: {e}", flush=True)
+            raise RuntimeError(f"inference failed: {e}") from e
+
+
+def load_dependencies() -> dict:
+    """Flash entrypoint alias for test-mocking parity with Beam/Modal."""
+    return load_models()

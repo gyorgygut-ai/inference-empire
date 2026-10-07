@@ -5,10 +5,12 @@ Run: uv run --locked pytest apps/realtime_voice/tests/test_whisper_real_stt.py -
 from __future__ import annotations
 
 import base64
+
 import numpy as np
 import pytest
 
 from apps.realtime_voice._shared_realtime_voice_qwen import WhisperSTT, float_to_pcm16
+
 
 def _load_fixture_b64() -> str:
     import wave

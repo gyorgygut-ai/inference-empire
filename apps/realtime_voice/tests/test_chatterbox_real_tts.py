@@ -8,6 +8,7 @@ import pytest
 
 from apps.realtime_voice._shared_realtime_voice_qwen import ChatterboxTTS
 
+
 def _make_tts():
     tts = ChatterboxTTS(reference_dir="/vol/models/reference_voices")
     tts.load()

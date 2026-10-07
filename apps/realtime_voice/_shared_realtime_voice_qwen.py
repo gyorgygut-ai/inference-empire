@@ -14,6 +14,13 @@ SAMPLE_RATE_OUT = 24000
 TTS_SR = 24000
 SUPPORTED_LANGUAGES = {"en": "English", "hu": "Hungarian"}
 
+# Canonical model identities. Directory names match the repo they cache so
+# volume paths are self-describing (previously qwen3-4b cached 2.5-3B).
+QWEN_REPO_ID = "Qwen/Qwen2.5-3B-Instruct"
+QWEN_DIR_NAME = "qwen25-3b"
+WHISPER_DIR_NAME = "whisper-fw"
+REFERENCE_VOICES_DIR_NAME = "reference_voices"
+
 # Single source of truth for ALL provider image pip deps (beam/modal).
 # Worker files must reference this list, never inline their own pins.
 # chatterbox-tts rides --no-deps (see CHATTERBOX_TTS_NO_DEPS): its
@@ -104,6 +111,48 @@ def _patch_torch_dist() -> None:
         return False
 
     setattr(dist, "is_available", _dist_unavailable)
+
+
+def ensure_whisper_dir(local_dir: str) -> str:
+    """Download faster-whisper-large-v3 into local_dir unless populated."""
+    import os
+
+    if os.path.isdir(local_dir) and any(os.scandir(local_dir)):
+        return local_dir
+    from faster_whisper import download_model
+
+    os.makedirs(local_dir, exist_ok=True)
+    print("[INIT] downloading faster-whisper-large-v3", flush=True)
+    return download_model("large-v3", cache_dir=local_dir)
+
+
+def ensure_hf_model(local_dir: str, repo_id: str) -> None:
+    """Download repo_id into local_dir unless populated."""
+    import os
+
+    if os.path.isdir(local_dir) and any(os.scandir(local_dir)):
+        return
+    from huggingface_hub import snapshot_download
+
+    os.makedirs(local_dir, exist_ok=True)
+    print(f"[INIT] downloading {repo_id} -> {local_dir}", flush=True)
+    snapshot_download(repo_id=repo_id, local_dir=local_dir, local_dir_use_symlinks=False)
+
+
+def _ensure_chatterbox_no_deps() -> None:
+    """Install chatterbox-tts --no-deps at runtime (Flash has no image layer)."""
+    try:
+        import importlib
+
+        importlib.import_module("chatterbox")
+        return
+    except ImportError:
+        pass
+    import subprocess
+    import sys
+
+    print(f"[INIT] installing {CHATTERBOX_TTS_NO_DEPS} --no-deps", flush=True)
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "--no-deps", CHATTERBOX_TTS_NO_DEPS])
 
 
 class WhisperSTT:
@@ -268,6 +317,7 @@ def do_inference(models: dict, req: RealtimeVoiceInput) -> RealtimeVoiceOutput:
         if not transcript:
             raise RuntimeError("empty llm reply")
         pcm_out = b"".join(models["tts"].stream(transcript, req.voice))
+        print("[R2] skip inline-audio (no R2 upload for realtime turn)", flush=True)
         out = RealtimeVoiceOutput(
             audio=base64.b64encode(pcm_out).decode("ascii"),
             transcript=transcript,
@@ -346,7 +396,36 @@ def build_app(models: dict):
     return app
 
 
-def load_dependencies():
-    """Load all dependencies (mocked in unit tests)."""
+def load_dependencies(whisper_path: str | None = None, qwen_path: str | None = None,
+                       reference_dir: str | None = None) -> dict:
+    """Load all dependencies (mocked in unit tests).
+
+    Zero-arg call uses env/defaults so existing tests and Modal web() keep
+    working; providers pass explicit volume paths for clarity.
+    """
+    import os
+
     _patch_torch_dist()
-    return {}
+    try:
+        import hf_xet  # noqa: F401
+    except ImportError:
+        pass
+    t0 = time.time()
+    try:
+        whisper_dir = ensure_whisper_dir(
+            whisper_path or os.getenv("WHISPER_PATH") or f"./{WHISPER_DIR_NAME}"
+        )
+        qwen_dir = qwen_path or os.getenv("QWEN_PATH") or f"./{QWEN_DIR_NAME}"
+        ensure_hf_model(qwen_dir, QWEN_REPO_ID)
+        ref_dir = reference_dir or os.getenv("REFERENCE_VOICES_DIR") or "/volumes/models/reference_voices"
+        _ensure_chatterbox_no_deps()
+        models = {
+            "stt": WhisperSTT(whisper_dir).load(),
+            "llm": QwenLLM(qwen_dir).load(),
+            "tts": ChatterboxTTS(reference_dir=ref_dir).load(),
+        }
+        print(f"[INIT] loaded all models in {time.time() - t0:.1f}s", flush=True)
+        return models
+    except Exception as e:
+        print(f"[ERR] load_models failed: {type(e).__name__}: {e}", flush=True)
+        raise

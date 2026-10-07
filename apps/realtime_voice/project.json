@@ -2,7 +2,7 @@
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "name": "realtime-voice",
   "projectType": "application",
-  "sourceRoot": "apps/realtime-voice",
+  "sourceRoot": "apps/realtime_voice",
   "tags": ["type:app", "scope:worker", "model:realtime-voice"],
   "targets": {
     "build": {
@@ -15,29 +15,29 @@
     },
     "test-unit": {
       "executor": "@inference/workspace-plugin:pytest",
-      "options": { "family": "realtime-voice", "mode": "unit" },
+      "options": { "family": "realtime_voice", "mode": "unit" },
       "inputs": ["default"],
       "cache": true
     },
     "test-e2e": {
       "executor": "@inference/workspace-plugin:pytest",
-      "options": { "family": "realtime-voice", "mode": "e2e" },
+      "options": { "family": "realtime_voice", "mode": "e2e" },
       "cache": false
     },
     "lint": {
       "executor": "@inference/workspace-plugin:ruff",
-      "options": { "family": "realtime-voice" },
+      "options": { "family": "realtime_voice" },
       "cache": true
     },
     "typecheck": {
       "executor": "@inference/workspace-plugin:ty",
-      "options": { "family": "realtime-voice" },
+      "options": { "family": "realtime_voice" },
       "cache": true
     },
     "verify-deploy-gate": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "uv run --python 3.11 python -c \"import importlib.util; spec=importlib.util.spec_from_file_location('m','apps/realtime-voice/_shared_realtime_voice_qwen.py'); m=importlib.util.module_from_spec(spec); spec.loader.exec_module(m); print('\\n'.join(m.IMAGE_PIP_DEPS))\" | uv pip compile --python-version 3.10 --python 3.11 -",
+        "command": "export PATH=\"$(echo \"$PATH\" | tr ':' '\\n' | grep -v 'Versions/2.7' | paste -sd: -)\" && uv run --python 3.11 python -c \"import importlib.util; spec=importlib.util.spec_from_file_location('m','apps/realtime_voice/_shared_realtime_voice_qwen.py'); m=importlib.util.module_from_spec(spec); spec.loader.exec_module(m); print('\\n'.join(m.IMAGE_PIP_DEPS))\" | uv pip compile --python-version 3.10 -",
         "cwd": "."
       },
       "cache": true

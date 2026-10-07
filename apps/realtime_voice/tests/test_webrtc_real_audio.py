@@ -9,14 +9,15 @@ import pytest
 
 from apps.realtime_voice._shared_realtime_voice_qwen import handle_webrtc_audio
 
+
 @pytest.mark.real
 def test_webrtc_handler_real_audio_roundtrip():
     """handle_webrtc_audio with real models returns (24000, non-empty ndarray)."""
     try:
         from apps.realtime_voice._shared_realtime_voice_qwen import (
-            WhisperSTT,
-            QwenLLM,
             ChatterboxTTS,
+            QwenLLM,
+            WhisperSTT,
         )
         whisper = WhisperSTT(model_path="openai/whisper-base.en", device="cuda", compute_type="int8")
         whisper.load()

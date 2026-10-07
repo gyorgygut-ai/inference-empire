@@ -1,18 +1,22 @@
 from __future__ import annotations
 
-import os
 import threading
 from pathlib import Path
 
 import modal
 
 from apps.realtime_voice._shared_realtime_voice_qwen import (
-    IMAGE_PIP_DEPS,
     CHATTERBOX_TTS_NO_DEPS,
+    IMAGE_PIP_DEPS,
+    QWEN_DIR_NAME,
+    REFERENCE_VOICES_DIR_NAME,
+    WHISPER_DIR_NAME,
     RealtimeVoiceInput,
     build_app,
     do_inference,
-    load_dependencies,
+)
+from apps.realtime_voice._shared_realtime_voice_qwen import (
+    load_dependencies as shared_load_dependencies,
 )
 
 app = modal.App("realtime-voice-qwen-worker")
@@ -22,6 +26,9 @@ _INFERENCE_LOCK = threading.Lock()
 dotenv_secret = modal.Secret.from_dotenv(str(Path(__file__).parent.parent.parent / ".env"))
 hf_cache_vol = modal.Volume.from_name("hf-cache", create_if_missing=True)
 MODEL_MOUNT = "/root/.cache/huggingface"
+WHISPER_PATH = f"{MODEL_MOUNT}/{WHISPER_DIR_NAME}"
+QWEN_PATH = f"{MODEL_MOUNT}/{QWEN_DIR_NAME}"
+REFERENCE_DIR = f"{MODEL_MOUNT}/{REFERENCE_VOICES_DIR_NAME}"
 
 image = (
     modal.Image.debian_slim(python_version="3.10")
@@ -57,20 +64,8 @@ def generate(models: dict, **kwargs) -> dict:
 class RealtimeVoiceWorker:
     @modal.enter()
     def load(self):
-        import torch.distributed as dist
-
-        def _dist_unavailable() -> bool:
-            return False
-
-        setattr(dist, "is_available", _dist_unavailable)
-
         print("[INIT] loading realtime-voice-qwen models", flush=True)
-        from apps.realtime_voice._shared_realtime_voice_qwen import WhisperSTT, QwenLLM, ChatterboxTTS
-        self.models = {
-            "stt": WhisperSTT(f"{MODEL_MOUNT}/whisper-fw").load(),
-            "llm": QwenLLM(f"{MODEL_MOUNT}/qwen3-4b").load(),
-            "tts": ChatterboxTTS().load(),
-        }
+        self.models = shared_load_dependencies(WHISPER_PATH, QWEN_PATH, REFERENCE_DIR)
         print("[INIT] models loaded", flush=True)
 
     @modal.method()
@@ -85,15 +80,12 @@ class RealtimeVoiceWorker:
     scaledown_window=60,
     max_containers=1,
 )
-@modal.concurrent(max_inputs=10)
 @modal.asgi_app()
 def web():
-    models = load_dependencies()
-    if not models:
-        from apps.realtime_voice._shared_realtime_voice_qwen import WhisperSTT, QwenLLM, ChatterboxTTS
-        models = {
-            "stt": WhisperSTT(f"{MODEL_MOUNT}/whisper-fw").load(),
-            "llm": QwenLLM(f"{MODEL_MOUNT}/qwen3-4b").load(),
-            "tts": ChatterboxTTS().load(),
-        }
+    models = shared_load_dependencies(WHISPER_PATH, QWEN_PATH, REFERENCE_DIR)
     return build_app(models)
+
+
+def load_dependencies() -> dict:
+    """Modal entrypoint alias for test-mocking parity with Beam/Flash."""
+    return shared_load_dependencies(WHISPER_PATH, QWEN_PATH, REFERENCE_DIR)

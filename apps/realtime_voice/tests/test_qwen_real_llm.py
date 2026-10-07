@@ -8,6 +8,7 @@ import pytest
 
 from apps.realtime_voice._shared_realtime_voice_qwen import QwenLLM
 
+
 def _make_models():
     llm = QwenLLM(model_path="Qwen/Qwen2-0.5B-Instruct", device="cuda", max_new_tokens=32)
     llm.load()
