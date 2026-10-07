@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import React, { useCallback, useState } from "react";
 
-export default function Home() {
+const Home = () => {
   const [prompt, setPrompt] = useState("A golden retriever wearing a top hat");
   const [image, setImage] = useState<string | null>(null);
   const [revisedPrompt, setRevisedPrompt] = useState<string | null>(null);
@@ -20,7 +20,9 @@ export default function Home() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ prompt: p }),
       });
-      if (!res.ok) throw new Error(await res.text());
+      if (!res.ok) {
+        throw new Error(await res.text());
+      }
       const result = (await res.json()) as {
         image: string;
         metadata?: { revisedPrompt?: string };
@@ -97,4 +99,6 @@ export default function Home() {
       )}
     </main>
   );
-}
+};
+
+export default Home;

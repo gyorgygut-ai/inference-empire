@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { MessagePrimitive } from "@assistant-ui/react";
 import { vocabulary } from "@/messages/vocabulary";
 

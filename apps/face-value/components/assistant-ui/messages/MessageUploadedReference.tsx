@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { MessagePrimitive, AttachmentPrimitive } from "@assistant-ui/react";
 
 export const MessageUploadedReference = () => (

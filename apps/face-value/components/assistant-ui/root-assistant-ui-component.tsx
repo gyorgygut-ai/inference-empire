@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import React, { useEffect } from "react";
 import { useAui, useAuiState, ThreadPrimitive } from "@assistant-ui/react";
 import type { PublicOutcome } from "@/outcomes";
 import { useImageGeneration } from "../image-generation/image-generation";
@@ -57,7 +57,7 @@ export const RootAssistantUiComponent = ({
           )}
         </ThreadPrimitive.Messages>
       </ThreadPrimitive.Viewport>
-      <UploadComposer selectedOutcomeId={selectedOutcome?.id} />
+      <UploadComposer _selectedOutcomeId={selectedOutcome?.id} />
     </ThreadPrimitive.Root>
   );
 };

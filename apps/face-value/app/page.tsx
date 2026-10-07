@@ -1,3 +1,4 @@
+import React from "react";
 import { getPublicOutcomes } from "@/outcomes";
 import { ChatClient } from "@/components/assistant-ui/chat-client";
 

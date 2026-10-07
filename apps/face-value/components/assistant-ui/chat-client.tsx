@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { RuntimeProvider } from "./runtime-provider";
 import type { PublicOutcome } from "@/outcomes";
 import { RootAssistantUiComponent } from "./root-assistant-ui-component";

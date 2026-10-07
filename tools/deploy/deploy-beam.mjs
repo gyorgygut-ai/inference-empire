@@ -36,7 +36,7 @@ if (worker.startsWith("worker_beam_tq_")) {
     console.error(`Beam deploy failed: ${detail || err.message}`)
     process.exit(1)
   }
-  const clean = stdout.replace(/\u001b\[[0-9;?]*[A-Za-z]/g, "")
+  const clean = stdout.replace(/\\u001b\\[[0-9;?]*[A-Za-z]/g, "")
   const output = JSON.parse(clean.slice(clean.indexOf("{"), clean.lastIndexOf("}") + 1))
   beam = { url: output.invoke_url, taskApi: "https://api.beam.cloud" }
 } else {

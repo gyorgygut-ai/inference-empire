@@ -9,9 +9,13 @@ function parseSize(size: `${number}x${number}` | undefined): {
   width?: number;
   height?: number;
 } {
-  if (!size) return {};
+  if (!size) {
+    return {};
+  }
   const match = /^(\d+)x(\d+)$/.exec(size);
-  if (!match) return {};
+  if (!match) {
+    return {};
+  }
   return { width: Number(match[1]), height: Number(match[2]) };
 }
 

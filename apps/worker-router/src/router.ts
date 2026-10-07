@@ -60,12 +60,12 @@ router.get('/inquire', async (request: Request, env: Env) => {
   })
 })
 
-router.all('*', async () => {
-  return new Response(JSON.stringify({ error: 'Not Found' }), {
+router.all('*', async () => (
+  new Response(JSON.stringify({ error: 'Not Found' }), {
     status: 404,
     headers: { 'Content-Type': 'application/json' }
   })
-})
+))
 
 function resolveConfig<K extends ProviderName>(name: K, env: Env): ProviderConfigs[K] {
   const providers = JSON.parse(env.PROVIDERS) as ProviderConfigs

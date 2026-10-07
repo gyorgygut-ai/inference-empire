@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import React from "react";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -6,12 +7,12 @@ export const metadata: Metadata = {
   description: "Example using @assistant-ui/react image generation primitives",
 };
 
-export default function RootLayout({
+const RootLayout = ({
   children,
-}: Readonly<{ children: React.ReactNode }>) {
-  return (
-    <html lang="en">
-      <body className="bg-background text-foreground h-dvh">{children}</body>
-    </html>
-  );
-}
+}: Readonly<{ children: React.ReactNode }>) => (
+  <html lang="en">
+    <body className="bg-background text-foreground h-dvh">{children}</body>
+  </html>
+);
+
+export default RootLayout;
