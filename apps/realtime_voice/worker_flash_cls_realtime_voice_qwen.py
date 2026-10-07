@@ -28,6 +28,28 @@ def load_models() -> dict:
     return shared_load_dependencies(WHISPER_PATH, QWEN_PATH, REFERENCE_DIR)
 
 
+def load_dependencies() -> dict:
+    """Flash entrypoint alias for test-mocking parity with Beam/Modal."""
+    return load_models()
+
+
+def generate(models: dict, **kwargs) -> dict:
+    req = RealtimeVoiceInput(**kwargs)
+    try:
+        return do_inference(models, req).model_dump()
+    except Exception as e:
+        print(f"[ERR] {type(e).__name__}: {e}", flush=True)
+        raise RuntimeError(f"inference failed: {e}") from e
+
+
+def generate_webrtc(models: dict, sample_rate: int, audio) -> tuple[int, object]:
+    try:
+        return handle_webrtc_audio(models, sample_rate, audio)
+    except Exception as e:
+        print(f"[ERR] {type(e).__name__}: {e}", flush=True)
+        raise RuntimeError(f"inference failed: {e}") from e
+
+
 @Endpoint(
     name="realtime-voice-qwen-worker",
     gpu=[
@@ -58,13 +80,8 @@ class RealtimeVoiceWorker:
                 if self._models is None:
                     self._models = self._load_models()
 
-        req = RealtimeVoiceInput(**kwargs)
-        try:
-            with self._lock:
-                return do_inference(self._models, req).model_dump()
-        except Exception as e:
-            print(f"[ERR] {type(e).__name__}: {e}", flush=True)
-            raise RuntimeError(f"inference failed: {e}") from e
+        with self._lock:
+            return generate(self._models, **kwargs)
 
     def generate_webrtc(self, sample_rate: int, audio) -> tuple[int, object]:
         """WebRTC parity with shared handler (Beam/Modal ASGI path)."""
@@ -72,14 +89,5 @@ class RealtimeVoiceWorker:
             with self._lock:
                 if self._models is None:
                     self._models = self._load_models()
-        try:
-            with self._lock:
-                return handle_webrtc_audio(self._models, sample_rate, audio)
-        except Exception as e:
-            print(f"[ERR] {type(e).__name__}: {e}", flush=True)
-            raise RuntimeError(f"inference failed: {e}") from e
-
-
-def load_dependencies() -> dict:
-    """Flash entrypoint alias for test-mocking parity with Beam/Modal."""
-    return load_models()
+        with self._lock:
+            return generate_webrtc(self._models, sample_rate, audio)

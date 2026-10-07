@@ -20,6 +20,7 @@ def _load(name, filename):
 shared = _load("rt_shared", "_shared_realtime_voice_qwen.py")
 beam_mod = _load("rt_beam", "worker_beam_asgi_realtime_voice_qwen.py")
 modal_mod = _load("rt_modal", "worker_modal_cls_realtime_voice_qwen.py")
+flash_mod = _load("rt_flash", "worker_flash_cls_realtime_voice_qwen.py")
 
 RealtimeVoiceInput = shared.RealtimeVoiceInput
 RealtimeVoiceOutput = shared.RealtimeVoiceOutput
@@ -72,6 +73,25 @@ def test_generate_modal_returns_contract():
     assert out["transcript"] == "Hello world"
 
 
+def test_generate_flash_returns_contract():
+    out = flash_mod.generate(_models(), audio=_audio_b64(), voice="test-voice")
+    assert out["transcript"] == "Hello world"
+    assert base64.b64decode(out["audio"])
+
+
+def test_generate_flash_rejects_missing_audio():
+    with pytest.raises(ValidationError):
+        flash_mod.generate(_models(), voice="test-voice")
+
+
+def test_generate_webrtc_flash_roundtrip():
+    import numpy as np
+
+    sr, arr = flash_mod.generate_webrtc(_models(), 24000, np.zeros(2400, dtype=np.float32))
+    assert sr == 24000
+    assert len(arr) > 0
+
+
 def test_generate_rejects_missing_audio():
     with pytest.raises(ValidationError):
         beam_mod.generate(_models(), voice="test-voice")
@@ -105,6 +125,8 @@ def test_load_dependencies_mocked(monkeypatch):
     assert beam_mod.load_dependencies() is models
     monkeypatch.setattr(modal_mod, "load_dependencies", fake_load)
     assert modal_mod.load_dependencies() is models
+    monkeypatch.setattr(flash_mod, "load_dependencies", fake_load)
+    assert flash_mod.load_dependencies() is models
 
 
 class _StubWav:

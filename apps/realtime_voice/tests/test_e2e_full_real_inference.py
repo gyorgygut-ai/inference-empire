@@ -27,7 +27,6 @@ def _load_fixture_audio():
     pcm16 = float_to_pcm16(arr)
     return base64.b64encode(pcm16).decode("ascii")
 
-@pytest.mark.real
 def test_full_pipeline_stt_llm_tts_with_fixture():
     """Run complete STT→LLM→TTS pipeline with real models and fixture audio."""
     try:
@@ -62,7 +61,6 @@ def test_full_pipeline_stt_llm_tts_with_fixture():
     except (ValueError, RuntimeError, ModuleNotFoundError) as e:
         pytest.fail(f"Real GPU inference failed: {e}")
 
-@pytest.mark.real
 def test_full_pipeline_raises_on_empty_transcript():
     """Validate that do_inference raises RuntimeError when STT returns empty text."""
     try:

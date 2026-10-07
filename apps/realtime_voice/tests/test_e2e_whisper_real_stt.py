@@ -20,7 +20,6 @@ def _load_fixture_b64() -> str:
     pcm16 = float_to_pcm16(arr)
     return base64.b64encode(pcm16).decode("ascii")
 
-@pytest.mark.real
 def test_whisper_stt_loads_and_runs():
     """Whisper model loads on CUDA and transcribes the fixture audio chunk."""
     try:
@@ -32,7 +31,6 @@ def test_whisper_stt_loads_and_runs():
     except (ValueError, RuntimeError, ModuleNotFoundError) as e:
         pytest.fail(f"Real GPU inference failed: {e}")
 
-@pytest.mark.real
 def test_whisper_stt_returns_string_type():
     """Ensure transcribe() always returns str (never None/crash)."""
     try:

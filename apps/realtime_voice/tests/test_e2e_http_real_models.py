@@ -25,7 +25,6 @@ def _load_fixture_audio_b64():
     pcm16 = float_to_pcm16(arr)
     return base64.b64encode(pcm16).decode("ascii")
 
-@pytest.mark.real
 def test_http_voice_turn_endpoint_returns_contract():
     """POST /v1/voice:turn with real models returns 200 + valid contract output."""
     try:

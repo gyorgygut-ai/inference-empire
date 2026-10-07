@@ -189,19 +189,19 @@ def test_realtime_voice_output_contract_shape():
 def test_voice_field_required_on_input_contract():
     """Voice is a contract-required field."""
     with pytest.raises(ValidationError):
-        RealtimeVoiceInput(audio=_audio_b64())
+        RealtimeVoiceInput(audio=_audio_b64())  # ty: ignore[missing-argument]
 
 
 def test_audio_field_required_on_input_contract():
     """Audio is a contract-required field."""
     with pytest.raises(ValidationError):
-        RealtimeVoiceInput(voice="test-voice")
+        RealtimeVoiceInput(voice="test-voice")  # ty: ignore[missing-argument]
 
 
 def test_transcript_field_required_on_output_contract():
     """Transcript is a contract-required field on output."""
     with pytest.raises(ValidationError):
-        RealtimeVoiceOutput(
+        RealtimeVoiceOutput(  # ty: ignore[missing-argument]
             audio=base64.b64encode(b"\x00" * 80).decode("ascii"),
             sample_rate=24000,
         )
@@ -210,7 +210,7 @@ def test_transcript_field_required_on_output_contract():
 def test_audio_field_required_on_output_contract():
     """Audio is a contract-required field on output."""
     with pytest.raises(ValidationError):
-        RealtimeVoiceOutput(transcript="hello", sample_rate=24000)
+        RealtimeVoiceOutput(transcript="hello", sample_rate=24000)  # ty: ignore[missing-argument]
 
 
 def test_sample_rate_defaults_on_output_contract():

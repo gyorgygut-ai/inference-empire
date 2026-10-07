@@ -14,7 +14,6 @@ def _make_tts():
     tts.load()
     return tts
 
-@pytest.mark.real
 def test_chatterbox_tts_loads_and_generates():
     """Chatterbox model loads on CUDA and generate() returns PCM16 bytes."""
     try:
@@ -25,7 +24,6 @@ def test_chatterbox_tts_loads_and_generates():
     except (ValueError, RuntimeError, ModuleNotFoundError) as e:
         pytest.fail(f"Real GPU inference failed: {e}")
 
-@pytest.mark.real
 def test_chatterbox_tts_returns_valid_pcm():
     """ensure generate() output passes base64 decode sanity check."""
     try:

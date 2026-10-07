@@ -404,6 +404,7 @@ def load_dependencies(whisper_path: str | None = None, qwen_path: str | None = N
     working; providers pass explicit volume paths for clarity.
     """
     import os
+    from pathlib import Path
 
     _patch_torch_dist()
     try:
@@ -418,6 +419,11 @@ def load_dependencies(whisper_path: str | None = None, qwen_path: str | None = N
         qwen_dir = qwen_path or os.getenv("QWEN_PATH") or f"./{QWEN_DIR_NAME}"
         ensure_hf_model(qwen_dir, QWEN_REPO_ID)
         ref_dir = reference_dir or os.getenv("REFERENCE_VOICES_DIR") or "/volumes/models/reference_voices"
+        if not os.path.isdir(ref_dir):
+            bundled = str(Path(__file__).parent / "voices")
+            if os.path.isdir(bundled):
+                print(f"[INIT] reference voices missing at {ref_dir}; using bundled {bundled}", flush=True)
+                ref_dir = bundled
         _ensure_chatterbox_no_deps()
         models = {
             "stt": WhisperSTT(whisper_dir).load(),

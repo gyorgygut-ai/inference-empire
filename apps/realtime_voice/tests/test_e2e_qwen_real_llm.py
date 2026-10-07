@@ -14,7 +14,6 @@ def _make_models():
     llm.load()
     return llm
 
-@pytest.mark.real
 def test_qwen_llm_loads_and_streams():
     """Qwen model loads on CUDA and stream() yields tokens without crash."""
     try:
@@ -27,7 +26,6 @@ def test_qwen_llm_loads_and_streams():
     except (ValueError, RuntimeError, ModuleNotFoundError, StopIteration) as e:
         pytest.fail(f"Real GPU inference failed: {e}")
 
-@pytest.mark.real
 def test_qwen_llm_streams_non_empty():
     """Ensure stream() produces at least one token for a simple prompt."""
     try:
