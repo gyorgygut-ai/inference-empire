@@ -13,9 +13,9 @@ import { cn } from "../../styles/class-names";
 import type { PublicOutcome } from "@/outcomes";
 
 export const UploadComposer = ({
-  selectedOutcomeId,
+  _selectedOutcomeId,
 }: {
-  selectedOutcomeId?: PublicOutcome["id"];
+  _selectedOutcomeId?: PublicOutcome["id"];
 }) => {
   const aui = useAui();
   const messages = useAuiState((s) => s.thread.messages);
@@ -50,8 +50,8 @@ export const UploadComposer = ({
         })}
       >
         <ComposerPrimitive.Attachments>
-          {({ attachment }) => {
-            return attachment.type === "image" ? (
+          {({ attachment }) =>
+            attachment.type === "image" ? (
               <AttachmentPrimitive.Root className="flex items-center gap-2 rounded-lg border p-2 m-2 bg-background">
                 <AttachmentPrimitive.unstable_Thumb className="flex size-10 items-center justify-center overflow-hidden rounded bg-muted text-xs">
                   <ImageIcon className="size-4" />
@@ -63,8 +63,7 @@ export const UploadComposer = ({
                   <XIcon className="size-3" />
                 </AttachmentPrimitive.Remove>
               </AttachmentPrimitive.Root>
-            ) : null;
-          }}
+            ) : null}
         </ComposerPrimitive.Attachments>
         <ComposerPrimitive.AddAttachment
           disabled={!isAttachmentUploadEnabled}
