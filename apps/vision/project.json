@@ -27,6 +27,13 @@
       },
       "cache": false
     },
+    "e2e-sandbox-beam": {
+      "executor": "@inference/workspace-plugin:beam-sandbox-e2e",
+      "options": {
+        "family": "vision"
+      },
+      "cache": false
+    },
     "e2e-real": {
       "executor": "@inference/workspace-plugin:real-e2e",
       "options": {

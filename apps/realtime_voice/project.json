@@ -29,6 +29,11 @@
       "options": { "family": "realtime_voice" },
       "cache": false
     },
+    "e2e-sandbox-beam": {
+      "executor": "@inference/workspace-plugin:beam-sandbox-e2e",
+      "options": { "family": "realtime_voice" },
+      "cache": false
+    },
     "lint": {
       "executor": "@inference/workspace-plugin:ruff",
       "options": { "family": "realtime_voice" },

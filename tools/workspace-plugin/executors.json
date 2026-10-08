@@ -13,7 +13,12 @@
     "sandbox-e2e": {
       "implementation": "./src/executors/sandbox-e2e/sandbox-e2e",
       "schema": "./src/executors/sandbox-e2e/schema.json",
-      "description": "Run a worker family's GPU sandbox turn (no deploy)"
+      "description": "Run a worker family's Modal sandbox turn (no deploy)"
+    },
+    "beam-sandbox-e2e": {
+      "implementation": "./src/executors/beam-sandbox-e2e/beam-sandbox-e2e",
+      "schema": "./src/executors/beam-sandbox-e2e/schema.json",
+      "description": "Run a worker family's Beam sandbox turn (no deploy)"
     },
     "real-e2e": {
       "implementation": "./src/executors/real-e2e/real-e2e",
