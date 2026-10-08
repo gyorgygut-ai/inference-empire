@@ -1,17 +1,16 @@
 "use client";
 
 import { createChatHook } from "@tanstack/ai-react/ui";
-import { clientTools } from "@tanstack/ai-react";
-import { generateImageTool } from "./tools/generate-image-tool";
-import { GenerateImageTool } from "./tools/GenerateImageTool";
 import { ChatLayout } from "./ChatLayout";
 import { ChatMessage } from "./ChatMessage";
+import { TextPart } from "./TextPart";
 import { vocabulary } from "@/messages";
 
 export const { useAppChat, useChatContext } = createChatHook({
   options: {
-    tools: clientTools(generateImageTool),
-    fetcher: async () => new Response(),
+    fetcher: async () => {
+      throw new Error("Append-only chat: no LLM transport");
+    },
     initialMessages: [
       {
         id: "select-outcome",
@@ -24,8 +23,7 @@ export const { useAppChat, useChatContext } = createChatHook({
     layout: ChatLayout,
     message: ChatMessage,
   },
-  partsComponents: {},
-  toolsComponents: {
-    generateImage: GenerateImageTool,
+  partsComponents: {
+    text: TextPart,
   },
 });

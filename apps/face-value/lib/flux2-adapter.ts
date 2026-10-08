@@ -1,14 +1,28 @@
+import "server-only";
+import sharp from "sharp";
 import { BaseImageAdapter, type ImageAdapterConfig } from "@tanstack/ai/adapters";
-import { type ImageGenerationOptions, type ImageGenerationResult } from "@tanstack/ai";
-import { generateImage } from "@/app/actions/generate";
+import type { ImageGenerationOptions, ImageGenerationResult } from "@tanstack/ai";
+import { inferWithPolling } from "@inference/worker-router-client";
+import type { Flux2Klein9BOutput } from "@/app/inference-api/schema";
+import { workerRouterConfig } from "@/app/inference-api/router-config";
 import { getInferenceOutcome } from "@/outcomes/inference-outcomes";
-import { getFlux2FileBlob } from "@/lib/flux2-files-adapter";
-import { randomUUID } from "crypto";
+
+const MAX_SIZE = 512;
+const MAX_BYTES = 5 * 1024 * 1024;
+
+const dataUrlPattern = /^data:([\w/-]+);base64,(.+)$/;
+
+const toBase64 = (value: string): { base64: string; mimeType: string } => {
+  const match = dataUrlPattern.exec(value);
+  if (match) {
+    return { base64: match[2], mimeType: match[1] };
+  }
+  return { base64: value, mimeType: "image/png" };
+};
 
 export class Flux2KleinAdapter extends BaseImageAdapter {
   readonly name = "flux2-klein";
   readonly model = "flux-2-klein" as const;
-  readonly supportsFileSources = true;
 
   constructor(config: ImageAdapterConfig = {}) {
     super("flux-2-klein", config);
@@ -21,45 +35,52 @@ export class Flux2KleinAdapter extends BaseImageAdapter {
       throw new Error("Unknown outcome");
     }
 
-    const imagePart =
-      Array.isArray(options.prompt) ? (options.prompt as any[]).find((p) => p.type === "image") : undefined;
-    const file = await this.resolveReferenceImage(imagePart);
-
-    if (!file) {
+    const parts = Array.isArray(options.prompt) ? options.prompt : [];
+    const imagePart = parts.find((p) => p.type === "image");
+    const source = (imagePart as { source?: { type: string; value?: unknown; mimeType?: string } } | undefined)?.source;
+    if (!source || source.type === "file" || typeof source.value !== "string") {
       throw new Error("Reference image required");
     }
 
-    const response = await generateImage(outcome.id, file);
-
-    if (response.status === "rejected") {
-      throw new Error("Generation rejected");
+    let reference: { base64: string; mimeType: string };
+    if (source.type === "data") {
+      reference = toBase64(source.value);
+    } else if (source.type === "url") {
+      const fetched = await fetch(source.value);
+      const blob = await fetched.blob();
+      if (!blob.type.startsWith("image/") || blob.size > MAX_BYTES) {
+        throw new Error("Reference image rejected");
+      }
+      const buffer = Buffer.from(await blob.arrayBuffer());
+      reference = { base64: buffer.toString("base64"), mimeType: blob.type };
+    } else {
+      throw new Error("Reference image required");
     }
+
+    const resized = await sharp(Buffer.from(reference.base64, "base64"))
+      .resize({ width: MAX_SIZE, height: MAX_SIZE, fit: "inside" })
+      .toBuffer();
+
+    const output = await inferWithPolling<Flux2Klein9BOutput>(
+      {
+        prompt: outcome.prompt,
+        width: outcome.width,
+        height: outcome.height,
+        input_image: resized.toString("base64"),
+      },
+      {
+        baseUrl: workerRouterConfig.baseUrl,
+        token: workerRouterConfig.authToken,
+        pollIntervalMs: 5000,
+        timeoutMs: 60000 * 4,
+      },
+    );
 
     return {
-      id: randomUUID(),
+      id: crypto.randomUUID(),
       model: this.model,
-      images: [{ url: response.presignedUrl }],
+      images: [{ url: output.artifact.presigned_url }],
     };
-  }
-
-  private async resolveReferenceImage(imagePart: any): Promise<File | null> {
-    if (!imagePart?.source) {
-      return null;
-    }
-    if (imagePart.source.type === "file" && typeof imagePart.source.value === "string") {
-      const blob = getFlux2FileBlob(imagePart.source.value);
-      if (!blob) {
-        return null;
-      }
-      return blob instanceof File
-        ? blob
-        : new File([blob], "reference.jpg", { type: blob.type || "image/jpeg" });
-    }
-    if (imagePart.source.type === "data" && typeof imagePart.source.value === "string") {
-      const blob = await (await fetch(imagePart.source.value)).blob();
-      return new File([blob], "reference.jpg", { type: blob.type || "image/jpeg" });
-    }
-    return null;
   }
 }
 

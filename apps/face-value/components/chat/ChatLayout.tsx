@@ -1,12 +1,29 @@
 "use client";
 
 import React from "react";
-import { uploadFile, fileSourceFromHandle } from "@tanstack/ai";
+import { fetchServerSentEvents, useGenerateImage } from "@tanstack/ai-react";
 import { useChatContext } from "./chat-hook";
-import { usePublicOutcomes } from "./outcomes-context";
 import { MessageOutcomeSuggestions } from "./messages/MessageOutcomeSuggestions";
-import { flux2Files } from "@/lib/flux2-files-adapter";
 import { vocabulary } from "@/messages";
+import type { PublicOutcome } from "@/outcomes/outcomes";
+
+type ReferenceImage = { base64: string; mimeType: string };
+
+const readFileAsData = (file: File): Promise<ReferenceImage> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("Reference image unreadable"));
+    reader.onload = () => {
+      const url = String(reader.result ?? "");
+      const match = /^data:([\w/-]+);base64,(.+)$/.exec(url);
+      if (!match) {
+        reject(new Error("Reference image unreadable"));
+        return;
+      }
+      resolve({ base64: match[2], mimeType: match[1] });
+    };
+    reader.readAsDataURL(file);
+  });
 
 const AttachmentUpload = ({ onUpload }: { onUpload: (file: File) => void }) => {
   const inputRef = React.useRef<HTMLInputElement>(null);
@@ -51,93 +68,130 @@ export const ChatLayout = ({ Messages, Interrupts, Queue }: {
 }) => {
   const { messages, append } = useChatContext();
 
-  // Derive phase from messages - NO external state
-  const lastAssistantMsg = [...messages].reverse().find(m => m.role === "assistant");
-  const lastUserMsg = [...messages].reverse().find(m => m.role === "user");
+  const outcomes = ((messages[0]?.metadata as { outcomes?: PublicOutcome[] } | undefined)?.outcomes ?? []);
 
-  const hasGenerateImageToolCall = lastAssistantMsg?.parts?.some(p => p.type === "tool-call" && p.name === "generateImage");
-  const hasGenerateImageResult = lastAssistantMsg?.parts?.some(p => p.type === "tool-result" && p.toolCallId?.includes("generateImage"));
-
-  const showOutcomeSuggestions = lastAssistantMsg?.parts?.some(p =>
-    p.type === "text" && p.content?.includes(vocabulary.messages.selectOutcome)
-  ) && !hasGenerateImageToolCall && !hasGenerateImageResult;
-
-  const showAttachmentPrompt = lastAssistantMsg?.parts?.some(p =>
-    p.type === "text" && p.content?.includes(vocabulary.messages.uploadReference)
-  ) && !hasGenerateImageToolCall && !hasGenerateImageResult && !lastUserMsg?.parts?.some(p => p.type === "image");
-
-  const showRequestInference = lastAssistantMsg?.parts?.some(p =>
-    p.type === "text" && p.content?.includes(vocabulary.messages.requestInference)
-  ) && !hasGenerateImageToolCall && !hasGenerateImageResult;
-
-  // Extract selected outcome from user messages
-  const publicOutcomes = usePublicOutcomes();
   const selectedOutcomeId = [...messages].reverse().reduce<string | undefined>((found, m) => {
     if (found || m.role !== "user") {
       return found;
     }
-    const textPart = m.parts?.find(p => p.type === "text");
+    const textPart = m.parts?.find((p) => p.type === "text");
     const content = (textPart as { content?: string } | undefined)?.content;
-    const match = publicOutcomes.find(
+    const match = outcomes.find(
       (o) => content === vocabulary.messages.userPickedOutcome.replace("{title}", o.title),
     );
     return match?.id ?? found;
   }, undefined);
 
-  const handleOutcomeSelect = (id: string) => {
-    const outcome = publicOutcomes.find((o) => o.id === id);
-    if (!outcome) { return; }
+  const reference = [...messages].reverse().reduce<ReferenceImage | undefined>((found, m) => {
+    if (found || m.role !== "user") {
+      return found;
+    }
+    const imagePart = m.parts?.find((p) => p.type === "image") as
+      | { source?: { type: string; value?: unknown; mimeType?: string } }
+      | undefined;
+    const source = imagePart?.source;
+    if (!source || typeof source.value !== "string") {
+      return found;
+    }
+    if (source.type === "data") {
+      return { base64: source.value, mimeType: source.mimeType ?? "image/png" };
+    }
+    return found;
+  }, undefined);
 
+  const hasResult = messages.some((m) =>
+    m.parts?.some(
+      (p) =>
+        p.type === "text" &&
+        ((p as { content?: string }).content === vocabulary.messages.fulfilled ||
+          (p as { content?: string }).content === vocabulary.messages.rejected),
+    ),
+  );
+
+  const { generate, isLoading } = useGenerateImage({
+    connection: fetchServerSentEvents("/api/image"),
+    onResult: async (result) => {
+      const url = result.images[0]?.url;
+      if (!url) {
+        await append({
+          id: crypto.randomUUID(),
+          role: "assistant",
+          parts: [{ type: "text", content: vocabulary.messages.rejected }],
+        });
+        return;
+      }
+      await append({
+        id: crypto.randomUUID(),
+        role: "assistant",
+        parts: [
+          { type: "text", content: vocabulary.messages.fulfilled },
+          { type: "image", source: { type: "url", value: url } },
+        ],
+      });
+    },
+    onError: async () => {
+      await append({
+        id: crypto.randomUUID(),
+        role: "assistant",
+        parts: [{ type: "text", content: vocabulary.messages.rejected }],
+      });
+    },
+  });
+
+  const showOutcomeSuggestions = !selectedOutcomeId && !hasResult && !isLoading;
+  const showAttachmentPrompt = Boolean(selectedOutcomeId) && !reference && !hasResult && !isLoading;
+  const showRequestInference = Boolean(selectedOutcomeId && reference) && !hasResult && !isLoading;
+
+  const handleOutcomeSelect = async (id: string) => {
+    const outcome = outcomes.find((o) => o.id === id);
+    if (!outcome || isLoading) {
+      return;
+    }
     const content = vocabulary.messages.userPickedOutcome.replace("{title}", outcome.title);
-    append({
+    await append({
+      id: crypto.randomUUID(),
       role: "user",
-      content,
       parts: [{ type: "text", content }],
     });
-    append({
+    await append({
+      id: crypto.randomUUID(),
       role: "assistant",
-      content: vocabulary.messages.uploadReference,
       parts: [{ type: "text", content: vocabulary.messages.uploadReference }],
     });
   };
 
   const handleImageUpload = async (file: File) => {
-    const handle = await uploadFile({ adapter: flux2Files, input: file });
-    append({
+    if (isLoading) {
+      return;
+    }
+    const data = await readFileAsData(file);
+    await append({
+      id: crypto.randomUUID(),
       role: "user",
-      content: file.name,
-      parts: [{ type: "image", source: fileSourceFromHandle(handle) }],
+      parts: [{ type: "image", source: { type: "data", value: data.base64, mimeType: data.mimeType } }],
     });
-    append({
+    await append({
+      id: crypto.randomUUID(),
       role: "assistant",
-      content: vocabulary.messages.requestInference,
       parts: [{ type: "text", content: vocabulary.messages.requestInference }],
     });
   };
 
-  const handleRequestInference = () => {
-    if (!selectedOutcomeId) { return { }; }
-    const imagePart = lastUserMsg?.parts?.find(p => p.type === "image");
-    const referenceFileId = imagePart?.source?.type === "file" ? imagePart.source.value : null;
-    if (!referenceFileId) { return { }; }
-    const outcome = publicOutcomes.find((o) => o.id === selectedOutcomeId);
-    if (!outcome) { return { }; }
-
-    append({
+  const handleRequestInference = async () => {
+    if (!selectedOutcomeId || !reference || isLoading) {
+      return;
+    }
+    await append({
+      id: crypto.randomUUID(),
       role: "assistant",
-      content: "",
-      parts: [{
-        type: "tool-call",
-        name: "generateImage",
-        id: crypto.randomUUID(),
-        state: "awaiting-input",
-        arguments: JSON.stringify({
-          outcomeId: selectedOutcomeId,
-          referenceFileId,
-          width: outcome.width,
-          height: outcome.height,
-        }),
-      }],
+      parts: [{ type: "text", content: vocabulary.messages.working }],
+    });
+    await generate({
+      prompt: [
+        { type: "text", content: selectedOutcomeId },
+        { type: "image", source: { type: "data", value: reference.base64, mimeType: reference.mimeType } },
+      ],
+      modelOptions: { outcomeId: selectedOutcomeId },
     });
   };
 
@@ -147,9 +201,9 @@ export const ChatLayout = ({ Messages, Interrupts, Queue }: {
 
       {showOutcomeSuggestions && (
         <MessageOutcomeSuggestions
-          outcomes={publicOutcomes}
+          outcomes={outcomes}
           onSelect={handleOutcomeSelect}
-          disabled={false}
+          disabled={isLoading}
         />
       )}
 
@@ -161,7 +215,7 @@ export const ChatLayout = ({ Messages, Interrupts, Queue }: {
         </div>
       )}
 
-      {showRequestInference && selectedOutcomeId && (
+      {showRequestInference && (
         <div className="animate-in fade-in-50 slide-in-from-bottom-2 duration-300">
           <button
             type="button"
