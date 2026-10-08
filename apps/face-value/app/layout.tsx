@@ -1,10 +1,10 @@
-import type { Metadata } from "next"
 import React from "react"
+import { vocabulary } from "@/messages/vocabulary"
 import "./globals.css"
 
-export const metadata: Metadata = {
-  title: "Face Value",
-  description: "AI face transformation",
+export const metadata = {
+  title: vocabulary.meta.name,
+  description: vocabulary.meta.description,
   icons: {
     icon: [
       { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
@@ -14,6 +14,10 @@ export const metadata: Metadata = {
     apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
     other: [{ url: "/site.webmanifest", type: "application/manifest+json" }],
   },
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#000000" },
+  ],
 }
 
 const RootLayout = ({ children }: Readonly<{ children: React.ReactNode }>) => (

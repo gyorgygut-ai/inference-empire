@@ -1,4 +1,8 @@
 export const vocabulary = {
+  meta: {
+    name: "Face Value",
+    description: "AI face transformation",
+  },
   messages: {
     selectOutcome: "Select an outcome.",
     uploadReference: "Upload your photo...",

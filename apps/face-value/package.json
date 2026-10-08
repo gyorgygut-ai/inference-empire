@@ -2,12 +2,14 @@
   "name": "face-value",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "engines": {
     "node": ">=22"
   },
   "scripts": {
-    "dev": "next dev",
-    "build": "NODE_ENV=production next build",
+    "build:manifest": "node --experimental-strip-types scripts/generate-manifest.mjs",
+    "dev": "npm run build:manifest && next dev",
+    "build": "npm run build:manifest && NODE_ENV=production next build",
     "start": "next start",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
