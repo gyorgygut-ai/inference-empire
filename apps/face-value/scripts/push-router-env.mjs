@@ -110,11 +110,11 @@ try {
       type: "encrypted",
       target: ["production", "preview"],
     })
-    console.log(`[push-router-env] Upserted ${env.key} → Vercel (production+preview)`)
+    process.stdout.write(`[push-router-env] Upserted ${env.key} → Vercel (production+preview)\n`)
   }
   writeFileSync(syncedTokenPath, authToken, 'utf-8')
 }
 catch (err) {
-  console.error("[push-router-env] Failed to push env vars:", err.message)
+  process.stderr.write("[push-router-env] Failed to push env vars: " + err.message + "\n")
   process.exit(1)
 }
