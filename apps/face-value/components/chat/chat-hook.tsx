@@ -14,6 +14,7 @@ export const { useAppChat, useChatContext } = createChatHook({
     layout: ChatLayout,
     message: ChatMessage,
   },
+  partsComponents: {},
   toolsComponents: {
     generateImage: GenerateImageTool,
   },

@@ -18,8 +18,9 @@ export class Flux2KleinAdapter extends BaseImageAdapter {
     if (typeof options.prompt === "string") {
       prompt = options.prompt;
     } else if (Array.isArray(options.prompt)) {
-      const textPart = options.prompt.find((p: any) => p.type === "text");
-      const imagePart = options.prompt.find((p: any) => p.type === "image");
+      const parts = options.prompt as any[];
+      const textPart = parts.find((p) => p.type === "text");
+      const imagePart = parts.find((p) => p.type === "image");
       prompt = textPart?.content || "";
       referenceImage = imagePart?.source?.value;
     }
@@ -38,6 +39,8 @@ export class Flux2KleinAdapter extends BaseImageAdapter {
     }
 
     return {
+      id: crypto.randomUUID(),
+      model: this.model,
       images: [{ url: response.presignedUrl }],
     };
   }
