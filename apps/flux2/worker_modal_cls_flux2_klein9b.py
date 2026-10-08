@@ -15,7 +15,7 @@ from apps.flux2._shared_flux2_klein9b import (
 from packages.modal_bridge import attach_bridge
 
 if TYPE_CHECKING:
-    from packages.storage.storage import Storage
+    from packages.shared_gpu.artifacts.storage import Storage
 
 app = modal.App("flux2-klein9b-worker")
 

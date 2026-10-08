@@ -13,7 +13,7 @@ from packages.media.validation import validate_image_b64
 if TYPE_CHECKING:
     from diffusers import Flux2KleinPipeline
 
-    from packages.storage.storage import Storage
+    from packages.shared_gpu.artifacts.storage import Storage
 
 MODEL_ID = "Disty0/FLUX.2-klein-9B-SDNQ-4bit-dynamic-svd-r32"
 _MAX_WIDTH = 2560
@@ -193,7 +193,7 @@ def pipe_factory() -> Flux2KleinPipeline:
 
 def load_dependencies():
     """Load all dependencies for flux2-klein9b worker."""
-    from packages.storage.r2_storage import R2Storage
+    from packages.shared_gpu.artifacts.r2_storage import R2Storage
 
     storage = R2Storage()
     return storage, pipe_factory(), _TorchModuleService()

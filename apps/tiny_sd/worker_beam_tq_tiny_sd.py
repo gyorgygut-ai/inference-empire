@@ -13,7 +13,7 @@ from apps.tiny_sd._shared_tiny_sd import (
 )
 
 if TYPE_CHECKING:
-    from packages.storage.storage import Storage
+    from packages.shared_gpu.artifacts.storage import Storage
 
 
 CACHE_PATH = "./hf-cache"

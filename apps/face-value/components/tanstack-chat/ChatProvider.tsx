@@ -4,7 +4,7 @@ import React, { useContext, useState, useCallback, useEffect } from "react";
 import { useChat } from "@tanstack/ai-react";
 import type { PublicOutcome } from "@/outcomes";
 import { vocabulary } from "@/messages/vocabulary";
-import { ChatPhase } from "../assistant-ui/chat";
+import { ChatPhase } from "../chat/chat";
 import { generateImage } from "@/app/actions/generate";
 
 interface ChatContextValue {

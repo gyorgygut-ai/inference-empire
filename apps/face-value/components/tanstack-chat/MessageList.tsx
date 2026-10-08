@@ -1,12 +1,12 @@
 "use client";
 
 import React from "react";
-import { MessageSelectOutcome } from "../assistant-ui/messages/MessageSelectOutcome";
-import { MessageUploadReference } from "../assistant-ui/messages/MessageUploadReference";
-import { MessageOutcomeSuggestions } from "../assistant-ui/messages/MessageOutcomeSuggestions";
-import { MessageRequestInference } from "../assistant-ui/messages/MessageRequestInference";
-import { MessageArtifact } from "../assistant-ui/messages/MessageArtifact";
-import { ChatPhase } from "../assistant-ui/chat";
+import { MessageSelectOutcome } from "../chat/messages/MessageSelectOutcome";
+import { MessageUploadReference } from "../chat/messages/MessageUploadReference";
+import { MessageOutcomeSuggestions } from "../chat/messages/MessageOutcomeSuggestions";
+import { MessageRequestInference } from "../chat/messages/MessageRequestInference";
+import { MessageArtifact } from "../chat/messages/MessageArtifact";
+import { ChatPhase } from "../chat/chat";
 import { useChatContext } from "./ChatProvider";
 
 export const MessageList = () => {

@@ -14,7 +14,7 @@ from apps.h3_fl2va._shared_minimax_h3_turbo_fl2va import (
 from packages.modal_bridge import attach_bridge
 
 if TYPE_CHECKING:
-    from packages.storage.storage import Storage
+    from packages.shared_gpu.artifacts.storage import Storage
 
 app = modal.App("minimax-h3-fl2va-worker")
 

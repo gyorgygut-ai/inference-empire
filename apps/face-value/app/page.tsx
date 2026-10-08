@@ -1,6 +1,6 @@
 import React from "react";
 import { getPublicOutcomes } from "@/outcomes";
-import { ChatClient } from "@/components/assistant-ui/chat-client";
+import { ChatClient } from "@/components/chat/chat-client";
 
 export const dynamic = "force-dynamic";
 

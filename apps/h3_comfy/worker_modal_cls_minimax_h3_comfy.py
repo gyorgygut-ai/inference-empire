@@ -15,10 +15,10 @@ from apps.h3_comfy._shared_minimax_h3_comfy import (
     do_inference,
 )
 from packages.modal_bridge import attach_bridge
-from packages.storage.r2_storage import R2Storage
+from packages.shared_gpu.artifacts.r2_storage import R2Storage
 
 if TYPE_CHECKING:
-    from packages.storage.storage import Storage
+    from packages.shared_gpu.artifacts.storage import Storage
 
 app = modal.App("minimax-h3-comfy-worker")
 

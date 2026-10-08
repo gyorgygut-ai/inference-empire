@@ -15,7 +15,7 @@ from apps.tiny_sd._shared_tiny_sd import (
 from packages.modal_bridge import attach_bridge
 
 if TYPE_CHECKING:
-    from packages.storage.storage import Storage
+    from packages.shared_gpu.artifacts.storage import Storage
 
 
 app = modal.App("tiny-sd-worker")

@@ -2,11 +2,11 @@ url: http://localhost:3000
 ---
 - launchApp
 - extendedWaitUntil:
-    visible: "Select an outcome to transform your face"
+    visible: "Select an outcome."
     timeout: 10000
 - assertTrue: "document.readyState === 'complete'"
 - tapOn: "Your celebrity selfie"
-- tapOn: "Upload a reference image"
+- tapOn: "Upload your photo..."
 - evalScript: |
     const input = document.querySelector('input[type="file"]');
     const dataTransfer = new DataTransfer();
@@ -15,19 +15,19 @@ url: http://localhost:3000
     input.files = dataTransfer.files;
     input.dispatchEvent(new Event('change', { bubbles: true }));
 - extendedWaitUntil:
-    visible: "Generate"
+    visible: "Let's do this!"
     timeout: 5000
-- tapOn: "Generate"
+- tapOn: "Let's do this!"
 - extendedWaitUntil:
-    visible: "Generating…"
+    visible: "Working on it..."
     timeout: 5000
 - repeat:
     times: 10
     commands:
       - evalScript: |
           const ps = Array.from(document.querySelectorAll('p'));
-          output.done = ps.some(p => p.textContent.includes('Done'));
-          output.rejected = ps.some(p => p.textContent.includes('Generation rejected'));
+          output.done = ps.some(p => p.textContent.includes('Done!'));
+          output.rejected = ps.some(p => p.textContent.includes('The server rejected this request'));
       - waitForAnimationToEnd:
           timeout: 3000
 - runFlow:
@@ -39,4 +39,4 @@ url: http://localhost:3000
     when:
       true: ${output.rejected === true}
     commands:
-      - assertVisible: "Generation rejected"
+      - assertVisible: "The server rejected this request"

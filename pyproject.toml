@@ -42,7 +42,10 @@ test = [
 
 [tool.setuptools.packages.find]
 where = [".", "workers"]
-include = ["workers*", "apps*", "apps.*", "packages.media", "packages.storage"]
+include = ["workers*", "apps*", "apps.*", "packages.media", "packages.shared_gpu.artifacts"]
+
+[tool.setuptools.package-dir]
+"packages.shared_gpu" = "packages/shared-gpu"
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
@@ -55,6 +58,7 @@ markers = [
 [tool.ruff]
 line-length = 100
 target-version = "py311"
+exclude = ["packages/shared-gpu"]
 
 [tool.ruff.lint]
 select = ["F", "E1", "E4", "E7", "W", "I", "N", "UP", "ARG", "RET", "PLC", "PLE", "TC", "PTH", "PERF", "RUF"]
@@ -96,7 +100,7 @@ unresolved-attribute = "ignore"
 not-iterable = "ignore"
 
 [[tool.ty.overrides]]
-include = ["apps/**/_shared_*.py", "packages/media/**/*.py", "packages/storage/**/*.py", "tools/seed-volumes/seed-volumes.py"]
+include = ["apps/**/_shared_*.py", "packages/media/**/*.py", "packages/shared_gpu/artifacts/**/*.py", "tools/seed-volumes/seed-volumes.py"]
 
 [tool.ty.overrides.rules]
 invalid-assignment = "ignore"

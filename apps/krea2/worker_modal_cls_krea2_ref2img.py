@@ -16,7 +16,7 @@ from apps.krea2._shared_krea2_ref2img import (
 from packages.modal_bridge import attach_bridge
 
 if TYPE_CHECKING:
-    from packages.storage.storage import Storage
+    from packages.shared_gpu.artifacts.storage import Storage
 
 app = modal.App("krea2-ref2img-worker")
 

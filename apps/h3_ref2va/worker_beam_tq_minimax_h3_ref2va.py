@@ -10,10 +10,10 @@ from apps.h3_ref2va._shared_minimax_h3_turbo_ref2va import (
     do_inference,
     load_dependencies,
 )
-from packages.storage.r2_storage import R2Storage
+from packages.shared_gpu.artifacts.r2_storage import R2Storage
 
 if TYPE_CHECKING:
-    from packages.storage.storage import Storage
+    from packages.shared_gpu.artifacts.storage import Storage
 
 
 CACHE_PATH = "./hf-cache"

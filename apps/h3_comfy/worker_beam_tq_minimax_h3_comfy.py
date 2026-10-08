@@ -11,10 +11,10 @@ import requests
 from beam import Image, QueueDepthAutoscaler, Volume, task_queue
 
 from apps.h3_comfy._shared_minimax_h3_comfy import MiniMaxH3ComfyInput, apply_torch_shims, do_inference
-from packages.storage.r2_storage import R2Storage
+from packages.shared_gpu.artifacts.r2_storage import R2Storage
 
 if TYPE_CHECKING:
-    from packages.storage.storage import Storage
+    from packages.shared_gpu.artifacts.storage import Storage
 
 
 CACHE_PATH = "./hf-cache"

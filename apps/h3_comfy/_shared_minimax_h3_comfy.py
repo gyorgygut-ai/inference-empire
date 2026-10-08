@@ -11,7 +11,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, field_validat
 from packages.media.validation import validate_image_b64
 
 if TYPE_CHECKING:
-    from packages.storage.storage import Storage
+    from packages.shared_gpu.artifacts.storage import Storage
 
 MODEL_FILES = {
     "unet_name": "minimax_h3_fl2va_pruned_int8_convrot.safetensors",

@@ -3,7 +3,7 @@ import os
 import boto3
 from botocore.config import Config
 
-from packages.storage.storage import Storage
+from packages.shared_gpu.artifacts.storage import Storage
 
 
 class R2Storage(Storage):

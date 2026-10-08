@@ -14,7 +14,7 @@ from packages.media.validation import validate_image_b64
 if TYPE_CHECKING:
     from diffusers import DiffusionPipeline
 
-    from packages.storage.storage import Storage
+    from packages.shared_gpu.artifacts.storage import Storage
 
 MODEL_REPO = "krea/Krea-2-Turbo"
 REID_REPO = "yijunwang2/krea2-reid"
@@ -275,7 +275,7 @@ def pipe_factory(cache_dir=None) -> DiffusionPipeline:
 
 def load_dependencies(cache_dir=None):
     """Load all dependencies for krea2-ref2img worker."""
-    from packages.storage.r2_storage import R2Storage
+    from packages.shared_gpu.artifacts.r2_storage import R2Storage
 
     storage = R2Storage()
     pipe, runtime_dir, _ = load_pipeline(cache_dir=cache_dir)

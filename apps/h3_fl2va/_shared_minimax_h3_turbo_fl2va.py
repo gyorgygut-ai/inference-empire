@@ -13,7 +13,7 @@ from packages.media.validation import validate_image_b64
 
 if TYPE_CHECKING:
 
-    from packages.storage.storage import Storage
+    from packages.shared_gpu.artifacts.storage import Storage
 
 BASE_REPO = "MiniMax/MiniMax-H3"
 TEXT_ENCODER = "FL2VA/text_encoder/model*.safetensors"
@@ -239,7 +239,7 @@ def pipe_factory():
     return load_pipeline()[0]
 
 def load_dependencies(cache_dir=None):
-    from packages.storage.r2_storage import R2Storage
+    from packages.shared_gpu.artifacts.r2_storage import R2Storage
 
     storage = R2Storage()
     return storage, pipe_factory(), _WriteVideoAudioService()

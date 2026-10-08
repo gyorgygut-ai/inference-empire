@@ -1,4 +1,4 @@
-from packages.storage.storage import Storage
+from packages.shared_gpu.artifacts.storage import Storage
 
 
 class FakeR2Storage(Storage):

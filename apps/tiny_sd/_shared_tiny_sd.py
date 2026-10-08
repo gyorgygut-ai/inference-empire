@@ -10,7 +10,7 @@ from pydantic import BaseModel, ConfigDict, Field
 if TYPE_CHECKING:
     from diffusers import StableDiffusionPipeline
 
-    from packages.storage.storage import Storage
+    from packages.shared_gpu.artifacts.storage import Storage
 
 MODEL_ID = "segmind/tiny-sd"
 _MAX_WIDTH = 1024
@@ -139,7 +139,7 @@ def pipe_factory() -> StableDiffusionPipeline:
 
 def load_dependencies():
     """Load all dependencies for tiny-sd worker."""
-    from packages.storage.r2_storage import R2Storage
+    from packages.shared_gpu.artifacts.r2_storage import R2Storage
 
     storage = R2Storage()
     return storage, pipe_factory(), _TorchModuleService()
