@@ -1,5 +1,5 @@
 import React from "react"
-import { vocabulary } from "@/messages/vocabulary"
+import { vocabulary } from "@/messages"
 import "./globals.css"
 
 export const metadata = {

@@ -2,7 +2,7 @@
 
 import { useGenerateImage, fetchServerSentEvents } from "@tanstack/ai-react";
 import { useRef, useState, useEffect } from "react";
-import { vocabulary } from "@/messages/vocabulary";
+import { vocabulary } from "@/messages";
 
 export function GenerateImageTool({ part, result, interrupt }: any) {
   const { generate, isLoading, error } = useGenerateImage({

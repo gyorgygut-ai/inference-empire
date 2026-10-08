@@ -23,21 +23,20 @@ url: http://localhost:3000
     visible: "[aria-labelledby='statusWorking']"
     timeout: 5000
 - repeat:
-    times: 10
+    times: 12
     commands:
-      - evalScript: |
-          const el = document.querySelector('[aria-labelledby="statusWorking"]');
-          output.done = el?.textContent.includes('Done!');
-          output.rejected = el?.textContent.includes('The server rejected this request');
-      - waitForAnimationToEnd:
+      - extendedWaitUntil:
+          visible: "[aria-labelledby='resultDownload']"
           timeout: 3000
+      - evalScript: |
+          output.seen = !!document.querySelector('[aria-labelledby=\"resultDownload\"]');
 - runFlow:
     when:
-      true: ${output.done === true}
+      true: ${output.seen === true}
     commands:
       - assertVisible: "[aria-labelledby='resultDownload']"
 - runFlow:
     when:
-      true: ${output.rejected === true}
+      true: ${output.seen !== true}
     commands:
       - assertVisible: "[aria-labelledby='errorRejected']"

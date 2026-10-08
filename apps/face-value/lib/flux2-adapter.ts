@@ -1,4 +1,5 @@
 import { BaseImageAdapter, type ImageAdapterConfig } from "@tanstack/ai/adapters";
+import { type ImageGenerationOptions, type ImageGenerationResult } from "@tanstack/ai";
 import { generateImage } from "@/app/actions/generate";
 
 export class Flux2KleinAdapter extends BaseImageAdapter {
@@ -10,7 +11,7 @@ export class Flux2KleinAdapter extends BaseImageAdapter {
     super("flux-2-klein", config);
   }
 
-  async generateImages(options: any): Promise<any> {
+  async generateImages(options: ImageGenerationOptions): Promise<ImageGenerationResult> {
     let prompt = "";
     let referenceImage: string | undefined;
 

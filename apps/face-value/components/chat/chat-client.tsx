@@ -11,7 +11,6 @@ export const ChatClient = () => {
     chat.append({
       role: "assistant",
       content: "Select an outcome.",
-      parts: [{ type: "text", content: "Select an outcome." }],
     });
   }, []);
 

@@ -4,7 +4,7 @@ import React from "react";
 import { useChatContext } from "./chat-hook";
 import { MessageOutcomeSuggestions } from "./messages/MessageOutcomeSuggestions";
 import { getPublicOutcomes, getInferenceOutcome } from "@/outcomes";
-import { vocabulary } from "@/messages/vocabulary";
+import { vocabulary } from "@/messages";
 
 export function ChatLayout({ Messages, Interrupts, Queue }: {
   Messages: React.ComponentType;
@@ -33,7 +33,8 @@ export function ChatLayout({ Messages, Interrupts, Queue }: {
   ) && !hasGenerateImageToolCall && !hasGenerateImageResult;
 
   // Extract selected outcome from messages
-  const selectedOutcomeId = lastAssistantMsg?.parts?.find(p => p.type === "tool-call" && p.name === "generateImage")?.input?.outcomeId;
+  const toolCallPart = lastAssistantMsg?.parts?.find(p => p.type === "tool-call" && p.name === "generateImage");
+  const selectedOutcomeId = toolCallPart?.arguments ? JSON.parse(toolCallPart.arguments)?.outcomeId : undefined;
 
   const handleOutcomeSelect = (id: string) => {
     const outcome = getInferenceOutcome(id);
@@ -134,6 +135,8 @@ export function ChatLayout({ Messages, Interrupts, Queue }: {
 }
 
 function dataUrlToFile(dataUrl: string, filename: string): File {
+  // Convert data URL to File object for TanStack AI image generation
+  // Data URL format: data:[<mediatype>][;base64],<data>
   const arr = dataUrl.split(",");
   const mime = arr[0].match(/:(.*?);/)?.[1] || "image/jpeg";
   const bstr = atob(arr[1]);

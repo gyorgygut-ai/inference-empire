@@ -20,6 +20,8 @@ export const MessageOutcomeSuggestions = ({
       <span id="selectOutcome" className="sr-only">Select an outcome.</span>
       {outcomes.map(({ id: outcomeId, title }) => {
         const isSelected = outcomeId === selectedOutcomeId;
+        // Transform kebab-case outcome id to camelCase for aria-labelledby consistency with vocabulary keys
+        // e.g., 'celebrity-selfie' -> 'outcomeCelebritySelfie'
         const labelId = `outcome${outcomeId.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join('')}`;
 
         return (
