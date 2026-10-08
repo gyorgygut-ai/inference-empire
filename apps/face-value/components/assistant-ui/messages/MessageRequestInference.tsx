@@ -1,7 +1,6 @@
 "use client";
- 
+
 import React from "react";
-import { MessagePrimitive } from "@assistant-ui/react";
 import { vocabulary } from "@/messages/vocabulary";
 
 export const MessageRequestInference = ({
@@ -11,7 +10,7 @@ export const MessageRequestInference = ({
   disabled: boolean;
   onGenerateAction: () => void;
 }) => (
-  <MessagePrimitive.Root className="animate-in fade-in-50 slide-in-from-bottom-2 duration-300">
+  <div className="animate-in fade-in-50 slide-in-from-bottom-2 duration-300">
     <button
       type="button"
       disabled={disabled}
@@ -20,5 +19,5 @@ export const MessageRequestInference = ({
     >
       {vocabulary.messages.requestInference}
     </button>
-  </MessagePrimitive.Root>
+  </div>
 );

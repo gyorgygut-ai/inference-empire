@@ -1,13 +1,16 @@
 "use client";
 
 import React from "react";
-import { RuntimeProvider } from "./runtime-provider";
+import { ChatProvider } from "@/components/tanstack-chat/ChatProvider";
+import { MessageList } from "@/components/tanstack-chat/MessageList";
+import { AttachmentComposer } from "@/components/tanstack-chat/AttachmentComposer";
 import type { PublicOutcome } from "@/outcomes";
-import { RootAssistantUiComponent } from "./root-assistant-ui-component";
 
 export const ChatClient = ({ outcomes }: { outcomes: PublicOutcome[] }) => (
-  <RuntimeProvider
-    suggestions={outcomes}
-    childrenFn={() => <RootAssistantUiComponent outcomes={outcomes} />}
-  />
+  <ChatProvider initialOutcomes={outcomes}>
+    <div className="h-full flex flex-col">
+      <MessageList />
+      <AttachmentComposer />
+    </div>
+  </ChatProvider>
 );

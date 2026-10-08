@@ -149,6 +149,20 @@
         "production",
         "^production"
       ]
+    },
+    "dev": {
+      "dependsOn": [
+        "^build"
+      ],
+      "inputs": [
+        "default",
+        "^production"
+      ]
+    },
+    "preview": {
+      "dependsOn": [
+        "build"
+      ]
     }
   },
   "plugins": [
@@ -156,7 +170,6 @@
     "@nx/react",
     "@nx/node",
     "@nx/js",
-    "@nx/vitest",
     "@nx/eslint"
   ],
   "nxCloudAccessToken": "",

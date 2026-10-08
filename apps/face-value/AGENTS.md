@@ -1,43 +1,85 @@
-# Rules for Agents
+# Face Value Agent Specs
 
-## Critical Specs
+**Project goal**:
+NextJS app demonstrating a selection of NextJS features - most introduced in the last 1.5 years.
 
-- [Specifications](./specs/SPECS.md)
-- [NextJS Docs](./node_modules/next/dist/docs/)
+## Core User Flow
 
-## Golden Rules
+1. Upload reference image
+2. Select an outcome
+3. Send inference request
+4. Display error / generated image
 
-- Specs are authoritative — code must match them
-- STRICTLY no touching, editing, removal of any file, no git commands
-- User MUST approve agent suggestion before any file operation
-- No meta-commentary or context-aware talk in code, docs or commits
-- No assumptions, inference or helpfulness creep; do the task as requested
-- Exact touched files and lines to finish task; no less, no more
-- Any suggestion, conflict, flaw can and should be raised upon finishing task
-- A question is not a command; questions need answers, commands need action
-- No cutting corners, slacking, fabricating or lying; if task is not clear, say it
-- Adherence to requirements, key decisions and golden rules is non-negotiable
+## NextJS non-negotiables
 
----
+- **Server Components**: static shell, outcome prompts server-only. [Server and Client Components](https://nextjs.org/docs/app/getting-started/server-and-client-components)
+- **Server Actions**: reference image submit + Flux call, no API routes. [Server Actions and Mutations](https://nextjs.org/docs/app/building-your-application/data-fetching/server-actions-and-mutations)
+- **React Compiler**: no manual memoization. [React Compiler](https://react.dev/learn/react-compiler)
 
-## Workflow
+## Business Logic
 
-**Read before writing code**:
+- **Magic Encapsulated**:
+  - `worker-router-flux2` URL derived from `dist/apps/flux2/contract.json` (`workerUrl`, emitted by `flux2-router:deploy`) at build time via server-only `router-config.ts`, never exposed to client
+  - Auth token never written to disk: Cloudflare secret on the worker side, `FLUX2_ROUTER_TOKEN` build env on the face-value side
+  - Client sends reference image + selected outcome id upon submit to Server Action
+  - Server Action posts outcome prompt + reference image to `worker-router-flux2` `/queue`, polls `/task/:id` until DONE or timeout (max 5 min, poll interval 3s)
+  - Upon response, serves generated image or error message to client
+- **Markdown + Frontmatter**:
+  - Each outcome is a .md file in /outcomes
+  - Frontmatter: (id, title, order, width, height), body = prompt
+  - Never exposed to client as is, id and title for display only
+- **Proper Data Handling**:
+  - Where data is dynamic, the "empty, 1, many data" cases should be handled
+  - Same goes for loading, success, error states at the minimum
+- **Reference Image Handling**:
+  - User uploads their own image
+  - Resized to max 512×512 on server before sending to inference server
+  - Server validates type, size, format before sending to inference server
 
-- [Specifications](./specs/SPECS.md)
+**Inference Backend API**
 
-**Critical Rules**:
+- Contract: `apps/face-value/app/inference-api/schema.ts`
+- Polling logic encapsulated in `packages/worker-router-client`
+- Send `FLUX2_ROUTER_TOKEN` as auth token
+- Action returns `presignedUrl` or `error` to ui
+- Polling timeout: 180000ms
 
-- `useAui()` / `useAuiState()` MUST NEVER be called at component render time in any component inside `RuntimeProvider`. In React 19 / Next.js, hooks run during render. `RuntimeProvider` mounts AFTER child components are rendered, so `useAui()` throws "empty thread" error. ALWAYS wrap calls inside `useEffect`, or better yet, put `useAui()` calls at module level OUTSIDE the component (before `function InnerChat()`), or use `useLayoutEffect`.
+## Chat UI
 
-- No kindergarten level code comments; adults write clean code
-- Any code change only while keeping requirements, old or new, intact
-- If user request directly contradicts any of the former, raise it boldly
-- No direct editing of generated files, npm packages or OpenAPI specs
-- ESLint rules are non-negotiable; all code must pass linting
-- Terminology lib, helpers banned - use domain naming
+Progressive chat, without LLM.
+Messages prompting for user input get pushed one at a time:
 
-**Versioning and Commits**:
+**1. Select Outcome**:
 
-- Bump version when requested adhering to semver
-- Conventional commits, sentence case, no period
+- Trigger: initial assistant message
+- Text: vocabulary.messages.selectOutcome
+- Available outcomes as suggestions
+
+**2. Upload Reference Image**:
+
+- Trigger: user selected an outcome
+- Text: vocabulary.messages.uploadReference
+- File upload + uploaded photo appears inline
+
+**3. Request Inference**:
+
+- Trigger: user uploaded reference
+- Text: vocabulary.messages.requestInference
+- Submit button inline, enabled if reference + outcome valid
+
+**4. Inference Busy**:
+
+- Trigger: user initated inference
+- Text: no text for 35s, vocabulary.messages.busyForAWhile after
+- Assistant loading message
+
+**5.a Inference Rejected**:
+
+- Trigger: inference failed
+- Text: vocabulary.messages.rejected
+
+**5.b Inference Fulfilled**:
+
+- Trigger: inference fulfilled, image received
+- Text: vocabulary.messages.fulfilled
+- Received image appears inline

@@ -8,5 +8,6 @@ export const vocabulary = {
     timeout: "Server timeout",
     rejected: "🫷🏻 The server rejected this request.",
     sizeLimit: "Image exceeds size limit",
+    fulfilled: "Done!",
   },
 };

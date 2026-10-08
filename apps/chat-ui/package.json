@@ -1,0 +1,48 @@
+{
+  "name": "chat-ui",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build",
+    "start": "vite preview"
+  },
+  "dependencies": {
+    "@inference-empire/ai": "*",
+    "@tanstack/ai": "^0.65.1",
+    "@tanstack/ai-client": "^0.18.2",
+    "@tanstack/ai-react": "^0.30.0",
+    "@tanstack/ai-react-ui": "^0.9.7",
+    "@tanstack/react-router": "^1.170.16",
+    "@tanstack/react-start": "^1.168.26",
+    "highlight.js": "^11.11.1",
+    "lucide-react": "^0.561.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-markdown": "^10.1.0",
+    "rehype-highlight": "^7.0.2",
+    "rehype-raw": "^7.0.0",
+    "rehype-sanitize": "^6.0.0",
+    "remark-gfm": "^4.0.1",
+    "tailwindcss": "^4.1.18",
+    "zod": "^4.2.0",
+    "@tanstack/ai-openrouter": "^0.15.13"
+  },
+  "devDependencies": {
+    "@tailwindcss/typography": "^0.5.20",
+    "@tailwindcss/vite": "^4.1.18",
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.1.6",
+    "@types/react-dom": "^19.1.5",
+    "@vitejs/plugin-react": "^6.0.2",
+    "typescript": "~6.0.3",
+    "vite": "^8.0.16"
+  },
+  "nx": {
+    "tags": [
+      "scope:web",
+      "type:app"
+    ]
+  }
+}

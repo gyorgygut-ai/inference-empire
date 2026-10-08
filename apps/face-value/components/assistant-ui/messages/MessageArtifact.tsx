@@ -1,11 +1,8 @@
 "use client";
 
 import React from "react";
-import { MessagePrimitive } from "@assistant-ui/react";
 import { ChatPhase } from "../chat";
 import { vocabulary } from "@/messages/vocabulary";
-import { BusyIndicator } from "../BusyIndicator";
-
 
 export const MessageArtifact = ({
   state,
@@ -17,19 +14,17 @@ export const MessageArtifact = ({
   image?: string;
   width?: number;
   height?: number;
-  }) => {
+}) => {
   const isBusy = state === ChatPhase.INFERENCE_BUSY;
   const isRejected = state === ChatPhase.INFERENCE_REJECTED;
   const isFulfilled = state === ChatPhase.INFERENCE_FULFILLED && image;
 
   return (
-    <MessagePrimitive.Root className="mb-4 animate-in fade-in-50 slide-in-from-bottom-2 duration-300 bg-surface rounded-xl p-4">
+    <div className="mb-4 animate-in fade-in-50 slide-in-from-bottom-2 duration-300 bg-surface rounded-xl p-4">
       {isBusy && (
-        <BusyIndicator
-          label={vocabulary.messages.busy}
-          labelAfterAWhile={vocabulary.messages.busyForAWhile}
-          thresholdMs={35000}
-        />
+        <div className="mt-2 text-sm text-secondary-foreground">
+          {vocabulary.messages.busy}
+        </div>
       )}
       {isRejected && <p>{vocabulary.messages.rejected}</p>}
       {isFulfilled && (
@@ -46,6 +41,6 @@ export const MessageArtifact = ({
           </figure>
         </>
       )}
-    </MessagePrimitive.Root>
+    </div>
   );
 };

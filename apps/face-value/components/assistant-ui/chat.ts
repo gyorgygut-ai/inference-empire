@@ -1,5 +1,3 @@
-import { CreateAppendMessage } from "@assistant-ui/react";
-
 export enum ChatPhase {
   PROMPT_FOR_OUTCOME = "PROMPT_FOR_OUTCOME",
   PROMPT_FOR_REFERENCE = "PROMPT_FOR_REFERENCE",
@@ -9,9 +7,19 @@ export enum ChatPhase {
   REQUEST_INFERENCE = "request-inference",
 }
 
-export const createMessage = (type: ChatPhase, text = "") =>
-  ({
-    role: "assistant",
-    metadata: { custom: { type } },
-    content: [{ type: "text", text }],
-  }) satisfies CreateAppendMessage;
+export interface AppMessageMetadata {
+  custom?: {
+    type?: ChatPhase;
+    outcomeId?: string;
+    artifactUrl?: string;
+    selectedOutcomeId?: string;
+  };
+}
+
+export interface AppMessage {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  metadata?: AppMessageMetadata;
+  createdAt: Date;
+}
