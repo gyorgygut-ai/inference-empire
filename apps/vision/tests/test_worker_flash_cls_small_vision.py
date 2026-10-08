@@ -6,14 +6,14 @@ from PIL import Image
 from pydantic import ValidationError
 
 import apps.vision.worker_flash_cls_small_vision as worker_mod
-from apps.vision._shared_small_vision import (
+from apps.vision.fakes.vision_fake import FakeVisionModel, FakeVisionProcessor
+from packages.vision.shared import (
     SmallVisionInput,
     SmallVisionOutput,
     build_analyze_prompt,
     do_inference,
     resolve_analyze_prompt,
 )
-from apps.vision.fakes.vision_fake import FakeVisionModel, FakeVisionProcessor
 
 
 def _image_b64():

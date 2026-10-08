@@ -9,8 +9,8 @@ import os
 
 import numpy as np
 
-from apps.realtime_voice import _shared_realtime_voice_qwen as shared
-from apps.realtime_voice._shared_realtime_voice_qwen import float_to_pcm16
+from packages.realtime_voice import shared
+from packages.realtime_voice.shared import float_to_pcm16
 
 
 def _load_fixture_audio():

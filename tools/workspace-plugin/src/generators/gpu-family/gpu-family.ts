@@ -28,8 +28,8 @@ export async function gpuFamilyGenerator(tree: Tree, options: GpuFamilyGenerator
   });
   await formatFiles(tree);
   logger.info(
-    `Scaffolded family "${family}". Next: fill apps/${family}/contracts/${contract}.json, ` +
-      `implement apps/${family}/, run "npx nx run types:generate".`
+    `Scaffolded family "${family}". Next: fill packages/${family}/contract.json, ` +
+      `implement packages/${family}/shared.py and apps/${family}/ workers.`
   );
 }
 

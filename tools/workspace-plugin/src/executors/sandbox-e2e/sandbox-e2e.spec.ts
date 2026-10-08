@@ -14,13 +14,13 @@ const context: ExecutorContext = {
 describe('SandboxE2e Executor', () => {
   it('builds the default command', () => {
     expect(buildCommand('realtime_voice', 600, 'L4')).toBe(
-      'SANDBOX_TIMEOUT=600 SANDBOX_GPU=L4 uv run --locked python apps/realtime_voice/sandbox_e2e.py'
+      'SANDBOX_TIMEOUT=600 SANDBOX_GPU=L4 uv run --locked python tools/workspace-plugin/src/executors/sandbox-e2e/sandbox_boot.py realtime_voice -- pytest apps/realtime_voice/tests/ -k "e2e" -q'
     );
   });
 
   it('honors timeout and gpu options', () => {
     expect(buildCommand('realtime_voice', 300, 'RTX4090')).toBe(
-      'SANDBOX_TIMEOUT=300 SANDBOX_GPU=RTX4090 uv run --locked python apps/realtime_voice/sandbox_e2e.py'
+      'SANDBOX_TIMEOUT=300 SANDBOX_GPU=RTX4090 uv run --locked python tools/workspace-plugin/src/executors/sandbox-e2e/sandbox_boot.py realtime_voice -- pytest apps/realtime_voice/tests/ -k "e2e" -q'
     );
   });
 

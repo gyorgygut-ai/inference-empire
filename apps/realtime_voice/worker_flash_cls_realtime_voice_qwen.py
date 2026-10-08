@@ -5,7 +5,7 @@ import threading
 
 from runpod_flash import Endpoint, GpuGroup
 
-from apps.realtime_voice._shared_realtime_voice_qwen import (
+from packages.realtime_voice.shared import (
     IMAGE_PIP_DEPS,
     QWEN_DIR_NAME,
     WHISPER_DIR_NAME,
@@ -13,7 +13,7 @@ from apps.realtime_voice._shared_realtime_voice_qwen import (
     do_inference,
     handle_webrtc_audio,
 )
-from apps.realtime_voice._shared_realtime_voice_qwen import (
+from packages.realtime_voice.shared import (
     load_dependencies as shared_load_dependencies,
 )
 

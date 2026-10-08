@@ -5,7 +5,7 @@ from pathlib import Path
 
 import modal
 
-from apps.realtime_voice._shared_realtime_voice_qwen import (
+from packages.realtime_voice.shared import (
     CHATTERBOX_TTS_NO_DEPS,
     IMAGE_PIP_DEPS,
     QWEN_DIR_NAME,
@@ -15,7 +15,7 @@ from apps.realtime_voice._shared_realtime_voice_qwen import (
     build_app,
     do_inference,
 )
-from apps.realtime_voice._shared_realtime_voice_qwen import (
+from packages.realtime_voice.shared import (
     load_dependencies as shared_load_dependencies,
 )
 

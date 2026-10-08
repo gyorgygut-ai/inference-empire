@@ -1,6 +1,6 @@
 import modal
 
-from apps.tiny_sd._shared_tiny_sd import Artifact, TinySDOutput
+from packages.tiny_sd.shared import Artifact, TinySDOutput
 
 
 def test_good_input_returns_contract_and_artifact(artifact_exists):

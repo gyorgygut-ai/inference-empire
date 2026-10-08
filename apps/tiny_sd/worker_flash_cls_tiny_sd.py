@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 from runpod_flash import Endpoint, GpuGroup
 
-from apps.tiny_sd._shared_tiny_sd import (
+from packages.tiny_sd.shared import (
     IMAGE_PIP_DEPS,
     TinySDInput,
     do_inference,
@@ -12,10 +12,10 @@ from apps.tiny_sd._shared_tiny_sd import (
 )
 
 if TYPE_CHECKING:
-    from packages.shared_gpu.artifacts.storage import Storage
+    from packages.shared_gpu.artifacts.artifacts import Artifacts
 
 
-def generate(storage: Storage, pipe, torch_module, **kwargs) -> dict:
+def generate(storage: Artifacts, pipe, torch_module, **kwargs) -> dict:
     """Validate at boundary, delegate, return output contract."""
     req = TinySDInput(**kwargs)
     try:

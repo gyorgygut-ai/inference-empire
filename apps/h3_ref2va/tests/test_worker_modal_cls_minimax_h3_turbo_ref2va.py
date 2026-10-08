@@ -5,13 +5,13 @@ import pytest
 from pydantic import ValidationError
 
 import apps.h3_ref2va.worker_modal_cls_minimax_h3_ref2va as worker_mod
-from apps.h3_ref2va._shared_minimax_h3_turbo_ref2va import (
+from apps.h3_ref2va.fakes.video_pipe_fake import FakeVideoPipe
+from apps.h3_ref2va.fakes.write_video_audio_fake import FakeWriteVideoAudio
+from packages.h3_ref2va.shared import (
     MiniMaxH3TurboRef2vaOutput,
     ValidatedRef2VAInput,
     do_inference,
 )
-from apps.h3_ref2va.fakes.video_pipe_fake import FakeVideoPipe
-from apps.h3_ref2va.fakes.write_video_audio_fake import FakeWriteVideoAudio
 
 # Real (tiny) payloads: validators reject junk strings, so count tests use these.
 _IMG = (

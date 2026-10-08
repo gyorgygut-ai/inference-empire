@@ -20,11 +20,17 @@
       ],
       "cache": true
     },
-    "test-e2e": {
-      "executor": "@inference/workspace-plugin:pytest",
+    "e2e-sandbox": {
+      "executor": "@inference/workspace-plugin:sandbox-e2e",
       "options": {
-        "family": "tiny_sd",
-        "mode": "e2e"
+        "family": "tiny_sd"
+      },
+      "cache": false
+    },
+    "e2e-real": {
+      "executor": "@inference/workspace-plugin:real-e2e",
+      "options": {
+        "family": "tiny_sd"
       },
       "cache": false
     },

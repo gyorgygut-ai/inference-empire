@@ -5,14 +5,14 @@ from pathlib import Path
 
 import modal
 
-from apps.vision._shared_small_vision import (
+from packages.modal_bridge import attach_bridge
+from packages.vision.shared import (
     IMAGE_PIP_DEPS,
     SmallVisionInput,
     do_inference,
     load_dependencies,
     resolve_analyze_prompt,
 )
-from packages.modal_bridge import attach_bridge
 
 app = modal.App("small-vision-worker")
 

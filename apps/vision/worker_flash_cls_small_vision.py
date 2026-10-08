@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from runpod_flash import Endpoint, GpuGroup
 
-from apps.vision._shared_small_vision import (
+from packages.vision.shared import (
     IMAGE_PIP_DEPS,
     SmallVisionInput,
     do_inference,

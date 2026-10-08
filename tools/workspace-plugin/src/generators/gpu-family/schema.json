@@ -2,22 +2,22 @@
   "$schema": "https://json-schema.org/schema",
   "$id": "GpuFamily",
   "title": "GPU worker family",
-  "description": "Scaffold a new GPU worker family (apps/gpu-workers/ + contract stub)",
+  "description": "Scaffold a new GPU worker family (apps/<family>/ workers + packages/<family>/ shared + contract)",
   "type": "object",
   "properties": {
     "family": {
       "type": "string",
-      "description": "Worker family name for apps/gpu-workers/<family>/ (lowercase, underscores, e.g. tiny_sd)",
+      "description": "Worker family name for apps/<family>/ + packages/<family>/ (lowercase, underscores, e.g. tiny_sd)",
       "$default": { "$source": "argv", "index": 0 },
       "x-prompt": "Worker family name (e.g. tiny_sd)?"
     },
     "contract": {
       "type": "string",
-      "description": "Contract basename in apps/<family>/contracts/ (defaults to family with dashes)"
+      "description": "Model tag for contract titles (defaults to family with dashes)"
     },
     "pythonVersion": {
       "type": "string",
-      "description": "Python version for the deploy-gate pin resolution",
+      "description": "Python version for validate-deps pin resolution",
       "default": "3.11"
     }
   },

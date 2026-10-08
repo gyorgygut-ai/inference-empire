@@ -1,6 +1,6 @@
 import modal
 
-from apps.krea2._shared_krea2_ref2img import Artifact, Krea2Ref2ImgOutput
+from packages.krea2.shared import Artifact, Krea2Ref2ImgOutput
 
 
 def test_good_input_returns_contract_and_artifact(artifact_exists):

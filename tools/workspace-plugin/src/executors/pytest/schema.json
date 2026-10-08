@@ -2,18 +2,12 @@
   "$schema": "https://json-schema.org/schema",
   "version": 2,
   "title": "Pytest executor",
-  "description": "Run pytest unit or e2e tests for a GPU worker family",
+  "description": "Run pytest unit tests for a GPU worker family",
   "type": "object",
   "properties": {
     "family": {
       "type": "string",
       "description": "Worker family dir under workers/ (e.g. tiny_sd)"
-    },
-    "mode": {
-      "type": "string",
-      "enum": ["unit", "e2e"],
-      "default": "unit",
-      "description": "Test selection: unit (-k 'not e2e') or e2e (-k 'e2e')"
     }
   },
   "required": ["family"]

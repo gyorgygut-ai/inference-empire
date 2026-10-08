@@ -3,7 +3,7 @@
 Mirrors FakeVisionModel/FakeVisionProcessor call shapes so generate() needs
 no change: processor stashes the PIL, model runs `auge --output json` and
 `apfel` on it, decode() returns the contract dict as JSON text. The result is
-validated against workers/vision/contracts/small_vision.json.
+validated against packages/vision/contract.json.
 Swap deps to (TinyVisionModel(), TinyVisionProcessor(), prompt); no canned.
 """
 from __future__ import annotations

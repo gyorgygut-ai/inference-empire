@@ -5,15 +5,15 @@ from typing import TYPE_CHECKING
 
 from beam import Image, QueueDepthAutoscaler, Volume, task_queue
 
-from apps.h3_ref2va._shared_minimax_h3_turbo_ref2va import (
+from packages.h3_ref2va.shared import (
     ValidatedRef2VAInput,
     do_inference,
     load_dependencies,
 )
-from packages.shared_gpu.artifacts.r2_storage import R2Storage
+from packages.shared_gpu.artifacts.r2_artifacts import R2Artifacts
 
 if TYPE_CHECKING:
-    from packages.shared_gpu.artifacts.storage import Storage
+    from packages.shared_gpu.artifacts.artifacts import Artifacts
 
 
 CACHE_PATH = "./hf-cache"
@@ -49,7 +49,7 @@ def load_deps():
     return load_dependencies(cache_dir=CACHE_PATH)
 
 
-def generate(storage: Storage, pipe, write_video_audio, **kwargs) -> dict:
+def generate(storage: Artifacts, pipe, write_video_audio, **kwargs) -> dict:
     """Validate at boundary, delegate, return output contract."""
     req = ValidatedRef2VAInput(**kwargs)
     try:

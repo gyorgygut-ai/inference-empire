@@ -3,7 +3,7 @@ import { runCommand } from '../run-command';
 import type { SandboxE2eExecutorSchema } from './schema';
 
 export function buildCommand(family: string, timeout: number, gpu: string): string {
-  return `SANDBOX_TIMEOUT=${timeout} SANDBOX_GPU=${gpu} uv run --locked python apps/${family}/sandbox_e2e.py`;
+  return `SANDBOX_TIMEOUT=${timeout} SANDBOX_GPU=${gpu} uv run --locked python tools/workspace-plugin/src/executors/sandbox-e2e/sandbox_boot.py ${family} -- pytest apps/${family}/tests/ -k "e2e" -q`;
 }
 
 const runExecutor: PromiseExecutor<SandboxE2eExecutorSchema> = async (

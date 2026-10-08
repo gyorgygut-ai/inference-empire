@@ -4,7 +4,7 @@
 
 1. Run full unit suite: `npx nx run realtime-voice:test-unit` → 10/10 pass.
 2. Ruff clean: `npx ruff check apps/realtime-voice` → all checks pass.
-3. Deploy gate: `npx nx run realtime-voice:verify-deploy-gate --skip-nx-cache` → exit 0.
+3. Validate deps: `npx nx run realtime-voice:validate-deps --skip-nx-cache` → exit 0.
 4. Build artifacts: `npx nx run realtime-voice:build` → no errors, outputs in `dist/apps/realtime-voice/`.
 
 ## Phase 2 — Smoke test (local, no GPU)

@@ -1,6 +1,6 @@
 import modal
 
-from apps.h3_fl2va._shared_minimax_h3_turbo_fl2va import Artifact, MiniMaxH3TurboFl2vaOutput
+from packages.h3_fl2va.shared import Artifact, MiniMaxH3TurboFl2vaOutput
 
 
 def test_good_input_returns_contract_and_artifact(artifact_exists):

@@ -5,9 +5,9 @@ from PIL import Image
 from pydantic import ValidationError
 
 import apps.flux2.worker_modal_cls_flux2_klein9b as worker_mod
-from apps.flux2._shared_flux2_klein9b import Flux2Klein9bInput, Flux2Klein9bOutput, do_inference
 from apps.flux2.fakes.image_pipe_fake import FakeImagePipe
 from apps.flux2.fakes.torch_module_fake import FakeTorchModule
+from packages.flux2.shared import Flux2Klein9bInput, Flux2Klein9bOutput, do_inference
 
 
 def _png_bytes(img):

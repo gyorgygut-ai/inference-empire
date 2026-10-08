@@ -1,7 +1,7 @@
 import pytest
 
 import apps.flux2.worker_flash_cls_flux2_klein9b as worker_function
-from apps.flux2._shared_flux2_klein9b import Artifact, Flux2Klein9bOutput
+from packages.flux2.shared import Artifact, Flux2Klein9bOutput
 
 pytestmark = pytest.mark.skip(reason="flash dev not available")
 

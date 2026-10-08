@@ -4,7 +4,7 @@ import io
 import modal
 from PIL import Image
 
-from apps.vision._shared_small_vision import SmallVisionOutput
+from packages.vision.shared import SmallVisionOutput
 
 
 def _image_b64():

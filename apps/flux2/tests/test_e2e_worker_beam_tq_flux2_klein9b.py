@@ -1,4 +1,4 @@
-from apps.flux2._shared_flux2_klein9b import Artifact, Flux2Klein9bOutput
+from packages.flux2.shared import Artifact, Flux2Klein9bOutput
 
 
 def test_good_input_returns_contract_and_artifact(artifact_exists):

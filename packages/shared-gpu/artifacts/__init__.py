@@ -1,5 +1,5 @@
-from packages.shared_gpu.artifacts.r2_storage import R2Storage
-from packages.shared_gpu.artifacts.r2_storage_fake import FakeR2Storage
-from packages.shared_gpu.artifacts.storage import Storage
+from packages.shared_gpu.artifacts.artifacts import Artifacts
+from packages.shared_gpu.artifacts.r2_artifacts import R2Artifacts
+from packages.shared_gpu.artifacts.r2_artifacts_fake import FakeR2Artifacts
 
-__all__ = ["FakeR2Storage", "R2Storage", "Storage"]
+__all__ = ["Artifacts", "FakeR2Artifacts", "R2Artifacts"]

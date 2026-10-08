@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 import modal
 
-from apps.flux2._shared_flux2_klein9b import (
+from packages.flux2.shared import (
     IMAGE_PIP_DEPS,
     Flux2Klein9bInput,
     do_inference,
@@ -15,14 +15,14 @@ from apps.flux2._shared_flux2_klein9b import (
 from packages.modal_bridge import attach_bridge
 
 if TYPE_CHECKING:
-    from packages.shared_gpu.artifacts.storage import Storage
+    from packages.shared_gpu.artifacts.artifacts import Artifacts
 
 app = modal.App("flux2-klein9b-worker")
 
 _INFERENCE_LOCK = threading.Lock()
 
 
-def generate(storage: Storage, pipe, torch_module, **kwargs) -> dict:
+def generate(storage: Artifacts, pipe, torch_module, **kwargs) -> dict:
     """Validate at boundary, delegate, return output contract."""
     req = Flux2Klein9bInput(**kwargs)
     try:

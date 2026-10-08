@@ -1,6 +1,6 @@
 import modal
 
-from apps.h3_comfy._shared_minimax_h3_comfy import Artifact, MiniMaxH3ComfyOutput
+from packages.h3_comfy.shared import Artifact, MiniMaxH3ComfyOutput
 
 
 def test_good_input_returns_contract_and_artifact(artifact_exists):

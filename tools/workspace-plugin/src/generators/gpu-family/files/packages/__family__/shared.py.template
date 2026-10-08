@@ -1,0 +1,8 @@
+"""Shared business logic for <%= modelTag %>. No platform imports."""
+from __future__ import annotations
+
+# Single source of truth for ALL provider image pip deps (modal/beam/flash).
+# Worker files must reference this list, never inline their own pins.
+# Pre-deploy gate: uv run python -c "from packages.<%= family %>.shared import IMAGE_PIP_DEPS; print('\n'.join(IMAGE_PIP_DEPS))" | uv pip compile --python-version <%= pythonVersion %> -
+# TODO: fill in exact pins (never bare package names).
+IMAGE_PIP_DEPS: list[str] = []

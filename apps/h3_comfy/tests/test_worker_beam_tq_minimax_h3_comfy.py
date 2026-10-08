@@ -4,7 +4,7 @@ import pytest
 from pydantic import ValidationError
 
 import apps.h3_comfy.worker_beam_tq_minimax_h3_comfy as worker_mod
-from apps.h3_comfy._shared_minimax_h3_comfy import (
+from packages.h3_comfy.shared import (
     MiniMaxH3ComfyInput,
     MiniMaxH3ComfyOutput,
     do_inference,
@@ -94,7 +94,7 @@ def test_load_dependencies_mocked(monkeypatch, bucket):
         return "http://fake-comfy:8188"
 
     monkeypatch.setattr(worker_mod, "_start_comfy", fake_start)
-    monkeypatch.setattr(worker_mod, "R2Storage", lambda: bucket)
+    monkeypatch.setattr(worker_mod, "R2Artifacts", lambda: bucket)
     storage, url = worker_mod.load_dependencies()
     assert storage is bucket
     assert url == "http://fake-comfy:8188"
@@ -109,7 +109,7 @@ def test_dispatch_returns_video_artifact(bucket, monkeypatch):
 
 
 def test_workflow_scheduler_simple_and_steps():
-    from apps.h3_comfy._shared_minimax_h3_comfy import build_workflow
+    from packages.h3_comfy.shared import build_workflow
 
     req = MiniMaxH3ComfyInput(prompt="clip")
     wf = build_workflow(req)
@@ -137,14 +137,14 @@ def test_ensure_comfy_models_calls_snapshot_download_when_missing(monkeypatch):
 
 
 def test_workflow_seed_default_and_set():
-    from apps.h3_comfy._shared_minimax_h3_comfy import build_workflow
+    from packages.h3_comfy.shared import build_workflow
 
     assert build_workflow(MiniMaxH3ComfyInput(prompt="clip"))["noise"]["inputs"]["noise_seed"] == 42
     assert build_workflow(MiniMaxH3ComfyInput(prompt="clip", seed=7))["noise"]["inputs"]["noise_seed"] == 7
 
 
 def test_first_last_frame_workflow_and_images():
-    from apps.h3_comfy._shared_minimax_h3_comfy import build_images, build_workflow
+    from packages.h3_comfy.shared import build_images, build_workflow
 
     _img = (
         "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="

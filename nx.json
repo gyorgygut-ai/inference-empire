@@ -11,7 +11,7 @@
       "{workspaceRoot}/package.json"
     ],
     "contracts": [
-      "{workspaceRoot}/apps/*/contracts/*.json"
+      "{workspaceRoot}/packages/*/contract.json"
     ],
     "production": [
       "!{projectRoot}/**/*.spec.ts",
@@ -50,7 +50,14 @@
       ],
       "cache": true
     },
-    "test-e2e": {
+    "e2e-sandbox": {
+      "inputs": [
+        "default",
+        "^production"
+      ],
+      "cache": false
+    },
+    "e2e-real": {
       "inputs": [
         "default",
         "^production"
@@ -71,7 +78,7 @@
       ],
       "cache": true
     },
-    "verify-deploy-gate": {
+    "validate-deps": {
       "inputs": [
         "default"
       ],
@@ -84,7 +91,7 @@
         "cwd": "."
       },
       "dependsOn": [
-        "verify-deploy-gate"
+        "validate-deps"
       ],
       "cache": false
     },
@@ -95,7 +102,7 @@
         "cwd": "."
       },
       "dependsOn": [
-        "verify-deploy-gate"
+        "validate-deps"
       ],
       "cache": false
     },
@@ -106,7 +113,7 @@
         "cwd": "."
       },
       "dependsOn": [
-        "verify-deploy-gate"
+        "validate-deps"
       ],
       "cache": false
     },

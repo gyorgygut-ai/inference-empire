@@ -19,9 +19,9 @@
       "inputs": ["default"],
       "cache": true
     },
-    "test-e2e": {
-      "executor": "@inference/workspace-plugin:pytest",
-      "options": { "family": "realtime_voice", "mode": "e2e" },
+    "e2e-real": {
+      "executor": "@inference/workspace-plugin:real-e2e",
+      "options": { "family": "realtime_voice" },
       "cache": false
     },
     "e2e-sandbox": {
@@ -39,12 +39,9 @@
       "options": { "family": "realtime_voice" },
       "cache": true
     },
-    "verify-deploy-gate": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "export PATH=\"$(echo \"$PATH\" | tr ':' '\\n' | grep -v 'Versions/2.7' | paste -sd: -)\" && uv run --python 3.11 python -c \"import importlib.util; spec=importlib.util.spec_from_file_location('m','apps/realtime_voice/_shared_realtime_voice_qwen.py'); m=importlib.util.module_from_spec(spec); spec.loader.exec_module(m); print('\\n'.join(m.IMAGE_PIP_DEPS))\" | uv pip compile --python-version 3.10 -",
-        "cwd": "."
-      },
+    "validate-deps": {
+      "executor": "@inference/workspace-plugin:validate-deps",
+      "options": { "family": "realtime_voice", "python_version": "3.10" },
       "cache": true
     },
     "deploy-modal": {

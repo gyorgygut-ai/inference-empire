@@ -2,9 +2,8 @@ import type { ExecutorContext, PromiseExecutor } from '@nx/devkit';
 import { runCommand } from '../run-command';
 import type { PytestExecutorSchema } from './schema';
 
-export function buildCommand(family: string, mode: 'unit' | 'e2e'): string {
-  const k = mode === 'e2e' ? 'e2e' : 'not e2e';
-  return `uv run --locked --group test pytest apps/${family}/tests/ -k "${k}" -q`;
+export function buildCommand(family: string): string {
+  return `uv run --locked --group test pytest apps/${family}/tests/ -k "not e2e" -q`;
 }
 
 const runExecutor: PromiseExecutor<PytestExecutorSchema> = async (
@@ -16,7 +15,7 @@ const runExecutor: PromiseExecutor<PytestExecutorSchema> = async (
   }
   return {
     success: runCommand(
-      buildCommand(options.family, options.mode ?? 'unit'),
+      buildCommand(options.family),
       context.root
     ),
   };

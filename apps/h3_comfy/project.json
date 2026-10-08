@@ -20,11 +20,17 @@
       ],
       "cache": true
     },
-    "test-e2e": {
-      "executor": "@inference/workspace-plugin:pytest",
+    "e2e-sandbox": {
+      "executor": "@inference/workspace-plugin:sandbox-e2e",
       "options": {
-        "family": "h3_comfy",
-        "mode": "e2e"
+        "family": "h3_comfy"
+      },
+      "cache": false
+    },
+    "e2e-real": {
+      "executor": "@inference/workspace-plugin:real-e2e",
+      "options": {
+        "family": "h3_comfy"
       },
       "cache": false
     },

@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 from runpod_flash import Endpoint, GpuGroup
 
-from apps.krea2._shared_krea2_ref2img import (
+from packages.krea2.shared import (
     IMAGE_PIP_DEPS,
     Krea2Ref2ImgInput,
     do_inference,
@@ -12,10 +12,10 @@ from apps.krea2._shared_krea2_ref2img import (
 )
 
 if TYPE_CHECKING:
-    from packages.shared_gpu.artifacts.storage import Storage
+    from packages.shared_gpu.artifacts.artifacts import Artifacts
 
 
-def generate(storage: Storage, pipe, runtime_dir, torch_module, **kwargs) -> dict:
+def generate(storage: Artifacts, pipe, runtime_dir, torch_module, **kwargs) -> dict:
     """Validate at boundary, delegate, return output contract."""
     req = Krea2Ref2ImgInput(**kwargs)
     try:

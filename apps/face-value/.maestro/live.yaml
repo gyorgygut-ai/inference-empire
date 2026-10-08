@@ -5,7 +5,7 @@ url: http://localhost:3000
     visible: "Select an outcome."
     timeout: 10000
 - assertTrue: "document.readyState === 'complete'"
-- tapOn: "Your celebrity selfie"
+- tapOn: "Celebrity Selfie"
 - tapOn: "Upload your photo..."
 - evalScript: |
     const input = document.querySelector('input[type="file"]');

@@ -154,13 +154,13 @@ def _repo_root() -> Path:
 def find_contract(contract_name: str) -> Path | None:
     """Find the contract JSON whose title matches contract_name.
 
-    Canonical source is apps/*/contracts/.
+    Canonical source is packages/*/contract.json.
     """
-    roots = [_repo_root() / "apps"]
+    roots = [_repo_root() / "packages"]
     for root in roots:
         if not root.is_dir():
             continue
-        for json_path in sorted(root.rglob("*/contracts/*.json")):
+        for json_path in sorted(root.glob("*/contract.json")):
             try:
                 data = json.loads(json_path.read_text())
             except (OSError, ValueError):
@@ -172,8 +172,8 @@ def find_contract(contract_name: str) -> Path | None:
 
 
 def resolve_family_dir(contract_path: Path, slug: str) -> Path | None:
-    """Return the apps/<family> dir owning this contract."""
-    candidate = contract_path.parent.parent
+    """Return the apps/<family> dir owning this contract (workers live in apps/)."""
+    candidate = _repo_root() / "apps" / contract_path.parent.name
     if list(candidate.glob("worker_*.py")):
         return candidate
     return None
@@ -471,9 +471,9 @@ def main() -> int:
         print(f"Error: no contract found for '{contract_name}'", file=sys.stderr)
         return 1
 
-    # Narrow to workers for this contract (contract stem e.g.
-    # minimax_h3_turbo_fl2va matches worker_*_minimax_h3_turbo_fl2va.py).
-    slug = contract_path.stem
+    # Narrow to workers for this contract (contract dir e.g.
+    # packages/minimax_h3_turbo_fl2va maps to apps/minimax_h3_turbo_fl2va workers).
+    slug = contract_path.parent.name
     family_dir = resolve_family_dir(contract_path, slug)
     if family_dir is None:
         print(f"Error: no worker family found for contract '{slug}'", file=sys.stderr)

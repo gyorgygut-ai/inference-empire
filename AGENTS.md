@@ -155,7 +155,7 @@
 **Sharing**:
 
 - `ui apps` examples: `packages/shared-ui`, `packages/shared-ui/worker-router-client`
-- `gpu worker` examples: `packages/shared-gpu`, `packages/shared-gpu/storage`, `packages/flux2`
+- `gpu worker` examples: `packages/shared-gpu`, `packages/shared-gpu/artifacts`, `packages/flux2`
 
 **Tooling**:
 

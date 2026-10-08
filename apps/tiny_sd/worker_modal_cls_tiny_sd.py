@@ -6,16 +6,16 @@ from typing import TYPE_CHECKING
 
 import modal
 
-from apps.tiny_sd._shared_tiny_sd import (
+from packages.modal_bridge import attach_bridge
+from packages.tiny_sd.shared import (
     IMAGE_PIP_DEPS,
     TinySDInput,
     do_inference,
     load_dependencies,
 )
-from packages.modal_bridge import attach_bridge
 
 if TYPE_CHECKING:
-    from packages.shared_gpu.artifacts.storage import Storage
+    from packages.shared_gpu.artifacts.artifacts import Artifacts
 
 
 app = modal.App("tiny-sd-worker")
@@ -23,7 +23,7 @@ app = modal.App("tiny-sd-worker")
 _INFERENCE_LOCK = threading.Lock()
 
 
-def generate(storage: Storage, pipe, torch_module, **kwargs) -> dict:
+def generate(storage: Artifacts, pipe, torch_module, **kwargs) -> dict:
     """Validate at boundary, delegate, return output contract."""
     req = TinySDInput(**kwargs)
     try:

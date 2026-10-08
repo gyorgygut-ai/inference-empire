@@ -90,11 +90,11 @@ def die(msg: str, tmp: Path | None = None) -> "NoReturn":
     raise SystemExit(1)
 
 
-def shared_repos(family: str, directory: Path) -> set[str]:
+def shared_repos(family: str) -> set[str]:
     repos: set[str] = set()
-    for f in sorted(directory.glob("_shared_*.py")):
+    for f in sorted((WORKDIR / "packages" / family).glob("shared.py")):
         try:
-            m = importlib.import_module(f"apps.{family}.{f.stem}")
+            m = importlib.import_module(f"packages.{family}.shared")
         except Exception as e:
             print(f"WARN import {f.stem}: {e}")
             continue
@@ -176,7 +176,7 @@ def main() -> int:
             continue
         text = wf.read_text()
         vols = {m.group(1) or m.group(2) or m.group(3) for m in VOL_RE.finditer(text)}
-        repos = shared_repos(wf.parent.name, wf.parent) | set(REPO_RE.findall(text))
+        repos = shared_repos(wf.parent.name) | set(REPO_RE.findall(text))
         print(f"{wf.relative_to(WORKDIR)} -> volumes={sorted(vols)} repos={sorted(repos)}")
         for v in vols:
             plan.setdefault((provider, v), set()).update(repos)

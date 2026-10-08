@@ -1,4 +1,4 @@
-from apps.h3_ref2va._shared_minimax_h3_turbo_ref2va import Artifact, MiniMaxH3TurboRef2vaOutput
+from packages.h3_ref2va.shared import Artifact, MiniMaxH3TurboRef2vaOutput
 
 
 def test_good_input_returns_contract_and_artifact(artifact_exists):

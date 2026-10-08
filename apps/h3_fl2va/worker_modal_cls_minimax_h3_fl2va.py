@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 import modal
 
-from apps.h3_fl2va._shared_minimax_h3_turbo_fl2va import (
+from packages.h3_fl2va.shared import (
     MiniMaxH3TurboFl2vaInput,
     apply_torch_shims,
     do_inference,
@@ -14,7 +14,7 @@ from apps.h3_fl2va._shared_minimax_h3_turbo_fl2va import (
 from packages.modal_bridge import attach_bridge
 
 if TYPE_CHECKING:
-    from packages.shared_gpu.artifacts.storage import Storage
+    from packages.shared_gpu.artifacts.artifacts import Artifacts
 
 app = modal.App("minimax-h3-fl2va-worker")
 
@@ -57,7 +57,7 @@ image = (
 )
 
 
-def generate(storage: Storage, pipe, write_video_audio, **kwargs) -> dict:
+def generate(storage: Artifacts, pipe, write_video_audio, **kwargs) -> dict:
     """Validate at boundary, delegate, return output contract."""
     req = MiniMaxH3TurboFl2vaInput(**kwargs)
     try:

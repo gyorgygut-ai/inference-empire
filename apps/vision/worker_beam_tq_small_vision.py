@@ -4,7 +4,7 @@ import threading
 
 from beam import Image, QueueDepthAutoscaler, Volume, task_queue
 
-from apps.vision._shared_small_vision import (
+from packages.vision.shared import (
     IMAGE_PIP_DEPS,
     SmallVisionInput,
     do_inference,

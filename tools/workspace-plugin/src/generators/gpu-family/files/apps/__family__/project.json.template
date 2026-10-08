@@ -1,0 +1,58 @@
+{
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "name": "gpu-workers-<%= modelTag %>",
+  "projectType": "application",
+  "sourceRoot": "apps/<%= family %>",
+  "tags": ["type:app", "scope:gpu", "model:<%= modelTag %>"],
+  "targets": {
+    "test-unit": {
+      "executor": "@inference/workspace-plugin:pytest",
+      "options": { "family": "<%= family %>", "mode": "unit" },
+      "inputs": ["default"],
+      "cache": true
+    },
+    "e2e-sandbox": {
+      "executor": "@inference/workspace-plugin:sandbox-e2e",
+      "options": { "family": "<%= family %>" },
+      "cache": false
+    },
+    "e2e-real": {
+      "executor": "@inference/workspace-plugin:real-e2e",
+      "options": { "family": "<%= family %>" },
+      "cache": false
+    },
+    "lint": {
+      "executor": "@inference/workspace-plugin:ruff",
+      "options": { "family": "<%= family %>" },
+      "cache": true
+    },
+    "typecheck": {
+      "executor": "@inference/workspace-plugin:ty",
+      "options": { "family": "<%= family %>" },
+      "cache": true
+    },
+    "validate-deps": {
+      "executor": "@inference/workspace-plugin:validate-deps",
+      "options": { "family": "<%= family %>", "python_version": "<%= pythonVersion %>" },
+      "cache": true
+    },
+    "deploy-modal": {
+      "executor": "nx:run-commands",
+      "options": { "command": "uv run --locked modal deploy <%= family %>/worker_modal_cls_<%= family %>.py", "cwd": "." },
+      "dependsOn": ["validate-deps"],
+      "cache": false
+    },
+    "deploy-beam": {
+      "executor": "nx:run-commands",
+      "options": { "command": "echo 'Beam deploys on dispatch.put(); see AGENTS.md'", "cwd": "." },
+      "dependsOn": ["validate-deps"],
+      "cache": false
+    },
+    "deploy-flash": {
+      "executor": "nx:run-commands",
+      "options": { "command": "echo 'flash deploy --name <%= modelTag %>; see AGENTS.md'", "cwd": "." },
+      "dependsOn": ["validate-deps"],
+      "cache": false
+    }
+  }
+}

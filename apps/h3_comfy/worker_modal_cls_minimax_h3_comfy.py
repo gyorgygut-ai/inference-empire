@@ -1,24 +1,23 @@
 from __future__ import annotations
 
 import os
-import subprocess
 import threading
-import time
 from typing import TYPE_CHECKING
 
 import modal
 import requests
 
-from apps.h3_comfy._shared_minimax_h3_comfy import (
+from packages.h3_comfy.shared import (
     MiniMaxH3ComfyInput,
+    _start_comfy,
     apply_torch_shims,
     do_inference,
 )
 from packages.modal_bridge import attach_bridge
-from packages.shared_gpu.artifacts.r2_storage import R2Storage
+from packages.shared_gpu.artifacts.r2_artifacts import R2Artifacts
 
 if TYPE_CHECKING:
-    from packages.shared_gpu.artifacts.storage import Storage
+    from packages.shared_gpu.artifacts.artifacts import Artifacts
 
 app = modal.App("minimax-h3-comfy-worker")
 
@@ -46,40 +45,6 @@ image = (
 )
 
 
-def _start_comfy():
-    proc = subprocess.Popen(
-        [
-            "python",
-            "-m",
-            "comfyui",
-            "--listen",
-            "127.0.0.1",
-            "--port",
-            "8188",
-            "--disable-auto-update",
-            "--dont-print-server",
-        ],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )
-
-    for _ in range(60):
-        try:
-            r = requests.get("http://127.0.0.1:8188/system_stats", timeout=2)
-            if r.status_code == 200:
-                break
-        except requests.ConnectionError:
-            pass
-        if proc.poll() is not None:
-            raise RuntimeError(f"ComfyUI server exited with code {proc.returncode}")
-        time.sleep(1)
-    else:
-        raise RuntimeError("ComfyUI server did not become ready within 60s")
-    print("[INIT] ComfyUI server ready", flush=True)
-
-    return "http://127.0.0.1:8188"
-
-
 def snapshot_download(repo_id, local_dir, local_dir_use_symlinks=False, allow_patterns=None):
     # Stub for huggingface_hub.snapshot_download
     pass
@@ -96,7 +61,7 @@ def _ensure_comfy_models():
     )
 
 
-def generate(storage: Storage, comfy_base_url: str, **kwargs) -> dict:
+def generate(storage: Artifacts, comfy_base_url: str, **kwargs) -> dict:
     """Validate at boundary, delegate, return output contract."""
     req = MiniMaxH3ComfyInput(**kwargs)
     try:
@@ -123,7 +88,7 @@ class MiniMaxH3ComfyWorker:
     @modal.enter()
     def load(self):
         apply_torch_shims()
-        self.storage = R2Storage()
+        self.storage = R2Artifacts()
         self.comfy_base_url = _start_comfy()
 
     @modal.method()

@@ -3,7 +3,7 @@ import pytest
 from pydantic import ValidationError
 
 import apps.h3_comfy.worker_modal_cls_minimax_h3_comfy as worker_mod
-from apps.h3_comfy._shared_minimax_h3_comfy import (
+from packages.h3_comfy.shared import (
     MiniMaxH3ComfyInput,
     MiniMaxH3ComfyOutput,
     do_inference,
@@ -94,13 +94,13 @@ def test_load_dependencies_mocked(monkeypatch, bucket):
         return "http://fake-comfy:8188"
 
     monkeypatch.setattr(worker_mod, "_start_comfy", fake_start)
-    monkeypatch.setattr(worker_mod, "R2Storage", lambda: bucket)
+    monkeypatch.setattr(worker_mod, "R2Artifacts", lambda: bucket)
     assert worker_mod._start_comfy() == "http://fake-comfy:8188"
-    assert worker_mod.R2Storage() is bucket
+    assert worker_mod.R2Artifacts() is bucket
 
 
 def test_workflow_scheduler_simple_and_steps():
-    from apps.h3_comfy._shared_minimax_h3_comfy import build_workflow
+    from packages.h3_comfy.shared import build_workflow
 
     req = MiniMaxH3ComfyInput(prompt="clip")
     wf = build_workflow(req)
@@ -109,7 +109,7 @@ def test_workflow_scheduler_simple_and_steps():
 
 
 def test_first_last_frame_workflow_and_images():
-    from apps.h3_comfy._shared_minimax_h3_comfy import build_images, build_workflow
+    from packages.h3_comfy.shared import build_images, build_workflow
 
     _img = (
         "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="

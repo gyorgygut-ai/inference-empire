@@ -5,9 +5,9 @@ from PIL import Image
 from pydantic import ValidationError
 
 import apps.tiny_sd.worker_modal_cls_tiny_sd as worker_mod
-from apps.tiny_sd._shared_tiny_sd import TinySDInput, TinySDOutput, do_inference
 from apps.tiny_sd.fakes.image_pipe_fake import FakeImagePipe
 from apps.tiny_sd.fakes.torch_module_fake import FakeTorchModule
+from packages.tiny_sd.shared import TinySDInput, TinySDOutput, do_inference
 
 
 def _png_bytes(img):

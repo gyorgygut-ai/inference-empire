@@ -5,12 +5,12 @@ from typing import Any
 import httpx
 import pytest
 
-from packages.shared_gpu.artifacts.r2_storage_fake import FakeR2Storage
+from packages.shared_gpu.artifacts.r2_artifacts_fake import FakeR2Artifacts
 
 
 @pytest.fixture
 def bucket():
-    return FakeR2Storage()
+    return FakeR2Artifacts()
 
 
 def _artifact_exists(url: str, timeout: int = 30) -> bool:

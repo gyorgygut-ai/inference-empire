@@ -10,16 +10,17 @@ describe('gpu-family generator', () => {
     tree = createTreeWithEmptyWorkspace();
   });
 
-  it('scaffolds apps/gpu-workers/, contract and Nx project', async () => {
+  it('scaffolds apps/<family>/, packages/<family>/ shared and contract', async () => {
     await gpuFamilyGenerator(tree, { family: 'demo_fam' });
-    expect(tree.exists('apps/gpu-workers/demo_fam/__init__.py')).toBe(true);
-    expect(tree.exists('apps/gpu-workers/demo_fam/_shared_demo_fam.py')).toBe(true);
-    expect(tree.exists('apps/gpu-workers/demo_fam/tests/__init__.py')).toBe(true);
-    expect(tree.exists('apps/gpu-workers/demo_fam/tests/test_demo_fam.py')).toBe(true);
-    expect(tree.exists('apps/demo_fam/contracts/demo-fam.json')).toBe(true);
-    expect(tree.exists('apps/gpu-workers/demo_fam/project.json')).toBe(true);
+    expect(tree.exists('apps/demo_fam/__init__.py')).toBe(true);
+    expect(tree.exists('apps/demo_fam/tests/__init__.py')).toBe(true);
+    expect(tree.exists('apps/demo_fam/tests/test_demo_fam.py')).toBe(true);
+    expect(tree.exists('packages/demo_fam/shared.py')).toBe(true);
+    expect(tree.exists('packages/demo_fam/__init__.py')).toBe(true);
+    expect(tree.exists('packages/demo_fam/contract.json')).toBe(true);
+    expect(tree.exists('apps/demo_fam/project.json')).toBe(true);
     const project = JSON.parse(
-      tree.read('apps/gpu-workers/demo_fam/project.json', 'utf-8')
+      tree.read('apps/demo_fam/project.json', 'utf-8')
     );
     expect(project.name).toBe('gpu-workers-demo-fam');
     expect(project.tags).toContain('model:demo-fam');

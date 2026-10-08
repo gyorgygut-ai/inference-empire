@@ -10,11 +10,11 @@ from typing import TYPE_CHECKING
 import requests
 from beam import Image, QueueDepthAutoscaler, Volume, task_queue
 
-from apps.h3_comfy._shared_minimax_h3_comfy import MiniMaxH3ComfyInput, apply_torch_shims, do_inference
-from packages.shared_gpu.artifacts.r2_storage import R2Storage
+from packages.h3_comfy.shared import MiniMaxH3ComfyInput, apply_torch_shims, do_inference
+from packages.shared_gpu.artifacts.r2_artifacts import R2Artifacts
 
 if TYPE_CHECKING:
-    from packages.shared_gpu.artifacts.storage import Storage
+    from packages.shared_gpu.artifacts.artifacts import Artifacts
 
 
 CACHE_PATH = "./hf-cache"
@@ -66,7 +66,7 @@ def _start_comfy():
 
 def load_dependencies():
     apply_torch_shims()
-    return (R2Storage(), _start_comfy())
+    return (R2Artifacts(), _start_comfy())
 
 
 def snapshot_download(repo_id, local_dir, local_dir_use_symlinks=False, allow_patterns=None):
@@ -85,7 +85,7 @@ def _ensure_comfy_models():
     )
 
 
-def generate(storage: Storage, comfy_base_url, **kwargs) -> dict:
+def generate(storage: Artifacts, comfy_base_url, **kwargs) -> dict:
     """Validate at boundary, delegate, return output contract."""
     req = MiniMaxH3ComfyInput(**kwargs)
     try:
