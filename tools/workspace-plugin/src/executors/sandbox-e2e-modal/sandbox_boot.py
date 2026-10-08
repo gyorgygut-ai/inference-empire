@@ -79,9 +79,16 @@ def main() -> int:
                 print(inst.stderr.read(), flush=True)
                 return 1
         proc = sb.exec(*cmd, timeout=timeout_s)
-        out = proc.stdout.read()
-        print(out, flush=True)
-        print(proc.stderr.read(), flush=True)
+        # Stream stdout and stderr live as they come in
+        try:
+            for line in proc.stdout:
+                # Avoid double newlines since StreamReader yields with newlines
+                print(line, end="", flush=True)
+            for line in proc.stderr:
+                print(line, end="", flush=True)
+        except Exception as e:
+            print(f"Error reading streams: {e}", flush=True)
+        # Wait for process to complete and get return code
         return 0 if proc.wait() == 0 else 1
     except Exception as e:
         print(f"FAIL: {type(e).__name__}: {e}", flush=True)
