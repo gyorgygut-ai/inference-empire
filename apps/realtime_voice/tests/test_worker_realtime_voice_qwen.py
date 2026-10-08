@@ -171,3 +171,73 @@ def test_tts_unknown_voice_uses_builtin_voice(tmp_path):
     pcm = tts.generate("hi", voice="unknown-voice")
     assert len(pcm) > 0
     assert tts.model.prompts == [None]
+
+
+class _StubCaptureModel:
+    """Stub LLM backend: captures generate() kwargs, emits one token."""
+
+    def __init__(self, device="cpu"):
+        import torch
+
+        self.device = device
+        self.seen_kwargs: dict = {}
+        self._torch = torch
+
+    def generate(self, **kwargs):
+        self.seen_kwargs = kwargs
+        kwargs["streamer"].put(kwargs["input_ids"][:, :1])
+        kwargs["streamer"].end()
+
+
+def _stub_tokenizer(input_ids):
+    class _StubTokenizer:
+        def apply_chat_template(self, messages, add_generation_prompt=True, return_tensors="pt"):
+            assert return_tensors == "pt"
+            return {"input_ids": input_ids}
+
+    return _StubTokenizer()
+
+
+def test_qwen_stream_passes_tensor_input_ids():
+    import torch
+
+    ids = torch.zeros(1, 5, dtype=torch.long)
+    llm = shared.QwenLLM.__new__(shared.QwenLLM)
+    import threading
+
+    llm._lock = threading.Lock()
+    llm.model = _StubCaptureModel()
+    llm.tokenizer = _stub_tokenizer(ids)
+    llm.max_new_tokens = 8
+    assert list(llm.stream([{"role": "user", "content": "hi"}])) is not None
+    seen = llm.model.seen_kwargs
+    assert isinstance(seen["input_ids"], torch.Tensor)
+    assert seen["input_ids"].ndim == 2
+    assert "inputs" not in seen
+
+
+def test_qwen_stream_unblocks_when_generate_dies():
+    import threading
+    import time
+
+    import torch
+
+    class _DyingModel(_StubCaptureModel):
+        def generate(self, **kwargs):
+            raise RuntimeError("boom")
+
+    llm = shared.QwenLLM.__new__(shared.QwenLLM)
+    llm._lock = threading.Lock()
+    llm.model = _DyingModel()
+    llm.tokenizer = _stub_tokenizer(torch.zeros(1, 5, dtype=torch.long))
+    llm.max_new_tokens = 8
+    out = []
+    t0 = time.time()
+    thread = threading.Thread(
+        target=lambda: out.append(list(llm.stream([{"role": "user", "content": "hi"}])))
+    )
+    thread.start()
+    thread.join(timeout=30)
+    assert not thread.is_alive(), "stream hung after generate thread died"
+    assert len(out) == 1 and all(tok == "" for tok in out[0]), f"unexpected tokens: {out}"
+    assert time.time() - t0 < 30

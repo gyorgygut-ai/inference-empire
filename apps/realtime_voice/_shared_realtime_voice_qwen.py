@@ -220,15 +220,19 @@ class QwenLLM:
         from transformers import TextIteratorStreamer
 
         max_tokens = max_new_tokens or self.max_new_tokens
-        inputs = self.tokenizer.apply_chat_template(
+        enc = self.tokenizer.apply_chat_template(
             messages, add_generation_prompt=True, return_tensors="pt"
-        ).to(self.model.device)
+        )
+        input_ids = enc["input_ids"].to(self.model.device)
         streamer = TextIteratorStreamer(self.tokenizer, skip_prompt=True, skip_special_tokens=True)
-        gen_kwargs: dict = {"inputs": inputs, "streamer": streamer, "max_new_tokens": max_tokens}
+        gen_kwargs: dict = {"input_ids": input_ids, "streamer": streamer, "max_new_tokens": max_tokens}
 
         def generate():
-            with self._lock:
-                self.model.generate(**gen_kwargs)
+            try:
+                with self._lock:
+                    self.model.generate(**gen_kwargs)
+            finally:
+                streamer.end()
 
         t = threading.Thread(target=generate)
         t.start()

@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/schema",
+  "version": 2,
+  "title": "Sandbox e2e executor",
+  "description": "Run a worker family's GPU sandbox turn (no deploy)",
+  "type": "object",
+  "properties": {
+    "family": {
+      "type": "string",
+      "description": "Worker family dir under apps/ (e.g. realtime_voice)"
+    },
+    "timeout": {
+      "type": "number",
+      "default": 600,
+      "description": "Exec budget in seconds; expiry counts as FAIL"
+    },
+    "gpu": {
+      "type": "string",
+      "default": "L4",
+      "description": "GPU type for the sandbox container"
+    }
+  },
+  "required": ["family"]
+}
