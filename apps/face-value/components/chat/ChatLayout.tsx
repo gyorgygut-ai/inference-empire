@@ -106,7 +106,8 @@ export function ChatLayout({ Messages, Interrupts, Queue }: {
       )}
       
       {showAttachmentPrompt && (
-        <div className="mb-4 animate-in fade-in-50 slide-in-from-bottom-2 duration-500 bg-surface italic rounded-xl p-4">
+        <div className="mb-4 animate-in fade-in-50 slide-in-from-bottom-2 duration-500 bg-surface italic rounded-xl p-4" aria-labelledby="uploadReference">
+          <span id="uploadReference" className="sr-only">{vocabulary.messages.uploadReference}</span>
           {vocabulary.messages.uploadReference}
           <AttachmentUpload onUpload={handleImageUpload} />
         </div>
@@ -117,8 +118,10 @@ export function ChatLayout({ Messages, Interrupts, Queue }: {
           <button
             type="button"
             onClick={handleRequestInference}
+            aria-labelledby="requestInference"
             className="my-2 px-4 py-3 bg-primary text-primary-foreground rounded w-full"
           >
+            <span id="requestInference" className="sr-only">{vocabulary.messages.requestInference}</span>
             {vocabulary.messages.requestInference}
           </button>
         </div>

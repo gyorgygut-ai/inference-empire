@@ -50,7 +50,8 @@ export function GenerateImageTool({ part, result, interrupt }: any) {
 
   if (part.state === "error" || error) {
     return (
-      <div className="p-4 text-red-500 animate-in fade-in-50">
+      <div className="p-4 text-red-500 animate-in fade-in-50" aria-labelledby="errorRejected">
+        <span id="errorRejected" className="sr-only">{vocabulary.messages.rejected}</span>
         {vocabulary.messages.rejected}
       </div>
     );
@@ -58,7 +59,8 @@ export function GenerateImageTool({ part, result, interrupt }: any) {
 
   if (isLoading) {
     return (
-      <div className="flex items-center gap-2 text-sm text-secondary-foreground animate-in fade-in-50">
+      <div className="flex items-center gap-2 text-sm text-secondary-foreground animate-in fade-in-50" aria-labelledby="statusWorking">
+        <span id="statusWorking" className="sr-only">Working on it...</span>
         <span className="flex space-x-1">
           <span className="size-2 rounded-full bg-current animate-bounce" style={{ animationDelay: "0ms" }} />
           <span className="size-2 rounded-full bg-current animate-bounce" style={{ animationDelay: "150ms" }} />
@@ -71,7 +73,8 @@ export function GenerateImageTool({ part, result, interrupt }: any) {
 
   if (result?.imageUrl) {
     return (
-      <figure style={{ aspectRatio: `${result.width} / ${result.height}` }} className="w-full overflow-hidden rounded-lg animate-in fade-in-50 slide-in-from-bottom-2 duration-300">
+      <figure style={{ aspectRatio: `${result.width} / ${result.height}` }} className="w-full overflow-hidden rounded-lg animate-in fade-in-50 slide-in-from-bottom-2 duration-300" aria-labelledby="resultDownload">
+        <span id="resultDownload" className="sr-only">Download</span>
         <img src={result.imageUrl} alt="Generated" className="h-full w-full object-cover" />
       </figure>
     );

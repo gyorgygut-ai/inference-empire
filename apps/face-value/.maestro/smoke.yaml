@@ -3,3 +3,9 @@ url: http://localhost:3000
 - launchApp
 - assertVisible:
     css: "main"
+- assertVisible:
+    css: "[role='status']"
+- assertVisible:
+    css: "[aria-labelledby='uploadReference']"
+- assertVisible:
+    css: "[aria-labelledby='requestInference']"

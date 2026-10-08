@@ -1,12 +1,13 @@
 url: http://localhost:3000
 ---
 - launchApp
+- waitForAnimationToEnd
 - extendedWaitUntil:
-    visible: "Select an outcome."
+    visible: "[aria-labelledby='selectOutcome']"
     timeout: 10000
 - assertTrue: "document.readyState === 'complete'"
-- tapOn: "Celebrity Selfie"
-- tapOn: "Upload your photo..."
+- tapOn: "[aria-labelledby='outcomeCelebritySelfie']"
+- tapOn: "[aria-labelledby='uploadReference']"
 - evalScript: |
     const input = document.querySelector('input[type="file"]');
     const dataTransfer = new DataTransfer();
@@ -15,28 +16,28 @@ url: http://localhost:3000
     input.files = dataTransfer.files;
     input.dispatchEvent(new Event('change', { bubbles: true }));
 - extendedWaitUntil:
-    visible: "Let's do this!"
+    visible: "[aria-labelledby='requestInference']"
     timeout: 5000
-- tapOn: "Let's do this!"
+- tapOn: "[aria-labelledby='requestInference']"
 - extendedWaitUntil:
-    visible: "Working on it..."
+    visible: "[aria-labelledby='statusWorking']"
     timeout: 5000
 - repeat:
     times: 10
     commands:
       - evalScript: |
-          const ps = Array.from(document.querySelectorAll('p'));
-          output.done = ps.some(p => p.textContent.includes('Done!'));
-          output.rejected = ps.some(p => p.textContent.includes('The server rejected this request'));
+          const el = document.querySelector('[aria-labelledby="statusWorking"]');
+          output.done = el?.textContent.includes('Done!');
+          output.rejected = el?.textContent.includes('The server rejected this request');
       - waitForAnimationToEnd:
           timeout: 3000
 - runFlow:
     when:
       true: ${output.done === true}
     commands:
-      - assertVisible: "Download"
+      - assertVisible: "[aria-labelledby='resultDownload']"
 - runFlow:
     when:
       true: ${output.rejected === true}
     commands:
-      - assertVisible: "The server rejected this request"
+      - assertVisible: "[aria-labelledby='errorRejected']"
