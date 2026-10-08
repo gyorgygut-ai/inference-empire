@@ -1,6 +1,7 @@
 import { BaseImageAdapter, type ImageAdapterConfig } from "@tanstack/ai/adapters";
 import { type ImageGenerationOptions, type ImageGenerationResult } from "@tanstack/ai";
 import { generateImage } from "@/app/actions/generate";
+import { randomUUID } from "crypto";
 
 export class Flux2KleinAdapter extends BaseImageAdapter {
   readonly name = "flux2-klein";
@@ -39,7 +40,7 @@ export class Flux2KleinAdapter extends BaseImageAdapter {
     }
 
     return {
-      id: crypto.randomUUID(),
+      id: randomUUID(),
       model: this.model,
       images: [{ url: response.presignedUrl }],
     };
