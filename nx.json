@@ -50,7 +50,7 @@
       ],
       "cache": true
     },
-    "e2e-sandbox": {
+    "e2e-sandbox-modal": {
       "inputs": [
         "default",
         "^production"

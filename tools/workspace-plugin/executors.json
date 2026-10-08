@@ -10,9 +10,9 @@
       "schema": "./src/executors/ruff/schema.json",
       "description": "Run ruff lint for a GPU worker family"
     },
-    "sandbox-e2e": {
-      "implementation": "./src/executors/sandbox-e2e/sandbox-e2e",
-      "schema": "./src/executors/sandbox-e2e/schema.json",
+    "sandbox-e2e-modal": {
+      "implementation": "./src/executors/sandbox-e2e-modal/sandbox-e2e-modal",
+      "schema": "./src/executors/sandbox-e2e-modal/schema.json",
       "description": "Run a worker family's Modal sandbox turn (no deploy)"
     },
     "beam-sandbox-e2e": {

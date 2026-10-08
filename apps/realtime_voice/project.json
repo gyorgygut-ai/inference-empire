@@ -24,8 +24,8 @@
       "options": { "family": "realtime_voice" },
       "cache": false
     },
-    "e2e-sandbox": {
-      "executor": "@inference/workspace-plugin:sandbox-e2e",
+    "e2e-sandbox-modal": {
+      "executor": "@inference/workspace-plugin:sandbox-e2e-modal",
       "options": { "family": "realtime_voice" },
       "cache": false
     },

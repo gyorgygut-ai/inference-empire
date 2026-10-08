@@ -1,16 +1,19 @@
 "use client";
 
-import React from "react";
-import { ChatProvider } from "@/components/tanstack-chat/ChatProvider";
-import { MessageList } from "@/components/tanstack-chat/MessageList";
-import { AttachmentComposer } from "@/components/tanstack-chat/AttachmentComposer";
-import type { PublicOutcome } from "@/outcomes";
+import { useEffect } from "react";
+import { useAppChat } from "./chat-hook";
 
-export const ChatClient = ({ outcomes }: { outcomes: PublicOutcome[] }) => (
-  <ChatProvider initialOutcomes={outcomes}>
-    <div className="h-full flex flex-col">
-      <MessageList />
-      <AttachmentComposer />
-    </div>
-  </ChatProvider>
-);
+export const ChatClient = () => {
+  const chat = useAppChat();
+
+  // Seed initial message once
+  useEffect(() => {
+    chat.append({
+      role: "assistant",
+      content: "Select an outcome.",
+      parts: [{ type: "text", content: "Select an outcome." }],
+    });
+  }, []);
+
+  return <chat.AppChat />;
+};
