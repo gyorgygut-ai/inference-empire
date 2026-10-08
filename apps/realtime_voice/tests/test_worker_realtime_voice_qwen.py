@@ -30,6 +30,7 @@ class FakeSTT:
     last_language = "en"
 
     def transcribe(self, audio24k):
+        _ = audio24k
         return "hello world"
 
 
@@ -192,6 +193,7 @@ class _StubCaptureModel:
 def _stub_tokenizer(input_ids):
     class _StubTokenizer:
         def apply_chat_template(self, messages, add_generation_prompt=True, return_tensors="pt"):
+            _ = (messages, add_generation_prompt)
             assert return_tensors == "pt"
             return {"input_ids": input_ids}
 

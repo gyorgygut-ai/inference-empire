@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useContext, useState, useCallback, useEffect } from "react";
+import React, { useContext, useState, useCallback } from "react";
 import { useChat } from "@tanstack/ai-react";
 import type { PublicOutcome } from "@/outcomes";
 import { vocabulary } from "@/messages/vocabulary";
@@ -8,8 +8,12 @@ import { ChatPhase } from "../chat/chat";
 import { generateImage } from "@/app/actions/generate";
 
 interface ChatContextValue {
-  messages: Array<any>;
-  appendMessage: (content: string, phase?: ChatPhase) => void;
+  messages: Array<{
+    id: string;
+    role: "user" | "assistant";
+    parts: Array<{ type: string; content?: string; phase?: ChatPhase }>;
+    createdAt: Date;
+  }>;
   onSelectOutcome: (id: string) => void;
   referenceFile: File | null;
   setReferenceFile: (file: File | null) => void;
@@ -18,13 +22,12 @@ interface ChatContextValue {
   canGenerate: boolean;
   isLoading: boolean;
   artifactUrl: string | undefined;
-  getMessagePhase: (id: string) => ChatPhase | undefined;
   triggerGeneration: () => Promise<void>;
 }
 
 const ChatContext = React.createContext<ChatContextValue | null>(null);
 
-export const useChatContext = () => {
+export const useChatContext = (): ChatContextValue => {
   const ctx = useContext(ChatContext);
   if (!ctx) {
     throw new Error("useChatContext must be used within ChatProvider");
@@ -32,8 +35,12 @@ export const useChatContext = () => {
   return ctx;
 };
 
-// Minimal fetcher for offline use - just returns empty response
-const offlineFetcher = async () => new Response(null, { status: 200 });
+const offlineFetcher = async (): Promise<Response> => new Response(null, { status: 200 });
+
+interface PhasePart {
+  type: "phase";
+  phase: ChatPhase;
+}
 
 export const ChatProvider = ({
   children,
@@ -42,43 +49,71 @@ export const ChatProvider = ({
   children: React.ReactNode;
   initialOutcomes: PublicOutcome[];
 }) => {
-  const { messages, append } = useChat({ fetcher: offlineFetcher });
+  const { messages, append, isLoading } = useChat({
+    fetcher: offlineFetcher,
+    initialMessages: [
+      {
+        id: crypto.randomUUID(),
+        role: "assistant",
+        parts: [
+          { type: "text", content: vocabulary.messages.selectOutcome },
+          { type: "phase", phase: ChatPhase.PROMPT_FOR_OUTCOME },
+        ],
+        createdAt: new Date(),
+      },
+    ],
+  });
+
   const [selectedOutcome, setSelectedOutcome] = useState<PublicOutcome | null>(null);
   const [referenceFile, setReferenceFile] = useState<File | null>(null);
-  const [generationState, setGenerationState] = useState<
-    "idle" | "busy" | "rejected" | "fulfilled"
-  >("idle");
   const [artifactUrl, setArtifactUrl] = useState<string | undefined>();
-  const [messagePhases, setMessagePhases] = useState<Map<string, ChatPhase>>(
-    new Map()
-  );
 
   const canGenerate = !!selectedOutcome && !!referenceFile;
 
-  const appendMessage = useCallback(
-    (content: string, phase?: ChatPhase) => {
-      const id = crypto.randomUUID();
+  const appendPhaseMessage = useCallback(
+    (content: string, phase: ChatPhase) => {
+      const alreadyShown = messages.some((m) =>
+        m.parts?.some((p) => p.type === "phase" && (p as PhasePart).phase === phase)
+      );
+      if (alreadyShown) return;
       append({
-        id,
+        id: crypto.randomUUID(),
         role: "assistant",
-        parts: [{ type: "text", content }],
+        parts: [
+          { type: "text", content },
+          { type: "phase", phase },
+        ],
         createdAt: new Date(),
       });
-      if (phase) {
-        setMessagePhases((prev) => new Map(prev.set(id, phase)));
-      }
     },
-    [append]
+    [append, messages]
   );
 
-  const getMessagePhase = useCallback((id: string) => messagePhases.get(id), [
-    messagePhases,
-  ]);
-
+  // Phase transitions in event handlers — NO useEffect
   const onSelectOutcome = useCallback(
-    (id: string) =>
-      setSelectedOutcome(initialOutcomes.find((o) => o.id === id) ?? null),
-    [initialOutcomes]
+    (id: string) => {
+      const outcome = initialOutcomes.find((o) => o.id === id) ?? null;
+      setSelectedOutcome(outcome);
+      if (outcome) {
+        // FIX: Append BOTH prompts after outcome selection
+        // 1. PROMPT_FOR_REFERENCE — "Upload your photo..."
+        // 2. REQUEST_INFERENCE — "Let's do this!"
+        appendPhaseMessage(vocabulary.messages.uploadReference, ChatPhase.PROMPT_FOR_REFERENCE);
+        appendPhaseMessage(vocabulary.messages.requestInference, ChatPhase.REQUEST_INFERENCE);
+      }
+    },
+    [initialOutcomes, appendPhaseMessage]
+  );
+
+  const onFileSelect = useCallback(
+    (file: File | null) => {
+      setReferenceFile(file);
+      if (file && selectedOutcome) {
+        appendPhaseMessage(vocabulary.messages.uploadReference, ChatPhase.PROMPT_FOR_REFERENCE);
+        appendPhaseMessage(vocabulary.messages.requestInference, ChatPhase.REQUEST_INFERENCE);
+      }
+    },
+    [selectedOutcome, appendPhaseMessage]
   );
 
   const triggerGeneration = useCallback(async () => {
@@ -86,88 +121,33 @@ export const ChatProvider = ({
       return;
     }
 
-    setGenerationState("busy");
-
-    // Append busy message immediately (3-dot animation, no text)
-    appendMessage(vocabulary.messages.busy, ChatPhase.INFERENCE_BUSY);
-
-    // Schedule busyForAWhile after 35s per spec
-    const busyForAWhileTimer = setTimeout(() => {
-      appendMessage(
-        vocabulary.messages.busyForAWhile,
-        ChatPhase.INFERENCE_BUSY
-      );
-    }, 35000);
+    appendPhaseMessage(vocabulary.messages.busy, ChatPhase.INFERENCE_BUSY);
 
     try {
       const response = await generateImage(selectedOutcome.id, referenceFile);
-      clearTimeout(busyForAWhileTimer);
-
       if (response.status === "rejected") {
-        appendMessage(
-          vocabulary.messages.rejected,
-          ChatPhase.INFERENCE_REJECTED
-        );
-        setGenerationState("rejected");
+        appendPhaseMessage(vocabulary.messages.rejected, ChatPhase.INFERENCE_REJECTED);
       } else {
-        appendMessage(
-          vocabulary.messages.fulfilled,
-          ChatPhase.INFERENCE_FULFILLED
-        );
+        appendPhaseMessage(vocabulary.messages.fulfilled, ChatPhase.INFERENCE_FULFILLED);
         setArtifactUrl(response.presignedUrl);
-        setGenerationState("fulfilled");
       }
     } catch {
-      clearTimeout(busyForAWhileTimer);
-      appendMessage(
-        vocabulary.messages.rejected,
-        ChatPhase.INFERENCE_REJECTED
-      );
-      setGenerationState("rejected");
+      appendPhaseMessage(vocabulary.messages.rejected, ChatPhase.INFERENCE_REJECTED);
     }
-  }, [canGenerate, selectedOutcome, referenceFile, appendMessage]);
-
-  // Initial prompt effect - seed the thread with outcome prompt
-  useEffect(() => {
-    if (messages.length === 0) {
-      appendMessage(
-        vocabulary.messages.selectOutcome,
-        ChatPhase.PROMPT_FOR_OUTCOME
-      );
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [messages.length, appendMessage]);
-
-  // Reference prompt effect - triggers when user selects outcome and uploads image.
-  useEffect(() => {
-    if (selectedOutcome && referenceFile) {
-      const hasReferencePrompt = Array.from(messagePhases.values()).includes(
-        ChatPhase.PROMPT_FOR_REFERENCE
-      );
-      if (!hasReferencePrompt) {
-        appendMessage(
-          vocabulary.messages.uploadReference,
-          ChatPhase.PROMPT_FOR_REFERENCE
-        );
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedOutcome, referenceFile, messagePhases, appendMessage]);
+  }, [canGenerate, selectedOutcome, referenceFile, appendPhaseMessage]);
 
   return (
     <ChatContext.Provider
       value={{
         messages,
-        appendMessage,
         onSelectOutcome,
         referenceFile,
-        setReferenceFile,
+        setReferenceFile: onFileSelect,
         selectedOutcome,
         outcomes: initialOutcomes,
         canGenerate,
-        isLoading: generationState === "busy",
+        isLoading,
         artifactUrl,
-        getMessagePhase,
         triggerGeneration,
       }}
     >

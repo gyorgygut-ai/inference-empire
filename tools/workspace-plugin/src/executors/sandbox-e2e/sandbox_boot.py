@@ -15,6 +15,8 @@ import glob
 import os
 import sys
 
+sys.path.insert(0, os.getcwd())
+
 
 def main() -> int:
     family = sys.argv[1]
@@ -32,11 +34,14 @@ def main() -> int:
     mount = getattr(worker, "MODEL_MOUNT", "/root/.cache/huggingface")
 
     img = worker.image
+    # packages/shared_gpu is a symlink to packages/shared-gpu; mount the real
+    # dir under the importable name since add_local_python_source skips links.
+    img = img.add_local_dir("packages/shared-gpu", "/root/packages/shared_gpu")
     for path in sorted(glob.glob(f"apps/{family}/tests/fixtures/*")):
         if os.path.isfile(path):
             img = img.add_local_file(path, f"/root/{path}")
 
-    creds = {}
+    creds: dict[str, str | None] = {}
     for key in (
         "MODAL_TOKEN_ID",
         "MODAL_TOKEN_SECRET",
@@ -63,21 +68,21 @@ def main() -> int:
         print("GPU sandbox up", flush=True)
         probe = sb.exec("python", "-c", "import pytest, httpx", timeout=120)
         probe.stdout.read()
-        if probe.returncode != 0:
+        if probe.wait() != 0:
             print("installing test deps", flush=True)
             inst = sb.exec(
                 "pip", "install", "-q", "pytest", "httpx", "pillow", "modal", "beam-client",
                 timeout=600,
             )
             print(inst.stdout.read(), flush=True)
-            if inst.returncode != 0:
+            if inst.wait() != 0:
                 print(inst.stderr.read(), flush=True)
                 return 1
         proc = sb.exec(*cmd, timeout=timeout_s)
         out = proc.stdout.read()
         print(out, flush=True)
         print(proc.stderr.read(), flush=True)
-        return 0 if proc.returncode == 0 else 1
+        return 0 if proc.wait() == 0 else 1
     except Exception as e:
         print(f"FAIL: {type(e).__name__}: {e}", flush=True)
         return 1

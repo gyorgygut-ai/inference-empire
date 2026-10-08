@@ -36,6 +36,7 @@ class TinyImagePipe:
         self._pipe = pipe
 
     def set_adapters(self, adapter_names, weights=None):
+        _ = (adapter_names, weights)
         """No-op: tiny-sd carries no LoRA adapters."""
 
     def __call__(self, **kwargs):

@@ -83,7 +83,7 @@ def remote_present(provider: str, volume: str, path: str) -> bool:
     return True
 
 
-def die(msg: str, tmp: Path | None = None) -> "NoReturn":
+def die(msg: str, tmp: Path | None = None) -> NoReturn:
     if tmp is not None:
         shutil.rmtree(tmp, ignore_errors=True)
     print(f"FAILED {msg} -> bailing")

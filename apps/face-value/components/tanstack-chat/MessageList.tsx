@@ -9,6 +9,18 @@ import { MessageArtifact } from "../chat/messages/MessageArtifact";
 import { ChatPhase } from "../chat/chat";
 import { useChatContext } from "./ChatProvider";
 
+interface PhasePart {
+  type: "phase";
+  phase: ChatPhase;
+}
+
+function getMessagePhase(message: {
+  parts?: Array<{ type: string; phase?: ChatPhase }>;
+}): ChatPhase | undefined {
+  const phasePart = message.parts?.find((p) => p.type === "phase") as PhasePart | undefined;
+  return phasePart?.phase;
+}
+
 export const MessageList = () => {
   const {
     messages,
@@ -17,7 +29,6 @@ export const MessageList = () => {
     isLoading,
     canGenerate,
     artifactUrl,
-    getMessagePhase,
     onSelectOutcome,
     triggerGeneration,
   } = useChatContext();
@@ -25,9 +36,9 @@ export const MessageList = () => {
   return (
     <div className="flex-1 overflow-y-auto space-y-4 pb-4">
       {messages.map((message) => {
-        const type = getMessagePhase(message.id);
+        const type = getMessagePhase(message);
         const content = message.parts?.find(
-          (p: { type: string; content: string }) => p.type === "text"
+          (p: { type: string; content?: string }) => p.type === "text"
         )?.content;
 
         if (type === ChatPhase.PROMPT_FOR_OUTCOME) {
@@ -77,4 +88,3 @@ export const MessageList = () => {
       })}
     </div>
   );
-};

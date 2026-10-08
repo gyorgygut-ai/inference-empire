@@ -47,7 +47,7 @@ image = (
 
 def snapshot_download(repo_id, local_dir, local_dir_use_symlinks=False, allow_patterns=None):
     # Stub for huggingface_hub.snapshot_download
-    pass
+    _ = (repo_id, local_dir, local_dir_use_symlinks, allow_patterns)
 
 
 def _ensure_comfy_models():

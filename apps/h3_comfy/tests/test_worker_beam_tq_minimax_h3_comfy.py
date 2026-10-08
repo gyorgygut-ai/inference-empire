@@ -127,6 +127,7 @@ def test_ensure_comfy_models_calls_snapshot_download_when_missing(monkeypatch):
         called["repo"] = repo_id
         called["dir"] = local_dir
         called["patterns"] = allow_patterns
+        called["use_symlinks"] = local_dir_use_symlinks
     monkeypatch.setattr(worker_mod, "snapshot_download", fake_snapshot)
     monkeypatch.setattr(Path, "exists", lambda _self: True)
     monkeypatch.setattr(worker_mod.shutil, "copy2", lambda *_a, **_k: None)
