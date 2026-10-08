@@ -124,14 +124,10 @@ function cycleCheck() {
   let envRerunCount = parseInt(getArg('--env-rerun-count') || '0', 10);
 
   // Cycle classification: if previous cycle was agent-triggered, count it
-  if (wasAgentTriggered) {
-    cycleCount++;
-  }
+  if (wasAgentTriggered) cycleCount++;
 
   // Reset env_rerun_count on non-environment status
-  if (status !== 'environment_issue') {
-    envRerunCount = 0;
-  }
+  if (status !== 'environment_issue') envRerunCount = 0;
 
   // Cycle limit gates. limitReached is a terminal stop; approachingLimit is an
   // advisory warning emitted in the two cycles before the cap.

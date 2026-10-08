@@ -34,13 +34,12 @@ const tokenPath = join(distDir, '.router-token')
 rmSync(tokenPath, { force: true })
 
 // Providers: static modal identity from the contract, dynamic entries (beam/flash) from provider.json when present.
-const contractsDir = join(workspaceRoot, 'apps', family, 'contracts')
-const contractFiles = readdirSync(contractsDir).filter((file) => file.endsWith('.json'))
-if (contractFiles.length !== 1) {
-  console.error(`[serve] expected exactly one contract in ${contractsDir}, found ${contractFiles.length}`)
+const contractPath = join(workspaceRoot, 'packages', family, 'contract.json')
+if (!existsSync(contractPath)) {
+  console.error(`[serve] contract not found at ${contractPath}`)
   process.exit(1)
 }
-const contract = JSON.parse(readFileSync(join(contractsDir, contractFiles[0]), 'utf-8'))
+const contract = JSON.parse(readFileSync(contractPath, 'utf-8'))
 const providerPath = join(workspaceRoot, 'dist', 'apps', family, 'provider.json')
 const dynamicProviders = existsSync(providerPath) ? JSON.parse(readFileSync(providerPath, 'utf-8')) : {}
 const providers = { ...dynamicProviders, ...(contract.providers || {}) }

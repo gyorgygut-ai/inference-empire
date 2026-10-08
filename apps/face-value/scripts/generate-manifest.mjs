@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs"
 import { join } from "node:path"
 
-const vocabPath = join(process.cwd(), "messages", "vocabulary.en.ts")
+const vocabPath = join(process.cwd(), "messages", "vocabulary", "en.ts")
 const vocabContent = readFileSync(vocabPath, "utf-8")
 
 // Extract meta object from vocabulary.ts using regex

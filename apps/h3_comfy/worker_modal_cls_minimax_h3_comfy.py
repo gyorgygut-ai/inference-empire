@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 from functools import partial
+from pathlib import Path
 
 import modal
 import requests
@@ -22,9 +23,7 @@ app = modal.App("minimax-h3-comfy-worker")
 # COMFY_MODELS is used by _ensure_comfy_models and tests
 COMFY_MODELS: list[str] = []
 
-r2_secret = modal.Secret.from_name(
-    "r2-creds", required_keys=["R2_BUCKET", "R2_ENDPOINT", "R2_ACCESS_KEY", "R2_SECRET_KEY"]
-)
+dotenv_secret = modal.Secret.from_dotenv(str(Path(__file__).parent.parent.parent / ".env"))
 hf_cache_vol = modal_volume()
 
 image = (
@@ -68,7 +67,7 @@ def generate(storage, comfy_base_url: str, **kwargs) -> dict:
 @app.cls(
     image=image,
     gpu="L4",
-    secrets=[r2_secret],
+    secrets=[dotenv_secret],
     volumes={MODAL_HF_MOUNT: hf_cache_vol},
     timeout=3600,
     memory=32768,

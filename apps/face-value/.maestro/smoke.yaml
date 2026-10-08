@@ -1,11 +1,14 @@
 url: http://localhost:3000
 ---
 - launchApp
+- extendedWaitUntil:
+    visible: "[aria-labelledby='selectOutcome']"
+    timeout: 10000
 - assertVisible:
-    css: "main"
+    css: "[aria-labelledby='selectOutcome']"
 - assertVisible:
-    css: "[role='status']"
-- assertVisible:
+    css: "[aria-labelledby='celebrity-selfie']"
+- assertNotVisible:
     css: "[aria-labelledby='uploadReference']"
-- assertVisible:
+- assertNotVisible:
     css: "[aria-labelledby='requestInference']"

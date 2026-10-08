@@ -1,18 +1,15 @@
 "use client";
 
-import { useEffect } from "react";
+import React from "react";
 import { useAppChat } from "./chat-hook";
+import { OutcomesProvider } from "./outcomes-context";
+import type { PublicOutcome } from "@/outcomes/outcomes";
 
-export const ChatClient = () => {
+export const ChatClient = ({ outcomes }: { outcomes: PublicOutcome[] }) => {
   const chat = useAppChat();
-
-  // Seed initial message once
-  useEffect(() => {
-    chat.append({
-      role: "assistant",
-      content: "Select an outcome.",
-    });
-  }, []);
-
-  return <chat.AppChat />;
+  return (
+    <OutcomesProvider outcomes={outcomes}>
+      <chat.AppChat />
+    </OutcomesProvider>
+  );
 };

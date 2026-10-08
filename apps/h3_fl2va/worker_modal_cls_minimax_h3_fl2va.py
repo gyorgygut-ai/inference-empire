@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from functools import partial
+from pathlib import Path
 
 import modal
 
@@ -16,9 +17,7 @@ from packages.shared_gpu.platform import MODAL_HF_MOUNT, modal_env, modal_volume
 
 app = modal.App("minimax-h3-fl2va-worker")
 
-r2_secret = modal.Secret.from_name(
-    "r2-creds", required_keys=["R2_BUCKET", "R2_ENDPOINT", "R2_ACCESS_KEY", "R2_SECRET_KEY"]
-)
+dotenv_secret = modal.Secret.from_dotenv(str(Path(__file__).parent.parent.parent / ".env"))
 hf_cache_vol = modal_volume()
 
 
@@ -64,7 +63,7 @@ image = (
 @app.cls(
     image=image,
     gpu="L4",
-    secrets=[r2_secret],
+    secrets=[dotenv_secret],
     volumes={MODAL_HF_MOUNT: hf_cache_vol},
     timeout=3600,
     memory=32768,

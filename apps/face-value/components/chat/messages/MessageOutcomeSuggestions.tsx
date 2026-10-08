@@ -3,6 +3,7 @@
 import React from "react";
 import { cn } from "cn";
 import type { PublicOutcome } from "@/outcomes";
+import { vocabulary } from "@/messages";
 
 export const MessageOutcomeSuggestions = ({
   outcomes,
@@ -15,14 +16,11 @@ export const MessageOutcomeSuggestions = ({
   onSelect: (id: string) => void;
   selectedOutcomeId?: PublicOutcome["id"];
 }) => (
-  <div className="mb-6 animate-in fade-in-50 slide-in-from-bottom-2 duration-400">
-    <div role="listbox" aria-label="Outcomes" className="grid grid-cols-2 gap-2">
-      <span id="selectOutcome" className="sr-only">Select an outcome.</span>
+  <div className="mb-6 animate-in fade-in-50 slide-in-from-bottom-2 duration-400" aria-labelledby="selectOutcome">
+    <div role="listbox" aria-label={vocabulary.messages.outcomesAria} aria-labelledby="selectOutcome" className="grid grid-cols-2 gap-2">
+      <span id="selectOutcome" className="sr-only">{vocabulary.messages.selectOutcome}</span>
       {outcomes.map(({ id: outcomeId, title }) => {
         const isSelected = outcomeId === selectedOutcomeId;
-        // Transform kebab-case outcome id to camelCase for aria-labelledby consistency with vocabulary keys
-        // e.g., 'celebrity-selfie' -> 'outcomeCelebritySelfie'
-        const labelId = `outcome${outcomeId.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join('')}`;
 
         return (
           <button
@@ -31,7 +29,7 @@ export const MessageOutcomeSuggestions = ({
             key={outcomeId}
             disabled={disabled}
             aria-selected={isSelected}
-            aria-labelledby={labelId}
+            aria-labelledby={outcomeId}
             onClick={() => onSelect(outcomeId)}
             className={cn({
               "px-3 py-2 md:py-1 rounded border text-title": true,
@@ -40,7 +38,7 @@ export const MessageOutcomeSuggestions = ({
               "cursor-not-allowed opacity-50": disabled,
             })}
           >
-            <span id={labelId} className="sr-only">{title}</span>
+            <span id={outcomeId} className="sr-only">{title}</span>
             {title}
           </button>
         );

@@ -5,38 +5,40 @@ url: http://localhost:3000
 - extendedWaitUntil:
     visible: "[aria-labelledby='selectOutcome']"
     timeout: 10000
-- assertTrue: "document.readyState === 'complete'"
-- tapOn: "[aria-labelledby='outcomeCelebritySelfie']"
-- tapOn: "[aria-labelledby='uploadReference']"
+- tapOn: "[aria-labelledby='celebrity-selfie']"
+- extendedWaitUntil:
+    visible: "[aria-labelledby='uploadReference']"
+    timeout: 5000
 - evalScript: |
     const input = document.querySelector('input[type="file"]');
+    const res = await fetch('/test-asset.png');
+    const buf = await res.arrayBuffer();
+    const file = new File([buf], 'test-asset.png', { type: 'image/png' });
     const dataTransfer = new DataTransfer();
-    const file = new File([await fetch('./apps/face-value/01-initial.png').then(r => r.arrayBuffer())], '01-initial.png', { type: 'image/png' });
     dataTransfer.items.add(file);
     input.files = dataTransfer.files;
     input.dispatchEvent(new Event('change', { bubbles: true }));
 - extendedWaitUntil:
     visible: "[aria-labelledby='requestInference']"
     timeout: 5000
+- assertTrue: "document.querySelector('img') !== null"
 - tapOn: "[aria-labelledby='requestInference']"
 - extendedWaitUntil:
     visible: "[aria-labelledby='statusWorking']"
     timeout: 5000
-- repeat:
-    times: 12
-    commands:
-      - extendedWaitUntil:
-          visible: "[aria-labelledby='resultDownload']"
-          timeout: 3000
-      - evalScript: |
-          output.seen = !!document.querySelector('[aria-labelledby=\"resultDownload\"]');
+- extendedWaitUntil:
+    visible:
+      css: "[aria-labelledby='resultDownload'], [aria-labelledby='errorRejected']"
+    timeout: 240000
 - runFlow:
     when:
-      true: ${output.seen === true}
+      visible: "[aria-labelledby='resultDownload']"
     commands:
       - assertVisible: "[aria-labelledby='resultDownload']"
+      - takeScreenshot: "fulfilled"
 - runFlow:
     when:
-      true: ${output.seen !== true}
+      visible: "[aria-labelledby='errorRejected']"
     commands:
       - assertVisible: "[aria-labelledby='errorRejected']"
+- assertTrue: "document.querySelector('[aria-labelledby=\"resultDownload\"]') !== null || document.querySelector('[aria-labelledby=\"errorRejected\"]') !== null"

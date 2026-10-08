@@ -4,7 +4,7 @@ import sharp from "sharp";
 import { inferWithPolling } from "@inference/worker-router-client";
 import type { Flux2Klein9BOutput } from "@/app/inference-api/schema";
 import { workerRouterConfig } from "@/app/inference-api/router-config";
-import { getInferenceOutcome } from "@/outcomes";
+import { getInferenceOutcome } from "@/outcomes/inference-outcomes";
 
 const MAX_SIZE = 512;
 const MAX_BYTES = 5 * 1024 * 1024;

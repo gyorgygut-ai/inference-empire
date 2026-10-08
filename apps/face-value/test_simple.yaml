@@ -1,4 +1,0 @@
-url: http://localhost:3000
----
-- launchApp
-- assertTrue: "document.querySelector('p').textContent.includes('Select an outcome')"

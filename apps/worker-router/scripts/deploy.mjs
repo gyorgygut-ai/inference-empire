@@ -25,15 +25,13 @@ if (!project) {
 const family = project.endsWith('-router') ? project.slice(0, -'-router'.length) : project
 
 // A router is always the router of exactly one GPU family: resolve that family's contract.
-const contractsDir = join(workspaceRoot, 'apps', family, 'contracts')
-const contractFiles = readdirSync(contractsDir).filter((file) => file.endsWith('.json'))
-if (contractFiles.length !== 1) {
-  console.error(`[deploy] expected exactly one contract in ${contractsDir}, found ${contractFiles.length}`)
+const contractPath = join(workspaceRoot, 'packages', family, 'contract.json')
+if (!existsSync(contractPath)) {
+  console.error(`[deploy] contract not found at ${contractPath}`)
   process.exit(1)
 }
-
-const contractName = basename(contractFiles[0], '.json')
-const contract = JSON.parse(readFileSync(join(contractsDir, contractFiles[0]), 'utf-8'))
+const contract = JSON.parse(readFileSync(contractPath, 'utf-8'))
+const contractName = basename(contractPath, '.json')
 
 // Providers: dynamic entries (beam/flash) from provider.json, static modal identity from the contract.
 const providerPath = join(workspaceRoot, 'dist', 'apps', family, 'provider.json')
