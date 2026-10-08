@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Check, Copy, Terminal } from 'lucide-react';
+import { useState } from 'react'
+import { Check, Copy, Terminal } from 'lucide-react'
 
 /**
  * Renders the output of the `showNxCommand` tool: a copy-ready command card.
@@ -13,13 +13,13 @@ export const NxCommandCard = ({
   command: string;
   explanation: string;
 }) => {
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState(false)
 
   const copy = () => {
-    navigator.clipboard?.writeText(command);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
-  };
+    navigator.clipboard?.writeText(command)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1500)
+  }
 
   return (
     <div className="mt-3 overflow-hidden rounded-xl border border-emerald-500/30 bg-zinc-900/80">
@@ -54,5 +54,5 @@ export const NxCommandCard = ({
         </p>
       )}
     </div>
-  );
+  )
 }

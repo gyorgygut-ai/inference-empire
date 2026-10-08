@@ -1,11 +1,11 @@
-import React from "react";
-import { ChatClient } from "@/components/chat/chat-client";
-import { getPublicOutcomes } from "@/outcomes/outcomes";
+import React from "react"
+import { ChatClient } from "@/components/chat/chat-client"
+import { getPublicOutcomes } from "@/outcomes/outcomes"
 
-export const dynamic = "force-dynamic";
+export const dynamic = "force-dynamic"
 
 const Home = async () => {
-  const outcomes = getPublicOutcomes();
+  const outcomes = getPublicOutcomes()
   return (
     <main className="min-h-screen bg-background flex">
       <aside className="hidden md:flex md:w-2/3 bg-sidebar border-r border-border" />
@@ -13,7 +13,7 @@ const Home = async () => {
         <ChatClient outcomes={outcomes} />
       </div>
     </main>
-  );
-};
+  )
+}
 
-export default Home;
+export default Home

@@ -1,6 +1,6 @@
-import { toolDefinition } from '@tanstack/ai';
-import { z } from 'zod';
-import { NX_TIPS, getRandomNxTip, getNxTipsByCategory } from './nx-tips';
+import { toolDefinition } from '@tanstack/ai'
+import { z } from 'zod'
+import { NX_TIPS, getRandomNxTip, getNxTipsByCategory } from './nx-tips'
 
 /**
  * Isomorphic tool definitions.
@@ -18,14 +18,14 @@ const nxCategory = z.enum([
   'generators',
   'ci',
   'cloud',
-]);
+])
 
 const nxTipOutput = z.object({
   id: z.number(),
   category: nxCategory,
   tip: z.string(),
   command: z.string().optional(),
-});
+})
 
 /**
  * getNxTip - returns a random Nx tip (or one from a given category).
@@ -42,7 +42,7 @@ export const getNxTipToolDef = toolDefinition({
       .describe('Optional category to filter the tip by.'),
   }),
   outputSchema: nxTipOutput,
-});
+})
 
 export const getNxTip = getNxTipToolDef.server((args, context) => {
   context?.emitCustomEvent('tool:progress', {
@@ -50,16 +50,16 @@ export const getNxTip = getNxTipToolDef.server((args, context) => {
     message: args.category
       ? `Looking up an Nx tip about ${args.category}`
       : 'Picking a random Nx tip',
-  });
+  })
 
   if (args.category) {
-    const matches = getNxTipsByCategory(args.category);
+    const matches = getNxTipsByCategory(args.category)
     if (matches.length > 0) {
-      return matches[Math.floor(Math.random() * matches.length)];
+      return matches[Math.floor(Math.random() * matches.length)]
     }
   }
-  return getRandomNxTip();
-});
+  return getRandomNxTip()
+})
 
 /**
  * searchNxDocs - a stubbed docs search. In a real app this would hit a search
@@ -78,28 +78,28 @@ export const searchNxDocsToolDef = toolDefinition({
     results: z.array(nxTipOutput),
     totalFound: z.number(),
   }),
-});
+})
 
 export const searchNxDocs = searchNxDocsToolDef.server((args, context) => {
   context?.emitCustomEvent('tool:progress', {
     tool: 'searchNxDocs',
     message: `Searching Nx docs for "${args.query}"`,
-  });
+  })
 
-  const q = args.query.toLowerCase();
+  const q = args.query.toLowerCase()
   const results = NX_TIPS.filter(
     (t) =>
       t.tip.toLowerCase().includes(q) ||
       t.category.toLowerCase().includes(q) ||
       (t.command?.toLowerCase().includes(q) ?? false),
-  );
+  )
 
   return {
     query: args.query,
     results: [...results],
     totalFound: results.length,
-  };
-});
+  }
+})
 
 /**
  * showNxCommand - a "render-in-the-UI" tool. The server has no implementation;
@@ -123,11 +123,11 @@ export const showNxCommandToolDef = toolDefinition({
     command: z.string(),
     explanation: z.string(),
   }),
-});
+})
 
 /**
  * Every server-side tool the chat route should expose.
  * `showNxCommandToolDef` is intentionally definition-only here - its execution
  * happens on the client (see apps/web), which renders the command card.
  */
-export const serverTools = [getNxTip, searchNxDocs, showNxCommandToolDef];
+export const serverTools = [getNxTip, searchNxDocs, showNxCommandToolDef]

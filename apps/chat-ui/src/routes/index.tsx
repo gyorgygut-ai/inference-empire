@@ -1,29 +1,29 @@
-import { useEffect, useRef, useState } from 'react';
-import { createFileRoute } from '@tanstack/react-router';
-import { Send, Sparkles, Square, Wrench } from 'lucide-react';
-import ReactMarkdown from 'react-markdown';
-import rehypeHighlight from 'rehype-highlight';
-import rehypeSanitize from 'rehype-sanitize';
-import remarkGfm from 'remark-gfm';
-import { fetchServerSentEvents, useChat } from '@tanstack/ai-react';
-import { clientTools } from '@tanstack/ai-client';
-import type { UIMessage } from '@tanstack/ai-react';
-import { showNxCommandToolDef } from '@inference-empire/ai';
-import { NxCommandCard } from '../components/NxCommandCard';
+import { useEffect, useRef, useState } from 'react'
+import { createFileRoute } from '@tanstack/react-router'
+import { Send, Sparkles, Square, Wrench } from 'lucide-react'
+import ReactMarkdown from 'react-markdown'
+import rehypeHighlight from 'rehype-highlight'
+import rehypeSanitize from 'rehype-sanitize'
+import remarkGfm from 'remark-gfm'
+import { fetchServerSentEvents, useChat } from '@tanstack/ai-react'
+import { clientTools } from '@tanstack/ai-client'
+import type { UIMessage } from '@tanstack/ai-react'
+import { showNxCommandToolDef } from '@inference-empire/ai'
+import { NxCommandCard } from '../components/NxCommandCard'
 
 // The showNxCommand tool has no server execution: the model emits a tool call
 // and the browser "executes" it by simply echoing the args, which we then
 // render as a rich command card. One definition, shared types, custom UI.
-const showNxCommandClient = showNxCommandToolDef.client((args) => args);
+const showNxCommandClient = showNxCommandToolDef.client((args) => args)
 
-const tools = clientTools(showNxCommandClient);
+const tools = clientTools(showNxCommandClient)
 
 const SUGGESTIONS = [
   'Give me a random Nx tip',
   'How do I run only affected projects?',
   'What does remote caching do?',
   'Show me the command to visualize the project graph',
-];
+]
 
 const EmptyState = ({ onPick }: { onPick: (text: string) => void }) => (
   <div className="flex flex-1 items-center justify-center px-4 py-10">
@@ -54,14 +54,14 @@ const EmptyState = ({ onPick }: { onPick: (text: string) => void }) => (
       </div>
     </div>
   </div>
-);
+)
 
 const ToolProgress = ({ message }: { message: string }) => (
   <div className="mt-2 flex items-center gap-2 rounded-lg border border-amber-500/20 bg-amber-500/10 px-3 py-1.5 text-xs text-amber-300">
     <Wrench className="h-3.5 w-3.5 animate-pulse" />
     {message}
   </div>
-);
+)
 
 const MessagePart = ({ part }: { part: UIMessage['parts'][number] }) => {
   if (part.type === 'text' && part.content) {
@@ -74,7 +74,7 @@ const MessagePart = ({ part }: { part: UIMessage['parts'][number] }) => {
           {part.content}
         </ReactMarkdown>
       </div>
-    );
+    )
   }
 
   // showNxCommand tool result -> render the command card
@@ -83,26 +83,26 @@ const MessagePart = ({ part }: { part: UIMessage['parts'][number] }) => {
     part.name === 'showNxCommand' &&
     part.output
   ) {
-    const output = part.output as { command: string; explanation: string };
+    const output = part.output as { command: string; explanation: string }
     return (
       <NxCommandCard
         command={output.command}
         explanation={output.explanation}
       />
-    );
+    )
   }
 
-  return null;
-};
+  return null
+}
 
 const Messages = ({ messages }: { messages: Array<UIMessage> }) => {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (containerRef.current) {
-      containerRef.current.scrollTop = containerRef.current.scrollHeight;
+      containerRef.current.scrollTop = containerRef.current.scrollHeight
     }
-  }, [messages]);
+  }, [messages])
 
   return (
     <div ref={containerRef} className="flex-1 overflow-y-auto px-4 py-6">
@@ -127,35 +127,35 @@ const Messages = ({ messages }: { messages: Array<UIMessage> }) => {
         ))}
       </div>
     </div>
-  );
+  )
 }
 
 const ChatPage = () => {
-  const [input, setInput] = useState('');
-  const [toolMessage, setToolMessage] = useState<string | null>(null);
+  const [input, setInput] = useState('')
+  const [toolMessage, setToolMessage] = useState<string | null>(null)
 
   const { messages, sendMessage, isLoading, error, stop } = useChat({
     connection: fetchServerSentEvents('/api/chat'),
     tools,
     onCustomEvent: (eventType, data) => {
       if (eventType === 'tool:progress') {
-        const value = data as { message?: string } | undefined;
+        const value = data as { message?: string } | undefined
         if (value?.message) {
-          setToolMessage(value.message);
-          setTimeout(() => setToolMessage(null), 2500);
+          setToolMessage(value.message)
+          setTimeout(() => setToolMessage(null), 2500)
         }
       }
     },
-  });
+  })
 
   const submit = (text: string) => {
-    const value = text.trim();
+    const value = text.trim()
     if (!value || isLoading) {
-      return;
+      return
     }
-    sendMessage(value);
-    setInput('');
-  };
+    sendMessage(value)
+    setInput('')
+  }
 
   return (
     <div className="flex h-screen flex-col bg-zinc-950">
@@ -215,8 +215,8 @@ const ChatPage = () => {
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  submit(input);
+                  e.preventDefault()
+                  submit(input)
                 }
               }}
               placeholder="Ask about Nx, TanStack, caching, the project graph..."
@@ -238,9 +238,9 @@ const ChatPage = () => {
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
 export const Route = createFileRoute('/')({
   component: ChatPage,
-});
+})

@@ -20,4 +20,4 @@ export const vocabulary = {
     resultAlt: "Generated",
     download: "Download",
   },
-};
+}

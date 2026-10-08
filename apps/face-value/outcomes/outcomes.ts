@@ -1,7 +1,7 @@
-import "server-only";
-import fs from "fs";
-import path from "path";
-import matter from "gray-matter";
+import "server-only"
+import fs from "fs"
+import path from "path"
+import matter from "gray-matter"
 
 export type Outcome = {
   id: string;
@@ -10,23 +10,23 @@ export type Outcome = {
   width: number;
   height: number;
   prompt: string;
-};
+}
 
 export type PublicOutcome = {
   id: string;
   title: string;
   width: number;
   height: number;
-};
+}
 
-const outcomesDir = path.join(process.cwd(), "outcomes");
+const outcomesDir = path.join(process.cwd(), "outcomes")
 
 const outcomeCache = new Map<string, Outcome>(
   fs
     .readdirSync(outcomesDir)
     .filter((f) => f.endsWith(".md"))
     .map((file) => {
-      const { data, content } = matter(fs.readFileSync(path.join(outcomesDir, file), "utf-8"));
+      const { data, content } = matter(fs.readFileSync(path.join(outcomesDir, file), "utf-8"))
       const outcome: Outcome = {
         id: data.id as string,
         title: data.title as string,
@@ -34,10 +34,10 @@ const outcomeCache = new Map<string, Outcome>(
         prompt: content.trim(),
         height: data.height as number,
         width: data.width as number,
-      };
-      return [outcome.id, outcome];
+      }
+      return [outcome.id, outcome]
     }),
-);
+)
 
 export function getPublicOutcomes(): PublicOutcome[] {
   return Array.from(outcomeCache.values())
@@ -47,9 +47,9 @@ export function getPublicOutcomes(): PublicOutcome[] {
       title,
       width: width ?? 512,
       height: height ?? 768,
-    }));
+    }))
 }
 
 export function getInferenceOutcome(id: string): Outcome | null {
-  return outcomeCache.get(id) ?? null;
+  return outcomeCache.get(id) ?? null
 }

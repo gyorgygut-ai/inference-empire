@@ -1,4 +1,4 @@
-import "server-only";
+import "server-only"
 
-export { getInferenceOutcome, getPublicOutcomes } from "./outcomes";
-export type { Outcome, PublicOutcome } from "./outcomes";
+export { getInferenceOutcome, getPublicOutcomes } from "./outcomes"
+export type { Outcome, PublicOutcome } from "./outcomes"

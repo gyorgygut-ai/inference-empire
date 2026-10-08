@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute } from '@tanstack/react-router'
 import {
   chat,
   chatParamsFromRequestBody,
@@ -6,8 +6,8 @@ import {
   maxIterations,
   mergeAgentTools,
   toServerSentEventsResponse,
-} from '@tanstack/ai';
-import { openRouterText } from '@tanstack/ai-openrouter';
+} from '@tanstack/ai'
+import { openRouterText } from '@tanstack/ai-openrouter'
 // To switch providers, swap the adapter above and below for one of:
 //   import { openaiText } from '@tanstack/ai-openai'   -> openaiText(model)
 //   import { geminiText } from '@tanstack/ai-gemini'   -> geminiText(model)
@@ -17,11 +17,11 @@ import {
   serverTools,
   SYSTEM_PROMPT,
   DEFAULT_CHAT_MODEL,
-} from '@inference-empire/ai';
+} from '@inference-empire/ai'
 
 // Read the model from the environment so it is configurable per deployment.
 // Defaults to openrouter/free via KILO_API_KEY.
-const MODEL = process.env.CHAT_MODEL || DEFAULT_CHAT_MODEL;
+const MODEL = process.env.CHAT_MODEL || DEFAULT_CHAT_MODEL
 
 export const Route = createFileRoute('/api/chat')({
   server: {
@@ -34,29 +34,29 @@ export const Route = createFileRoute('/api/chat')({
                 'KILO_API_KEY is not set. Add it to your environment to use OpenRouter.',
             }),
             { status: 500, headers: { 'Content-Type': 'application/json' } },
-          );
+          )
         }
 
-        let params;
+        let params
         try {
-          params = await chatParamsFromRequestBody(await request.json());
+          params = await chatParamsFromRequestBody(await request.json())
         } catch (error) {
           return new Response(
             error instanceof Error ? error.message : 'Bad request',
             { status: 400 },
-          );
+          )
         }
 
-        const abortController = new AbortController();
+        const abortController = new AbortController()
 
         try {
           // Merge the server tool set with any client-side tools the request
           // brought along (e.g. the showNxCommand UI tool).
-          const mergedTools = mergeAgentTools(serverTools, params.tools);
+          const mergedTools = mergeAgentTools(serverTools, params.tools)
 
           const options = createChatOptions({
             adapter: openRouterText(MODEL as any)
-          });
+          })
 
           const stream = chat({
             ...options,
@@ -67,20 +67,20 @@ export const Route = createFileRoute('/api/chat')({
             threadId: params.threadId,
             runId: params.runId,
             abortController,
-          });
+          })
 
-          return toServerSentEventsResponse(stream, { abortController });
+          return toServerSentEventsResponse(stream, { abortController })
         } catch (error: any) {
           if (error?.name === 'AbortError' || abortController.signal.aborted) {
-            return new Response(null, { status: 499 });
+            return new Response(null, { status: 499 })
           }
-          console.error('[api/chat] error:', error);
+          console.error('[api/chat] error:', error)
           return new Response(
             JSON.stringify({ error: error?.message || 'An error occurred' }),
             { status: 500, headers: { 'Content-Type': 'application/json' } },
-          );
+          )
         }
       },
     },
   },
-});
+})

@@ -30,7 +30,7 @@ if (!VERCEL_TOKEN) {
 }
 
 if (!VERCEL_TOKEN) {
-  console.log("[push-router-env] VERCEL_TOKEN not found; skipping Vercel push (local dev ok)")
+  process.stdout.write("[push-router-env] VERCEL_TOKEN not found; skipping Vercel push (local dev ok)\n")
   process.exit(0)
 }
 
@@ -45,7 +45,7 @@ if (!VERCEL_PROJECT_ID) {
 }
 
 if (!VERCEL_PROJECT_ID) {
-  console.log("[push-router-env] VERCEL_PROJECT_ID not found; skipping Vercel push (local dev ok)")
+  process.stdout.write("[push-router-env] VERCEL_PROJECT_ID not found; skipping Vercel push (local dev ok)\n")
   process.exit(0)
 }
 const flux2DistDir = join(workspaceRoot, "dist", "apps", "flux2")
@@ -53,7 +53,7 @@ const contractPath = join(flux2DistDir, "contract.json")
 const tokenPath = join(flux2DistDir, ".router-token")
 
 if (!existsSync(contractPath) || !existsSync(tokenPath)) {
-  console.error("[push-router-env] flux2 dist files not found; ensure worker-router:flux2-deploy ran first")
+  process.stderr.write("[push-router-env] flux2 dist files not found; ensure worker-router:flux2-deploy ran first\n")
   process.exit(1)
 }
 
@@ -62,7 +62,7 @@ const authToken = readFileSync(tokenPath, "utf-8").trim()
 const workerUrl = contract.workerUrl
 
 if (!workerUrl || !authToken) {
-  console.error("[push-router-env] Empty workerUrl or authToken in flux2 dist")
+  process.stderr.write("[push-router-env] Empty workerUrl or authToken in flux2 dist\n")
   process.exit(1)
 }
 
@@ -91,7 +91,7 @@ const syncedTokenPath = join(flux2DistDir, '.vercel-synced-token')
 const syncedToken = existsSync(syncedTokenPath) ? readFileSync(syncedTokenPath, 'utf-8').trim() : null
 
 if (syncedToken === authToken) {
-  console.log(`[push-router-env] Env vars already synced for current router token; skipping Vercel push`)
+  process.stdout.write(`[push-router-env] Env vars already synced for current router token; skipping Vercel push\n`)
   process.exit(0)
 }
 

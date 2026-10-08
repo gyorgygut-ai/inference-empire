@@ -1,9 +1,9 @@
-"use client";
+"use client"
 
-import React from "react";
-import { cn } from "cn";
-import type { PublicOutcome } from "@/outcomes";
-import { vocabulary } from "@/messages";
+import React from "react"
+import { cn } from "cn"
+import type { PublicOutcome } from "@/outcomes"
+import { vocabulary } from "@/messages"
 
 export const MessageOutcomeSuggestions = ({
   outcomes,
@@ -20,7 +20,7 @@ export const MessageOutcomeSuggestions = ({
     <div role="listbox" aria-label={vocabulary.messages.outcomesAria} aria-labelledby="selectOutcome" className="grid grid-cols-2 gap-2">
       <span id="selectOutcome" className="sr-only">{vocabulary.messages.selectOutcome}</span>
       {outcomes.map(({ id: outcomeId, title }) => {
-        const isSelected = outcomeId === selectedOutcomeId;
+        const isSelected = outcomeId === selectedOutcomeId
 
         return (
           <button
@@ -41,8 +41,8 @@ export const MessageOutcomeSuggestions = ({
             <span id={outcomeId} className="sr-only">{title}</span>
             {title}
           </button>
-        );
+        )
       })}
     </div>
   </div>
-);
+)

@@ -11,7 +11,10 @@
     "react-hooks"
   ],
   "jsPlugins": [
-    "@stylistic/eslint-plugin"
+    {
+      "name": "stylistic",
+      "specifier": "@stylistic/eslint-plugin"
+    }
   ],
   "rules": {
     "curly": ["error", "all"],

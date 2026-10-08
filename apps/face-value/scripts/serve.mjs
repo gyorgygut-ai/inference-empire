@@ -19,7 +19,7 @@ for (let attempt = 0; attempt < 240 && !token; attempt++) {
 }
 
 if (!FLUX2_ROUTER_URL || !token) {
-  console.error('[serve] FLUX2_ROUTER_URL (dev options.env) and a fresh dist/apps/flux2/.router-token are required')
+  process.stderr.write('[serve] FLUX2_ROUTER_URL (dev options.env) and a fresh dist/apps/flux2/.router-token are required\n')
   process.exit(1)
 }
 

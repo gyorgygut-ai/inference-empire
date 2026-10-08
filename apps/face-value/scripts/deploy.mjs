@@ -24,7 +24,7 @@ const appDir = join(dirname(fileURLToPath(import.meta.url)), "..")
 const workspaceRoot = join(appDir, "..", "..")
 
 if (realpathSync(process.cwd()) !== realpathSync(workspaceRoot)) {
-  console.error(`[deploy] must run from workspace root (${workspaceRoot}); got ${process.cwd()}`)
+  process.stderr.write(`[deploy] must run from workspace root (${workspaceRoot}); got ${process.cwd()}\n`)
   process.exit(1)
 }
 
@@ -33,14 +33,13 @@ const linkFile = join(linkDir, "project.json")
 if (!existsSync(linkFile)) {
   mkdirSync(linkDir, { recursive: true })
   copyFileSync(join(appDir, "vercel.project.json"), linkFile)
-  console.log("[deploy] bootstrapped .vercel/project.json from committed template")
 }
 
 const template = JSON.parse(readFileSync(join(appDir, "vercel.project.json"), "utf-8"))
 const projectId = process.env.VERCEL_PROJECT_ID || template.projectId
 const orgId = process.env.VERCEL_ORG_ID || template.orgId
 if (!projectId || !orgId) {
-  console.error("[deploy] no Vercel project identity: template corrupt and VERCEL_PROJECT_ID/VERCEL_ORG_ID unset")
+  process.stderr.write("[deploy] no Vercel project identity: template corrupt and VERCEL_PROJECT_ID/VERCEL_ORG_ID unset\n")
   process.exit(1)
 }
 
@@ -48,13 +47,12 @@ if (!process.env.VERCEL_TOKEN) {
   try {
     execFileSync("vercel", ["whoami"], { stdio: "ignore" })
   } catch {
-    console.error("[deploy] no Vercel auth: set VERCEL_TOKEN or run `vercel login`")
+    process.stderr.write("[deploy] no Vercel auth: set VERCEL_TOKEN or run `vercel login`\n")
     process.exit(1)
   }
 }
 
 const tokenFlag = process.env.VERCEL_TOKEN ? `--token=${process.env.VERCEL_TOKEN}` : ""
-console.log(`[deploy] Running: vercel deploy --prod --yes (cwd=workspace root, project=${projectId})`)
 execSync(`vercel deploy --prod --yes ${tokenFlag}`, {
   stdio: "inherit",
   cwd: workspaceRoot,

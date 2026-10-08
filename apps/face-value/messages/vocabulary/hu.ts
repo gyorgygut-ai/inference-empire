@@ -20,4 +20,4 @@ export const vocabulary = {
     resultAlt: "Generált kép",
     download: "Letöltés",
   },
-};
+}

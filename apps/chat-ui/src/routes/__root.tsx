@@ -3,9 +3,9 @@ import {
   HeadContent,
   Outlet,
   Scripts,
-} from '@tanstack/react-router';
-import type { ReactNode } from 'react';
-import appCss from '../styles.css?url';
+} from '@tanstack/react-router'
+import type { ReactNode } from 'react'
+import appCss from '../styles.css?url'
 
 const RootDocument = ({ children }: Readonly<{ children: ReactNode }>) => (
   <html lang="en">
@@ -17,13 +17,13 @@ const RootDocument = ({ children }: Readonly<{ children: ReactNode }>) => (
       <Scripts />
     </body>
   </html>
-);
+)
 
 const RootComponent = () => (
   <RootDocument>
     <Outlet />
   </RootDocument>
-);
+)
 
 export const Route = createRootRoute({
   head: () => ({
@@ -41,4 +41,4 @@ export const Route = createRootRoute({
     ],
   }),
   component: RootComponent,
-});
+})

@@ -66,13 +66,13 @@ export const NX_TIPS: ReadonlyArray<NxTip> = [
     category: 'cloud',
     tip: 'Self-healing CI uses Nx Cloud to detect flaky tasks and re-run them automatically, so flakes do not block your team.',
   },
-];
+]
 
 export function getRandomNxTip(): NxTip {
-  const index = Math.floor(Math.random() * NX_TIPS.length);
-  return NX_TIPS[index];
+  const index = Math.floor(Math.random() * NX_TIPS.length)
+  return NX_TIPS[index]
 }
 
 export function getNxTipsByCategory(category: NxTip['category']): NxTip[] {
-  return NX_TIPS.filter((t) => t.category === category);
+  return NX_TIPS.filter((t) => t.category === category)
 }
