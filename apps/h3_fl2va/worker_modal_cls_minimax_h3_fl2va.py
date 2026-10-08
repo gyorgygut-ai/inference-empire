@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-import threading
-from typing import TYPE_CHECKING
+from functools import partial
 
 import modal
 
@@ -12,17 +11,23 @@ from packages.h3_fl2va.shared import (
     load_dependencies,
 )
 from packages.modal_bridge import attach_bridge
-
-if TYPE_CHECKING:
-    from packages.shared_gpu.artifacts.artifacts import Artifacts
+from packages.shared_gpu.guard import run_guarded
+from packages.shared_gpu.platform import MODAL_HF_MOUNT, modal_env, modal_volume
 
 app = modal.App("minimax-h3-fl2va-worker")
-
-_INFERENCE_LOCK = threading.Lock()
 
 r2_secret = modal.Secret.from_name(
     "r2-creds", required_keys=["R2_BUCKET", "R2_ENDPOINT", "R2_ACCESS_KEY", "R2_SECRET_KEY"]
 )
+hf_cache_vol = modal_volume()
+
+
+def generate(storage, pipe, write_video_audio, **kwargs) -> dict:
+    return run_guarded(
+        MiniMaxH3TurboFl2vaInput,
+        kwargs,
+        partial(do_inference, pipe, write_video_audio, storage),
+    )
 
 
 image = (
@@ -46,10 +51,9 @@ image = (
     )
     .env(
         {
-            "HF_HOME": "/root/.cache/huggingface",
-            "HF_HUB_ENABLE_HF_TRANSFER": "1",
+            **modal_env(),
             "DIFFSYNTH_DOWNLOAD_SOURCE": "huggingface",
-            "DIFFSYNTH_MODEL_BASE_PATH": "/root/.cache/huggingface/diffsynth",
+            "DIFFSYNTH_MODEL_BASE_PATH": f"{MODAL_HF_MOUNT}/diffsynth",
         }
     )
     .add_local_python_source("apps", "apps")
@@ -57,21 +61,11 @@ image = (
 )
 
 
-def generate(storage: Artifacts, pipe, write_video_audio, **kwargs) -> dict:
-    """Validate at boundary, delegate, return output contract."""
-    req = MiniMaxH3TurboFl2vaInput(**kwargs)
-    try:
-        with _INFERENCE_LOCK:
-            return do_inference(pipe, write_video_audio, storage, req).model_dump()
-    except Exception as e:
-        print(f"[ERR] {type(e).__name__}: {e}", flush=True)
-        raise RuntimeError(f"inference failed: {e}") from e
-
-
 @app.cls(
     image=image,
     gpu="L4",
     secrets=[r2_secret],
+    volumes={MODAL_HF_MOUNT: hf_cache_vol},
     timeout=3600,
     memory=32768,
     scaledown_window=150,
@@ -88,7 +82,6 @@ class MiniMaxH3Fl2VAWorker:
 
     @modal.method()
     def generate(self, **kwargs) -> dict:
-        """Validate at boundary, delegate, return output contract."""
         return generate(self.storage, self.pipe, self.write_video_audio, **kwargs)
 
 

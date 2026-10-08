@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-import threading
+from functools import partial
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 import modal
 
 from packages.modal_bridge import attach_bridge
+from packages.shared_gpu.guard import run_guarded
+from packages.shared_gpu.platform import MODAL_HF_MOUNT, modal_env, modal_volume
 from packages.tiny_sd.shared import (
     IMAGE_PIP_DEPS,
     TinySDInput,
@@ -14,40 +15,23 @@ from packages.tiny_sd.shared import (
     load_dependencies,
 )
 
-if TYPE_CHECKING:
-    from packages.shared_gpu.artifacts.artifacts import Artifacts
-
-
 app = modal.App("tiny-sd-worker")
 
-_INFERENCE_LOCK = threading.Lock()
-
-
-def generate(storage: Artifacts, pipe, torch_module, **kwargs) -> dict:
-    """Validate at boundary, delegate, return output contract."""
-    req = TinySDInput(**kwargs)
-    try:
-        with _INFERENCE_LOCK:
-            return do_inference(pipe, torch_module, storage, req).model_dump()
-    except Exception as e:
-        print(f"[ERR] {type(e).__name__}: {e}", flush=True)
-        raise RuntimeError(f"inference failed: {e}") from e
-
-
 dotenv_secret = modal.Secret.from_dotenv(str(Path(__file__).parent.parent.parent / ".env"))
-hf_cache_vol = modal.Volume.from_name("hf-cache", create_if_missing=True)
+hf_cache_vol = modal_volume()
+
+
+def generate(storage, pipe, torch_module, **kwargs) -> dict:
+    return run_guarded(
+        TinySDInput, kwargs, partial(do_inference, pipe, torch_module, storage)
+    )
 
 
 image = (
     modal.Image.debian_slim(python_version="3.11")
     .apt_install("git", "ffmpeg", "libgl1", "libglib2.0-0")
     .pip_install(*IMAGE_PIP_DEPS)
-    .env(
-        {
-            "HF_HOME": "/root/.cache/huggingface",
-            "HF_HUB_ENABLE_HF_TRANSFER": "1",
-        }
-    )
+    .env(modal_env())
     .add_local_python_source("apps", "apps")
     .add_local_python_source("packages", "packages")
 )
@@ -57,7 +41,7 @@ image = (
     image=image,
     gpu="L4",
     secrets=[dotenv_secret],
-    volumes={"/root/.cache/huggingface": hf_cache_vol},
+    volumes={MODAL_HF_MOUNT: hf_cache_vol},
     timeout=300,
     memory=32768,
     scaledown_window=150,
@@ -70,7 +54,6 @@ class TinySDWorker:
 
     @modal.method()
     def generate(self, **kwargs) -> dict:
-        """Validate at boundary, delegate, return output contract."""
         return generate(self.storage, self.pipe, self.torch_module, **kwargs)
 
 

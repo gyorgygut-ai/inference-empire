@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from functools import partial
 
 from runpod_flash import Endpoint, GpuGroup
 
@@ -10,19 +10,16 @@ from packages.krea2.shared import (
     do_inference,
     load_dependencies,
 )
+from packages.shared_gpu.guard import run_guarded
+from packages.shared_gpu.platform import flash_env
 
-if TYPE_CHECKING:
-    from packages.shared_gpu.artifacts.artifacts import Artifacts
 
-
-def generate(storage: Artifacts, pipe, runtime_dir, torch_module, **kwargs) -> dict:
-    """Validate at boundary, delegate, return output contract."""
-    req = Krea2Ref2ImgInput(**kwargs)
-    try:
-        return do_inference(pipe, runtime_dir, torch_module, storage, req).model_dump()
-    except Exception as e:
-        print(f"[ERR] {type(e).__name__}: {e}", flush=True)
-        raise RuntimeError(f"inference failed: {e}") from e
+def generate(storage, pipe, runtime_dir, torch_module, **kwargs) -> dict:
+    return run_guarded(
+        Krea2Ref2ImgInput,
+        kwargs,
+        partial(do_inference, pipe, runtime_dir, torch_module, storage),
+    )
 
 
 @Endpoint(
@@ -31,10 +28,7 @@ def generate(storage: Artifacts, pipe, runtime_dir, torch_module, **kwargs) -> d
     workers=(0, 1),
     idle_timeout=5,
     flashboot=True,
-    env={
-        "HF_HOME": "/runpod-volume/huggingface-cache",
-        "PYTORCH_NVML_BASED_CUDA_CHECK": "0",
-    },
+    env=flash_env(extra={"PYTORCH_NVML_BASED_CUDA_CHECK": "0"}),
     dependencies=list(IMAGE_PIP_DEPS),
 )
 class Krea2Ref2ImgWorker:
@@ -44,5 +38,4 @@ class Krea2Ref2ImgWorker:
         self.storage, self.pipe, self.runtime_dir, self.torch_module = load_dependencies()
 
     def generate(self, **kwargs) -> dict:
-        """Validate at boundary, delegate, return output contract."""
         return generate(self.storage, self.pipe, self.runtime_dir, self.torch_module, **kwargs)

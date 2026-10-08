@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from runpod_flash import Endpoint, GpuGroup
 
+from packages.shared_gpu.guard import run_guarded
+from packages.shared_gpu.platform import flash_env
 from packages.vision.shared import (
     IMAGE_PIP_DEPS,
     SmallVisionInput,
@@ -12,14 +14,13 @@ from packages.vision.shared import (
 
 
 def generate(model, processor, analyze_prompt, **kwargs) -> dict:
-    """Validate at boundary, delegate, return output contract."""
-    req = SmallVisionInput(**kwargs)
-    try:
-        result = do_inference(model, processor, resolve_analyze_prompt(analyze_prompt, req.prompt), req)
-        return result.model_dump()
-    except Exception as e:
-        print(f"[ERR] {type(e).__name__}: {e}", flush=True)
-        raise RuntimeError(f"inference failed: {e}") from e
+    return run_guarded(
+        SmallVisionInput,
+        kwargs,
+        lambda req: do_inference(
+            model, processor, resolve_analyze_prompt(analyze_prompt, req.prompt), req
+        ),
+    )
 
 
 @Endpoint(
@@ -28,9 +29,7 @@ def generate(model, processor, analyze_prompt, **kwargs) -> dict:
     workers=(0, 1),
     idle_timeout=5,
     flashboot=True,
-    env={
-        "HF_HOME": "/runpod-volume/huggingface-cache",
-    },
+    env=flash_env(),
     dependencies=list(IMAGE_PIP_DEPS),
 )
 class Qwen2VLVisionWorker:
@@ -40,5 +39,4 @@ class Qwen2VLVisionWorker:
         self.model, self.processor, self.analyze_prompt = load_dependencies()
 
     def generate(self, **kwargs) -> dict:
-        """Validate at boundary, delegate, return output contract."""
         return generate(self.model, self.processor, self.analyze_prompt, **kwargs)

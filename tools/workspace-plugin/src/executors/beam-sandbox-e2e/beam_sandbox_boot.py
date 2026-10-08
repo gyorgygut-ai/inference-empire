@@ -55,11 +55,18 @@ def main() -> int:
 
     from beam import Sandbox, Volume
 
+    from packages.shared_gpu.platform import BEAM_CACHE_PATH, BEAM_VOLUME_NAME
+
     mods = glob.glob(f"apps/{family}/worker_beam_*.py")
     assert len(mods) == 1, f"expected one worker_beam file for {family}: {mods}"
     stem = os.path.splitext(os.path.basename(mods[0]))[0]
     worker = __import__(f"apps.{family}.{stem}", fromlist=["image"])
-    cache_path = getattr(worker, "CACHE_PATH", "./hf-cache")
+    # Mount the worker-declared volume, not a hardcoded one: most families
+    # use hf-cache at CACHE_PATH, realtime_voice uses models at MOUNT_PATH.
+    volume_name = getattr(worker, "VOLUME_NAME", BEAM_VOLUME_NAME)
+    mount_path = getattr(
+        worker, "MOUNT_PATH", getattr(worker, "CACHE_PATH", BEAM_CACHE_PATH)
+    )
 
     img = worker.image.add_python_packages(["pytest", "httpx", "pillow"])
 
@@ -74,7 +81,7 @@ def main() -> int:
         gpu=gpu,  # type: ignore[arg-type]
         gpu_count=1,
         image=img,
-        volumes=[Volume(name="hf-cache", mount_path=cache_path)],
+        volumes=[Volume(name=volume_name, mount_path=mount_path)],
         env=env,
         keep_warm_seconds=timeout_s + 600,
     ).create()

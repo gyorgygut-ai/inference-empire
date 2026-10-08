@@ -3,23 +3,19 @@ from __future__ import annotations
 import os
 import shutil
 import subprocess
-import threading
 import time
-from typing import TYPE_CHECKING
+from functools import partial
 
 import requests
-from beam import Image, QueueDepthAutoscaler, Volume, task_queue
+from beam import Image, QueueDepthAutoscaler, task_queue
 
 from packages.h3_comfy.shared import MiniMaxH3ComfyInput, apply_torch_shims, do_inference
 from packages.shared_gpu.artifacts.r2_artifacts import R2Artifacts
+from packages.shared_gpu.guard import run_guarded
+from packages.shared_gpu.platform import BEAM_CACHE_PATH, beam_env, beam_volume
 
-if TYPE_CHECKING:
-    from packages.shared_gpu.artifacts.artifacts import Artifacts
 
-
-CACHE_PATH = "./hf-cache"
-
-_INFERENCE_LOCK = threading.Lock()
+CACHE_PATH = BEAM_CACHE_PATH
 
 # COMFY_MODELS is used by _ensure_comfy_models and tests
 COMFY_MODELS: list[str] = []
@@ -27,10 +23,9 @@ COMFY_MODELS: list[str] = []
 image = Image.from_registry(
     "ghcr.io/vincezh2000/minimax-h3-comfyui-serverless:cu130",
 ).with_envs({
-    "HF_HOME": CACHE_PATH,
+    **beam_env(),
     "DIFFSYNTH_DOWNLOAD_SOURCE": "huggingface",
     "DIFFSYNTH_MODEL_BASE_PATH": f"{CACHE_PATH}/diffsynth",
-    "HF_HUB_ENABLE_HF_TRANSFER": "1",
 })
 
 
@@ -85,15 +80,12 @@ def _ensure_comfy_models():
     )
 
 
-def generate(storage: Artifacts, comfy_base_url, **kwargs) -> dict:
-    """Validate at boundary, delegate, return output contract."""
-    req = MiniMaxH3ComfyInput(**kwargs)
-    try:
-        with _INFERENCE_LOCK:
-            return do_inference(comfy_base_url, storage, req).model_dump()
-    except Exception as e:
-        print(f"[ERR] {type(e).__name__}: {e}", flush=True)
-        raise RuntimeError(f"inference failed: {e}") from e
+def generate(storage, comfy_base_url, **kwargs) -> dict:
+    return run_guarded(
+        MiniMaxH3ComfyInput,
+        kwargs,
+        partial(do_inference, comfy_base_url, storage),
+    )
 
 
 @task_queue(
@@ -103,7 +95,7 @@ def generate(storage: Artifacts, comfy_base_url, **kwargs) -> dict:
     gpu="RTX4090",
     image=image,
     on_start=load_dependencies,
-    volumes=[Volume(name="hf-cache", mount_path=CACHE_PATH)],
+    volumes=[beam_volume(CACHE_PATH)],
     autoscaler=QueueDepthAutoscaler(max_containers=1, tasks_per_container=1),
     keep_warm_seconds=0,
     checkpoint_enabled=True,

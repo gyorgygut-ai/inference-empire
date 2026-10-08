@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import threading
+from functools import partial
 
 from beam import Image, QueueDepthAutoscaler, Volume, asgi
 
@@ -17,6 +17,7 @@ from packages.realtime_voice.shared import (
 from packages.realtime_voice.shared import (
     load_dependencies as shared_load_dependencies,
 )
+from packages.shared_gpu.guard import run_guarded
 
 VOLUME_NAME = "models"
 MOUNT_PATH = "/volumes/models"
@@ -37,8 +38,6 @@ image = (
 
 volume = Volume(name=VOLUME_NAME, mount_path=MOUNT_PATH)
 
-_INFERENCE_LOCK = threading.Lock()
-
 
 def load_models():
     return shared_load_dependencies(WHISPER_PATH, QWEN_PATH, REFERENCE_DIR)
@@ -49,13 +48,7 @@ def load_dependencies():
 
 
 def generate(models: dict, **kwargs) -> dict:
-    req = RealtimeVoiceInput(**kwargs)
-    try:
-        with _INFERENCE_LOCK:
-            return do_inference(models, req).model_dump()
-    except Exception as e:
-        print(f"[ERR] {type(e).__name__}: {e}", flush=True)
-        raise RuntimeError(f"inference failed: {e}") from e
+    return run_guarded(RealtimeVoiceInput, kwargs, partial(do_inference, models))
 
 
 @asgi(

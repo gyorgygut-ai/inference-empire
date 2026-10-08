@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-import threading
-from typing import TYPE_CHECKING
+from functools import partial
 
-from beam import Image, QueueDepthAutoscaler, Volume, task_queue
+from beam import Image, QueueDepthAutoscaler, task_queue
 
+from packages.shared_gpu.guard import run_guarded
+from packages.shared_gpu.platform import BEAM_CACHE_PATH, beam_env, beam_volume
 from packages.tiny_sd.shared import (
     IMAGE_PIP_DEPS,
     TinySDInput,
@@ -12,35 +13,19 @@ from packages.tiny_sd.shared import (
     load_dependencies,
 )
 
-if TYPE_CHECKING:
-    from packages.shared_gpu.artifacts.artifacts import Artifacts
-
-
-CACHE_PATH = "./hf-cache"
-
-_INFERENCE_LOCK = threading.Lock()
+CACHE_PATH = BEAM_CACHE_PATH
 
 image = (
     Image(python_version="python3.11")
     .add_python_packages(list(IMAGE_PIP_DEPS))
-    .with_envs(
-        {
-            "HF_HOME": CACHE_PATH,
-            "HF_HUB_ENABLE_HF_TRANSFER": "1",
-        }
-    )
+    .with_envs(beam_env())
 )
 
 
-def generate(storage: Artifacts, pipe, torch_module, **kwargs) -> dict:
-    """Validate at boundary, delegate, return output contract."""
-    req = TinySDInput(**kwargs)
-    try:
-        with _INFERENCE_LOCK:
-            return do_inference(pipe, torch_module, storage, req).model_dump()
-    except Exception as e:
-        print(f"[ERR] {type(e).__name__}: {e}", flush=True)
-        raise RuntimeError(f"inference failed: {e}") from e
+def generate(storage, pipe, torch_module, **kwargs) -> dict:
+    return run_guarded(
+        TinySDInput, kwargs, partial(do_inference, pipe, torch_module, storage)
+    )
 
 
 @task_queue(
@@ -50,7 +35,7 @@ def generate(storage: Artifacts, pipe, torch_module, **kwargs) -> dict:
     gpu="RTX4090",
     image=image,
     on_start=load_dependencies,
-    volumes=[Volume(name="hf-cache", mount_path=CACHE_PATH)],
+    volumes=[beam_volume(CACHE_PATH)],
     autoscaler=QueueDepthAutoscaler(max_containers=1, tasks_per_container=1),
     keep_warm_seconds=1800,
     checkpoint_enabled=True,

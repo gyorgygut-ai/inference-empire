@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-import os
-import threading
+from functools import partial
 
 from runpod_flash import Endpoint, GpuGroup
 
@@ -16,10 +15,12 @@ from packages.realtime_voice.shared import (
 from packages.realtime_voice.shared import (
     load_dependencies as shared_load_dependencies,
 )
+from packages.shared_gpu.guard import new_lock, run_guarded
+from packages.shared_gpu.platform import flash_env, flash_hf_home
 
-HF_HOME = os.getenv("HF_HOME", "/runpod-volume/huggingface-cache")
-WHISPER_PATH = f"{HF_HOME}/{WHISPER_DIR_NAME}"
-QWEN_PATH = f"{HF_HOME}/{QWEN_DIR_NAME}"
+HF_HOME_DIR = flash_hf_home()
+WHISPER_PATH = f"{HF_HOME_DIR}/{WHISPER_DIR_NAME}"
+QWEN_PATH = f"{HF_HOME_DIR}/{QWEN_DIR_NAME}"
 REFERENCE_DIR = "/runpod-volume/models/reference_voices"
 
 
@@ -34,12 +35,7 @@ def load_dependencies() -> dict:
 
 
 def generate(models: dict, **kwargs) -> dict:
-    req = RealtimeVoiceInput(**kwargs)
-    try:
-        return do_inference(models, req).model_dump()
-    except Exception as e:
-        print(f"[ERR] {type(e).__name__}: {e}", flush=True)
-        raise RuntimeError(f"inference failed: {e}") from e
+    return run_guarded(RealtimeVoiceInput, kwargs, partial(do_inference, models))
 
 
 def generate_webrtc(models: dict, sample_rate: int, audio) -> tuple[int, object]:
@@ -58,10 +54,7 @@ def generate_webrtc(models: dict, sample_rate: int, audio) -> tuple[int, object]
     workers=(0, 1),
     idle_timeout=5,
     flashboot=True,
-    env={
-        "HF_HOME": HF_HOME,
-        "HF_HUB_ENABLE_HF_TRANSFER": "1",
-    },
+    env=flash_env(hf_home=HF_HOME_DIR, extra={"HF_HUB_ENABLE_HF_TRANSFER": "1"}),
     dependencies=list(IMAGE_PIP_DEPS),
 )
 class RealtimeVoiceWorker:
@@ -69,7 +62,7 @@ class RealtimeVoiceWorker:
 
     def __init__(self):
         self._models = None
-        self._lock = threading.Lock()
+        self._lock = new_lock()
 
     def _load_models(self) -> dict:
         return load_models()

@@ -1,9 +1,11 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from functools import partial
 
 from runpod_flash import Endpoint, GpuGroup
 
+from packages.shared_gpu.guard import run_guarded
+from packages.shared_gpu.platform import flash_env
 from packages.tiny_sd.shared import (
     IMAGE_PIP_DEPS,
     TinySDInput,
@@ -11,18 +13,11 @@ from packages.tiny_sd.shared import (
     load_dependencies,
 )
 
-if TYPE_CHECKING:
-    from packages.shared_gpu.artifacts.artifacts import Artifacts
 
-
-def generate(storage: Artifacts, pipe, torch_module, **kwargs) -> dict:
-    """Validate at boundary, delegate, return output contract."""
-    req = TinySDInput(**kwargs)
-    try:
-        return do_inference(pipe, torch_module, storage, req).model_dump()
-    except Exception as e:
-        print(f"[ERR] {type(e).__name__}: {e}", flush=True)
-        raise RuntimeError(f"inference failed: {e}") from e
+def generate(storage, pipe, torch_module, **kwargs) -> dict:
+    return run_guarded(
+        TinySDInput, kwargs, partial(do_inference, pipe, torch_module, storage)
+    )
 
 
 @Endpoint(
@@ -33,9 +28,7 @@ def generate(storage: Artifacts, pipe, torch_module, **kwargs) -> dict:
     workers=(0, 1),
     idle_timeout=5,
     flashboot=True,
-    env={
-        "HF_HOME": "/runpod-volume/huggingface-cache",
-    },
+    env=flash_env(),
     dependencies=list(IMAGE_PIP_DEPS),
 )
 class TinySDWorker:
@@ -45,5 +38,4 @@ class TinySDWorker:
         self.storage, self.pipe, self.torch_module = load_dependencies()
 
     def generate(self, **kwargs) -> dict:
-        """Validate at boundary, delegate, return output contract."""
         return generate(self.storage, self.pipe, self.torch_module, **kwargs)

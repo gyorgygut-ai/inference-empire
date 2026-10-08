@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import threading
+from functools import partial
 from pathlib import Path
 
 import modal
@@ -18,14 +18,14 @@ from packages.realtime_voice.shared import (
 from packages.realtime_voice.shared import (
     load_dependencies as shared_load_dependencies,
 )
+from packages.shared_gpu.guard import run_guarded
+from packages.shared_gpu.platform import MODAL_HF_MOUNT, modal_env, modal_volume
 
 app = modal.App("realtime-voice-qwen-worker")
 
-_INFERENCE_LOCK = threading.Lock()
-
 dotenv_secret = modal.Secret.from_dotenv(str(Path(__file__).parent.parent.parent / ".env"))
-hf_cache_vol = modal.Volume.from_name("hf-cache", create_if_missing=True)
-MODEL_MOUNT = "/root/.cache/huggingface"
+hf_cache_vol = modal_volume()
+MODEL_MOUNT = MODAL_HF_MOUNT
 WHISPER_PATH = f"{MODEL_MOUNT}/{WHISPER_DIR_NAME}"
 QWEN_PATH = f"{MODEL_MOUNT}/{QWEN_DIR_NAME}"
 REFERENCE_DIR = f"{MODEL_MOUNT}/{REFERENCE_VOICES_DIR_NAME}"
@@ -37,20 +37,14 @@ image = (
     .apt_install("ffmpeg", "libsndfile1")
     .pip_install(*IMAGE_PIP_DEPS)
     .run_commands(f"pip install --no-deps {CHATTERBOX_TTS_NO_DEPS}")
-    .env({"HF_HOME": MODEL_MOUNT, "HF_HUB_ENABLE_HF_TRANSFER": "1"})
+    .env(modal_env())
     .add_local_python_source("apps", "apps")
     .add_local_python_source("packages", "packages")
 )
 
 
 def generate(models: dict, **kwargs) -> dict:
-    req = RealtimeVoiceInput(**kwargs)
-    try:
-        with _INFERENCE_LOCK:
-            return do_inference(models, req).model_dump()
-    except Exception as e:
-        print(f"[ERR] {type(e).__name__}: {e}", flush=True)
-        raise RuntimeError(f"inference failed: {e}") from e
+    return run_guarded(RealtimeVoiceInput, kwargs, partial(do_inference, models))
 
 
 @app.cls(
