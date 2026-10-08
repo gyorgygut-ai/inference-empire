@@ -16,5 +16,6 @@ export const ChatClient = ({ outcomes }: { outcomes: PublicOutcome[] }) => {
       },
     ],
   });
+
   return <chat.AppChat />;
 };

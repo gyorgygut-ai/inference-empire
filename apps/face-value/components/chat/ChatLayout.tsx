@@ -1,7 +1,8 @@
 "use client";
 
 import React from "react";
-import { fetchServerSentEvents, useGenerateImage } from "@tanstack/ai-react";
+import { useGenerateImage } from "@tanstack/ai-react";
+import { generateImageAction } from "@/app/actions/generate-image";
 import { useChatContext } from "./chat-hook";
 import { MessageOutcomeSuggestions } from "./messages/MessageOutcomeSuggestions";
 import { vocabulary } from "@/messages";
@@ -109,7 +110,7 @@ export const ChatLayout = ({ Messages, Interrupts, Queue }: {
   );
 
   const { generate, isLoading } = useGenerateImage({
-    connection: fetchServerSentEvents("/api/image"),
+    fetcher: (input) => generateImageAction(input),
     onResult: async (result) => {
       const url = result.images[0]?.url;
       if (!url) {

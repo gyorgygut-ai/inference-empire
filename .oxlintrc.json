@@ -10,6 +10,9 @@
     "react",
     "react-hooks"
   ],
+  "jsPlugins": [
+    "@stylistic/eslint-plugin"
+  ],
   "rules": {
     "curly": ["error", "all"],
     "no-console": "warn",
@@ -19,6 +22,7 @@
     "react/function-component-definition": ["error", { "namedComponents": "arrow-function" }],
     "react-hooks/exhaustive-deps": "warn",
     "typescript/no-floating-promises": "error",
-    "typescript/no-misused-promises": "error"
+    "typescript/no-misused-promises": "error",
+    "stylistic/semi": ["error", "never"]
   }
 }

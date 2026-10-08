@@ -16,6 +16,13 @@ NextJS app demonstrating a selection of NextJS features - most introduced in the
 - **Server Actions**: reference image submit + Flux call, no API routes. [Server Actions and Mutations](https://nextjs.org/docs/app/building-your-application/data-fetching/server-actions-and-mutations)
 - **React Compiler**: no manual memoization. [React Compiler](https://react.dev/learn/react-compiler)
 
+## TanStack non-negotiables
+
+- **Thread owns all chat state**: `messages` + `append` only. No `useState`, no contexts, no phase derivation outside the hook.
+- **Outcomes travel in thread `metadata`** (public fields only, never prompts). No provider/context for domain data.
+- **Inference only via `useGenerateImage`** (Server Action fetcher). No hand-built `tool-call` parts, no files adapter, no client tools duplicating it.
+- **Custom code only at injection points**: image adapter, layout/message/part visuals (props only, no state).
+
 ## Business Logic
 
 - **Magic Encapsulated**:

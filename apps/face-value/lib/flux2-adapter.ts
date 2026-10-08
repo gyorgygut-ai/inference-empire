@@ -72,7 +72,7 @@ export class Flux2KleinAdapter extends BaseImageAdapter {
         baseUrl: workerRouterConfig.baseUrl,
         token: workerRouterConfig.authToken,
         pollIntervalMs: 5000,
-        timeoutMs: 60000 * 4,
+        timeoutMs: 180000,
       },
     );
 
