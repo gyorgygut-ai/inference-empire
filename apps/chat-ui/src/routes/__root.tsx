@@ -7,6 +7,24 @@ import {
 import type { ReactNode } from 'react';
 import appCss from '../styles.css?url';
 
+const RootDocument = ({ children }: Readonly<{ children: ReactNode }>) => (
+  <html lang="en">
+    <head>
+      <HeadContent />
+    </head>
+    <body className="bg-zinc-950 text-zinc-100 antialiased">
+      {children}
+      <Scripts />
+    </body>
+  </html>
+);
+
+const RootComponent = () => (
+  <RootDocument>
+    <Outlet />
+  </RootDocument>
+);
+
 export const Route = createRootRoute({
   head: () => ({
     meta: [
@@ -24,25 +42,3 @@ export const Route = createRootRoute({
   }),
   component: RootComponent,
 });
-
-function RootComponent() {
-  return (
-    <RootDocument>
-      <Outlet />
-    </RootDocument>
-  );
-}
-
-function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
-  return (
-    <html lang="en">
-      <head>
-        <HeadContent />
-      </head>
-      <body className="bg-zinc-950 text-zinc-100 antialiased">
-        {children}
-        <Scripts />
-      </body>
-    </html>
-  );
-}

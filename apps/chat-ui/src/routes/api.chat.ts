@@ -55,7 +55,7 @@ export const Route = createFileRoute('/api/chat')({
           const mergedTools = mergeAgentTools(serverTools, params.tools);
 
           const options = createChatOptions({
-            adapter: openRouterText(MODEL, { apiKey: process.env.KILO_API_KEY })
+            adapter: openRouterText(MODEL as any)
           });
 
           const stream = chat({

@@ -6,13 +6,13 @@ import { Check, Copy, Terminal } from 'lucide-react';
  * The model decides WHAT command to surface; this component decides HOW it
  * looks. This is the "define the tool once, render it richly" pattern.
  */
-export function NxCommandCard({
+export const NxCommandCard = ({
   command,
   explanation,
 }: {
   command: string;
   explanation: string;
-}) {
+}) => {
   const [copied, setCopied] = useState(false);
 
   const copy = () => {

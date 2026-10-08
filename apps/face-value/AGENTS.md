@@ -22,7 +22,7 @@ NextJS app demonstrating a selection of NextJS features - most introduced in the
   - `worker-router-flux2` URL derived from `dist/apps/flux2/contract.json` (`workerUrl`, emitted by `flux2-router:deploy`) at build time via server-only `router-config.ts`, never exposed to client
   - Auth token never written to disk: Cloudflare secret on the worker side, `FLUX2_ROUTER_TOKEN` build env on the face-value side
   - Client sends reference image + selected outcome id upon submit to Server Action
-  - Server Action posts outcome prompt + reference image to `worker-router-flux2` `/queue`, polls `/task/:id` until DONE or timeout (max 5 min, poll interval 3s)
+  - Server Action posts outcome prompt + reference image to `worker-router-flux2` `/queue`, polls `/task/:id`
   - Upon response, serves generated image or error message to client
 - **Markdown + Frontmatter**:
   - Each outcome is a .md file in /outcomes

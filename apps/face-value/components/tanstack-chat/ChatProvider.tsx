@@ -88,11 +88,26 @@ export const ChatProvider = ({
 
     setGenerationState("busy");
 
+    // Append busy message immediately (3-dot animation, no text)
+    appendMessage(vocabulary.messages.busy, ChatPhase.INFERENCE_BUSY);
+
+    // Schedule busyForAWhile after 35s per spec
+    const busyForAWhileTimer = setTimeout(() => {
+      appendMessage(
+        vocabulary.messages.busyForAWhile,
+        ChatPhase.INFERENCE_BUSY
+      );
+    }, 35000);
+
     try {
       const response = await generateImage(selectedOutcome.id, referenceFile);
+      clearTimeout(busyForAWhileTimer);
 
       if (response.status === "rejected") {
-        appendMessage(vocabulary.messages.rejected, ChatPhase.INFERENCE_REJECTED);
+        appendMessage(
+          vocabulary.messages.rejected,
+          ChatPhase.INFERENCE_REJECTED
+        );
         setGenerationState("rejected");
       } else {
         appendMessage(
@@ -103,16 +118,22 @@ export const ChatProvider = ({
         setGenerationState("fulfilled");
       }
     } catch {
-      appendMessage(vocabulary.messages.rejected, ChatPhase.INFERENCE_REJECTED);
+      clearTimeout(busyForAWhileTimer);
+      appendMessage(
+        vocabulary.messages.rejected,
+        ChatPhase.INFERENCE_REJECTED
+      );
       setGenerationState("rejected");
     }
   }, [canGenerate, selectedOutcome, referenceFile, appendMessage]);
 
-  // Initial prompt effect - uses appendMessage which calls setState internally.
-  // This is intentional: we need to seed the thread with the outcome prompt.
+  // Initial prompt effect - seed the thread with outcome prompt
   useEffect(() => {
     if (messages.length === 0) {
-      appendMessage(vocabulary.messages.selectOutcome, ChatPhase.PROMPT_FOR_OUTCOME);
+      appendMessage(
+        vocabulary.messages.selectOutcome,
+        ChatPhase.PROMPT_FOR_OUTCOME
+      );
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages.length, appendMessage]);

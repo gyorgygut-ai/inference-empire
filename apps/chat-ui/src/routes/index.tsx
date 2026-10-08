@@ -25,49 +25,45 @@ const SUGGESTIONS = [
   'Show me the command to visualize the project graph',
 ];
 
-function EmptyState({ onPick }: { onPick: (text: string) => void }) {
-  return (
-    <div className="flex flex-1 items-center justify-center px-4 py-10">
-      <div className="w-full max-w-xl space-y-8 text-center">
-        <div className="space-y-3">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-linear-to-br from-violet-500 to-indigo-600 shadow-lg shadow-indigo-500/30">
-            <Sparkles className="h-7 w-7 text-white" />
-          </div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">
-            Nx + TanStack AI
-          </h1>
-          <p className="mx-auto max-w-md text-sm text-zinc-400">
-            A streaming, type-safe AI chat with tool calling - built on TanStack
-            Start and TanStack AI, in an Nx monorepo. Ask about Nx and watch the
-            model call real tools.
-          </p>
+const EmptyState = ({ onPick }: { onPick: (text: string) => void }) => (
+  <div className="flex flex-1 items-center justify-center px-4 py-10">
+    <div className="w-full max-w-xl space-y-8 text-center">
+      <div className="space-y-3">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-linear-to-br from-violet-500 to-indigo-600 shadow-lg shadow-indigo-500/30">
+          <Sparkles className="h-7 w-7 text-white" />
         </div>
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-          {SUGGESTIONS.map((s) => (
-            <button
-              key={s}
-              onClick={() => onPick(s)}
-              className="rounded-lg border border-zinc-800 bg-zinc-900/60 px-4 py-3 text-left text-sm text-zinc-300 transition-colors hover:border-violet-500/40 hover:bg-zinc-900"
-            >
-              {s}
-            </button>
-          ))}
-        </div>
+        <h1 className="text-2xl font-bold tracking-tight text-white">
+          Nx + TanStack AI
+        </h1>
+        <p className="mx-auto max-w-md text-sm text-zinc-400">
+          A streaming, type-safe AI chat with tool calling - built on TanStack
+          Start and TanStack AI, in an Nx monorepo. Ask about Nx and watch the
+          model call real tools.
+        </p>
+      </div>
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        {SUGGESTIONS.map((s) => (
+          <button
+            key={s}
+            onClick={() => onPick(s)}
+            className="rounded-lg border border-zinc-800 bg-zinc-900/60 px-4 py-3 text-left text-sm text-zinc-300 transition-colors hover:border-violet-500/40 hover:bg-zinc-900"
+          >
+            {s}
+          </button>
+        ))}
       </div>
     </div>
-  );
-}
+  </div>
+);
 
-function ToolProgress({ message }: { message: string }) {
-  return (
-    <div className="mt-2 flex items-center gap-2 rounded-lg border border-amber-500/20 bg-amber-500/10 px-3 py-1.5 text-xs text-amber-300">
-      <Wrench className="h-3.5 w-3.5 animate-pulse" />
-      {message}
-    </div>
-  );
-}
+const ToolProgress = ({ message }: { message: string }) => (
+  <div className="mt-2 flex items-center gap-2 rounded-lg border border-amber-500/20 bg-amber-500/10 px-3 py-1.5 text-xs text-amber-300">
+    <Wrench className="h-3.5 w-3.5 animate-pulse" />
+    {message}
+  </div>
+);
 
-function MessagePart({ part }: { part: UIMessage['parts'][number] }) {
+const MessagePart = ({ part }: { part: UIMessage['parts'][number] }) => {
   if (part.type === 'text' && part.content) {
     return (
       <div className="prose prose-sm prose-invert max-w-none prose-pre:bg-zinc-900 prose-pre:border prose-pre:border-zinc-800">
@@ -97,9 +93,9 @@ function MessagePart({ part }: { part: UIMessage['parts'][number] }) {
   }
 
   return null;
-}
+};
 
-function Messages({ messages }: { messages: Array<UIMessage> }) {
+const Messages = ({ messages }: { messages: Array<UIMessage> }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -134,7 +130,7 @@ function Messages({ messages }: { messages: Array<UIMessage> }) {
   );
 }
 
-function ChatPage() {
+const ChatPage = () => {
   const [input, setInput] = useState('');
   const [toolMessage, setToolMessage] = useState<string | null>(null);
 
@@ -154,7 +150,9 @@ function ChatPage() {
 
   const submit = (text: string) => {
     const value = text.trim();
-    if (!value || isLoading) return;
+    if (!value || isLoading) {
+      return;
+    }
     sendMessage(value);
     setInput('');
   };
@@ -241,7 +239,7 @@ function ChatPage() {
       </div>
     </div>
   );
-}
+};
 
 export const Route = createFileRoute('/')({
   component: ChatPage,

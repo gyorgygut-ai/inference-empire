@@ -26,6 +26,9 @@ export const MessageList = () => {
     <div className="flex-1 overflow-y-auto space-y-4 pb-4">
       {messages.map((message) => {
         const type = getMessagePhase(message.id);
+        const content = message.parts?.find(
+          (p: { type: string; content: string }) => p.type === "text"
+        )?.content;
 
         if (type === ChatPhase.PROMPT_FOR_OUTCOME) {
           return (
@@ -63,6 +66,7 @@ export const MessageList = () => {
             <MessageArtifact
               key={message.id}
               state={type as ChatPhase}
+              content={content}
               image={artifactUrl}
               width={selectedOutcome?.width}
               height={selectedOutcome?.height}
