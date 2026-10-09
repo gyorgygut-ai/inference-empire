@@ -3,7 +3,7 @@
   "name": "realtime-voice",
   "projectType": "application",
   "sourceRoot": "apps/realtime_voice",
-  "tags": ["type:app", "scope:worker", "model:realtime-voice"],
+  "tags": ["type:app", "scope:gpu-worker", "model:realtime-voice"],
   "targets": {
     "build": {
       "executor": "nx:run-commands",
@@ -13,60 +13,24 @@
       },
       "cache": true
     },
-    "test-unit": {
-      "executor": "@inference/workspace-plugin:pytest",
-      "options": { "family": "realtime_voice", "mode": "unit" },
-      "inputs": ["default"],
-      "cache": true
-    },
-    "e2e-real": {
-      "executor": "@inference/workspace-plugin:real-e2e",
-      "options": { "family": "realtime_voice" },
-      "cache": false
-    },
-    "e2e-sandbox-modal": {
-      "executor": "@inference/workspace-plugin:sandbox-e2e-modal",
-      "options": { "family": "realtime_voice" },
-      "cache": false
-    },
-    "e2e-sandbox-beam": {
-      "executor": "@inference/workspace-plugin:beam-sandbox-e2e",
-      "options": { "family": "realtime_voice" },
-      "cache": false
-    },
-    "lint": {
-      "executor": "@inference/workspace-plugin:ruff",
-      "options": { "family": "realtime_voice" },
-      "cache": true
-    },
-    "typecheck": {
-      "executor": "@inference/workspace-plugin:ty",
-      "options": { "family": "realtime_voice" },
-      "cache": true
-    },
-    "validate-deps": {
-      "executor": "@inference/workspace-plugin:validate-deps",
-      "options": { "family": "realtime_voice", "python_version": "3.10" },
-      "cache": true
-    },
     "deploy-modal": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "npx nx run realtime-voice:build && echo '{\"provider\": \"modal\", \"endpoint\": \"realtime-voice-qwen-worker\"}' > dist/apps/realtime-voice/contract.json",
+        "command": "npx nx run realtime-voice:build",
         "cwd": "."
       }
     },
     "deploy-beam": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "npx nx run realtime-voice:build && echo '{\"provider\": \"beam\", \"endpoint\": \"realtime-voice-qwen-worker\"}' > dist/apps/realtime-voice/contract.json",
+        "command": "npx nx run realtime-voice:build",
         "cwd": "."
       }
     },
     "deploy-flash": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "npx nx run realtime-voice:build && echo '{\"provider\": \"flash\", \"endpoint\": \"realtime-voice-qwen-worker\"}' > dist/apps/realtime-voice/contract.json",
+        "command": "npx nx run realtime-voice:build",
         "cwd": "."
       }
     }

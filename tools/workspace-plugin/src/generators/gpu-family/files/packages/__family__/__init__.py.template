@@ -1,1 +1,0 @@
-from packages.<%= family %>.shared import *  # noqa: F403

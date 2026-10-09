@@ -1,7 +1,7 @@
 import pytest
 
 import apps.krea2.worker_flash_cls_krea2_ref2img as worker_function
-from packages.krea2.shared import Artifact, Krea2Ref2ImgOutput
+from apps.krea2.shared.worker_krea2 import Artifact, Krea2Ref2ImgOutput
 
 pytestmark = pytest.mark.skip(reason="flash dev not available")
 

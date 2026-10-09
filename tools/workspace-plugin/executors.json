@@ -10,21 +10,6 @@
       "schema": "./src/executors/ruff/schema.json",
       "description": "Run ruff lint for a GPU worker family"
     },
-    "sandbox-e2e-modal": {
-      "implementation": "./src/executors/sandbox-e2e-modal/sandbox-e2e-modal",
-      "schema": "./src/executors/sandbox-e2e-modal/schema.json",
-      "description": "Run a worker family's Modal sandbox turn (no deploy)"
-    },
-    "beam-sandbox-e2e": {
-      "implementation": "./src/executors/beam-sandbox-e2e/beam-sandbox-e2e",
-      "schema": "./src/executors/beam-sandbox-e2e/schema.json",
-      "description": "Run a worker family's Beam sandbox turn (no deploy)"
-    },
-    "real-e2e": {
-      "implementation": "./src/executors/real-e2e/real-e2e",
-      "schema": "./src/executors/real-e2e/schema.json",
-      "description": "Run a worker family's e2e tests against deployed workers"
-    },
     "validate-deps": {
       "implementation": "./src/executors/validate-deps/validate-deps",
       "schema": "./src/executors/validate-deps/schema.json",

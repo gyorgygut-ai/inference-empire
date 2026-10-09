@@ -1,7 +1,7 @@
 import pytest
 
 import apps.tiny_sd.worker_flash_cls_tiny_sd as worker_function
-from packages.tiny_sd.shared import Artifact, TinySDOutput
+from apps.tiny_sd.shared.worker_tiny_sd import Artifact, TinySDOutput
 
 pytestmark = pytest.mark.skip(reason="flash dev not available")
 

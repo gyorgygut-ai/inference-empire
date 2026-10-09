@@ -5,7 +5,7 @@ from pathlib import Path
 
 import modal
 
-from packages.realtime_voice.shared import (
+from apps.realtime_voice.shared.worker_realtime_voice import (
     CHATTERBOX_TTS_NO_DEPS,
     IMAGE_PIP_DEPS,
     QWEN_DIR_NAME,
@@ -15,7 +15,7 @@ from packages.realtime_voice.shared import (
     build_app,
     do_inference,
 )
-from packages.realtime_voice.shared import (
+from apps.realtime_voice.shared.worker_realtime_voice import (
     load_dependencies as shared_load_dependencies,
 )
 from packages.shared_gpu.guard import run_guarded
@@ -38,14 +38,10 @@ image = (
     .pip_install(*IMAGE_PIP_DEPS)
     .run_commands(f"pip install --no-deps {CHATTERBOX_TTS_NO_DEPS}")
     .env(modal_env())
-    .add_local_python_source("apps", "apps")
-    .add_local_python_source("packages", "packages")
 )
-
 
 def generate(models: dict, **kwargs) -> dict:
     return run_guarded(RealtimeVoiceInput, kwargs, partial(do_inference, models))
-
 
 @app.cls(
     image=image,

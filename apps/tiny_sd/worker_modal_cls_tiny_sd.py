@@ -5,21 +5,19 @@ from pathlib import Path
 
 import modal
 
-from packages.modal_bridge import attach_bridge
-from packages.shared_gpu.guard import run_guarded
-from packages.shared_gpu.platform import MODAL_HF_MOUNT, modal_env, modal_volume
-from packages.tiny_sd.shared import (
+from apps.tiny_sd.shared.worker_tiny_sd import (
     IMAGE_PIP_DEPS,
     TinySDInput,
     do_inference,
     load_dependencies,
 )
+from packages.shared_gpu.guard import run_guarded
+from packages.shared_gpu.platform import MODAL_HF_MOUNT, modal_env, modal_volume
 
 app = modal.App("tiny-sd-worker")
 
 dotenv_secret = modal.Secret.from_dotenv(str(Path(__file__).parent.parent.parent / ".env"))
 hf_cache_vol = modal_volume()
-
 
 def generate(storage, pipe, torch_module, **kwargs) -> dict:
     return run_guarded(
@@ -32,10 +30,7 @@ image = (
     .apt_install("git", "ffmpeg", "libgl1", "libglib2.0-0")
     .pip_install(*IMAGE_PIP_DEPS)
     .env(modal_env())
-    .add_local_python_source("apps", "apps")
-    .add_local_python_source("packages", "packages")
 )
-
 
 @app.cls(
     image=image,
@@ -57,4 +52,3 @@ class TinySDWorker:
         return generate(self.storage, self.pipe, self.torch_module, **kwargs)
 
 
-attach_bridge(app, "TinySDWorker")

@@ -7,7 +7,7 @@ from pydantic import ValidationError
 import apps.krea2.worker_flash_cls_krea2_ref2img as worker_mod
 from apps.krea2.fakes.image_pipe_fake import FakeImagePipe
 from apps.krea2.fakes.torch_module_fake import FakeTorchModule
-from packages.krea2.shared import Krea2Ref2ImgInput, Krea2Ref2ImgOutput, do_inference
+from apps.krea2.shared.worker_krea2 import Krea2Ref2ImgInput, Krea2Ref2ImgOutput, do_inference
 
 
 def _png_bytes(img):

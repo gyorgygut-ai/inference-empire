@@ -1,4 +1,3 @@
-import { modalProvider } from './provider-modal'
 import { beamProvider } from './provider-beam'
 import { flashProvider } from './provider-flash'
 
@@ -9,12 +8,6 @@ export const enum Status {
   FAILED = 'failed',
   CANCELLED = 'cancelled',
   REJECTED = 'rejected'
-}
-
-export interface ModalConfig {
-  url: string
-  proxyKey: string
-  proxySecret: string
 }
 
 export interface BeamConfig {
@@ -28,7 +21,6 @@ export interface FlashConfig {
 }
 
 export interface ProviderConfigs {
-  modal: ModalConfig
   beam: BeamConfig
   flash: FlashConfig
 }
@@ -43,13 +35,12 @@ export interface Provider<K extends ProviderName> {
 }
 
 const providers: { [K in ProviderName]: Provider<K> } = {
-  modal: modalProvider,
   beam: beamProvider,
   flash: flashProvider
 }
 
 export function isProviderName(value: string): value is ProviderName {
-  return value === 'modal' || value === 'beam' || value === 'flash'
+  return value === 'beam' || value === 'flash'
 }
 
 export default function createProvider<K extends ProviderName>(name: K): Provider<K> {

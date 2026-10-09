@@ -4,14 +4,14 @@ from functools import partial
 
 from beam import Image, QueueDepthAutoscaler, task_queue
 
-from packages.shared_gpu.guard import run_guarded
-from packages.shared_gpu.platform import BEAM_CACHE_PATH, beam_env, beam_volume
-from packages.tiny_sd.shared import (
+from apps.tiny_sd.shared.worker_tiny_sd import (
     IMAGE_PIP_DEPS,
     TinySDInput,
     do_inference,
     load_dependencies,
 )
+from packages.shared_gpu.guard import run_guarded
+from packages.shared_gpu.platform import BEAM_CACHE_PATH, beam_env, beam_volume
 
 CACHE_PATH = BEAM_CACHE_PATH
 

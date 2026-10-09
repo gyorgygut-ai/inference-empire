@@ -4,7 +4,7 @@ from functools import partial
 
 from beam import Image, QueueDepthAutoscaler, Volume, asgi
 
-from packages.realtime_voice.shared import (
+from apps.realtime_voice.shared.worker_realtime_voice import (
     CHATTERBOX_TTS_NO_DEPS,
     IMAGE_PIP_DEPS,
     QWEN_DIR_NAME,
@@ -14,7 +14,7 @@ from packages.realtime_voice.shared import (
     build_app,
     do_inference,
 )
-from packages.realtime_voice.shared import (
+from apps.realtime_voice.shared.worker_realtime_voice import (
     load_dependencies as shared_load_dependencies,
 )
 from packages.shared_gpu.guard import run_guarded

@@ -4,7 +4,7 @@ from functools import partial
 
 from runpod_flash import Endpoint, GpuGroup
 
-from packages.realtime_voice.shared import (
+from apps.realtime_voice.shared.worker_realtime_voice import (
     IMAGE_PIP_DEPS,
     QWEN_DIR_NAME,
     WHISPER_DIR_NAME,
@@ -12,7 +12,7 @@ from packages.realtime_voice.shared import (
     do_inference,
     handle_webrtc_audio,
 )
-from packages.realtime_voice.shared import (
+from apps.realtime_voice.shared.worker_realtime_voice import (
     load_dependencies as shared_load_dependencies,
 )
 from packages.shared_gpu.guard import new_lock, run_guarded

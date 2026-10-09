@@ -5,13 +5,12 @@ from pathlib import Path
 
 import modal
 
-from packages.flux2.shared import (
+from apps.flux2.shared.worker_flux2 import (
     IMAGE_PIP_DEPS,
     Flux2Klein9bInput,
     do_inference,
     load_dependencies,
 )
-from packages.modal_bridge import attach_bridge
 from packages.shared_gpu.guard import run_guarded
 from packages.shared_gpu.platform import MODAL_HF_MOUNT, modal_env, modal_volume
 
@@ -32,10 +31,7 @@ image = (
     .apt_install("git", "ffmpeg", "libgl1", "libglib2.0-0")
     .pip_install(*IMAGE_PIP_DEPS)
     .env(modal_env(extra={"SDNQ_USE_TRITON_MM": "0"}))
-    .add_local_python_source("apps", "apps")
-    .add_local_python_source("packages", "packages")
 )
-
 
 @app.cls(
     image=image,
@@ -57,4 +53,3 @@ class FluxKleinWorker:
         return generate(self.storage, self.pipe, self.torch_module, **kwargs)
 
 
-attach_bridge(app, "FluxKleinWorker")

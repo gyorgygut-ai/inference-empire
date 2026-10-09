@@ -4,7 +4,7 @@ from functools import partial
 
 from beam import Image, QueueDepthAutoscaler, task_queue
 
-from packages.flux2.shared import (
+from apps.flux2.shared.worker_flux2 import (
     IMAGE_PIP_DEPS,
     Flux2Klein9bInput,
     do_inference,

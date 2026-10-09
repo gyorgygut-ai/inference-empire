@@ -97,6 +97,3 @@ out
 # TypeScript
 *.tsbuildinfo
 .vercel
-
-apps/realtime-voice/voices/*
-!apps/realtime-voice/voices/.gitkeep

@@ -3,7 +3,7 @@ import pytest
 from pydantic import ValidationError
 
 import apps.h3_comfy.worker_modal_cls_minimax_h3_comfy as worker_mod
-from packages.h3_comfy.shared import (
+from apps.h3_comfy.shared.worker_h3_comfy import (
     MiniMaxH3ComfyInput,
     MiniMaxH3ComfyOutput,
     do_inference,
@@ -100,7 +100,7 @@ def test_load_dependencies_mocked(monkeypatch, bucket):
 
 
 def test_workflow_scheduler_simple_and_steps():
-    from packages.h3_comfy.shared import build_workflow
+    from apps.h3_comfy.shared.worker_h3_comfy import build_workflow
 
     req = MiniMaxH3ComfyInput(prompt="clip")
     wf = build_workflow(req)
@@ -109,7 +109,7 @@ def test_workflow_scheduler_simple_and_steps():
 
 
 def test_first_last_frame_workflow_and_images():
-    from packages.h3_comfy.shared import build_images, build_workflow
+    from apps.h3_comfy.shared.worker_h3_comfy import build_images, build_workflow
 
     _img = (
         "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="

@@ -1,13 +1,28 @@
-from packages.h3_comfy.shared import Artifact, MiniMaxH3ComfyOutput
+import os
+
+from apps.h3_comfy.shared.worker_h3_comfy import (
+    Artifact,
+    MiniMaxH3ComfyInput,
+    MiniMaxH3ComfyOutput,
+    do_inference,
+    load_dependencies,
+)
 
 
 def test_good_input_returns_contract_and_artifact(artifact_exists):
-    import apps.h3_comfy.worker_beam_tq_minimax_h3_comfy as worker_mod
-
-    task = worker_mod.dispatch.put(prompt="a cat walking in a garden", seed=7)
-    out = task.result(wait=True)
-    assert out is not None, "beam task returned None - check beam logs"
-
-    url = out["artifact"]["presigned_url"]
-    assert out == MiniMaxH3ComfyOutput(artifact=Artifact(presigned_url=url)).model_dump()
+    storage, comfy_base_url = load_dependencies()
+    req = MiniMaxH3ComfyInput(prompt="a cat walking in a garden", seed=7)
+    out = do_inference(comfy_base_url, storage, req)
+    url = out.artifact.presigned_url
+    assert out == MiniMaxH3ComfyOutput(artifact=Artifact(presigned_url=url))
     assert artifact_exists(url)
+
+
+if __name__ == "__main__":
+    os.environ.setdefault("HF_TOKEN", "")
+    os.environ.setdefault("R2_ACCESS_KEY", "")
+    os.environ.setdefault("R2_SECRET_KEY", "")
+    os.environ.setdefault("R2_ENDPOINT", "")
+    from apps.conftest import _artifact_exists
+    test_good_input_returns_contract_and_artifact(_artifact_exists)
+    print("E2E PASSED")

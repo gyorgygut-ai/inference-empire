@@ -5,11 +5,11 @@
 ### Critical Specs
 
 - Endpoints: `POST /infer`, `GET /inquire`
-- Provider dispatch: read URLs from `contract.json` `providers` section
-- Auth token: static string from `contract.json` `authToken`
-- Task ID: `base64("provider:originalTaskId")` — modal: `call.object_id`, beam: task UUID from `.put()`
+- Provider dispatch: read URLs from environment (`BEAM_URL`, `BEAM_TASK_API`, `FLASH_URL`, `FLASH_ENDPOINT`); contracts carry input/output schemas only
+- Auth token: `AUTH_TOKEN` environment variable, generated once per deployment, never written to deploy output
+- Task ID: `base64("provider:originalTaskId")` — beam: task UUID from `.put()`, flash: endpoint call ID
 - Status enum: `PENDING | PROCESSING | COMPLETED | FAILED | CANCELLED`
-- v1 always picks modal, but selection function is separate for future expansion
+- v1 picks beam, but selection function is separate for future expansion
 - Code must be minimal, simple and stupid — no magic, no `any`, no ifs without `{}`, no semis
 
 ### Golden Rules
@@ -23,5 +23,5 @@
 **Read before writing code**:
 
 - `task-id.ts` — encode/decode with `btoa`/`atob`
-- `pick-task-handler.ts` — v1 always returns `'modal'`
+- `pick-task-handler.ts` — v1 returns `'beam'`
 - `router.ts` — itty-router endpoints

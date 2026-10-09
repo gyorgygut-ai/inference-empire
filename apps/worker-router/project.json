@@ -4,102 +4,194 @@
   "root": "apps/worker-router",
   "sourceRoot": "apps/worker-router/src",
   "projectType": "application",
-  "tags": ["type:app", "scope:router"],
+  "tags": ["type:app", "scope:service"],
   "targets": {
     "build": {
-      "inputs": ["default", "^production"],
+      "inputs": ["default", "production", "^production"],
       "executor": "nx:run-script",
-      "options": { "script": "build" },
+      "options": { "script": "build", "outputPath": "dist/apps/worker-router" },
+      "outputs": ["{projectRoot}/dist"],
       "cache": true
     },
-    "dev": {
+    "build-flux2": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "wrangler dev",
-        "cwd": "apps/worker-router"
+        "command": "ROUTER_FAMILY=flux2 npx tsc -p tsconfig.json --outDir ../../dist/apps/worker-router/flux2 --noEmit false",
+        "cwd": "apps/worker-router",
+        "outputPath": "dist/apps/worker-router/flux2"
       },
-      "continuous": true
+      "inputs": ["production", "^production"],
+      "outputs": ["{workspaceRoot}/dist/apps/worker-router/flux2"],
+      "cache": true
     },
-    "flux2": {
+    "build-krea2": {
       "executor": "nx:run-commands",
-      "defaultConfiguration": "serve",
-      "continuous": true,
-      "configurations": {
-        "serve": {
-          "command": "node apps/worker-router/scripts/serve.mjs --router flux2-router",
-          "cwd": "."
-        },
-        "deploy": {
-          "command": "node tools/deploy/deploy-modal.mjs --router flux2-router && node tools/deploy/deploy-beam.mjs --router flux2-router && node tools/deploy/deploy-flash.mjs --router flux2-router && node apps/worker-router/scripts/deploy.mjs --router flux2-router",
-          "cwd": "."
-        }
-      }
+      "options": {
+        "command": "ROUTER_FAMILY=krea2 npx tsc -p tsconfig.json --outDir ../../dist/apps/worker-router/krea2 --noEmit false",
+        "cwd": "apps/worker-router",
+        "outputPath": "dist/apps/worker-router/krea2"
+      },
+      "inputs": ["production", "^production"],
+      "outputs": ["{workspaceRoot}/dist/apps/worker-router/krea2"],
+      "cache": true
     },
-    "krea2": {
+    "build-router-flux2": {
+      "executor": "@nx-extend/vercel:build",
+      "options": {
+        "buildTarget": "worker-router:build-flux2",
+        "framework": "other",
+        "nodeVersion": "22.x",
+        "orgId": "team_J6vdHfx7Bjz7VVskbtdbL8kq"
+      },
+      "inputs": [
+        "production",
+        "^production",
+        { "env": "FLUX2_ROUTER_VERCEL_TOKEN" },
+        { "env": "FLUX2_ROUTER_VERCEL_PROJECT_ID" },
+        { "env": "FLUX2_ROUTER_VERCEL_ORG_ID" },
+        { "env": "AUTH_TOKEN" },
+        { "env": "BEAM_URL" },
+        { "env": "FLASH_URL" },
+        { "env": "FLASH_ENDPOINT" }
+      ],
+      "outputs": ["{projectRoot}/.vercel/output"],
+      "cache": true
+    },
+    "deploy-router-flux2": {
+      "executor": "@nx-extend/vercel:deploy",
+      "options": {
+        "deployment": "production"
+      },
+      "dependsOn": ["build-router-flux2", "^deploy-router-flux2"],
+      "inputs": [
+        "production",
+        "^production",
+        { "env": "FLUX2_ROUTER_VERCEL_TOKEN" },
+        { "env": "FLUX2_ROUTER_VERCEL_PROJECT_ID" },
+        { "env": "FLUX2_ROUTER_VERCEL_ORG_ID" }
+      ],
+      "cache": false
+    },
+    "router-flux2": {
       "executor": "nx:run-commands",
-      "defaultConfiguration": "serve",
-      "continuous": true,
-      "configurations": {
-        "serve": {
-          "command": "node apps/worker-router/scripts/serve.mjs --router krea2-router",
-          "cwd": "."
-        },
-        "deploy": {
-          "command": "node tools/deploy/deploy-modal.mjs --router krea2-router && node tools/deploy/deploy-beam.mjs --router krea2-router && node tools/deploy/deploy-flash.mjs --router krea2-router && node apps/worker-router/scripts/deploy.mjs --router krea2-router",
-          "cwd": "."
-        }
-      }
+      "options": {
+        "command": ": \"${FLUX2_ROUTER_VERCEL_TOKEN:?missing}\" && NX_DAEMON=false VERCEL_TOKEN=\"$FLUX2_ROUTER_VERCEL_TOKEN\" nx run worker-router:deploy-router-flux2",
+        "cwd": "."
+      },
+      "inputs": [
+        "production",
+        "^production",
+        { "env": "FLUX2_ROUTER_VERCEL_TOKEN" },
+        { "env": "FLUX2_ROUTER_VERCEL_PROJECT_ID" },
+        { "env": "FLUX2_ROUTER_VERCEL_ORG_ID" }
+      ],
+      "cache": false
+    },
+    "build-router-krea2": {
+      "executor": "@nx-extend/vercel:build",
+      "options": {
+        "buildTarget": "worker-router:build-krea2",
+        "framework": "other",
+        "nodeVersion": "22.x",
+        "orgId": "team_J6vdHfx7Bjz7VVskbtdbL8kq"
+      },
+      "inputs": [
+        "production",
+        "^production",
+        { "env": "KREA2_ROUTER_VERCEL_TOKEN" },
+        { "env": "KREA2_ROUTER_VERCEL_PROJECT_ID" },
+        { "env": "KREA2_ROUTER_VERCEL_ORG_ID" },
+        { "env": "AUTH_TOKEN" },
+        { "env": "BEAM_URL" },
+        { "env": "FLASH_URL" },
+        { "env": "FLASH_ENDPOINT" }
+      ],
+      "outputs": ["{projectRoot}/.vercel/output"],
+      "cache": true
+    },
+    "deploy-router-krea2": {
+      "executor": "@nx-extend/vercel:deploy",
+      "options": {
+        "deployment": "production"
+      },
+      "dependsOn": ["build-router-krea2", "^deploy-router-krea2"],
+      "inputs": [
+        "production",
+        "^production",
+        { "env": "KREA2_ROUTER_VERCEL_TOKEN" },
+        { "env": "KREA2_ROUTER_VERCEL_PROJECT_ID" },
+        { "env": "KREA2_ROUTER_VERCEL_ORG_ID" }
+      ],
+      "cache": false
+    },
+    "router-krea2": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": ": \"${KREA2_ROUTER_VERCEL_TOKEN:?missing}\" && NX_DAEMON=false VERCEL_TOKEN=\"$KREA2_ROUTER_VERCEL_TOKEN\" nx run worker-router:deploy-router-krea2",
+        "cwd": "."
+      },
+      "inputs": [
+        "production",
+        "^production",
+        { "env": "KREA2_ROUTER_VERCEL_TOKEN" },
+        { "env": "KREA2_ROUTER_VERCEL_PROJECT_ID" },
+        { "env": "KREA2_ROUTER_VERCEL_ORG_ID" }
+      ],
+      "cache": false
     },
     "test": {
+      "dependsOn": ["test-unit", "test-e2e"],
+      "cache": false
+    },
+    "test-unit": {
       "executor": "@nx/vitest:test",
-      "inputs": ["default"],
+      "dependsOn": ["^test-unit"],
+      "inputs": ["default", "production", "^production"],
       "options": { "configFile": "apps/worker-router/vitest.config.mts" }
     },
     "test-e2e": {
       "executor": "@nx/vitest:test",
       "inputs": ["default", "^production"],
       "options": { "configFile": "apps/worker-router/vitest.e2e.config.mts" },
-      "dependsOn": ["flux2", "krea2"],
+      "dependsOn": ["^test-e2e"],
       "cache": false
     },
     "lint": {
       "executor": "@nx/eslint:lint",
-      "inputs": ["default", "{workspaceRoot}/eslint.config.mjs"],
+      "dependsOn": ["audit", "oxlint", "typecheck"],
+      "inputs": [
+        "default",
+        "production",
+        "^production",
+        "{workspaceRoot}/eslint.config.mjs",
+        { "externalDependencies": ["eslint"] }
+      ],
       "options": {}
     },
-    // Flash disabled temporarily
-    "flux2-deploy": {
+    "typecheck": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "node tools/deploy/deploy-modal.mjs --router flux2-router && node tools/deploy/deploy-beam.mjs --router flux2-router && node apps/worker-router/scripts/deploy.mjs --router flux2-router",
-        "cwd": "."
+        "command": "npx tsc --noEmit -p tsconfig.json",
+        "cwd": "apps/worker-router"
       },
-      "outputs": ["{workspaceRoot}/dist/apps/flux2/**"],
-      "cache": false
+      "cache": true
     },
-    // Flash disabled temporarily
-    "krea2-deploy": {
+    "audit": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "node tools/deploy/deploy-modal.mjs --router krea2-router && node tools/deploy/deploy-beam.mjs --router krea2-router && node apps/worker-router/scripts/deploy.mjs --router krea2-router",
-        "cwd": "."
+        "command": "npm audit --omit=dev && npm ci --dry-run",
+        "cwd": "apps/worker-router"
       },
-      "outputs": ["{workspaceRoot}/dist/apps/krea2/**"],
-      "cache": false
+      "cache": true
     },
-    "deploy": {
-      "executor": "nx:run-commands",
-      "dependsOn": ["flux2-deploy", "krea2-deploy"],
-      "options": {
-        "command": "echo 'worker-router deployment complete'",
-        "cwd": "."
-      },
+    "verify": {
+      "dependsOn": ["audit", "lint", "build", "test"],
       "cache": false
     },
     "build-manifest": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "echo 'worker-router manifest is generated per-deployment by deploy.mjs'",
+        "command": "echo 'worker-router manifest is generated per Vercel deployment'",
         "cwd": "apps/worker-router"
       },
       "cache": true

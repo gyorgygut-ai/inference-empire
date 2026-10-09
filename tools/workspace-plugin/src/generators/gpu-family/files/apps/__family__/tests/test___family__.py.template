@@ -1,5 +1,5 @@
 """<%= modelTag %> family smoke: pin table importable."""
-from packages.<%= family %>.shared import IMAGE_PIP_DEPS
+from apps.<%= family %>.shared.worker_<%= family %> import IMAGE_PIP_DEPS
 
 
 def test_pin_table_exists():

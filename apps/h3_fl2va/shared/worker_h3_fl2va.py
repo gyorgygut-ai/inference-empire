@@ -1,0 +1,258 @@
+"""Shared business logic for minimax-h3-turbo-fl2va. No platform imports."""
+from __future__ import annotations
+
+import os
+import time
+import uuid
+from pathlib import Path
+from typing import TYPE_CHECKING, Any
+
+from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, field_validator
+
+from packages.media.validation import validate_image_b64
+
+if TYPE_CHECKING:
+
+    from packages.artifacts.artifacts import Artifacts
+
+BASE_REPO = "MiniMax/MiniMax-H3"
+TEXT_ENCODER = "FL2VA/text_encoder/model*.safetensors"
+TRANSFORMER = "FL2VA/transformer/model*.safetensors"
+VIDEO_VAE = "FL2VA/video_vae/source/model.safetensors"
+AUDIO_VAE = "FL2VA/audio_vae/model.safetensors"
+PROCESSOR_PATTERN = "FL2VA/processor/"
+LORA_REPO = "lightx2v/Minimax-h3-Turbo"
+LORA_WEIGHTS = "minimax_h3_fl2v_turbo_4step_v1.0_768p_bf16.safetensors"
+# Turbo LoRA fixes inference to 4 steps; shifts match v1.0 768p training (video 6 / audio 3).
+STEPS = 4
+FLOW_SHIFT = 6.0
+AUDIO_FLOW_SHIFT = 3.0
+FPS = 24
+
+IMAGE_PIP_DEPS: list[str] = [
+    "torch==2.9.1",
+    "torchcodec==0.9.0",
+    "diffsynth[audio]==2.1.6",
+    "diffusers==0.40.0",
+    "transformers==5.16.1",
+    "accelerate==1.14.0",
+    "bitsandbytes==0.50.2",
+    "pillow==12.3.0",
+    "imageio==2.37.2",
+    "imageio-ffmpeg==0.6.0",
+    "torchaudio==2.9.1",
+    "boto3==1.43.83",
+    "fastapi==0.141.1",
+    "hf_transfer==0.1.9",
+]
+
+class MiniMaxH3TurboFl2vaInput(BaseModel):
+    model_config = ConfigDict(title="MiniMaxH3TurboFl2vaInput")
+    prompt: str
+    first_frame: str | None = Field(default=None)
+    last_frame: str | None = Field(default=None)
+    width: int = Field(default=1344)
+    height: int = Field(default=768)
+    length: int = Field(default=124)
+    seed: int | None = Field(default=None)
+
+    @field_validator("first_frame", "last_frame")
+    @classmethod
+    def _check_frame(cls, v: str | None, info: ValidationInfo) -> str | None:
+        if v is None:
+            return None
+        return validate_image_b64(v, info.field_name)
+
+class Artifact(BaseModel):
+    model_config = ConfigDict(title="Artifact")
+    presigned_url: str
+
+class MiniMaxH3TurboFl2vaOutput(BaseModel):
+    model_config = ConfigDict(title="MiniMaxH3TurboFl2vaOutput")
+    artifact: Artifact
+
+def _load_dotenv() -> None:
+    path = Path(__file__).parent.parent / ".env"
+    if not path.exists():
+        return
+    for line in path.read_text().splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, _, value = line.partition("=")
+        key, value = key.strip(), value.strip().strip('"').strip("'")
+        if key and key not in os.environ:
+            os.environ[key] = value
+
+def apply_torch_shims() -> None:
+    import torch.distributed as dist
+
+    try:
+        def _dist_unavailable() -> bool:
+            return False
+
+        dist.is_available = _dist_unavailable
+    except Exception:
+        pass
+
+    import torch
+
+    _orig_load_library = torch.ops.load_library
+
+    def _patched_load_library(path: str) -> None:
+        try:
+            _orig_load_library(path)
+        except OSError as e:
+            raise RuntimeError(f"torch native library failed to load: {path}: {e}") from e
+
+    torch.ops.load_library = _patched_load_library
+
+def decode_image(base64_str: str, field: str = "frame"):
+    import base64
+    import io
+
+    from PIL import Image
+
+    raw = validate_image_b64(base64_str, field)
+    return Image.open(io.BytesIO(base64.b64decode(raw))).convert("RGB")
+
+def load_pipeline(vram_reserve_gb: float = 2.0):
+    import torch
+    import torch.distributed as dist
+
+    try:
+        def _dist_unavailable() -> bool:
+            return False
+
+        dist.is_available = _dist_unavailable
+    except Exception:
+        pass
+
+    from diffsynth.pipelines.minimax_h3_audio_video import (
+        MiniMaxH3Pipeline,
+        ModelConfig,
+    )
+    from diffsynth.utils.data.audio_video import write_video_audio
+
+    vram_config: dict[str, Any] = {
+        "offload_dtype": "disk",
+        "offload_device": "disk",
+        "onload_dtype": torch.bfloat16,
+        "onload_device": "cpu",
+        "preparing_dtype": torch.bfloat16,
+        "preparing_device": "cuda",
+        "computation_dtype": torch.bfloat16,
+        "computation_device": "cuda",
+    }
+
+    print(f"[INIT] loading model {BASE_REPO} + turbo lora", flush=True)
+    t0 = time.time()
+    pipe = MiniMaxH3Pipeline.from_pretrained(
+        torch_dtype=torch.bfloat16,
+        device="cuda",
+        model_configs=[
+            ModelConfig(model_id=BASE_REPO, origin_file_pattern=TEXT_ENCODER, **vram_config),
+            ModelConfig(model_id=BASE_REPO, origin_file_pattern=TRANSFORMER, **vram_config),
+            ModelConfig(model_id=BASE_REPO, origin_file_pattern=VIDEO_VAE, **vram_config),
+            ModelConfig(model_id=BASE_REPO, origin_file_pattern=AUDIO_VAE, **vram_config),
+        ],
+        processor_config=ModelConfig(
+            model_id=BASE_REPO,
+            origin_file_pattern=PROCESSOR_PATTERN,
+        ),
+        vram_limit=torch.cuda.mem_get_info("cuda")[1] / (1024**3) - vram_reserve_gb,
+    )
+    pipe.load_lora(pipe.dit, ModelConfig(model_id=LORA_REPO, origin_file_pattern=LORA_WEIGHTS))
+    print(f"[INIT] model loaded in {time.time() - t0:.1f}s", flush=True)
+    return pipe, write_video_audio
+
+def do_inference(
+    pipe,
+    write_video_audio,
+    storage: Artifacts,
+    req: MiniMaxH3TurboFl2vaInput,
+) -> MiniMaxH3TurboFl2vaOutput:
+    t_req = time.time()
+    print(f"[REQ] prompt={req.prompt[:40]}  seed={req.seed}", flush=True)
+
+    pipe_kwargs = {
+        "prompt": req.prompt,
+        "height": req.height,
+        "width": req.width,
+        "num_frames": req.length,
+        "num_inference_steps": STEPS,
+        "flow_shift": FLOW_SHIFT,
+        "audio_flow_shift": AUDIO_FLOW_SHIFT,
+    }
+    if req.seed is not None:
+        pipe_kwargs["seed"] = req.seed
+
+    keyframes = []
+    keyframe_indices = []
+    if req.first_frame:
+        keyframes.append(decode_image(req.first_frame))
+        keyframe_indices.append(0)
+    if req.last_frame:
+        keyframes.append(decode_image(req.last_frame))
+        keyframe_indices.append(-1)
+    if keyframes:
+        pipe_kwargs["keyframes"] = keyframes
+        pipe_kwargs["keyframe_indices"] = keyframe_indices
+
+    print(f"[GEN] starting turbo inference prompt={req.prompt[:40]}", flush=True)
+    t_gen = time.time()
+    video, audio = pipe(**pipe_kwargs)
+    if isinstance(video, list):
+        _size = video[0].size if video and hasattr(video[0], "size") else "?"
+        _info = f"frames={len(video)} size={_size}"
+    else:
+        _info = f"shape={video.shape[2]}x{video.shape[3]}  frames={video.shape[1]}"
+    print(
+        f"[GEN] inference done in {time.time() - t_gen:.1f}s  {_info}",
+        flush=True,
+    )
+
+    output_path = f"/tmp/minimax_h3_turbo_fl2va_{uuid.uuid4()}.mp4"
+    try:
+        write_video_audio(
+            video=video,
+            audio=audio,
+            output_path=output_path,
+            fps=FPS,
+            audio_sample_rate=pipe.audio_vae.sample_rate,
+        )
+        with open(output_path, "rb") as fh:
+            video_bytes = fh.read()
+    finally:
+        if os.path.exists(output_path):
+            os.remove(output_path)
+
+    key = f"minimax_turbo_fl2va_{uuid.uuid4()}.mp4"
+    storage.put(key, video_bytes)
+    presigned_url = storage.presigned_url(key)
+    print(f"[R2] uploaded key={key} url={presigned_url[:60]}", flush=True)
+
+    print(f"[OK] completed in {time.time() - t_req:.1f}s", flush=True)
+    return MiniMaxH3TurboFl2vaOutput(artifact=Artifact(presigned_url=presigned_url))
+
+def pipe_factory():
+    return load_pipeline()[0]
+
+def load_dependencies(cache_dir=None):
+    from packages.artifacts.r2_artifacts import R2Artifacts
+
+    storage = R2Artifacts()
+    return storage, pipe_factory(), _WriteVideoAudioService()
+
+
+class _WriteVideoAudioService:
+    def __call__(self, video, audio, output_path, fps, audio_sample_rate):
+        from diffsynth.utils.data.audio_video import write_video_audio as diffsynth_write
+
+        return diffsynth_write(
+            video=video,
+            audio=audio,
+            output_path=output_path,
+            fps=fps,
+            audio_sample_rate=audio_sample_rate,
+        )

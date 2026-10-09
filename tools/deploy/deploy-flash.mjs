@@ -1,4 +1,4 @@
-import { readFileSync, readdirSync, mkdirSync, writeFileSync, existsSync } from "node:fs"
+import { readdirSync } from "node:fs"
 import { join, dirname } from "node:path"
 import { fileURLToPath } from "node:url"
 import { spawnSync } from "node:child_process"
@@ -33,12 +33,4 @@ if (result.status !== 0) {
 const match = (result.stderr || "").match(/endpoint[_\s-]?id[:\s]+(\w+)/i)
 const endpointId = match ? match[1] : name
 
-const outDir = join(root, "dist", "apps", family)
-mkdirSync(outDir, { recursive: true })
-const providerPath = join(outDir, "provider.json")
-const prev = existsSync(providerPath) ? JSON.parse(readFileSync(providerPath, "utf-8")) : {}
-writeFileSync(providerPath, JSON.stringify({
-  ...prev,
-  flash: { url: `https://endpoints.runpod.io/v2/${endpointId}`, endpointId }
-}, null, 2))
-console.log(`wrote dist/apps/${family}/provider.json (flash endpoint: ${endpointId})`)
+console.log(`[deploy-flash] ${family} flash endpoint: ${endpointId} (store in router Vercel project env)`)

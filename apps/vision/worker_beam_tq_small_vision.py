@@ -2,15 +2,15 @@ from __future__ import annotations
 
 from beam import Image, QueueDepthAutoscaler, task_queue
 
-from packages.shared_gpu.guard import run_guarded
-from packages.shared_gpu.platform import BEAM_CACHE_PATH, beam_env, beam_volume
-from packages.vision.shared import (
+from apps.vision.shared.worker_vision import (
     IMAGE_PIP_DEPS,
     SmallVisionInput,
     do_inference,
     load_dependencies,
     resolve_analyze_prompt,
 )
+from packages.shared_gpu.guard import run_guarded
+from packages.shared_gpu.platform import BEAM_CACHE_PATH, beam_env, beam_volume
 
 CACHE_PATH = BEAM_CACHE_PATH
 

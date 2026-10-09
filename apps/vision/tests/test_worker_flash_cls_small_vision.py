@@ -7,7 +7,7 @@ from pydantic import ValidationError
 
 import apps.vision.worker_flash_cls_small_vision as worker_mod
 from apps.vision.fakes.vision_fake import FakeVisionModel, FakeVisionProcessor
-from packages.vision.shared import (
+from apps.vision.shared.worker_vision import (
     SmallVisionInput,
     SmallVisionOutput,
     build_analyze_prompt,

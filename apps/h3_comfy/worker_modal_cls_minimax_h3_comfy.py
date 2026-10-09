@@ -7,16 +7,15 @@ from pathlib import Path
 import modal
 import requests
 
-from packages.h3_comfy.shared import (
+from apps.h3_comfy.shared.worker_h3_comfy import (
     MiniMaxH3ComfyInput,
     _start_comfy,
     apply_torch_shims,
     do_inference,
 )
-from packages.modal_bridge import attach_bridge
 from packages.shared_gpu.guard import run_guarded
 from packages.shared_gpu.platform import MODAL_HF_MOUNT, modal_env, modal_volume
-from packages.shared_gpu.artifacts.r2_artifacts import R2Artifacts
+from packages.artifacts.r2_artifacts import R2Artifacts
 
 app = modal.App("minimax-h3-comfy-worker")
 
@@ -35,10 +34,7 @@ image = (
             "DIFFSYNTH_MODEL_BASE_PATH": f"{MODAL_HF_MOUNT}/diffsynth",
         }
     )
-    .add_local_python_source("apps", "apps")
-    .add_local_python_source("packages", "packages")
 )
-
 
 def snapshot_download(repo_id, local_dir, local_dir_use_symlinks=False, allow_patterns=None):
     # Stub for huggingface_hub.snapshot_download
@@ -89,4 +85,3 @@ class MiniMaxH3ComfyWorker:
         return generate(self.storage, self.comfy_base_url, **kwargs)
 
 
-attach_bridge(app, "MiniMaxH3ComfyWorker")

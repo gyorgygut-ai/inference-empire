@@ -4,22 +4,20 @@ from pathlib import Path
 
 import modal
 
-from packages.modal_bridge import attach_bridge
-from packages.shared_gpu.guard import run_guarded
-from packages.shared_gpu.platform import MODAL_HF_MOUNT, modal_env, modal_volume
-from packages.vision.shared import (
+from apps.vision.shared.worker_vision import (
     IMAGE_PIP_DEPS,
     SmallVisionInput,
     do_inference,
     load_dependencies,
     resolve_analyze_prompt,
 )
+from packages.shared_gpu.guard import run_guarded
+from packages.shared_gpu.platform import MODAL_HF_MOUNT, modal_env, modal_volume
 
 app = modal.App("small-vision-worker")
 
 dotenv_secret = modal.Secret.from_dotenv(str(Path(__file__).parent.parent.parent / ".env"))
 hf_cache_vol = modal_volume()
-
 
 def generate(model, processor, analyze_prompt, **kwargs) -> dict:
     return run_guarded(
@@ -30,15 +28,11 @@ def generate(model, processor, analyze_prompt, **kwargs) -> dict:
         ),
     )
 
-
 image = (
     modal.Image.debian_slim(python_version="3.11")
     .pip_install(*IMAGE_PIP_DEPS)
     .env(modal_env())
-    .add_local_python_source("apps", "apps")
-    .add_local_python_source("packages", "packages")
 )
-
 
 @app.cls(
     image=image,
@@ -60,4 +54,3 @@ class SmallVisionWorker:
         return generate(self.model, self.processor, self.analyze_prompt, **kwargs)
 
 
-attach_bridge(app, "SmallVisionWorker")

@@ -5,55 +5,8 @@
   "sourceRoot": "apps/h3_comfy",
   "tags": [
     "type:app",
-    "scope:worker",
+    "scope:gpu-worker",
     "model:h3-comfy"
   ],
-  "targets": {
-    "test-unit": {
-      "executor": "@inference/workspace-plugin:pytest",
-      "options": {
-        "family": "h3_comfy",
-        "mode": "unit"
-      },
-      "inputs": [
-        "default"
-      ],
-      "cache": true
-    },
-    "e2e-sandbox-modal": {
-      "executor": "@inference/workspace-plugin:sandbox-e2e-modal",
-      "options": {
-        "family": "h3_comfy"
-      },
-      "cache": false
-    },
-    "e2e-sandbox-beam": {
-      "executor": "@inference/workspace-plugin:beam-sandbox-e2e",
-      "options": {
-        "family": "h3_comfy"
-      },
-      "cache": false
-    },
-    "e2e-real": {
-      "executor": "@inference/workspace-plugin:real-e2e",
-      "options": {
-        "family": "h3_comfy"
-      },
-      "cache": false
-    },
-    "lint": {
-      "executor": "@inference/workspace-plugin:ruff",
-      "options": {
-        "family": "h3_comfy"
-      },
-      "cache": true
-    },
-    "typecheck": {
-      "executor": "@inference/workspace-plugin:ty",
-      "options": {
-        "family": "h3_comfy"
-      },
-      "cache": true
-    }
-  }
+  "targets": {}
 }

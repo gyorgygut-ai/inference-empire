@@ -4,12 +4,12 @@ from functools import partial
 
 from beam import Image, QueueDepthAutoscaler, task_queue
 
-from packages.h3_ref2va.shared import (
+from apps.h3_ref2va.shared.worker_h3_ref2va import (
     ValidatedRef2VAInput,
     do_inference,
     load_dependencies,
 )
-from packages.shared_gpu.artifacts.r2_artifacts import R2Artifacts
+from packages.artifacts.r2_artifacts import R2Artifacts
 from packages.shared_gpu.guard import run_guarded
 from packages.shared_gpu.platform import BEAM_CACHE_PATH, beam_env, beam_volume
 

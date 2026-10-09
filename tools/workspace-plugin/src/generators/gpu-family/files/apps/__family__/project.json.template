@@ -3,7 +3,7 @@
   "name": "gpu-workers-<%= modelTag %>",
   "projectType": "application",
   "sourceRoot": "apps/<%= family %>",
-  "tags": ["type:app", "scope:gpu", "model:<%= modelTag %>"],
+  "tags": ["type:app", "scope:gpu-worker", "model:<%= modelTag %>"],
   "targets": {
     "test-unit": {
       "executor": "@inference/workspace-plugin:pytest",
@@ -11,16 +11,8 @@
       "inputs": ["default"],
       "cache": true
     },
-    "e2e-sandbox-modal": {
-      "executor": "@inference/workspace-plugin:sandbox-e2e-modal",
-      "options": { "family": "<%= family %>" },
-      "cache": false
-    },
-    "e2e-real": {
-      "executor": "@inference/workspace-plugin:real-e2e",
-      "options": { "family": "<%= family %>" },
-      "cache": false
-    },
+    "test": {},
+    "test-e2e": {},
     "lint": {
       "executor": "@inference/workspace-plugin:ruff",
       "options": { "family": "<%= family %>" },

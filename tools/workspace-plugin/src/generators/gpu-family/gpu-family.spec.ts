@@ -10,14 +10,13 @@ describe('gpu-family generator', () => {
     tree = createTreeWithEmptyWorkspace();
   });
 
-  it('scaffolds apps/<family>/, packages/<family>/ shared and contract', async () => {
+  it('scaffolds apps/<family>/ workers, shared logic and contract', async () => {
     await gpuFamilyGenerator(tree, { family: 'demo_fam' });
     expect(tree.exists('apps/demo_fam/__init__.py')).toBe(true);
     expect(tree.exists('apps/demo_fam/tests/__init__.py')).toBe(true);
     expect(tree.exists('apps/demo_fam/tests/test_demo_fam.py')).toBe(true);
-    expect(tree.exists('packages/demo_fam/shared.py')).toBe(true);
-    expect(tree.exists('packages/demo_fam/__init__.py')).toBe(true);
-    expect(tree.exists('packages/demo_fam/contract.json')).toBe(true);
+    expect(tree.exists('apps/demo_fam/shared/worker_demo_fam.py')).toBe(true);
+    expect(tree.exists('apps/demo_fam/shared/contract_demo_fam.json')).toBe(true);
     expect(tree.exists('apps/demo_fam/project.json')).toBe(true);
     const project = JSON.parse(
       tree.read('apps/demo_fam/project.json', 'utf-8')

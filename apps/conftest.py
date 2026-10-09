@@ -5,7 +5,7 @@ from typing import Any
 import httpx
 import pytest
 
-from packages.shared_gpu.artifacts.r2_artifacts_fake import FakeR2Artifacts
+from packages.artifacts.r2_artifacts_fake import FakeR2Artifacts
 
 
 @pytest.fixture

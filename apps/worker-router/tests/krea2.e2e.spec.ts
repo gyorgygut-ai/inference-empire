@@ -1,25 +1,13 @@
-import { readFileSync } from 'node:fs'
-import { dirname, join } from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 
-const ROUTER_URL = 'http://127.0.0.1:8788'
-const TOKEN_PATH = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', 'dist', 'apps', 'krea2', '.router-token')
-
-async function readToken(): Promise<string> {
-  const deadline = Date.now() + 60_000
-  while (Date.now() < deadline) {
-    try {
-      return readFileSync(TOKEN_PATH, 'utf-8').trim()
-    } catch {
-      await new Promise((resolve) => setTimeout(resolve, 250))
-    }
-  }
-  throw new Error(`router token not emitted at ${TOKEN_PATH}`)
+const ROUTER_URL = process.env.KREA2_ROUTER_URL ?? ''
+const ROUTER_TOKEN = process.env.KREA2_ROUTER_TOKEN ?? ''
+if (!ROUTER_URL || !ROUTER_TOKEN) {
+  throw new Error('KREA2_ROUTER_URL and KREA2_ROUTER_TOKEN env vars are required')
 }
 
 async function infer(input: Record<string, unknown>): Promise<Record<string, unknown>> {
-  const headers = { Authorization: `Bearer ${await readToken()}` }
+  const headers = { Authorization: `Bearer ${ROUTER_TOKEN}` }
   const submitted = await fetch(`${ROUTER_URL}/infer`, {
     method: 'POST',
     headers: { ...headers, 'Content-Type': 'application/json' },

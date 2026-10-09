@@ -1,3 +1,6 @@
-# Non-Flash workers
-worker_beam_*.py
-worker_modal_*.py
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+.flash/
+.DS_Store

@@ -6,7 +6,6 @@
   "main": "./src/index.ts",
   "scripts": {
     "build": "tsc",
-    "dev": "wrangler dev",
     "test": "vitest run",
     "lint": "echo no linter yet"
   },
@@ -14,7 +13,6 @@
     "itty-router": "^5.0.24"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.0.0",
     "@nx/vite": "^23.2.1",
     "typescript": "^5.0.0",
     "vite": "^5.0.0"

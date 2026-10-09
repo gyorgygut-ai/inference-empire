@@ -5,13 +5,12 @@ from pathlib import Path
 
 import modal
 
-from packages.h3_ref2va.shared import (
+from apps.h3_ref2va.shared.worker_h3_ref2va import (
     ValidatedRef2VAInput,
     apply_torch_shims,
     do_inference,
     load_dependencies,
 )
-from packages.modal_bridge import attach_bridge
 from packages.shared_gpu.guard import run_guarded
 from packages.shared_gpu.platform import MODAL_HF_MOUNT, modal_env, modal_volume
 
@@ -20,14 +19,12 @@ app = modal.App("minimax-h3-ref2va-worker")
 dotenv_secret = modal.Secret.from_dotenv(str(Path(__file__).parent.parent.parent / ".env"))
 hf_cache_vol = modal_volume()
 
-
 def generate(storage, pipe, write_video_audio, **kwargs) -> dict:
     return run_guarded(
         ValidatedRef2VAInput,
         kwargs,
         partial(do_inference, pipe, write_video_audio, storage),
     )
-
 
 image = (
     modal.Image.debian_slim(python_version="3.11")
@@ -55,10 +52,7 @@ image = (
             "DIFFSYNTH_MODEL_BASE_PATH": f"{MODAL_HF_MOUNT}/diffsynth",
         }
     )
-    .add_local_python_source("apps", "apps")
-    .add_local_python_source("packages", "packages")
 )
-
 
 @app.cls(
     image=image,
@@ -84,4 +78,3 @@ class MiniMaxH3Ref2VAWorker:
         return generate(self.storage, self.pipe, self.write_video_audio, **kwargs)
 
 
-attach_bridge(app, "MiniMaxH3Ref2VAWorker")

@@ -6,13 +6,12 @@ from pathlib import Path
 
 import modal
 
-from packages.krea2.shared import (
+from apps.krea2.shared.worker_krea2 import (
     IMAGE_PIP_DEPS,
     Krea2Ref2ImgInput,
     do_inference,
     load_dependencies,
 )
-from packages.modal_bridge import attach_bridge
 from packages.shared_gpu.guard import run_guarded
 from packages.shared_gpu.platform import MODAL_HF_MOUNT, modal_env, modal_volume
 
@@ -21,7 +20,6 @@ app = modal.App("krea2-ref2img-worker")
 dotenv_secret = modal.Secret.from_dotenv(str(Path(__file__).parent.parent.parent / ".env"))
 hf_cache_vol = modal_volume()
 
-
 def generate(storage, pipe, runtime_dir, torch_module, **kwargs) -> dict:
     return run_guarded(
         Krea2Ref2ImgInput,
@@ -29,16 +27,12 @@ def generate(storage, pipe, runtime_dir, torch_module, **kwargs) -> dict:
         partial(do_inference, pipe, runtime_dir, torch_module, storage),
     )
 
-
 image = (
     modal.Image.debian_slim(python_version="3.11")
     .apt_install("git", "ffmpeg", "libgl1", "libglib2.0-0")
     .pip_install(*IMAGE_PIP_DEPS)
     .env(modal_env(extra={"PYTORCH_NVML_BASED_CUDA_CHECK": "0"}))
-    .add_local_python_source("apps", "apps")
-    .add_local_python_source("packages", "packages")
 )
-
 
 @app.cls(
     image=image,
@@ -63,4 +57,3 @@ class Krea2Ref2ImgWorker:
         return generate(self.storage, self.pipe, self.runtime_dir, self.torch_module, **kwargs)
 
 
-attach_bridge(app, "Krea2Ref2ImgWorker")

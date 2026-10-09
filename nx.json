@@ -11,9 +11,10 @@
       "{workspaceRoot}/package.json"
     ],
     "contracts": [
-      "{workspaceRoot}/packages/*/contract.json"
+      "{workspaceRoot}/apps/*/shared/contract_*.json"
     ],
     "production": [
+      "default",
       "!{projectRoot}/**/*.spec.ts",
       "!{projectRoot}/**/*.test.ts",
       "!{projectRoot}/tests/**",
@@ -24,6 +25,12 @@
     ]
   },
   "targetDefaults": {
+    "audit": {
+      "cache": true
+    },
+    "lint": {
+      "cache": true
+    },
     "build": {
       "dependsOn": [
         "^build"
@@ -34,142 +41,17 @@
       ],
       "cache": true
     },
-    "build-manifest": {
-      "inputs": [
-        "contracts"
-      ],
-      "outputs": [
-        "{projectRoot}/src/lib/manifest.json"
-      ],
-      "cache": true
-    },
-    "test-unit": {
-      "inputs": [
-        "default",
-        "^production"
-      ],
-      "cache": true
-    },
-    "e2e-sandbox-modal": {
-      "inputs": [
-        "default",
-        "^production"
-      ],
+    "test": {
       "cache": false
     },
-    "e2e-real": {
-      "inputs": [
-        "default",
-        "^production"
+    "verify": {
+      "dependsOn": [
+        "audit",
+        "lint",
+        "build",
+        "test"
       ],
       "cache": false
-    },
-    "lint": {
-      "inputs": [
-        "default",
-        "{workspaceRoot}/eslint.config.mjs"
-      ],
-      "cache": true
-    },
-    "typecheck": {
-      "inputs": [
-        "default",
-        "^production"
-      ],
-      "cache": true
-    },
-    "validate-deps": {
-      "inputs": [
-        "default"
-      ],
-      "cache": true
-    },
-    "deploy-modal": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "node tools/deploy/deploy-modal.mjs --router {projectName}",
-        "cwd": "."
-      },
-      "dependsOn": [
-        "validate-deps"
-      ],
-      "cache": false
-    },
-    "deploy-beam": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "node tools/deploy/deploy-beam.mjs --router {projectName}",
-        "cwd": "."
-      },
-      "dependsOn": [
-        "validate-deps"
-      ],
-      "cache": false
-    },
-    "deploy-flash": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "node tools/deploy/deploy-flash.mjs --router {projectName}",
-        "cwd": "."
-      },
-      "dependsOn": [
-        "validate-deps"
-      ],
-      "cache": false
-    },
-    "serve": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "node apps/worker-router/scripts/serve.mjs --router {projectName}",
-        "cwd": "."
-      },
-      "continuous": true,
-      "cache": false
-    },
-    "@nx/js:tsc": {
-      "cache": true,
-      "dependsOn": [
-        "^build"
-      ],
-      "inputs": [
-        "production",
-        "^production"
-      ]
-    },
-    "@nx/eslint:lint": {
-      "cache": true,
-      "inputs": [
-        "default",
-        "^default",
-        "{workspaceRoot}/.eslintrc.json",
-        "{workspaceRoot}/.eslintignore",
-        "{workspaceRoot}/eslint.config.mjs",
-        "{workspaceRoot}/tools/eslint-rules/**/*"
-      ]
-    },
-    "@nx/next:build": {
-      "cache": true,
-      "dependsOn": [
-        "^build"
-      ],
-      "inputs": [
-        "production",
-        "^production"
-      ]
-    },
-    "dev": {
-      "dependsOn": [
-        "^build"
-      ],
-      "inputs": [
-        "default",
-        "^production"
-      ]
-    },
-    "preview": {
-      "dependsOn": [
-        "build"
-      ]
     }
   },
   "plugins": [
@@ -177,10 +59,19 @@
     "@nx/react",
     "@nx/node",
     "@nx/js",
-    "@nx/eslint"
+    "@nx/eslint",
+    {
+      "plugin": "@nx/oxlint",
+      "options": {
+        "targetName": "oxlint"
+      }
+    },
+    {
+      "plugin": "./tools/workspace-plugin/src/inference/python.ts"
+    }
   ],
   "nxCloudAccessToken": "",
-  "useInferencePlugins": false,
+  "useInferencePlugins": true,
   "analytics": true,
   "generators": {
     "@nx/next": {

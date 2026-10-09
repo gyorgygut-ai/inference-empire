@@ -2,12 +2,12 @@
   "$schema": "https://json-schema.org/schema",
   "$id": "GpuFamily",
   "title": "GPU worker family",
-  "description": "Scaffold a new GPU worker family (apps/<family>/ workers + packages/<family>/ shared + contract)",
+  "description": "Scaffold a new GPU worker family (apps/<family>/ workers + shared/worker + shared/contract)",
   "type": "object",
   "properties": {
     "family": {
       "type": "string",
-      "description": "Worker family name for apps/<family>/ + packages/<family>/ (lowercase, underscores, e.g. tiny_sd)",
+      "description": "Worker family name for apps/<family>/ (lowercase, underscores, e.g. tiny_sd)",
       "$default": { "$source": "argv", "index": 0 },
       "x-prompt": "Worker family name (e.g. tiny_sd)?"
     },

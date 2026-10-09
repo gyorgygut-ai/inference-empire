@@ -1,4 +1,4 @@
-"""Line-buffered watchdog for `nx run <project>:e2e-sandbox-modal`.
+"""Line-buffered watchdog for `nx run <project>:test-e2e`.
 Idempotent: safe to re-run; overwrites log file atomically per invocation.
 Usage: python tools/ci/nx-e2e-watchdog.py <project> <logfile>
   [--silence 180] [--hard 900] -- <nx args...>

@@ -9,8 +9,8 @@ from functools import partial
 import requests
 from beam import Image, QueueDepthAutoscaler, task_queue
 
-from packages.h3_comfy.shared import MiniMaxH3ComfyInput, apply_torch_shims, do_inference
-from packages.shared_gpu.artifacts.r2_artifacts import R2Artifacts
+from apps.h3_comfy.shared.worker_h3_comfy import MiniMaxH3ComfyInput, apply_torch_shims, do_inference
+from packages.artifacts.r2_artifacts import R2Artifacts
 from packages.shared_gpu.guard import run_guarded
 from packages.shared_gpu.platform import BEAM_CACHE_PATH, beam_env, beam_volume
 

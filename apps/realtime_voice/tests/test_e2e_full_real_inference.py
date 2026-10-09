@@ -9,8 +9,8 @@ import os
 
 import numpy as np
 
-from packages.realtime_voice import shared
-from packages.realtime_voice.shared import float_to_pcm16
+from apps.realtime_voice.shared import worker_realtime_voice as shared
+from apps.realtime_voice.shared.worker_realtime_voice import float_to_pcm16
 
 
 def _load_fixture_audio():

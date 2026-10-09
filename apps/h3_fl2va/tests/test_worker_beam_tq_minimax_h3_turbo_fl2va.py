@@ -7,7 +7,7 @@ from pydantic import ValidationError
 import apps.h3_fl2va.worker_beam_tq_minimax_h3_fl2va as worker_mod
 from apps.h3_fl2va.fakes.video_pipe_fake import FakeVideoPipe
 from apps.h3_fl2va.fakes.write_video_audio_fake import FakeWriteVideoAudio
-from packages.h3_fl2va.shared import (
+from apps.h3_fl2va.shared.worker_h3_fl2va import (
     MiniMaxH3TurboFl2vaInput,
     MiniMaxH3TurboFl2vaOutput,
     do_inference,

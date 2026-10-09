@@ -68,6 +68,14 @@ router.all('*', async () => (
 ))
 
 function resolveConfig<K extends ProviderName>(name: K, env: Env): ProviderConfigs[K] {
-  const providers = JSON.parse(env.PROVIDERS) as ProviderConfigs
-  return providers[name]
+  if (name === 'beam') {
+    return {
+      url: env.BEAM_URL,
+      taskApi: env.BEAM_TASK_API || 'https://api.beam.cloud'
+    } as ProviderConfigs[K]
+  }
+  return {
+    url: env.FLASH_URL,
+    endpointName: env.FLASH_ENDPOINT
+  } as ProviderConfigs[K]
 }

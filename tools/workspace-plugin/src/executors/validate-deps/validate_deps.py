@@ -6,7 +6,7 @@ gate) so heavy provider deps never import.
 
 Also enforces worker thinness: apps/<family>/worker_*.py must not contain
 duplicated platform mechanics (lock, env, volume, typing shims). Those live
-in packages/shared-gpu. Violations go to stderr with exit 1; stdout stays
+in packages/shared_gpu. Violations go to stderr with exit 1; stdout stays
 pure IMAGE_PIP_DEPS for the pip-compile pipe.
 """
 from __future__ import annotations
@@ -17,7 +17,7 @@ import os
 import sys
 
 # realtime_voice Beam intentionally declares its own models volume; every
-# other worker file must use the shared-gpu helpers.
+# other worker file must use the shared_gpu helpers.
 _THINNESS_BANNED = (
     "_INFERENCE_LOCK = threading.Lock()",
     '"HF_HOME"',
@@ -43,7 +43,7 @@ def _check_thinness(family: str) -> list[str]:
             if banned in exempt:
                 continue
             if banned in text:
-                violations.append(f"{path}: banned {banned!r}, use packages/shared-gpu")
+                violations.append(f"{path}: banned {banned!r}, use packages/shared_gpu")
     return violations
 
 

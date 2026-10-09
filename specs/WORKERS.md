@@ -1,0 +1,41 @@
+# GPU Workers
+
+**Apps**:
+
+- [Flux2](./apps/flux2/AGENTS.md)
+- [Krea2](./apps/krea2/AGENTS.md)
+- [TinySD](./apps/tiny_sd/AGENTS.md)
+- [Vision](./apps/vision/AGENTS.md)
+- [H3 COMFY](./apps/h3_comfy/AGENTS.md)
+- [H3 FL2VA](./apps/h3_fl2va/AGENTS.md)
+- [H3 REF3VA](./apps/h3_ref2va/AGENTS.md)
+- [RT Voice](./apps/realtime_voice/AGENTS.md)
+
+**Activate**:
+
+- `.agents/skills/modal`
+- `~/.agents/skills/python-uv`
+- `~/.agents/skills/cloud-gpu-workers`
+
+**Structure**:
+
+- Naming: `worker_{model}_{platform}.py` (`apps/{model}`)
+- Contract: has ONLY `input` and `output` (`apps/{model}/shared/contract_{model}.json`)
+- Logic: thin wrapper over provider, logic shared (`apps/{model}|shared/worker_{model}.pu`)
+- Types: `Pydantic` generated. consumers generate their own types from contract
+- Queue: always use task queue and return task id, except realtime workers
+- Output: produced files must be delivered as artifact (`packages/artifacts`)
+
+**Worker Config**:
+
+- Max. 1 worker, scale to 0, short idle timeouts, (`workers=(0, 1)`)
+- Use `flashboot=True`, `model cache` for quick starts
+- Use `Volume` (`./hf-cache`) if provider doesn't do built-in cache
+- Models lazy downloaded and cached on first request, `tools/seed-volumes` allowed
+
+**Testing Strategy**
+
+- Rule: value over volume. each test must prove a specced requirement.
+- Unit: assert output + artifact for a given input (bad, good), stub side effects
+- Working stubs: avoid mocking. rely instead on real stubs + DI to test side effects
+- E2E: sole sunny test case per worker asserting output and artifacts, do not stub

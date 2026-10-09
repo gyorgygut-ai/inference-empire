@@ -17,7 +17,7 @@ def _load(name, filename):
     return mod
 
 
-shared = _load("rt_shared", "../../packages/realtime_voice/shared.py")
+shared = _load("rt_shared", "shared/worker_realtime_voice.py")
 beam_mod = _load("rt_beam", "worker_beam_asgi_realtime_voice_qwen.py")
 modal_mod = _load("rt_modal", "worker_modal_cls_realtime_voice_qwen.py")
 flash_mod = _load("rt_flash", "worker_flash_cls_realtime_voice_qwen.py")

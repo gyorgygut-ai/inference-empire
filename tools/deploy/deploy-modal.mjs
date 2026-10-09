@@ -19,7 +19,7 @@ if (workers.length !== 1) {
   process.exit(1)
 }
 
-// The bridge URL lives in the family contract; this script only ships the Modal app.
+// The bridge URL lives in the router Vercel project env; this script only ships the Modal app.
 const result = spawnSync("uv", ["run", "--locked", "modal", "deploy", `apps/${family}/${workers[0]}`], {
   cwd: root,
   env: { ...process.env, PYTHONPATH: root },

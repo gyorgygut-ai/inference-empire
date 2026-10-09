@@ -4,14 +4,14 @@ from functools import partial
 
 from runpod_flash import Endpoint, GpuGroup
 
-from packages.shared_gpu.guard import run_guarded
-from packages.shared_gpu.platform import flash_env
-from packages.tiny_sd.shared import (
+from apps.tiny_sd.shared.worker_tiny_sd import (
     IMAGE_PIP_DEPS,
     TinySDInput,
     do_inference,
     load_dependencies,
 )
+from packages.shared_gpu.guard import run_guarded
+from packages.shared_gpu.platform import flash_env
 
 
 def generate(storage, pipe, torch_module, **kwargs) -> dict:

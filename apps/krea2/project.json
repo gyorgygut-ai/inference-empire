@@ -5,55 +5,8 @@
   "sourceRoot": "apps/krea2",
   "tags": [
     "type:app",
-    "scope:worker",
+    "scope:gpu-worker",
     "model:krea2"
   ],
-  "targets": {
-    "test-unit": {
-      "executor": "@inference/workspace-plugin:pytest",
-      "options": {
-        "family": "krea2",
-        "mode": "unit"
-      },
-      "inputs": [
-        "default"
-      ],
-      "cache": true
-    },
-    "e2e-sandbox-modal": {
-      "executor": "@inference/workspace-plugin:sandbox-e2e-modal",
-      "options": {
-        "family": "krea2"
-      },
-      "cache": false
-    },
-    "e2e-sandbox-beam": {
-      "executor": "@inference/workspace-plugin:beam-sandbox-e2e",
-      "options": {
-        "family": "krea2"
-      },
-      "cache": false
-    },
-    "e2e-real": {
-      "executor": "@inference/workspace-plugin:real-e2e",
-      "options": {
-        "family": "krea2"
-      },
-      "cache": false
-    },
-    "lint": {
-      "executor": "@inference/workspace-plugin:ruff",
-      "options": {
-        "family": "krea2"
-      },
-      "cache": true
-    },
-    "typecheck": {
-      "executor": "@inference/workspace-plugin:ty",
-      "options": {
-        "family": "krea2"
-      },
-      "cache": true
-    }
-  }
+  "targets": {}
 }

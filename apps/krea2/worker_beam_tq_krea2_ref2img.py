@@ -4,7 +4,7 @@ from functools import partial
 
 from beam import Image, QueueDepthAutoscaler, task_queue
 
-from packages.krea2.shared import (
+from apps.krea2.shared.worker_krea2 import (
     IMAGE_PIP_DEPS,
     Krea2Ref2ImgInput,
     do_inference,

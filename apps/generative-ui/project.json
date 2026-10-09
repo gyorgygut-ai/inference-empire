@@ -1,0 +1,157 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "generative-ui",
+  "projectType": "application",
+  "sourceRoot": "apps/generative-ui",
+  "tags": ["type:app", "scope:ui"],
+  "implicitDependencies": ["flux2", "worker-router"],
+  "targets": {
+    "build": {
+      "executor": "nx:run-script",
+      "options": {
+        "script": "build",
+        "outputPath": "apps/generative-ui"
+      },
+      "dependsOn": [
+        "build-manifest"
+      ],
+      "inputs": ["production", "^production"],
+      "outputs": ["{projectRoot}/.next"],
+      "cache": true
+    },
+    "build-manifest": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npm run build:manifest",
+        "cwd": "apps/generative-ui"
+      },
+      "inputs": [
+        "{projectRoot}/messages/vocabulary/en.ts",
+        "{projectRoot}/scripts/generate-manifest.mjs"
+      ],
+      "outputs": [
+        "{projectRoot}/public/site.webmanifest"
+      ],
+      "cache": true
+    },
+    "dev": {
+      "executor": "nx:run-script",
+      "options": {
+        "script": "dev"
+      },
+      "inputs": [
+        { "env": "FLUX2_ROUTER_URL" },
+        { "env": "FLUX2_ROUTER_TOKEN" }
+      ],
+      "cache": false,
+      "persistent": true
+    },
+    "start": {
+      "executor": "nx:run-script",
+      "options": { "script": "start" }
+    },
+    "lint": {
+      "executor": "nx:run-script",
+      "options": {
+        "script": "lint"
+      },
+      "dependsOn": [
+        "audit",
+        "oxlint",
+        "typecheck"
+      ],
+      "cache": true
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx tsc --noEmit -p tsconfig.json",
+        "cwd": "apps/generative-ui"
+      },
+      "cache": true
+    },
+    "test-unit": {
+      "executor": "nx:run-script",
+      "options": {
+        "script": "test:run"
+      },
+      "cache": true
+    },
+    "test": {
+      "dependsOn": [
+        "test-unit"
+      ],
+      "cache": false
+    },
+    "audit": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npm audit --omit=dev && npm ci --dry-run",
+        "cwd": "apps/generative-ui"
+      },
+      "cache": true
+    },
+    "verify": {
+      "dependsOn": [
+        "audit",
+        "lint",
+        "build",
+        "test"
+      ],
+      "cache": false
+    },
+    "build-ui-face-value": {
+      "executor": "@nx-extend/vercel:build",
+      "options": {
+        "projectId": "prj_4cb8NT4UmsamehohRPUdomDHvPVV",
+        "orgId": "team_J6vdHfx7Bjz7VVskbtdbL8kq",
+        "framework": "nextjs",
+        "nodeVersion": "22.x",
+        "buildTarget": "generative-ui:build"
+      },
+      "inputs": [
+        "production",
+        "^production",
+        { "env": "FACE_VALUE_UI_VERCEL_TOKEN" },
+        { "env": "FACE_VALUE_UI_VERCEL_PROJECT_ID" },
+        { "env": "FACE_VALUE_UI_VERCEL_ORG_ID" },
+        { "env": "FLUX2_ROUTER_URL" },
+        { "env": "FLUX2_ROUTER_TOKEN" }
+      ],
+      "outputs": ["{projectRoot}/.vercel/output"],
+      "cache": true
+    },
+    "deploy-ui-face-value": {
+      "executor": "@nx-extend/vercel:deploy",
+      "options": {
+        "deployment": "production"
+      },
+      "dependsOn": ["build-ui-face-value", "worker-router:deploy-router-flux2", "worker-router:deploy-router-krea2"],
+      "inputs": [
+        "production",
+        "^production",
+        { "env": "FACE_VALUE_UI_VERCEL_TOKEN" },
+        { "env": "FACE_VALUE_UI_VERCEL_PROJECT_ID" },
+        { "env": "FACE_VALUE_UI_VERCEL_ORG_ID" },
+        { "env": "FLUX2_ROUTER_URL" },
+        { "env": "FLUX2_ROUTER_TOKEN" }
+      ],
+      "cache": false
+    },
+    "ui-face-value": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": ": \"${FACE_VALUE_UI_VERCEL_TOKEN:?missing}\" && NX_DAEMON=false VERCEL_TOKEN=\"$FACE_VALUE_UI_VERCEL_TOKEN\" nx run generative-ui:deploy-ui-face-value",
+        "cwd": "."
+      },
+      "inputs": [
+        "production",
+        "^production",
+        { "env": "FACE_VALUE_UI_VERCEL_TOKEN" },
+        { "env": "FACE_VALUE_UI_VERCEL_PROJECT_ID" },
+        { "env": "FACE_VALUE_UI_VERCEL_ORG_ID" }
+      ],
+      "cache": false
+    }
+  }
+}
