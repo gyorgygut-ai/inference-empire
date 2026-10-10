@@ -7,14 +7,44 @@
   "tags": ["type:app", "scope:service"],
   "targets": {
     "build": {
+      "dependsOn": ["enforce-env", "gen-types-flux2", "gen-types-krea2"],
       "inputs": ["default", "production", "^production"],
       "executor": "nx:run-script",
       "options": { "script": "build", "outputPath": "dist/apps/router" },
       "outputs": ["{projectRoot}/dist"],
       "cache": true
     },
+    "enforce-env": {
+      "executor": "@inference/nx-enforce-env-variables:enforce",
+      "options": {
+        "schema": "{projectRoot}/env.schema.ts"
+      },
+      "cache": false
+    },
+    "gen-types-flux2": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx nx generate @inference/nx-codegen-json-schema-to-ts:json-to-ts --inference=packages/contracts/flux2/inference.json --api=packages/contracts/api-task-queue.json --output=apps/router/generated/router-flux2_contract.ts --no-interactive"
+      },
+      "inputs": ["{workspaceRoot}/packages/contracts/flux2/inference.json", "{workspaceRoot}/packages/contracts/api-task-queue.json"],
+      "outputs": ["{projectRoot}/generated/router-flux2_contract.ts"],
+      "cache": true
+    },
+    "gen-types-krea2": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx nx generate @inference/nx-codegen-json-schema-to-ts:json-to-ts --inference=packages/contracts/krea2/inference.json --api=packages/contracts/api-task-queue.json --output=apps/router/generated/router-krea2_contract.ts --no-interactive"
+      },
+      "inputs": ["{workspaceRoot}/packages/contracts/krea2/inference.json", "{workspaceRoot}/packages/contracts/api-task-queue.json"],
+      "outputs": ["{projectRoot}/generated/router-krea2_contract.ts"],
+      "cache": true
+    },
     "test": {
       "dependsOn": ["test-unit", "test-e2e"],
+      "cache": false
+    },
+    "verify": {
+      "dependsOn": ["audit", "lint", "build", "test"],
       "cache": false
     },
     "test-unit": {

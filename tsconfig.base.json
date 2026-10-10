@@ -13,8 +13,11 @@
       "@inference/workspace-plugin": [
         "./tools/workspace-plugin/src/index.ts"
       ],
-      "@inference/worker-router-client": [
-        "./packages/worker-router-client/src/index.ts"
+      "@inference/task-queue-client": [
+        "./packages/task-queue-client/src/index.ts"
+      ],
+      "@inference/nx-generate-auth-token": [
+        "tools/nx-generate-auth-token/src/index.ts"
       ]
     }
   }

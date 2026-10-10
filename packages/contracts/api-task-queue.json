@@ -1,0 +1,45 @@
+{
+  "title": "ApiTaskQueue",
+  "description": "Generic router interface. Implemented on top of any {worker}/inference.json. Input/Output are composed at typegen.",
+  "endpoints": {
+    "submit": "POST /q",
+    "poll": "GET /sup?id="
+  },
+  "inferRequest": {
+    "title": "InferRequest",
+    "type": "object",
+    "required": ["input"],
+    "properties": {
+      "input": {
+        "type": "object",
+        "description": "$ref:{worker}/inference.json#/input"
+      }
+    }
+  },
+  "inferResponse": {
+    "title": "InferResponse",
+    "type": "object",
+    "required": ["task_id"],
+    "properties": {
+      "task_id": {
+        "type": "string",
+        "description": "Opaque. base64(provider:originalTaskId)"
+      }
+    }
+  },
+  "inquireResponse": {
+    "title": "InquireResponse",
+    "type": "object",
+    "required": ["status"],
+    "properties": {
+      "status": {
+        "type": "string",
+        "enum": ["PENDING", "PROCESSING", "COMPLETED", "FAILED", "CANCELLED"]
+      },
+      "output": {
+        "type": "object",
+        "description": "$ref:{worker}/inference.json#/output. Present only when status==COMPLETED."
+      }
+    }
+  }
+}

@@ -11,7 +11,8 @@
       "{workspaceRoot}/package.json"
     ],
     "contracts": [
-      "{workspaceRoot}/packages/contracts/*/contract.json"
+      "{workspaceRoot}/packages/contracts/*/inference.json",
+      "{workspaceRoot}/packages/contracts/api-task-queue.json"
     ],
     "production": [
       "default",

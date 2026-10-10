@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/schema",
+  "version": 2,
+  "title": "Enforce executor",
+  "description": "Validate process env against the app zod env schema; fail closed on the first invalid key.",
+  "type": "object",
+  "properties": {
+    "schema": {
+      "type": "string",
+      "description": "Schema file path, e.g. {projectRoot}/env.schema.ts. Must export envSchema."
+    }
+  },
+  "required": ["schema"],
+  "additionalProperties": false
+}

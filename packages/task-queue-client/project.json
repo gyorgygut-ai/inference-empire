@@ -1,0 +1,26 @@
+{
+  "name": "task-queue-client",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/task-queue-client/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/task-queue-client",
+        "main": "packages/task-queue-client/src/index.ts",
+        "tsConfig": "packages/task-queue-client/tsconfig.lib.json",
+        "assets": [
+          "packages/task-queue-client/*.md"
+        ]
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

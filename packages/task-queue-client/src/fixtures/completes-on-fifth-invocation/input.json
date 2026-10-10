@@ -1,0 +1,14 @@
+{
+  "baseUrl": "https://router.test/",
+  "token": "test-token",
+  "input": { "prompt": "a cat wearing a hat" },
+  "pollIntervalMs": 0,
+  "timeoutMs": 1000,
+  "responses": [
+    { "status": 200, "body": { "task_id": "bW9kYWw6YWJj" } },
+    { "status": 200, "body": { "status": "PROCESSING" } },
+    { "status": 200, "body": { "status": "PROCESSING" } },
+    { "status": 200, "body": { "status": "PROCESSING" } },
+    { "status": 200, "body": { "status": "COMPLETED", "output": { "url": "https://cdn.example/x.png" } } }
+  ]
+}

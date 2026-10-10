@@ -1,0 +1,7 @@
+{
+  "output": { "url": "https://cdn.example/x.png" },
+  "requests": [
+    "https://router.test/q",
+    "https://router.test/sup?id=bW9kYWw6YWJj"
+  ]
+}

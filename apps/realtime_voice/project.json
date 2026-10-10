@@ -13,18 +13,33 @@
       },
       "cache": true
     },
+    "dev": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "modal serve worker_modal_cls_realtime_voice_qwen.py",
+        "cwd": "apps/realtime_voice"
+      },
+      "outputs": ["{projectRoot}/dist/dev-endpoint.json"],
+      "cache": false,
+      "persistent": true
+    },
+    "deploy": {
+      "dependsOn": ["deploy-modal", "deploy-beam", "deploy-flash"],
+      "outputs": ["{projectRoot}/dist/deploy-endpoints.json"],
+      "cache": false
+    },
     "deploy-modal": {
-      "executor": "@inference/workspace-plugin:deploy-modal",
+      "executor": "@inference/deploy-worker:deploy-modal",
       "cache": false,
       "options": { "worker": "worker_modal_cls_realtime_voice_qwen.py" }
     },
     "deploy-beam": {
-      "executor": "@inference/workspace-plugin:deploy-beam",
+      "executor": "@inference/deploy-worker:deploy-beam",
       "cache": false,
       "options": { "worker": "worker_beam_asgi_realtime_voice_qwen.py", "name": "realtime-voice-qwen-worker", "entrypoint": "worker" }
     },
     "deploy-flash": {
-      "executor": "@inference/workspace-plugin:deploy-flash",
+      "executor": "@inference/deploy-worker:deploy-flash",
       "cache": false,
       "options": { "worker": "worker_flash_cls_realtime_voice_qwen.py" }
     }

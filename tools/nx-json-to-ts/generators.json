@@ -1,9 +1,0 @@
-{
-  "generators": {
-    "json-to-ts": {
-      "factory": "./src/generators/json-to-ts/json-to-ts",
-      "schema": "./src/generators/json-to-ts/schema.json",
-      "description": "Generate generated/types.ts from a contract json schema"
-    }
-  }
-}

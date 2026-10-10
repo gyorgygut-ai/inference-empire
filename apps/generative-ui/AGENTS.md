@@ -1,17 +1,10 @@
-# Generative UI Agent Specs
+# Generative UI
 
-**Project goal**:
 NextJS app for chat + inference requests.
-
-## NextJS non-negotiables
-
-- **Server Components**: static shell, outcome prompts server-only. [Server and Client Components](https://nextjs.org/docs/app/getting-started/server-and-client-components)
-- **Server Actions**: reference image submit + Flux call, no API routes. [Server Actions and Mutations](https://nextjs.org/docs/app/building-your-application/data-fetching/server-actions-and-mutations)
-- **React Compiler**: no manual memoization. [React Compiler](https://react.dev/learn/react-compiler)
 
 ---
 
-## UI Flow (Flow-agnostic shell)
+## UI Shell
 
 **Layout**:
 
@@ -27,7 +20,7 @@ NextJS app for chat + inference requests.
 - `./chat/options.ts`: chat ui `options`
 - `./chat/components/`: chat ui `components`
 
-- `./chat/adapters/`: an `adapter` per file
+
 - `./chat/options/`: a `chatOption` per file
 - `./chat/messages/`: a `message factory` per file
 
@@ -49,28 +42,35 @@ NextJS app for chat + inference requests.
 
 ---
 
-## UI Flow (Face Value)
+## Target: Face Value
 
 Progressive chat thread, with NO LLM: tool result triggres next tool call.
 
+- **Targets**: multiple, matching naming pattern `router-{worker}`
+- **Depends on**: `{worker}:dev` + `{worker}:deploy`
+- **Generated TS**: types from `inference` plus `api-task-queue` schemas; `generated/face-value_contract.ts`
+
+**Environment**:
+
+- `ROUTER_FLUX2_APP_URL` resolved on `dev` + `deploy`
+- `ROUTER_FLUX2_SECRET_AUTH_TOKEN`: re-generated on `build`
+
 **Vocabulary**:
 
-- `./targets/face-value/vocabulary/`: `en` (default) + `hu`
+- `./targets/face-value/vocabulary/`: `en` (default)
 
 **Outcomes**:
 
 - `./targets/face-value/outcomes/`: one `.md` per outcome
-- fm: (`id`, `title`, `order`, `width`, `height`);
+- frontmatter: (`id`, `title`, `order`, `width`, `height`);
 - prompt: markdown body, can never be exposed to browser
 
 **Inference Requests**:
 
-- Url: `GENERATE_IMAGE_SERVICE_URL` from env
-- Auth: `GENERATE_IMAGE_SERVICE_SECRET_AUTH_TOKEN` from env
-- Client: use `packages/worker-router-client` to send requests
-- Action: `./app/actions/generate-image`, returning `error` OR `presignedUrl`
-- Contract: `packages/contracts/{worker name}/contract.json`
-- `generated/types.ts`: generated from `contract` json schema
+- Url: `ROUTER_FLUX2_APP_URL` from env
+- Auth: `ROUTER_FLUX2_SECRET_AUTH_TOKEN` from env
+- Client: use `packages/task-queue-client` (`POST /q`, `GET /sup`) to send requests
+- Action: `./app/actions/generate-image`; returns `error` OR `presignedUrl`
 - Reference image validated and resized to max. 512×512 on server
 
 **1. Request Selected Outcome**:

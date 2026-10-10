@@ -3,7 +3,7 @@ import type { Env } from '../src/index'
 
 function resolveEnv(): Env {
   return {
-    AUTH_TOKEN: process.env.AUTH_TOKEN ?? '',
+    SECRET_AUTH_TOKEN: process.env.SECRET_AUTH_TOKEN ?? '',
     ROUTER_FAMILY: process.env.ROUTER_FAMILY ?? '',
     BEAM_URL: process.env.BEAM_URL ?? '',
     BEAM_TASK_API: process.env.BEAM_TASK_API ?? '',

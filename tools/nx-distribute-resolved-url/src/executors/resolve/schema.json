@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/schema",
+  "version": 2,
+  "title": "Resolve executor",
+  "description": "Resolve APP_URL from the environment and mint a fresh SECRET_AUTH_TOKEN into a dotenv producer artifact. Overwrites on every run.",
+  "type": "object",
+  "properties": {
+    "output": {
+      "type": "string",
+      "description": "Workspace-relative dotenv artifact path, e.g. {projectRoot}/dist/router-flux2/dev.env"
+    }
+  },
+  "required": ["output"],
+  "additionalProperties": false
+}

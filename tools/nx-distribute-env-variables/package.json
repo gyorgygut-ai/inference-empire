@@ -1,0 +1,10 @@
+{
+  "name": "@inference/nx-distribute-env-variables",
+  "version": "0.0.1",
+  "private": true,
+  "type": "commonjs",
+  "dependencies": {
+    "@nx/devkit": "23.2.1"
+  },
+  "executors": "./executors.json"
+}

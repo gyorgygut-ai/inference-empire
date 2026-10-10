@@ -2,14 +2,56 @@
   "$schema": "../../tools/nx-orchestrate-configurations/src/schema.json",
   "targets": [
     {
-      "name": "router-flux2",
-      "dependsOn": ["flux2:dev", "flux2:deploy"],
-      "contract": "packages/contracts/flux2/contract.json"
+      "name": "router-flux2:dev",
+      "base": "build",
+      "executor": "@inference/nx-distribute-resolved-url:resolve",
+      "options": {
+        "output": "{projectRoot}/dist/router-flux2/dev.env"
+      },
+      "dependsOn": ["worker-flux2:dev", "router:gen-types-flux2"],
+      "contract": "packages/contracts/flux2/inference.json",
+      "inputs": ["{projectRoot}/dist/router-flux2/dev.env", "{workspaceRoot}/packages/contracts/api-task-queue.json"],
+      "outputs": ["{projectRoot}/dist/router-flux2/dev.env"],
+      "cache": false
     },
     {
-      "name": "router-krea2",
-      "dependsOn": ["krea2:dev", "krea2:deploy"],
-      "contract": "packages/contracts/krea2/contract.json"
+      "name": "router-flux2:deploy",
+      "base": "build",
+      "executor": "@inference/nx-distribute-resolved-url:resolve",
+      "options": {
+        "output": "{projectRoot}/dist/router-flux2/deploy.env"
+      },
+      "dependsOn": ["worker-flux2:deploy", "router:gen-types-flux2"],
+      "contract": "packages/contracts/flux2/inference.json",
+      "inputs": ["{projectRoot}/dist/router-flux2/deploy.env", "{workspaceRoot}/packages/contracts/api-task-queue.json"],
+      "outputs": ["{projectRoot}/dist/router-flux2/deploy.env"],
+      "cache": false
+    },
+    {
+      "name": "router-krea2:dev",
+      "base": "build",
+      "executor": "@inference/nx-distribute-resolved-url:resolve",
+      "options": {
+        "output": "{projectRoot}/dist/router-krea2/dev.env"
+      },
+      "dependsOn": ["worker-krea2:dev", "router:gen-types-krea2"],
+      "contract": "packages/contracts/krea2/inference.json",
+      "inputs": ["{projectRoot}/dist/router-krea2/dev.env", "{workspaceRoot}/packages/contracts/api-task-queue.json"],
+      "outputs": ["{projectRoot}/dist/router-krea2/dev.env"],
+      "cache": false
+    },
+    {
+      "name": "router-krea2:deploy",
+      "base": "build",
+      "executor": "@inference/nx-distribute-resolved-url:resolve",
+      "options": {
+        "output": "{projectRoot}/dist/router-krea2/deploy.env"
+      },
+      "dependsOn": ["worker-krea2:deploy", "router:gen-types-krea2"],
+      "contract": "packages/contracts/krea2/inference.json",
+      "inputs": ["{projectRoot}/dist/router-krea2/deploy.env", "{workspaceRoot}/packages/contracts/api-task-queue.json"],
+      "outputs": ["{projectRoot}/dist/router-krea2/deploy.env"],
+      "cache": false
     }
   ]
 }

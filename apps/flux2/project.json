@@ -1,22 +1,37 @@
 {
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
-  "name": "flux2",
+  "name": "worker-flux2",
   "projectType": "application",
   "sourceRoot": "apps/flux2",
   "tags": ["type:app", "scope:gpu-worker", "model:flux2"],
   "targets": {
+    "dev": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "modal serve worker_modal_cls_flux2_klein9b.py",
+        "cwd": "apps/flux2"
+      },
+      "outputs": ["{projectRoot}/dist/dev-endpoint.json"],
+      "cache": false,
+      "persistent": true
+    },
+    "deploy": {
+      "dependsOn": ["deploy-modal", "deploy-beam", "deploy-flash"],
+      "outputs": ["{projectRoot}/dist/deploy-endpoints.json"],
+      "cache": false
+    },
     "deploy-modal": {
-      "executor": "@inference/workspace-plugin:deploy-modal",
+      "executor": "@inference/deploy-worker:deploy-modal",
       "cache": false,
       "options": { "worker": "worker_modal_cls_flux2_klein9b.py" }
     },
     "deploy-beam": {
-      "executor": "@inference/workspace-plugin:deploy-beam",
+      "executor": "@inference/deploy-worker:deploy-beam",
       "cache": false,
       "options": { "worker": "worker_beam_tq_flux2_klein9b.py", "name": "flux2-klein9b", "entrypoint": "dispatch" }
     },
     "deploy-flash": {
-      "executor": "@inference/workspace-plugin:deploy-flash",
+      "executor": "@inference/deploy-worker:deploy-flash",
       "cache": false,
       "options": { "worker": "worker_flash_cls_flux2_klein9b.py" }
     }

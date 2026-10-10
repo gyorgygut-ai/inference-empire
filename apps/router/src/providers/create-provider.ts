@@ -2,12 +2,11 @@ import { beamProvider } from './provider-beam'
 import { flashProvider } from './provider-flash'
 
 export const enum Status {
-  PENDING = 'pending',
-  PROCESSING = 'processing',
-  COMPLETED = 'completed',
-  FAILED = 'failed',
-  CANCELLED = 'cancelled',
-  REJECTED = 'rejected'
+  PENDING = 'PENDING',
+  PROCESSING = 'PROCESSING',
+  COMPLETED = 'COMPLETED',
+  FAILED = 'FAILED',
+  CANCELLED = 'CANCELLED'
 }
 
 export interface BeamConfig {

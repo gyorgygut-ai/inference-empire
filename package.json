@@ -4,7 +4,7 @@
   "private": true,
   "workspaces": [
     "apps/*",
-    "packages/worker-router-client",
+    "packages/task-queue-client",
     "tools/*"
   ],
   "scripts": {

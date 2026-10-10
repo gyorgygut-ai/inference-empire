@@ -3,6 +3,7 @@ import { type Env } from './index'
 import createProvider, { isProviderName, type ProviderConfigs, type ProviderName } from './providers/create-provider'
 import { pickTaskHandler } from './pick-task-handler'
 import { decodeTaskId, encodeTaskId } from './task-id'
+import type { InferRequest, InferResponse, InquireResponse } from '../generated/router-flux2_contract'
 
 export const router = Router()
 
@@ -14,7 +15,7 @@ router.all('*', async (request: Request, env: Env) => {
       headers: { 'Content-Type': 'application/json' }
     })
   }
-  if (authHeader.substring(7) !== env.AUTH_TOKEN) {
+  if (authHeader.substring(7) !== env.SECRET_AUTH_TOKEN) {
     return new Response(JSON.stringify({ error: 'Invalid token' }), {
       status: 401,
       headers: { 'Content-Type': 'application/json' }
@@ -22,17 +23,18 @@ router.all('*', async (request: Request, env: Env) => {
   }
 })
 
-router.post('/infer', async (request: Request, env: Env) => {
-  const body = await request.json() as { input: Record<string, unknown> }
+router.post('/q', async (request: Request, env: Env) => {
+  const body = await request.json() as InferRequest
   const name = pickTaskHandler()
   const provider = createProvider(name)
   const { task_id } = await provider.pushToTaskQueue(body.input, resolveConfig(name, env))
-  return new Response(JSON.stringify({ task_id: encodeTaskId(name, task_id) }), {
+  const response: InferResponse = { task_id: encodeTaskId(name, task_id) }
+  return new Response(JSON.stringify(response), {
     headers: { 'Content-Type': 'application/json' }
   })
 })
 
-router.get('/inquire', async (request: Request, env: Env) => {
+router.get('/sup', async (request: Request, env: Env) => {
   const id = new URL(request.url).searchParams.get('id')
   if (!id) {
     return new Response(JSON.stringify({ error: 'Missing id' }), {
@@ -49,9 +51,9 @@ router.get('/inquire', async (request: Request, env: Env) => {
   }
   const provider = createProvider(name)
   const result = await provider.fetchTaskStatus(originalTaskId, resolveConfig(name, env))
-  const response: { status: string; output?: unknown } = { status: result.status }
-  if (result.status === 'completed') {
-    response.output = result.output
+  const response: InquireResponse = { status: result.status as InquireResponse['status'] }
+  if (result.status === 'COMPLETED') {
+    response.output = result.output as InquireResponse['output']
   }
   console.log('request', request)
   console.log('response', response)

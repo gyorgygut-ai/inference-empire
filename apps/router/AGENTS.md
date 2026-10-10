@@ -1,42 +1,23 @@
 # Router App
 
-Stateless router routing across worker implementations of a defined contract.
+Stateless router routing across worker implementations of a contract.
 
-**Whitelabel**:
+- **Targets**: multiple, matching naming pattern `router-{worker}`
+- **Depends on**: `{worker}:dev` + `{worker}:deploy`
+- **Generated TS**: types from `inference` plus `api-task-queue` schemas; `generated/router-{worker}_contract.ts`
 
-- Targets: multiple, matching naming pattern `router-{worker name}`
-- Project Deps: `{worker name}`'s `dev` and `deploy` targets
+**Environment**:
 
-**Inputs**:
-
-- Contract: `packages/contracts/{worker name}/contract.json`
-
-**Generated on build**:
-
-- `{WORKER_NAME}_ROUTER_SECRET_AUTH_TOKEN`: env, for cross-project auth
-- `generated/types.ts`: generated from `contract` json schema
-
-**Output**:
-
-- `{WORKER_NAME}_ROUTER_URL`
-- `{WORKER_NAME}_ROUTER_SECRET_AUTH_TOKEN`
+- `APP_URL` resolved on `dev` + `deploy`
+- `SECRET_AUTH_TOKEN`: generates new token on `build`
 
 **Endpoints**:
 
-- Endpoints: `POST /infer`, `GET /inquire`
+- POST `/q`; auth against `SECRET_AUTH_TOKEN`
+- GET `/sup`; auth against `SECRET_AUTH_TOKEN`
 
-<!--- Provider dispatch: read URLs from environment (`BEAM_URL`, `BEAM_TASK_API`, `FLASH_URL`, `FLASH_ENDPOINT`); contracts carry input/output schemas only-->
+**Business Logic**:
 
-- Auth: auth header validated to match `{WORKER_NAME}_SECRET_AUTH_TOKEN`
-- Task ID: `base64("provider:originalTaskId")` — beam: task UUID from `.put()`, flash: endpoint call ID
-- Status enum: `PENDING | PROCESSING | COMPLETED | FAILED | CANCELLED`
-- v1 picks beam, but selection function is separate for future expansion
-- Code must be minimal, simple and stupid — no magic, no `any`, no ifs without `{}`, no semis
-
-### Workflow
-
-**Read before writing code**:
-
-- `task-id.ts` — encode/decode with `btoa`/`atob`
-- `pick-task-handler.ts` — v1 returns `'beam'`
-- `router.ts` — itty-router endpoints
+- Status: `PENDING | PROCESSING | COMPLETED | FAILED | CANCELLED`
+- Task ID: `base64("provider:originalTaskId")`; beam: task UUID`, flash: call ID
+- Pick hardcoded to `modal`; this is temporary; but other provider code paths maintained

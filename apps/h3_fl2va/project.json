@@ -1,17 +1,32 @@
 {
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
-  "name": "h3_fl2va",
+  "name": "worker-h3_fl2va",
   "projectType": "application",
   "sourceRoot": "apps/h3_fl2va",
   "tags": ["type:app", "scope:gpu-worker", "model:h3-fl2va"],
   "targets": {
+    "dev": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "modal serve worker_modal_cls_minimax_h3_fl2va.py",
+        "cwd": "apps/h3_fl2va"
+      },
+      "outputs": ["{projectRoot}/dist/dev-endpoint.json"],
+      "cache": false,
+      "persistent": true
+    },
+    "deploy": {
+      "dependsOn": ["deploy-modal", "deploy-beam"],
+      "outputs": ["{projectRoot}/dist/deploy-endpoints.json"],
+      "cache": false
+    },
     "deploy-modal": {
-      "executor": "@inference/workspace-plugin:deploy-modal",
+      "executor": "@inference/deploy-worker:deploy-modal",
       "cache": false,
       "options": { "worker": "worker_modal_cls_minimax_h3_fl2va.py" }
     },
     "deploy-beam": {
-      "executor": "@inference/workspace-plugin:deploy-beam",
+      "executor": "@inference/deploy-worker:deploy-beam",
       "cache": false,
       "options": { "worker": "worker_beam_tq_minimax_h3_fl2va.py", "name": "minimax-h3-fl2va", "entrypoint": "dispatch" }
     }

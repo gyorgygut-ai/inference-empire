@@ -1,8 +1,9 @@
 "use server"
 
 import sharp from "sharp"
-import { inferWithPolling } from "@inference/worker-router-client"
+import { inferWithPolling } from "@inference/task-queue-client"
 import { getInferenceOutcome } from "@/outcomes"
+import type { Flux2Klein9BInput, Flux2Klein9BOutput } from "@/generated/face-value_contract"
 
 const MAX_SIZE = 512
 const MAX_BYTES = 5 * 1024 * 1024
@@ -15,15 +16,9 @@ type GenerateImageInput = {
 
 type GenerateImageResult = { presignedUrl: string } | { error: string }
 
-type FluxOutput = {
-  artifact: {
-    presigned_url: string;
-  };
-}
-
 export async function generateImageAction(input: GenerateImageInput): Promise<GenerateImageResult> {
-  const baseUrl = process.env.GENERATE_IMAGE_SERVICE_URL ?? ""
-  const token = process.env.GENERATE_IMAGE_SERVICE_SECRET_AUTH_TOKEN ?? ""
+  const baseUrl = process.env.ROUTER_FLUX2_APP_URL ?? ""
+  const token = process.env.ROUTER_FLUX2_SECRET_AUTH_TOKEN ?? ""
   if (!baseUrl || !token) {
     return { error: "Server misconfigured" }
   }
@@ -51,13 +46,14 @@ export async function generateImageAction(input: GenerateImageInput): Promise<Ge
   }
 
   try {
-    const output = await inferWithPolling<FluxOutput>(
-      {
-        prompt: outcome.prompt,
-        width: outcome.width,
-        height: outcome.height,
-        input_image: resized.toString("base64"),
-      },
+    const request: Flux2Klein9BInput = {
+      prompt: outcome.prompt,
+      width: outcome.width,
+      height: outcome.height,
+      input_image: resized.toString("base64"),
+    }
+    const output = await inferWithPolling<Flux2Klein9BInput, Flux2Klein9BOutput>(
+      request,
       {
         baseUrl,
         token,
@@ -65,10 +61,11 @@ export async function generateImageAction(input: GenerateImageInput): Promise<Ge
         timeoutMs: 180000,
       },
     )
-    if (!output.artifact.presigned_url) {
+    const url = output.artifact?.presigned_url
+    if (!url) {
       return { error: "The server rejected this request." }
     }
-    return { presignedUrl: output.artifact.presigned_url }
+    return { presignedUrl: url }
   } catch (error) {
     return { error: error instanceof Error ? error.message : "The server rejected this request." }
   }

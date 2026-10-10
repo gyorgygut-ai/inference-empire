@@ -1,0 +1,9 @@
+{
+  "executors": {
+    "resolve": {
+      "implementation": "./src/executors/resolve/resolve",
+      "schema": "./src/executors/resolve/schema.json",
+      "description": "Resolve APP_URL into a dotenv producer artifact; SECRET_AUTH_TOKEN minted via @inference/nx-generate-auth-token:generate"
+    }
+  }
+}

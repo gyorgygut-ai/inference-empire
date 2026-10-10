@@ -1,0 +1,9 @@
+{
+  "executors": {
+    "enforce": {
+      "implementation": "./src/executors/enforce/enforce",
+      "schema": "./src/executors/enforce/schema.json",
+      "description": "Validate process env against the app zod env schema; fail closed"
+    }
+  }
+}

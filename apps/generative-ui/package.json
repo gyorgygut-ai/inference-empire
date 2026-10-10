@@ -16,7 +16,7 @@
     "test:run": "echo 'no tests'"
   },
   "dependencies": {
-    "@inference/worker-router-client": "*",
+    "@inference/task-queue-client": "*",
     "@tanstack/ai": "^0.68.0",
     "@tanstack/ai-react": "^0.30.3",
     "class-variance-authority": "^0.7.1",

@@ -4,7 +4,6 @@
   "projectType": "application",
   "sourceRoot": "apps/generative-ui",
   "tags": ["type:app", "scope:ui"],
-  "implicitDependencies": ["flux2", "router"],
   "targets": {
     "build": {
       "executor": "nx:run-script",
@@ -13,6 +12,7 @@
         "outputPath": "apps/generative-ui"
       },
       "dependsOn": [
+        "enforce-env",
         "build-manifest"
       ],
       "inputs": ["production", "^production"],
@@ -34,14 +34,31 @@
       ],
       "cache": true
     },
+    "enforce-env": {
+      "executor": "@inference/nx-enforce-env-variables:enforce",
+      "options": {
+        "schema": "{projectRoot}/env.schema.ts"
+      },
+      "cache": false
+    },
+    "gen-types-flux2": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx nx generate @inference/nx-codegen-json-schema-to-ts:json-to-ts --inference=packages/contracts/flux2/inference.json --api=packages/contracts/api-task-queue.json --output=apps/generative-ui/generated/face-value_contract.ts --no-interactive"
+      },
+      "inputs": ["{workspaceRoot}/packages/contracts/flux2/inference.json", "{workspaceRoot}/packages/contracts/api-task-queue.json"],
+      "outputs": ["{projectRoot}/generated/face-value_contract.ts"],
+      "cache": true
+    },
     "dev": {
       "executor": "nx:run-script",
+      "dependsOn": ["enforce-env", "face-value:dev"],
       "options": {
         "script": "dev"
       },
       "inputs": [
-        { "env": "GENERATE_IMAGE_SERVICE_URL" },
-        { "env": "GENERATE_IMAGE_SERVICE_SECRET_AUTH_TOKEN" }
+        { "env": "APP_URL" },
+        { "env": "SECRET_AUTH_TOKEN" }
       ],
       "cache": false,
       "persistent": true
@@ -100,8 +117,9 @@
       ],
       "cache": false
     },
-    "build-ui-face-value": {
+    "build-face-value": {
       "executor": "@nx-extend/vercel:build",
+      "dependsOn": ["face-value:deploy"],
       "options": {
         "projectId": "prj_4cb8NT4UmsamehohRPUdomDHvPVV",
         "orgId": "team_J6vdHfx7Bjz7VVskbtdbL8kq",
@@ -115,41 +133,26 @@
         { "env": "FACE_VALUE_UI_VERCEL_TOKEN" },
         { "env": "FACE_VALUE_UI_VERCEL_PROJECT_ID" },
         { "env": "FACE_VALUE_UI_VERCEL_ORG_ID" },
-        { "env": "GENERATE_IMAGE_SERVICE_URL" },
-        { "env": "GENERATE_IMAGE_SERVICE_SECRET_AUTH_TOKEN" }
+        { "env": "APP_URL" },
+        { "env": "SECRET_AUTH_TOKEN" }
       ],
       "outputs": ["{projectRoot}/.vercel/output"],
       "cache": true
     },
-    "deploy-ui-face-value": {
+    "deploy-face-value": {
       "executor": "@nx-extend/vercel:deploy",
       "options": {
         "deployment": "production"
       },
-      "dependsOn": ["build-ui-face-value", "worker-router:deploy-router-flux2", "worker-router:deploy-router-krea2"],
+      "dependsOn": ["build-face-value", "router:router-flux2:deploy"],
       "inputs": [
         "production",
         "^production",
         { "env": "FACE_VALUE_UI_VERCEL_TOKEN" },
         { "env": "FACE_VALUE_UI_VERCEL_PROJECT_ID" },
         { "env": "FACE_VALUE_UI_VERCEL_ORG_ID" },
-        { "env": "GENERATE_IMAGE_SERVICE_URL" },
-        { "env": "GENERATE_IMAGE_SERVICE_SECRET_AUTH_TOKEN" }
-      ],
-      "cache": false
-    },
-    "ui-face-value": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": ": \"${FACE_VALUE_UI_VERCEL_TOKEN:?missing}\" && NX_DAEMON=false VERCEL_TOKEN=\"$FACE_VALUE_UI_VERCEL_TOKEN\" nx run generative-ui:deploy-ui-face-value",
-        "cwd": "."
-      },
-      "inputs": [
-        "production",
-        "^production",
-        { "env": "FACE_VALUE_UI_VERCEL_TOKEN" },
-        { "env": "FACE_VALUE_UI_VERCEL_PROJECT_ID" },
-        { "env": "FACE_VALUE_UI_VERCEL_ORG_ID" }
+        { "env": "APP_URL" },
+        { "env": "SECRET_AUTH_TOKEN" }
       ],
       "cache": false
     }

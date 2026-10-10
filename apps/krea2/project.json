@@ -1,22 +1,37 @@
 {
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
-  "name": "krea2",
+  "name": "worker-krea2",
   "projectType": "application",
   "sourceRoot": "apps/krea2",
   "tags": ["type:app", "scope:gpu-worker", "model:krea2"],
   "targets": {
+    "dev": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "modal serve worker_modal_cls_krea2_ref2img.py",
+        "cwd": "apps/krea2"
+      },
+      "outputs": ["{projectRoot}/dist/dev-endpoint.json"],
+      "cache": false,
+      "persistent": true
+    },
+    "deploy": {
+      "dependsOn": ["deploy-modal", "deploy-beam", "deploy-flash"],
+      "outputs": ["{projectRoot}/dist/deploy-endpoints.json"],
+      "cache": false
+    },
     "deploy-modal": {
-      "executor": "@inference/workspace-plugin:deploy-modal",
+      "executor": "@inference/deploy-worker:deploy-modal",
       "cache": false,
       "options": { "worker": "worker_modal_cls_krea2_ref2img.py" }
     },
     "deploy-beam": {
-      "executor": "@inference/workspace-plugin:deploy-beam",
+      "executor": "@inference/deploy-worker:deploy-beam",
       "cache": false,
       "options": { "worker": "worker_beam_tq_krea2_ref2img.py", "name": "krea2-ref2img", "entrypoint": "dispatch" }
     },
     "deploy-flash": {
-      "executor": "@inference/workspace-plugin:deploy-flash",
+      "executor": "@inference/deploy-worker:deploy-flash",
       "cache": false,
       "options": { "worker": "worker_flash_cls_krea2_ref2img.py" }
     }

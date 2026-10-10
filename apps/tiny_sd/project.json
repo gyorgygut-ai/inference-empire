@@ -1,22 +1,37 @@
 {
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
-  "name": "tiny_sd",
+  "name": "worker-tiny_sd",
   "projectType": "application",
   "sourceRoot": "apps/tiny_sd",
   "tags": ["type:app", "scope:gpu-worker", "model:tiny-sd"],
   "targets": {
+    "dev": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "modal serve worker_modal_cls_tiny_sd.py",
+        "cwd": "apps/tiny_sd"
+      },
+      "outputs": ["{projectRoot}/dist/dev-endpoint.json"],
+      "cache": false,
+      "persistent": true
+    },
+    "deploy": {
+      "dependsOn": ["deploy-modal", "deploy-beam", "deploy-flash"],
+      "outputs": ["{projectRoot}/dist/deploy-endpoints.json"],
+      "cache": false
+    },
     "deploy-modal": {
-      "executor": "@inference/workspace-plugin:deploy-modal",
+      "executor": "@inference/deploy-worker:deploy-modal",
       "cache": false,
       "options": { "worker": "worker_modal_cls_tiny_sd.py" }
     },
     "deploy-beam": {
-      "executor": "@inference/workspace-plugin:deploy-beam",
+      "executor": "@inference/deploy-worker:deploy-beam",
       "cache": false,
       "options": { "worker": "worker_beam_tq_tiny_sd.py", "name": "tiny-sd-worker", "entrypoint": "dispatch" }
     },
     "deploy-flash": {
-      "executor": "@inference/workspace-plugin:deploy-flash",
+      "executor": "@inference/deploy-worker:deploy-flash",
       "cache": false,
       "options": { "worker": "worker_flash_cls_tiny_sd.py" }
     }

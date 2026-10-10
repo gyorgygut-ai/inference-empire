@@ -1,0 +1,19 @@
+{
+  "executors": {
+    "deploy-modal": {
+      "implementation": "./src/executors/deploy-modal/deploy-modal",
+      "schema": "./src/executors/deploy-modal/schema.json",
+      "description": "Deploy a Modal worker app via the modal CLI"
+    },
+    "deploy-beam": {
+      "implementation": "./src/executors/deploy-beam/deploy-beam",
+      "schema": "./src/executors/deploy-beam/schema.json",
+      "description": "Deploy a Beam worker via the beam CLI"
+    },
+    "deploy-flash": {
+      "implementation": "./src/executors/deploy-flash/deploy-flash",
+      "schema": "./src/executors/deploy-flash/schema.json",
+      "description": "Deploy a Flash worker via the flash CLI"
+    }
+  }
+}
