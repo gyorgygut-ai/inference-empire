@@ -3,10 +3,22 @@
   "name": "vision",
   "projectType": "application",
   "sourceRoot": "apps/vision",
-  "tags": [
-    "type:app",
-    "scope:gpu-worker",
-    "model:vision"
-  ],
-  "targets": {}
+  "tags": ["type:app", "scope:gpu-worker", "model:vision"],
+  "targets": {
+    "deploy-modal": {
+      "executor": "@inference/workspace-plugin:deploy-modal",
+      "cache": false,
+      "options": { "worker": "worker_modal_cls_small_vision.py" }
+    },
+    "deploy-beam": {
+      "executor": "@inference/workspace-plugin:deploy-beam",
+      "cache": false,
+      "options": { "worker": "worker_beam_tq_small_vision.py", "name": "small-vision", "entrypoint": "dispatch" }
+    },
+    "deploy-flash": {
+      "executor": "@inference/workspace-plugin:deploy-flash",
+      "cache": false,
+      "options": { "worker": "worker_flash_cls_small_vision.py" }
+    }
+  }
 }

@@ -14,25 +14,19 @@
       "cache": true
     },
     "deploy-modal": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "npx nx run realtime-voice:build",
-        "cwd": "."
-      }
+      "executor": "@inference/workspace-plugin:deploy-modal",
+      "cache": false,
+      "options": { "worker": "worker_modal_cls_realtime_voice_qwen.py" }
     },
     "deploy-beam": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "npx nx run realtime-voice:build",
-        "cwd": "."
-      }
+      "executor": "@inference/workspace-plugin:deploy-beam",
+      "cache": false,
+      "options": { "worker": "worker_beam_asgi_realtime_voice_qwen.py", "name": "realtime-voice-qwen-worker", "entrypoint": "worker" }
     },
     "deploy-flash": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "npx nx run realtime-voice:build",
-        "cwd": "."
-      }
+      "executor": "@inference/workspace-plugin:deploy-flash",
+      "cache": false,
+      "options": { "worker": "worker_flash_cls_realtime_voice_qwen.py" }
     }
   }
 }

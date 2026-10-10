@@ -3,10 +3,17 @@
   "name": "h3_comfy",
   "projectType": "application",
   "sourceRoot": "apps/h3_comfy",
-  "tags": [
-    "type:app",
-    "scope:gpu-worker",
-    "model:h3-comfy"
-  ],
-  "targets": {}
+  "tags": ["type:app", "scope:gpu-worker", "model:h3-comfy"],
+  "targets": {
+    "deploy-modal": {
+      "executor": "@inference/workspace-plugin:deploy-modal",
+      "cache": false,
+      "options": { "worker": "worker_modal_cls_minimax_h3_comfy.py" }
+    },
+    "deploy-beam": {
+      "executor": "@inference/workspace-plugin:deploy-beam",
+      "cache": false,
+      "options": { "worker": "worker_beam_tq_minimax_h3_comfy.py", "name": "minimax-h3-comfy", "entrypoint": "dispatch" }
+    }
+  }
 }

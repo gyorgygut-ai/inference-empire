@@ -3,10 +3,22 @@
   "name": "flux2",
   "projectType": "application",
   "sourceRoot": "apps/flux2",
-  "tags": [
-    "type:app",
-    "scope:gpu-worker",
-    "model:flux2"
-  ],
-  "targets": {}
+  "tags": ["type:app", "scope:gpu-worker", "model:flux2"],
+  "targets": {
+    "deploy-modal": {
+      "executor": "@inference/workspace-plugin:deploy-modal",
+      "cache": false,
+      "options": { "worker": "worker_modal_cls_flux2_klein9b.py" }
+    },
+    "deploy-beam": {
+      "executor": "@inference/workspace-plugin:deploy-beam",
+      "cache": false,
+      "options": { "worker": "worker_beam_tq_flux2_klein9b.py", "name": "flux2-klein9b", "entrypoint": "dispatch" }
+    },
+    "deploy-flash": {
+      "executor": "@inference/workspace-plugin:deploy-flash",
+      "cache": false,
+      "options": { "worker": "worker_flash_cls_flux2_klein9b.py" }
+    }
+  }
 }

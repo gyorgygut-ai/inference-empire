@@ -3,10 +3,22 @@
   "name": "krea2",
   "projectType": "application",
   "sourceRoot": "apps/krea2",
-  "tags": [
-    "type:app",
-    "scope:gpu-worker",
-    "model:krea2"
-  ],
-  "targets": {}
+  "tags": ["type:app", "scope:gpu-worker", "model:krea2"],
+  "targets": {
+    "deploy-modal": {
+      "executor": "@inference/workspace-plugin:deploy-modal",
+      "cache": false,
+      "options": { "worker": "worker_modal_cls_krea2_ref2img.py" }
+    },
+    "deploy-beam": {
+      "executor": "@inference/workspace-plugin:deploy-beam",
+      "cache": false,
+      "options": { "worker": "worker_beam_tq_krea2_ref2img.py", "name": "krea2-ref2img", "entrypoint": "dispatch" }
+    },
+    "deploy-flash": {
+      "executor": "@inference/workspace-plugin:deploy-flash",
+      "cache": false,
+      "options": { "worker": "worker_flash_cls_krea2_ref2img.py" }
+    }
+  }
 }

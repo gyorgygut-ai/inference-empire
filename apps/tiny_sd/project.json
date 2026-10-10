@@ -3,10 +3,22 @@
   "name": "tiny_sd",
   "projectType": "application",
   "sourceRoot": "apps/tiny_sd",
-  "tags": [
-    "type:app",
-    "scope:gpu-worker",
-    "model:tiny-sd"
-  ],
-  "targets": {}
+  "tags": ["type:app", "scope:gpu-worker", "model:tiny-sd"],
+  "targets": {
+    "deploy-modal": {
+      "executor": "@inference/workspace-plugin:deploy-modal",
+      "cache": false,
+      "options": { "worker": "worker_modal_cls_tiny_sd.py" }
+    },
+    "deploy-beam": {
+      "executor": "@inference/workspace-plugin:deploy-beam",
+      "cache": false,
+      "options": { "worker": "worker_beam_tq_tiny_sd.py", "name": "tiny-sd-worker", "entrypoint": "dispatch" }
+    },
+    "deploy-flash": {
+      "executor": "@inference/workspace-plugin:deploy-flash",
+      "cache": false,
+      "options": { "worker": "worker_flash_cls_tiny_sd.py" }
+    }
+  }
 }

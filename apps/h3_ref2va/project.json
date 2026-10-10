@@ -3,10 +3,17 @@
   "name": "h3_ref2va",
   "projectType": "application",
   "sourceRoot": "apps/h3_ref2va",
-  "tags": [
-    "type:app",
-    "scope:gpu-worker",
-    "model:h3-ref2va"
-  ],
-  "targets": {}
+  "tags": ["type:app", "scope:gpu-worker", "model:h3-ref2va"],
+  "targets": {
+    "deploy-modal": {
+      "executor": "@inference/workspace-plugin:deploy-modal",
+      "cache": false,
+      "options": { "worker": "worker_modal_cls_minimax_h3_ref2va.py" }
+    },
+    "deploy-beam": {
+      "executor": "@inference/workspace-plugin:deploy-beam",
+      "cache": false,
+      "options": { "worker": "worker_beam_tq_minimax_h3_ref2va.py", "name": "minimax-h3-ref2va", "entrypoint": "dispatch" }
+    }
+  }
 }
