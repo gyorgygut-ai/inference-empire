@@ -69,7 +69,8 @@ Progressive chat thread, with NO LLM: tool result triggres next tool call.
 - Auth: `GENERATE_IMAGE_SERVICE_SECRET_AUTH_TOKEN` from env
 - Client: use `packages/worker-router-client` to send requests
 - Action: `./app/actions/generate-image`, returning `error` OR `presignedUrl`
-- Types: TS api types auto-generated (TO BE DISCUSSED)
+- Contract: `packages/contracts/{worker name}/contract.json`
+- `generated/types.ts`: generated from `contract` json schema
 - Reference image validated and resized to max. 512×512 on server
 
 **1. Request Selected Outcome**:

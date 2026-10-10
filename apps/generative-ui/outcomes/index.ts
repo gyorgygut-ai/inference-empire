@@ -29,12 +29,12 @@ const outcomeCache = new Map<string, Outcome>(
     .map((file) => {
       const { data, content } = matter(fs.readFileSync(path.join(outcomesDir, file), "utf-8"))
       const outcome: Outcome = {
-        id: data.id as string,
-        title: data.title as string,
-        order: data.order as number,
+        id: typeof data.id === 'string' ? data.id : '',
+        title: typeof data.title === 'string' ? data.title : '',
+        order: typeof data.order === 'number' ? data.order : 0,
         prompt: content.trim(),
-        height: data.height as number,
-        width: data.width as number,
+        height: typeof data.height === 'number' ? data.height : 768,
+        width: typeof data.width === 'number' ? data.width : 512,
       }
       return [outcome.id, outcome]
     }),

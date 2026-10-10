@@ -2,12 +2,12 @@
 import React from "react"
 import { createChatHook } from "@tanstack/ai-react/ui"
 import { chatOptions } from "./options"
-import { initialChatMessages } from "./options/initialMessages"
+import { initialChatMessages } from "./messages/initial-messages"
 import { ChatLayout } from "./components/ChatLayout"
 import { ChatMessage } from "./components/ChatMessage"
-import { TextPartComponent } from "./parts/components/TextPartComponent"
-import { OutcomeOptions } from "./tools/components/OutcomeOptions"
-import { ImageUpload } from "./tools/components/ImageUpload"
+import { TextPart } from "./parts/components/TextPart"
+import { PresentOutcomeOptions } from "./tools/components/PresentOutcomeOptions"
+import { PresentImageUpload } from "./tools/components/PresentImageUpload"
 import { GenerateImageApproval } from "./tools/components/GenerateImageApproval"
 import type { PublicOutcome } from "@/outcomes"
 
@@ -18,11 +18,11 @@ export const { useAppChat, useChatContext } = createChatHook({
     message: ChatMessage,
   },
   partsComponents: {
-    text: TextPartComponent,
+    text: TextPart,
   },
   toolsComponents: {
-    presentOutcomeOptions: OutcomeOptions,
-    presentImageUpload: ImageUpload,
+    presentOutcomeOptions: PresentOutcomeOptions,
+    presentImageUpload: PresentImageUpload,
     runGenerateImage: GenerateImageApproval,
   },
 })

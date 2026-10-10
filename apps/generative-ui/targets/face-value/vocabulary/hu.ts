@@ -9,7 +9,6 @@ export const vocabulary = {
     uploadCta: "Kattints vagy húzz ide egy képet",
     outcomesAria: "Eredmények",
     userPickedOutcome: "Ezt szeretném: {title}",
-    requestInference: "Készen?",
     busy: "",
     working: "Dolgozom rajta...",
     busyForAWhile: "🧽 Fel lett adva a sorba. Az inferencia nem olcsó...",
@@ -19,6 +18,12 @@ export const vocabulary = {
     fulfilled: "Kész!",
     resultAlt: "Generált kép",
     download: "Letöltés",
+  },
+  requestSelectedOutcome: {
+    assistantMessage: "Válassz ki egy eredményt.",
+  },
+  requestReferenceImage: {
+    assistantMessage: "Töltsd fel a fotódat...",
   },
   runGenerateImage: {
     requested: {

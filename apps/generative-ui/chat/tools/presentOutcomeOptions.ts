@@ -5,7 +5,21 @@ export const presentOutcomeOptionsDef = toolDefinition({
   description: "Present outcome options in a two-column grid sorted by order",
   inputSchema: {
     type: "object",
-    properties: {},
+    properties: {
+      outcomes: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            id: { type: "string" },
+            title: { type: "string" },
+            order: { type: "number" },
+          },
+          required: ["id", "title", "order"],
+        },
+      },
+    },
+    required: ["outcomes"],
   },
   outputSchema: {
     type: "object",

@@ -21,14 +21,13 @@ export async function gpuFamilyGenerator(tree: Tree, options: GpuFamilyGenerator
   const contract = options.contract ?? toModelTag(family);
   generateFiles(tree, path.join(__dirname, 'files'), '.', {
     family,
-    contract,
     modelTag: toModelTag(family),
     contractTitle: toTitle(contract),
     pythonVersion: options.pythonVersion ?? '3.11',
   });
   await formatFiles(tree);
   logger.info(
-    `Scaffolded family "${family}". Next: fill apps/${family}/shared/contract_${family}.json, ` +
+    `Scaffolded family "${family}". Next: fill packages/contracts/${family}/contract.json, ` +
       `implement apps/${family}/shared/worker_${family}.py and apps/${family}/ workers.`
   );
 }

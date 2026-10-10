@@ -4,7 +4,7 @@
   "projectType": "application",
   "sourceRoot": "apps/generative-ui",
   "tags": ["type:app", "scope:ui"],
-  "implicitDependencies": ["flux2", "worker-router"],
+  "implicitDependencies": ["flux2", "router"],
   "targets": {
     "build": {
       "executor": "nx:run-script",

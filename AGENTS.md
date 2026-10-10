@@ -42,5 +42,5 @@
 
 - `.opencode/skills/nx-workspace`
 
-**Critical Tools**: `nx graph`, `nx generators`, `nx executors` must be maintained and used
-**verify command**: `audit` -> `lint` -> `build` -> `test`, each tier can fail verification
+**Verification**: `audit` -> `lint` -> `build` -> `test`, tiered `verify` target
+**Dep Graph**:

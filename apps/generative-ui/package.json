@@ -17,8 +17,8 @@
   },
   "dependencies": {
     "@inference/worker-router-client": "*",
-    "@tanstack/ai": "^0.65.1",
-    "@tanstack/ai-react": "^0.30.0",
+    "@tanstack/ai": "^0.68.0",
+    "@tanstack/ai-react": "^0.30.3",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.4.0",
     "gray-matter": "^4.0.3",

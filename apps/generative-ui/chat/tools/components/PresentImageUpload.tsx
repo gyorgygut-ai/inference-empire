@@ -5,7 +5,7 @@ import { vocabulary } from "@/targets/face-value/vocabulary/en"
 import { imagePart } from "../../parts/image"
 import { textPart } from "../../parts/text"
 
-type ImageUploadPart = {
+type PresentImageUploadPart = {
   id: string;
   input?: {
     outcomeId?: string;
@@ -28,7 +28,7 @@ const readFileAsData = (file: File): Promise<{ base64: string; mimeType: string 
     reader.readAsDataURL(file)
   })
 
-export const ImageUpload = ({ part }: { part: ImageUploadPart }) => {
+export const PresentImageUpload = ({ part }: { part: PresentImageUploadPart }) => {
   const { append } = useChatContext()
   const inputRef = React.useRef<HTMLInputElement>(null)
 
@@ -41,6 +41,7 @@ export const ImageUpload = ({ part }: { part: ImageUploadPart }) => {
         type="file"
         accept="image/*"
         hidden
+        disabled={!part.input?.outcomeId}
         onChange={async (e) => {
           const file = e.target.files?.[0]
           const outcomeId = part.input?.outcomeId
@@ -87,6 +88,7 @@ export const ImageUpload = ({ part }: { part: ImageUploadPart }) => {
       <button
         type="button"
         onClick={() => inputRef.current?.click()}
+        disabled={!part.input?.outcomeId}
         className="w-full px-4 py-3 border-2 border-dashed rounded-xl hover:bg-primary/5 transition-colors"
       >
         <div className="flex items-center justify-center gap-2 text-sm text-secondary-foreground">📎 {""} {vocabulary.messages.uploadCta}</div>

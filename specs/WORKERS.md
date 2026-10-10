@@ -20,7 +20,7 @@
 **Structure**:
 
 - Naming: `worker_{model}_{platform}.py` (`apps/{model}`)
-- Contract: has ONLY `input` and `output` (`apps/{model}/shared/contract_{model}.json`)
+- Contract: has ONLY `input` and `output` (`packages/contracts/{model}/contract.json`)
 - Logic: thin wrapper over provider, logic shared (`apps/{model}|shared/worker_{model}.pu`)
 - Types: `Pydantic` generated. consumers generate their own types from contract
 - Queue: always use task queue and return task id, except realtime workers

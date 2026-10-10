@@ -2,7 +2,7 @@ import React from "react"
 import Image from "next/image"
 import hero from "@/public/hero/face_value_hero_0.png"
 
-export const FullScreenHeroImage = () => (
+export const HeroImage = () => (
   <Image
     src={hero}
     alt="Face Value Hero Image"
@@ -11,4 +11,4 @@ export const FullScreenHeroImage = () => (
   />
 )
 
-export default FullScreenHeroImage
+export default HeroImage

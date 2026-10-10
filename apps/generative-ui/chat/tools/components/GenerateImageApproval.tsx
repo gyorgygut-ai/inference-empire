@@ -61,7 +61,12 @@ export const GenerateImageApproval = ({
     return <GenerateImageArtifact url={url} />
   }
   if (result && result.state === "error") {
-    return null
+    return (
+      <p className="my-2 text-sm italic" aria-labelledby="errorRejected">
+        <span id="errorRejected" className="sr-only">{vocabulary.runGenerateImage.error.assistantMessage}</span>
+        {vocabulary.runGenerateImage.error.assistantMessage}
+      </p>
+    )
   }
   if (part.state === "approval-responded") {
     return <p className="my-2 text-sm italic">{vocabulary.runGenerateImage.responded.assistantMessage}</p>
@@ -101,7 +106,6 @@ export const GenerateImageApproval = ({
         id: crypto.randomUUID(),
         role: "assistant",
         parts: [
-          textPart(vocabulary.runGenerateImage.error.assistantMessage),
           {
             type: "tool-result",
             toolCallId: part.id,

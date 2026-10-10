@@ -1,22 +1,37 @@
-# apps/worker-router/AGENTS.md
+# Router App
 
-## Rules for Agents
+Stateless router routing across worker implementations of a defined contract.
 
-### Critical Specs
+**Whitelabel**:
+
+- Targets: multiple, matching naming pattern `router-{worker name}`
+- Project Deps: `{worker name}`'s `dev` and `deploy` targets
+
+**Inputs**:
+
+- Contract: `packages/contracts/{worker name}/contract.json`
+
+**Generated on build**:
+
+- `{WORKER_NAME}_ROUTER_SECRET_AUTH_TOKEN`: env, for cross-project auth
+- `generated/types.ts`: generated from `contract` json schema
+
+**Output**:
+
+- `{WORKER_NAME}_ROUTER_URL`
+- `{WORKER_NAME}_ROUTER_SECRET_AUTH_TOKEN`
+
+**Endpoints**:
 
 - Endpoints: `POST /infer`, `GET /inquire`
-- Provider dispatch: read URLs from environment (`BEAM_URL`, `BEAM_TASK_API`, `FLASH_URL`, `FLASH_ENDPOINT`); contracts carry input/output schemas only
-- Auth token: `AUTH_TOKEN` environment variable, generated once per deployment, never written to deploy output
+
+<!--- Provider dispatch: read URLs from environment (`BEAM_URL`, `BEAM_TASK_API`, `FLASH_URL`, `FLASH_ENDPOINT`); contracts carry input/output schemas only-->
+
+- Auth: auth header validated to match `{WORKER_NAME}_SECRET_AUTH_TOKEN`
 - Task ID: `base64("provider:originalTaskId")` — beam: task UUID from `.put()`, flash: endpoint call ID
 - Status enum: `PENDING | PROCESSING | COMPLETED | FAILED | CANCELLED`
 - v1 picks beam, but selection function is separate for future expansion
 - Code must be minimal, simple and stupid — no magic, no `any`, no ifs without `{}`, no semis
-
-### Golden Rules
-
-- Specs are authoritative — code must match them
-- Exact touched files and lines to finish task; no less, no more
-- Adherence to specs, key decisions and golden rules is non-negotiable
 
 ### Workflow
 

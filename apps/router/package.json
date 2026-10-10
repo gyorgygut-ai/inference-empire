@@ -1,13 +1,12 @@
 {
-  "name": "worker-router",
+  "name": "router",
   "version": "0.1.0",
   "type": "module",
   "private": true,
   "main": "./src/index.ts",
   "scripts": {
     "build": "tsc",
-    "test": "vitest run",
-    "lint": "echo no linter yet"
+    "test": "vitest run"
   },
   "dependencies": {
     "itty-router": "^5.0.24"

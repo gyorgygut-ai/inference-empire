@@ -1,16 +1,22 @@
 # Routers
 
-**Flux 2 Router**:
+## apps/router
 
-- nx target: `router-flux2`
-- app: [Router](./apps/worker-router/AGENTS.md)
-- routed workers: [Flux2](./apps/flux2/AGENTS.md)
+- Read: [Router](./apps/router/AGENTS.md)
 
-**Krea 2 Router**:
+**target: router-flux2**:
 
-- nx target: `router-krea2`
-- app: [Router](./apps/worker-router/AGENTS.md)
-- routed workers: [Krea2](./apps/krea2/AGENTS.md)
+- dependencies: `flux2` worker project
+- output (url): `GENERATE_IMAGE_SERVICE_URL`
+- output (auth): `GENERATE_IMAGE_SERVICE_SECRET_AUTH_TOKEN`
+- input (contract): [Flux2 Contract](./packages/contracts/flux2/contract.json)
+
+**target: router-krea2**:
+
+- dependencies: `krea2` worker project
+- output (url): `GENERATE_IMAGE_1_SERVICE_URL`
+- output (auth): `GENERATE_IMAGE_SERVICE_1_SECRET_AUTH_TOKEN`
+- input (contract): [Krea2 Contract](./packages/contracts/krea2/contract.json)
 
 **Activate**:
 

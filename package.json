@@ -15,7 +15,6 @@
     "lint": "nx run-many -t lint",
     "verify": "nx run-many -t verify --nxBail --parallel=1",
     "verify:affected": "nx affected -t verify --nxBail --parallel=1 --base=origin/main",
-    "generate": "nx run worker-cli-client:generate",
     "py-check": "uv run --locked --group test ruff check . && uv run --locked --group test ty check . && uv run --locked --group test vulture .",
     "lint:fix": "nx run-many -t lint oxlint --fix"
   },

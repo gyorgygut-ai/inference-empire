@@ -5,7 +5,10 @@ export const presentImageUploadDef = toolDefinition({
   description: "Present image upload dropzone for the reference image",
   inputSchema: {
     type: "object",
-    properties: {},
+    properties: {
+      outcomeId: { type: "string" },
+    },
+    required: ["outcomeId"],
   },
   outputSchema: {
     type: "object",

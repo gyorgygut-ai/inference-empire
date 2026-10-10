@@ -2,16 +2,16 @@
 import React from "react"
 import { useChatContext } from "@/chat/client"
 import { vocabulary } from "@/targets/face-value/vocabulary/en"
-import { assistantMessagePromptForReference } from "../../messages/ask-for-reference"
+import { requestReferenceImage } from "../../messages/request-reference-image"
 import { textPart } from "../../parts/text"
 import type { PublicOutcome } from "@/outcomes"
 
-type OutcomeOptionsPart = {
+type PresentOutcomeOptionsPart = {
   id: string;
   input?: { outcomes?: PublicOutcome[] };
 }
 
-export const OutcomeOptions = ({ part }: { part: OutcomeOptionsPart }) => {
+export const PresentOutcomeOptions = ({ part }: { part: PresentOutcomeOptionsPart }) => {
   const { append } = useChatContext()
   const outcomes = [...(part.input?.outcomes ?? [])].sort((a, b) => a.order - b.order)
 
@@ -29,7 +29,7 @@ export const OutcomeOptions = ({ part }: { part: OutcomeOptionsPart }) => {
         },
       ],
     })
-    await append(assistantMessagePromptForReference(outcome.id))
+    await append(requestReferenceImage(outcome.id))
   }
 
   return (

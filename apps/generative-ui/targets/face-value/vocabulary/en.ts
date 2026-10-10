@@ -9,7 +9,6 @@ export const vocabulary = {
     uploadCta: "Click or drag & drop an image",
     outcomesAria: "Outcomes",
     userPickedOutcome: "I want {title}",
-    requestInference: "Let's do this!",
     busy: "",
     working: "Working on it...",
     busyForAWhile: "🧽 You've been queued. Inference ain't cheap...",
@@ -19,6 +18,12 @@ export const vocabulary = {
     fulfilled: "Done!",
     resultAlt: "Generated",
     download: "Download",
+  },
+  requestSelectedOutcome: {
+    assistantMessage: "Select an outcome.",
+  },
+  requestReferenceImage: {
+    assistantMessage: "Upload your photo...",
   },
   runGenerateImage: {
     requested: {

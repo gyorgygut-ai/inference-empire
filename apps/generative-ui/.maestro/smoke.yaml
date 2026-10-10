@@ -11,4 +11,4 @@ url: http://localhost:3000
 - assertNotVisible:
     css: "[aria-labelledby='uploadReference']"
 - assertNotVisible:
-    css: "[aria-labelledby='requestInference']"
+    css: "[aria-labelledby='approveGeneration']"

@@ -11,7 +11,7 @@
       "{workspaceRoot}/package.json"
     ],
     "contracts": [
-      "{workspaceRoot}/apps/*/shared/contract_*.json"
+      "{workspaceRoot}/packages/contracts/*/contract.json"
     ],
     "production": [
       "default",

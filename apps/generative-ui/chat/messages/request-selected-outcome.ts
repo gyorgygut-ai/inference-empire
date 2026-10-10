@@ -3,12 +3,12 @@ import { vocabulary } from "@/targets/face-value/vocabulary/en"
 import { textPart } from "../parts/text"
 import type { PublicOutcome } from "@/outcomes"
 
-export function assistantMessagePromptForOutcome(outcomes: PublicOutcome[] = []) {
+export function requestSelectedOutcome(outcomes: PublicOutcome[] = []) {
   return {
     id: "select-outcome",
     role: "assistant",
     parts: [
-      textPart(vocabulary.messages.selectOutcome),
+      textPart(vocabulary.requestSelectedOutcome.assistantMessage),
       {
         type: "tool-call",
         id: crypto.randomUUID(),
