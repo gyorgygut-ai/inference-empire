@@ -26,7 +26,7 @@
         "cwd": "apps/generative-ui"
       },
       "inputs": [
-        "{projectRoot}/messages/vocabulary/en.ts",
+        "{projectRoot}/targets/face-value/vocabulary/en.ts",
         "{projectRoot}/scripts/generate-manifest.mjs"
       ],
       "outputs": [
@@ -40,8 +40,8 @@
         "script": "dev"
       },
       "inputs": [
-        { "env": "FLUX2_ROUTER_URL" },
-        { "env": "FLUX2_ROUTER_TOKEN" }
+        { "env": "GENERATE_IMAGE_SERVICE_URL" },
+        { "env": "GENERATE_IMAGE_SERVICE_SECRET_AUTH_TOKEN" }
       ],
       "cache": false,
       "persistent": true
@@ -115,8 +115,8 @@
         { "env": "FACE_VALUE_UI_VERCEL_TOKEN" },
         { "env": "FACE_VALUE_UI_VERCEL_PROJECT_ID" },
         { "env": "FACE_VALUE_UI_VERCEL_ORG_ID" },
-        { "env": "FLUX2_ROUTER_URL" },
-        { "env": "FLUX2_ROUTER_TOKEN" }
+        { "env": "GENERATE_IMAGE_SERVICE_URL" },
+        { "env": "GENERATE_IMAGE_SERVICE_SECRET_AUTH_TOKEN" }
       ],
       "outputs": ["{projectRoot}/.vercel/output"],
       "cache": true
@@ -133,8 +133,8 @@
         { "env": "FACE_VALUE_UI_VERCEL_TOKEN" },
         { "env": "FACE_VALUE_UI_VERCEL_PROJECT_ID" },
         { "env": "FACE_VALUE_UI_VERCEL_ORG_ID" },
-        { "env": "FLUX2_ROUTER_URL" },
-        { "env": "FLUX2_ROUTER_TOKEN" }
+        { "env": "GENERATE_IMAGE_SERVICE_URL" },
+        { "env": "GENERATE_IMAGE_SERVICE_SECRET_AUTH_TOKEN" }
       ],
       "cache": false
     },

@@ -20,4 +20,19 @@ export const vocabulary = {
     resultAlt: "Generált kép",
     download: "Letöltés",
   },
+  runGenerateImage: {
+    requested: {
+      assistantMessage: "Kész a generálás. Jóváhagyod az inferenciát?",
+      userApprove: "Generálás",
+    },
+    responded: {
+      assistantMessage: "Jóváhagyva. Generálok...",
+    },
+    error: {
+      assistantMessage: "Sikertelen generálás.",
+    },
+    streaming: {
+      assistantMessage: "Dolgozom rajta...",
+    },
+  },
 }

@@ -1,6 +1,6 @@
 import React from "react"
 import { ChatClient } from "@/chat/client"
-import { getPublicOutcomes } from "@/outcomes/outcomes"
+import { getPublicOutcomes } from "@/outcomes"
 import { SplitLayout } from "@/shell/SplitLayout"
 
 export const dynamic = "force-dynamic"

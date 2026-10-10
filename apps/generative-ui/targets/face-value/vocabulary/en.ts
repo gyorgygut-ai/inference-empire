@@ -20,4 +20,19 @@ export const vocabulary = {
     resultAlt: "Generated",
     download: "Download",
   },
+  runGenerateImage: {
+    requested: {
+      assistantMessage: "Ready to generate. Approve to run inference.",
+      userApprove: "Generate",
+    },
+    responded: {
+      assistantMessage: "Approved. Generating...",
+    },
+    error: {
+      assistantMessage: "Generation failed.",
+    },
+    streaming: {
+      assistantMessage: "Working on it...",
+    },
+  },
 }

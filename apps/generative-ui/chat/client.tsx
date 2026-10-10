@@ -6,8 +6,10 @@ import { initialChatMessages } from "./options/initialMessages"
 import { ChatLayout } from "./components/ChatLayout"
 import { ChatMessage } from "./components/ChatMessage"
 import { TextPartComponent } from "./parts/components/TextPartComponent"
-import { ShowOutcomeOptions } from "./tools/components/ShowOutcomeOptions"
-import type { PublicOutcome } from "@/outcomes/outcomes"
+import { OutcomeOptions } from "./tools/components/OutcomeOptions"
+import { ImageUpload } from "./tools/components/ImageUpload"
+import { GenerateImageApproval } from "./tools/components/GenerateImageApproval"
+import type { PublicOutcome } from "@/outcomes"
 
 export const { useAppChat, useChatContext } = createChatHook({
   options: chatOptions,
@@ -19,13 +21,15 @@ export const { useAppChat, useChatContext } = createChatHook({
     text: TextPartComponent,
   },
   toolsComponents: {
-    showOutcomeOptions: ShowOutcomeOptions,
+    presentOutcomeOptions: OutcomeOptions,
+    presentImageUpload: ImageUpload,
+    runGenerateImage: GenerateImageApproval,
   },
 })
 
-export const ChatClient = ({ outcomes: _outcomes }: { outcomes: PublicOutcome[] }) => {
+export const ChatClient = ({ outcomes }: { outcomes: PublicOutcome[] }) => {
   const chat = useAppChat({
-    initialMessages: initialChatMessages(),
+    initialMessages: initialChatMessages(outcomes),
   })
 
   return <chat.AppChat />
