@@ -68,6 +68,9 @@
     },
     {
       "plugin": "./tools/workspace-plugin/src/inference/python.ts"
+    },
+    {
+      "plugin": "./tools/nx-orchestrate-configurations/src/index.ts"
     }
   ],
   "nxCloudAccessToken": "",

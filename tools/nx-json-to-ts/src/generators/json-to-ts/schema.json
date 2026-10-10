@@ -1,0 +1,17 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "JsonToTs generator",
+  "type": "object",
+  "required": ["contract", "output"],
+  "additionalProperties": false,
+  "properties": {
+    "contract": {
+      "type": "string",
+      "description": "Workspace-relative contract path, e.g. packages/contracts/flux2/contract.json"
+    },
+    "output": {
+      "type": "string",
+      "description": "Workspace-relative output path, e.g. apps/router/generated/types.ts"
+    }
+  }
+}

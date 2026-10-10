@@ -1,0 +1,15 @@
+{
+  "$schema": "../../tools/nx-orchestrate-configurations/src/schema.json",
+  "targets": [
+    {
+      "name": "router-flux2",
+      "dependsOn": ["flux2:dev", "flux2:deploy"],
+      "contract": "packages/contracts/flux2/contract.json"
+    },
+    {
+      "name": "router-krea2",
+      "dependsOn": ["krea2:dev", "krea2:deploy"],
+      "contract": "packages/contracts/krea2/contract.json"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "$schema": "../../tools/nx-orchestrate-configurations/src/schema.json",
+  "targets": [
+    {
+      "name": "face-value",
+      "dependsOn": ["router:router-flux2"],
+      "contract": "packages/contracts/flux2/contract.json",
+      "env": ["GENERATE_IMAGE_SERVICE_URL", "GENERATE_IMAGE_SERVICE_SECRET_AUTH_TOKEN"]
+    }
+  ]
+}

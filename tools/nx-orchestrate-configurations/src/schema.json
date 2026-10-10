@@ -1,0 +1,39 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Orchestrate configurations",
+  "description": "Generic declarative source. Plugin passes values through verbatim; the only inference is contract path prefixing.",
+  "type": "object",
+  "required": ["targets"],
+  "additionalProperties": false,
+  "properties": {
+    "targets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name"],
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string" },
+          "contract": {
+            "type": "string",
+            "description": "Workspace-relative file path. Emitted as {workspaceRoot}/<contract> input."
+          },
+          "env": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Env var names. Each emitted as {env} input (cache key only)."
+          },
+          "dependsOn": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "inputs": { "type": "array" },
+          "outputs": { "type": "array" },
+          "executor": { "type": "string" },
+          "options": { "type": "object" },
+          "cache": { "type": "boolean" }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "name": "nx-json-to-ts",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "tools/nx-json-to-ts/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/tools/nx-json-to-ts",
+        "main": "tools/nx-json-to-ts/src/index.ts",
+        "tsConfig": "tools/nx-json-to-ts/tsconfig.lib.json",
+        "assets": [
+          "tools/nx-json-to-ts/generators.json",
+          {
+            "input": "./tools/nx-json-to-ts/src",
+            "glob": "**/!(*.ts)",
+            "output": "./src"
+          }
+        ]
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}
