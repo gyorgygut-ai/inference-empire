@@ -1,6 +1,6 @@
 "use client"
 import React from "react"
-import { useChatContext } from "./chat-client"
+import { useChatContext } from "@/chat/client"
 import { vocabulary } from "@/messages"
 import { readFileAsData } from "./file-utils"
 

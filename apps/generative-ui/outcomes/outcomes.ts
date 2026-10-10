@@ -19,7 +19,7 @@ export type PublicOutcome = {
   height: number;
 }
 
-const outcomesDir = path.join(process.cwd(), "outcomes")
+const outcomesDir = path.join(process.cwd(), "targets/face-value/outcomes")
 
 const outcomeCache = new Map<string, Outcome>(
   fs

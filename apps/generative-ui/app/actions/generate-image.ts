@@ -1,7 +1,7 @@
 "use server"
 
 import { generateImage, type ImageGenerationResult } from "@tanstack/ai"
-import { flux2KleinAdapter } from "@/adapters/flux2-adapter"
+import { flux2KleinAdapter } from "@/chat/adapters/flux2-adapter"
 
 type ImagePartSource = { type: string; value?: unknown; mimeType?: string }
 type PromptPart = { type: string; content?: string; source?: ImagePartSource }
