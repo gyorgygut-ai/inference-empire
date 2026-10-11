@@ -23,6 +23,12 @@
       "persistent": true,
       "options": { "worker": "worker_flash_cls_flux2_klein9b.py" }
     },
+    "dev": {
+      "executor": "nx:noop",
+      "dependsOn": ["dev-modal", "dev-beam", "dev-flash"],
+      "cache": false,
+      "persistent": true
+    },
     "deploy": {
       "dependsOn": ["deploy-modal", "deploy-beam", "deploy-flash"],
       "outputs": ["{projectRoot}/dist/deploy-endpoints.json"],

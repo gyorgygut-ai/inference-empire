@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/schema",
+  "version": 2,
+  "title": "Vulture executor",
+  "description": "Run vulture dead-code check for a GPU worker family",
+  "type": "object",
+  "properties": {
+    "family": {
+      "type": "string",
+      "description": "Worker family dir under apps/ (e.g. flux2)"
+    }
+  },
+  "required": ["family"]
+}

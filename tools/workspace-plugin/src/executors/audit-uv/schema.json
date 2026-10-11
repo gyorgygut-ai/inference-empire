@@ -1,0 +1,9 @@
+{
+  "$schema": "https://json-schema.org/schema",
+  "version": 2,
+  "title": "Audit UV executor",
+  "description": "Run uv pip check for dependency consistency",
+  "type": "object",
+  "properties": {},
+  "additionalProperties": false
+}

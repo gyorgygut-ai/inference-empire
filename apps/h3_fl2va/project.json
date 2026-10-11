@@ -17,6 +17,12 @@
       "persistent": true,
       "options": { "worker": "worker_beam_tq_minimax_h3_fl2va.py", "entrypoint": "dispatch" }
     },
+    "dev": {
+      "executor": "nx:noop",
+      "dependsOn": ["dev-modal", "dev-beam"],
+      "cache": false,
+      "persistent": true
+    },
     "deploy": {
       "dependsOn": ["deploy-modal", "deploy-beam"],
       "outputs": ["{projectRoot}/dist/deploy-endpoints.json"],

@@ -19,8 +19,9 @@ const runExecutor: PromiseExecutor<DevBeamExecutorSchema> = async (
     return { success: false };
   }
   const entrypoint = options.entrypoint ?? 'dispatch';
+  const relWorker = join(projectRootRel, resolved.file);
   return {
-    success: runCommand(`beam serve ${resolved.file}:${entrypoint}`, cwd, { PYTHONPATH: context.root }),
+    success: runCommand(`beam serve ${relWorker}:${entrypoint}`, context.root, { PYTHONPATH: context.root }),
   };
 };
 

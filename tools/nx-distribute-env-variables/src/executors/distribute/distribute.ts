@@ -1,10 +1,7 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, isAbsolute, join } from 'node:path';
+import { existsSync, readFileSync } from 'node:fs';
+import { isAbsolute, join } from 'node:path';
 import type { ExecutorContext, PromiseExecutor } from '@nx/devkit';
 import type { DistributeExecutorSchema } from './schema';
-
-const BLOCK_START = '# >>> nx-distribute-env-variables managed >>>';
-const BLOCK_END = '# <<< nx-distribute-env-variables managed <<<';
 
 function fail(message: string): { success: false } {
   console.error(`[nx-distribute-env-variables] ${message}`);
@@ -51,54 +48,74 @@ function configPrefix(target: string): string {
   return target.split(':')[0].toUpperCase().replace(/-/g, '_');
 }
 
-function readOwnEnvNames(contextRoot: string, projectRootRel: string, targetName: string): string[] | null {
-  try {
-    const raw = readFileSync(join(contextRoot, projectRootRel, 'project-targets.json'), 'utf8');
-    const parsed = JSON.parse(raw) as { targets?: Array<{ name?: unknown; env?: unknown; dependsOn?: unknown }> };
-    const entry = (parsed.targets ?? []).find((t) => t.name === targetName);
-    if (!entry || !Array.isArray(entry.env)) {
-      return null;
-    }
-    return entry.env.filter((e): e is string => typeof e === 'string');
-  } catch {
+function depPrefix(depProject: string, depTarget: string): string {
+  const config = configPrefix(depTarget);
+  const proj = depProject.toUpperCase().replace(/-/g, '_');
+  if (config === proj || config.startsWith(`${proj}_`)) {
+    return config;
+  }
+  return `${proj}_${config}`;
+}
+
+function readOwnEnvNamesFromMerged(
+  context: ExecutorContext,
+  projectName: string,
+  targetName: string
+): string[] | null {
+  const targets = context.projectsConfigurations?.projects?.[projectName]?.targets as
+    | Record<string, { inputs?: unknown }>
+    | undefined;
+  const inputs = targets?.[targetName]?.inputs;
+  if (!Array.isArray(inputs)) {
     return null;
   }
+  const names: string[] = [];
+  for (const input of inputs) {
+    if (
+      input !== null &&
+      typeof input === 'object' &&
+      !Array.isArray(input) &&
+      typeof (input as { env?: unknown }).env === 'string'
+    ) {
+      names.push((input as { env: string }).env);
+    }
+  }
+  return names.length > 0 ? names : null;
 }
 
-function ownDependsOn(contextRoot: string, projectRootRel: string, targetName: string): string[] {
-  try {
-    const raw = readFileSync(join(contextRoot, projectRootRel, 'project-targets.json'), 'utf8');
-    const parsed = JSON.parse(raw) as { targets?: Array<{ name?: unknown; dependsOn?: unknown }> };
-    const entry = (parsed.targets ?? []).find((t) => t.name === targetName);
-    if (!entry || !Array.isArray(entry.dependsOn)) {
-      return [];
-    }
-    return entry.dependsOn.filter((d): d is string => typeof d === 'string');
-  } catch {
+function ownDependsOnFromMerged(
+  context: ExecutorContext,
+  projectName: string,
+  targetName: string
+): string[] {
+  const targets = context.projectsConfigurations?.projects?.[projectName]?.targets as
+    | Record<string, { dependsOn?: unknown }>
+    | undefined;
+  const dependsOn = targets?.[targetName]?.dependsOn;
+  if (!Array.isArray(dependsOn)) {
     return [];
   }
-}
-
-function stripManagedBlock(content: string): { outside: string; hadBlock: boolean } {
-  const lines = content.split('\n');
-  const outside: string[] = [];
-  let inside = false;
-  let hadBlock = false;
-  for (const line of lines) {
-    if (line.trim() === BLOCK_START) {
-      inside = true;
-      hadBlock = true;
-      continue;
-    }
-    if (line.trim() === BLOCK_END) {
-      inside = false;
-      continue;
-    }
-    if (!inside) {
-      outside.push(line);
+  const out: string[] = [];
+  for (const dep of dependsOn) {
+    if (typeof dep === 'string') {
+      out.push(dep);
+    } else if (
+      dep !== null &&
+      typeof dep === 'object' &&
+      !Array.isArray(dep) &&
+      typeof (dep as { target?: unknown }).target === 'string'
+    ) {
+      const target = (dep as { target: string }).target;
+      const projects =
+        (dep as { projects?: unknown }).projects === undefined
+          ? projectName
+          : Array.isArray((dep as { projects: unknown }).projects)
+            ? ((dep as { projects: string[] }).projects[0] ?? projectName)
+            : ((dep as { projects: string }).projects as string);
+      out.push(`${projects}:${target}`);
     }
   }
-  return { outside: outside.join('\n'), hadBlock };
+  return out;
 }
 
 const runExecutor: PromiseExecutor<DistributeExecutorSchema> = async (
@@ -114,12 +131,12 @@ const runExecutor: PromiseExecutor<DistributeExecutorSchema> = async (
   if (!projectRootRel) {
     return fail(`unknown project ${projectName}`);
   }
-  const bareNames = readOwnEnvNames(context.root, projectRootRel, targetName);
+  const bareNames = readOwnEnvNamesFromMerged(context, projectName, targetName);
   if (bareNames === null) {
-    return fail(`entry "${targetName}" with env list not found in ${projectRootRel}/project-targets.json`);
+    return fail(`entry "${targetName}" with env list not found in merged Nx config`);
   }
   const collected: Record<string, string> = {};
-  for (const dep of ownDependsOn(context.root, projectRootRel, targetName)) {
+  for (const dep of ownDependsOnFromMerged(context, projectName, targetName)) {
     const sep = dep.indexOf(':');
     if (sep === -1) {
       continue;
@@ -137,7 +154,7 @@ const runExecutor: PromiseExecutor<DistributeExecutorSchema> = async (
     if (!Array.isArray(outputs)) {
       continue;
     }
-    const prefix = configPrefix(depTarget);
+    const prefix = depPrefix(depProject, depTarget);
     for (const output of outputs) {
       if (typeof output !== 'string' || !output.endsWith('.env')) {
         continue;
@@ -155,29 +172,12 @@ const runExecutor: PromiseExecutor<DistributeExecutorSchema> = async (
       }
     }
   }
-  const fileName = `.env.${targetName.replace(/:/g, '-')}`;
-  const consumerFile = join(context.root, projectRootRel, fileName);
-  mkdirSync(dirname(consumerFile), { recursive: true });
-  const body = Object.keys(collected)
-    .sort()
-    .map((key) => `${key}=${collected[key]}`)
-    .join('\n');
-  writeFileSync(consumerFile, body.length > 0 ? `${body}\n` : '');
-  const localFile = join(context.root, projectRootRel, '.env.local');
-  const existing = existsSync(localFile) ? readFileSync(localFile, 'utf8') : '';
-  const { outside } = stripManagedBlock(existing);
-  const outsideValues = parseDotenv(outside);
-  for (const key of Object.keys(collected)) {
-    if ((outsideValues[key] ?? '') !== '') {
-      return fail(`${key} is defined outside the managed block; remove it so distribution owns the key`);
+  for (const [key, value] of Object.entries(collected)) {
+    if ((process.env[key] ?? '') !== '' && process.env[key] !== value) {
+      console.warn(`[nx-distribute-env-variables] ${key} already in process env; overwriting with distributed value`);
     }
-    if ((process.env[key] ?? '') !== '') {
-      console.warn(`[nx-distribute-env-variables] ${key} is set in process env and shadows rotation`);
-    }
+    process.env[key] = value;
   }
-  const block = body.length > 0 ? `${BLOCK_START}\n${body}\n${BLOCK_END}\n` : '';
-  const merged = outside.endsWith('\n') || outside.length === 0 ? `${outside}${block}` : `${outside}\n${block}`;
-  writeFileSync(localFile, merged);
   return { success: true };
 };
 

@@ -19,6 +19,16 @@
       "implementation": "./src/executors/ty/ty",
       "schema": "./src/executors/ty/schema.json",
       "description": "Run ty typecheck for a GPU worker family"
+    },
+    "vulture": {
+      "implementation": "./src/executors/vulture/vulture",
+      "schema": "./src/executors/vulture/schema.json",
+      "description": "Run vulture dead-code check for a GPU worker family"
+    },
+    "audit-uv": {
+      "implementation": "./src/executors/audit-uv/audit-uv",
+      "schema": "./src/executors/audit-uv/schema.json",
+      "description": "Run uv pip check for dependency consistency"
     }
   }
 }

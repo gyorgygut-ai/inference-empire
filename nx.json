@@ -46,11 +46,34 @@
       "cache": false
     },
     "verify": {
+      "executor": "nx:noop",
       "dependsOn": [
         "audit",
         "lint",
         "build",
         "test"
+      ],
+      "cache": false
+    },
+    "verify-dev": {
+      "executor": "nx:noop",
+      "dependsOn": [
+        "audit",
+        "lint",
+        "build",
+        "test",
+        "dev"
+      ],
+      "cache": false
+    },
+    "verify-deploy": {
+      "executor": "nx:noop",
+      "dependsOn": [
+        "audit",
+        "lint",
+        "build",
+        "test",
+        "deploy"
       ],
       "cache": false
     }

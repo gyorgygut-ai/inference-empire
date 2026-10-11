@@ -1,9 +1,12 @@
-import { UIMessage } from "@tanstack/ai"
+import type { UIMessage } from "@tanstack/ai-client"
 import { vocabulary } from "@/targets/face-value/vocabulary/en"
 import { textPart } from "../parts/text"
 import type { PublicOutcome } from "@/outcomes"
+import type { ChatOptions } from "../options"
 
-export function requestSelectedOutcome(outcomes: PublicOutcome[] = []) {
+type AppTools = ChatOptions["tools"]
+
+export function requestSelectedOutcome(outcomes: PublicOutcome[] = []): UIMessage<AppTools> {
   return {
     id: "select-outcome",
     role: "assistant",
@@ -18,5 +21,5 @@ export function requestSelectedOutcome(outcomes: PublicOutcome[] = []) {
         state: "input-complete",
       },
     ],
-  } satisfies UIMessage
+  } satisfies UIMessage<AppTools>
 }

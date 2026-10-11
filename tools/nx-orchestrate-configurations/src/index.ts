@@ -18,6 +18,8 @@ type TargetDef = {
   inputs?: unknown[];
   outputs?: string[];
   cache?: boolean;
+  inheritBase?: boolean;
+  persistent?: boolean;
 };
 
 function readBaseTargets(projectRoot: string): Record<string, TargetDef> {
@@ -31,7 +33,6 @@ function readBaseTargets(projectRoot: string): Record<string, TargetDef> {
       return targets as Record<string, TargetDef>;
     }
   } catch {
-    // no readable project.json; base lookup fails per entry below
   }
   return {};
 }
@@ -87,8 +88,9 @@ function createNodesInternal(configFilePath: string): {
     const entryOptions =
       (entry["options"] as Record<string, unknown> | undefined) ?? {};
     const baseOptions = base.options ?? {};
+    const inheritBase = (entry["inheritBase"] as boolean | undefined) ?? true;
     const options: Record<string, unknown> =
-      entry["executor"] !== undefined && entry["executor"] !== base.executor
+      !inheritBase || (entry["executor"] !== undefined && entry["executor"] !== base.executor)
         ? { ...entryOptions }
         : { ...baseOptions, ...entryOptions };
     const target: TargetConfiguration = { executor };
@@ -97,9 +99,11 @@ function createNodesInternal(configFilePath: string): {
     }
     const entryDependsOn =
       (entry["dependsOn"] as Array<string | TargetDependencyConfig> | undefined) ?? [];
-    const dependsOn = [...(base.dependsOn ?? []), ...entryDependsOn].filter(
-      (dep) => !isSelfRef(dep, name)
-    );
+    const dependsOn = inheritBase
+      ? [...(base.dependsOn ?? []), ...entryDependsOn].filter(
+          (dep) => !isSelfRef(dep, name)
+        )
+      : entryDependsOn.filter((dep) => !isSelfRef(dep, name));
     if (dependsOn.length > 0) {
       target["dependsOn"] = dependsOn;
     }
@@ -113,7 +117,7 @@ function createNodesInternal(configFilePath: string): {
         inputs.push(input);
       }
     };
-    for (const input of base.inputs ?? []) {
+    for (const input of inheritBase ? (base.inputs ?? []) : []) {
       pushInput(input);
     }
     if (entry["contract"] !== undefined) {
@@ -128,14 +132,17 @@ function createNodesInternal(configFilePath: string): {
     if (inputs.length > 0) {
       target["inputs"] = inputs as TargetConfiguration["inputs"];
     }
-    const outputs =
-      (entry["outputs"] as string[] | undefined) ?? base.outputs;
+    const outputs = (entry["outputs"] as string[] | undefined) ?? (inheritBase ? base.outputs : undefined);
     if (outputs !== undefined) {
       target["outputs"] = outputs;
     }
-    const cache = (entry["cache"] as boolean | undefined) ?? base.cache;
+    const cache = (entry["cache"] as boolean | undefined) ?? (inheritBase ? base.cache : undefined);
     if (cache !== undefined) {
       target["cache"] = cache;
+    }
+    const persistent = (entry["persistent"] as boolean | undefined) ?? (inheritBase ? base.persistent : undefined);
+    if (persistent !== undefined) {
+      target["persistent"] = persistent;
     }
     targets[name] = target;
   }

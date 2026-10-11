@@ -2,18 +2,18 @@
   "$schema": "https://json-schema.org/schema",
   "version": 2,
   "title": "Generate executor",
-  "description": "Mint a fresh auth token and upsert it under key into a dotenv file. Mints on every run.",
+  "description": "Mint a fresh auth token. With file: upserts KEY=<token> into the env file; without: prints token to stdout. Mints on every run.",
   "type": "object",
   "properties": {
     "key": {
       "type": "string",
-      "description": "Dotenv key to write, e.g. SECRET_AUTH_TOKEN"
+      "description": "Token label, e.g. SECRET_AUTH_TOKEN"
     },
-    "output": {
+    "file": {
       "type": "string",
-      "description": "Workspace-relative dotenv file path. Other lines are preserved."
+      "description": "Workspace-relative env file. When set, upserts KEY=<token> into it; otherwise prints token to stdout."
     }
   },
-  "required": ["key", "output"],
+  "required": ["key"],
   "additionalProperties": false
 }

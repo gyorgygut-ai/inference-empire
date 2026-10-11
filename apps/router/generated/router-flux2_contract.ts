@@ -1,44 +1,6 @@
-export interface Flux2Klein9BInput {
-  prompt: string;
-  height?: number;
-  width?: number;
-  guidance_scale?: number;
-  num_inference_steps?: number;
-  seed?: number | null;
-  input_image?: string | null;
-  reference_images?: string[];
-  [k: string]: unknown;
-}
-export interface Flux2Klein9BOutput {
-  artifact: {
-    presigned_url: string;
-    [k: string]: unknown;
-  };
-  [k: string]: unknown;
-}
-export interface InferRequest {
-  /**
-   * $ref:{worker}/inference.json#/input
-   */
-  input: {
-    [k: string]: unknown;
-  };
-  [k: string]: unknown;
-}
-export interface InferResponse {
-  /**
-   * Opaque. base64(provider:originalTaskId)
-   */
-  task_id: string;
-  [k: string]: unknown;
-}
-export interface InquireResponse {
-  status: "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED" | "CANCELLED";
-  /**
-   * $ref:{worker}/inference.json#/output. Present only when status==COMPLETED.
-   */
-  output?: {
-    [k: string]: unknown;
-  };
+/**
+ * Generic router interface. Implemented on top of any {worker}/inference.json. Input/Output are composed at typegen.
+ */
+export interface ApiTaskQueue {
   [k: string]: unknown;
 }

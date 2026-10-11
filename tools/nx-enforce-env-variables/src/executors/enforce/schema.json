@@ -2,12 +2,16 @@
   "$schema": "https://json-schema.org/schema",
   "version": 2,
   "title": "Enforce executor",
-  "description": "Validate process env against the app zod env schema; fail closed on the first invalid key.",
+  "description": "Validate env against the app zod env schema; fail closed on the first invalid key. Validates process.env by default, or a dotenv file when file is set.",
   "type": "object",
   "properties": {
     "schema": {
       "type": "string",
       "description": "Schema file path, e.g. {projectRoot}/env.schema.ts. Must export envSchema."
+    },
+    "file": {
+      "type": "string",
+      "description": "Optional dotenv file path to validate instead of process.env, e.g. {projectRoot}/dist/router-flux2/dev.env"
     }
   },
   "required": ["schema"],

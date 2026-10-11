@@ -7,5 +7,11 @@ import { runGenerateImageDef } from "./tools/runGenerateImage"
 
 export const chatOptions = {
   fetcher: chatFetcher,
-  tools: [presentOutcomeOptionsDef, presentImageUploadDef, runGenerateImageDef],
+  tools: [
+    presentOutcomeOptionsDef.client(),
+    presentImageUploadDef.client(),
+    runGenerateImageDef.client(),
+  ],
 }
+
+export type ChatOptions = typeof chatOptions

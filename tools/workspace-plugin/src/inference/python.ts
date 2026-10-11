@@ -83,8 +83,8 @@ function createNodesInternal(
 
   const targets: Record<string, unknown> = {
     'audit-uv': {
-      executor: 'nx:run-commands',
-      options: { command: 'uv pip check', cwd: '.' },
+      executor: '@inference/workspace-plugin:audit-uv',
+      options: {},
       inputs: ['default', '{workspaceRoot}/uv.lock'],
       cache: true,
     },
@@ -99,8 +99,8 @@ function createNodesInternal(
       cache: true,
     },
     vulture: {
-      executor: 'nx:run-commands',
-      options: { command: `uv run --locked --group test vulture apps/${family}`, cwd: '.' },
+      executor: '@inference/workspace-plugin:vulture',
+      options: { family },
       cache: true,
     },
     [auditTarget]: { dependsOn: auditDeps },

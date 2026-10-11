@@ -2,9 +2,8 @@ import { formatFiles, joinPathFragments, logger, readJson, type Tree } from '@nx
 import { compile } from 'json-schema-to-typescript';
 
 export interface JsonToTsGeneratorSchema {
-  readonly contract?: string;
-  readonly inference?: string;
-  readonly api?: string;
+  readonly inference: string;
+  readonly api: string;
   readonly output: string;
 }
 
@@ -12,40 +11,38 @@ export async function jsonToTsGenerator(tree: Tree, options: JsonToTsGeneratorSc
   if (options.output.length === 0) {
     throw new Error('output must be a non-empty workspace-relative path');
   }
-  if (options.inference !== undefined || options.api !== undefined) {
-    if (options.inference === undefined || options.inference.length === 0 || options.api === undefined || options.api.length === 0) {
-      throw new Error('inference and api must both be non-empty workspace-relative paths');
-    }
-    const inference = readJson(tree, options.inference) as { input: unknown; output: unknown };
-    if (inference.input === undefined || inference.output === undefined) {
-      throw new Error(`inference ${options.inference} must contain ONLY input and output`);
-    }
-    const api = readJson(tree, options.api) as { inferRequest: unknown; inferResponse: unknown; inquireResponse: unknown };
-    if (api.inferRequest === undefined || api.inferResponse === undefined || api.inquireResponse === undefined) {
-      throw new Error(`api ${options.api} must contain inferRequest, inferResponse and inquireResponse`);
-    }
-    const input = await compile(inference.input as never, 'ContractInput', { bannerComment: '' });
-    const output = await compile(inference.output as never, 'ContractOutput', { bannerComment: '' });
-    const inferRequest = await compile(api.inferRequest as never, 'InferRequest', { bannerComment: '' });
-    const inferResponse = await compile(api.inferResponse as never, 'InferResponse', { bannerComment: '' });
-    const inquireResponse = await compile(api.inquireResponse as never, 'InquireResponse', { bannerComment: '' });
-    tree.write(joinPathFragments(options.output), `${input}${output}${inferRequest}${inferResponse}${inquireResponse}`);
-    await formatFiles(tree);
-    logger.info(`Generated ${options.output} from ${options.inference} + ${options.api}`);
-    return;
+  if (!/(^|\/)generated\/[^/]+_[^/]+\.ts$/.test(options.output)) {
+    throw new Error(`output must match generated/{target}_{filename}.ts, got ${options.output}`);
   }
-  if (options.contract === undefined || options.contract.length === 0) {
-    throw new Error('contract must be a non-empty workspace-relative path');
+  if (!options.inference || options.inference.length === 0) {
+    throw new Error('inference must be a non-empty workspace-relative path');
   }
-  const contract = readJson(tree, options.contract) as { input: unknown; output: unknown };
-  if (contract.input === undefined || contract.output === undefined) {
-    throw new Error(`contract ${options.contract} must contain ONLY input and output`);
+  if (!options.api || options.api.length === 0) {
+    throw new Error('api must be a non-empty workspace-relative path');
   }
-  const input = await compile(contract.input as never, 'ContractInput', { bannerComment: '' });
-  const output = await compile(contract.output as never, 'ContractOutput', { bannerComment: '' });
-  tree.write(joinPathFragments(options.output), `${input}${output}`);
+
+  const inferenceSchema = readJson(tree, options.inference);
+  const apiSchema = readJson(tree, options.api);
+  
+  // Combine both schemas into one for type generation
+  const combinedSchema = {
+    ...inferenceSchema,
+    ...apiSchema,
+    properties: {
+      ...(inferenceSchema.properties || {}),
+      ...(apiSchema.properties || {}),
+    },
+    required: [
+      ...(inferenceSchema.required || []),
+      ...(apiSchema.required || []),
+    ],
+  };
+
+  const result = await compile(combinedSchema, 'GeneratedSchema', { bannerComment: '' });
+  
+  tree.write(joinPathFragments(options.output), result);
   await formatFiles(tree);
-  logger.info(`Generated ${options.output} from ${options.contract}`);
+  logger.info(`Generated ${options.output} from ${options.inference} and ${options.api}`);
 }
 
 export default jsonToTsGenerator;

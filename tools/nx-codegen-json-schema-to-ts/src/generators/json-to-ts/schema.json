@@ -2,20 +2,16 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "JsonToTs generator",
   "type": "object",
-  "required": ["output"],
+  "required": ["inference", "api", "output"],
   "additionalProperties": false,
   "properties": {
-    "contract": {
-      "type": "string",
-      "description": "Legacy workspace-relative contract path, e.g. packages/contracts/flux2/inference.json"
-    },
     "inference": {
       "type": "string",
-      "description": "Workspace-relative inference path, e.g. packages/contracts/flux2/inference.json"
+      "description": "Workspace-relative inference JSON schema file path"
     },
     "api": {
       "type": "string",
-      "description": "Workspace-relative api path, e.g. packages/contracts/api-task-queue.json"
+      "description": "Workspace-relative API task queue JSON schema file path"
     },
     "output": {
       "type": "string",

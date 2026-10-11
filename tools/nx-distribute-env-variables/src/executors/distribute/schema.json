@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/schema",
   "version": 2,
   "title": "Distribute executor",
-  "description": "No options. Reads bare env names from the own project-targets.json entry, resolves producer dotenv artifacts via dependsOn, autoprefixes per dep config, writes the consumer dotenv file.",
+  "description": "No options. Reads bare env names from the own project-targets.json entry, resolves producer dotenv artifacts via dependsOn, autoprefixes per dep config, injects into process.env only. Writes nothing to disk.",
   "type": "object",
   "properties": {},
   "additionalProperties": false

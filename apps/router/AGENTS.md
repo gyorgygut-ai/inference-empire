@@ -2,14 +2,26 @@
 
 Stateless router routing across worker implementations of a contract.
 
-- **Targets**: multiple, matching naming pattern `router-{worker}`
-- **Depends on**: `{worker}:dev` + `{worker}:deploy`
-- **Generated TS**: types from `inference` plus `api-task-queue` schemas; `generated/router-{worker}_contract.ts`
+**NX Project**:
+
+- **Targets**: `router-{worker}`
+- **Depends on**: `{worker}:dev`, `{worker}:deploy`
+- **Contract**: `@packages/contracts/{worker}/inference.json`
+
+**target:generate-api**:
+
+- **input**: the worker contract schema
+- **output**: api + worker contract, `dist/{worker}_api.json`
+
+**target:generate-ts**:
+
+- **input**: `dist/{worker}_api.json`
+- **output**: generated TS, `generated/{worker}_api.ts`
 
 **Environment**:
 
 - `APP_URL` resolved on `dev` + `deploy`
-- `SECRET_AUTH_TOKEN`: generates new token on `build`
+- `SECRET_AUTH_TOKEN`: generates brand new token each run
 
 **Endpoints**:
 

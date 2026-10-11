@@ -1,6 +1,6 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, isAbsolute, join } from 'node:path';
 import { randomBytes } from 'node:crypto';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
 import type { ExecutorContext, PromiseExecutor } from '@nx/devkit';
 import type { GenerateExecutorSchema } from './schema';
 
@@ -8,34 +8,27 @@ export function mintAuthToken(): string {
   return randomBytes(32).toString('base64url');
 }
 
-function getProjectRootRel(context: ExecutorContext): string {
-  const name = context.projectName ?? '';
-  const proj = context.projectsConfigurations?.projects?.[name];
-  return proj?.root ?? '';
-}
-
-export function resolveOutputPath(context: ExecutorContext, output: string): string {
-  const expanded = output
-    .replace('{workspaceRoot}', context.root)
-    .replace('{projectRoot}', join(context.root, getProjectRootRel(context)));
-  return isAbsolute(expanded) ? expanded : join(context.root, expanded);
-}
-
-export function upsertDotenvLine(content: string, key: string, value: string): string {
-  const lines = content.length > 0 ? content.split('\n') : [];
-  let found = false;
-  const next = lines.map((line) => {
-    if (line.trim().startsWith(`${key}=`)) {
-      found = true;
-      return `${key}=${value}`;
+function upsertToken(file: string, key: string, token: string): void {
+  mkdirSync(dirname(file), { recursive: true });
+  const existing = existsSync(file) ? readFileSync(file, 'utf8') : '';
+  const line = `${key}=${token}`;
+  const lines = existing.length ? existing.split('\n') : [];
+  let replaced = false;
+  const next = lines.map((l) => {
+    if (l.trim().startsWith(`${key}=`)) {
+      replaced = true;
+      return line;
     }
-    return line;
+    return l;
   });
-  if (!found) {
-    next.push(`${key}=${value}`);
+  if (!replaced) {
+    next.push(line);
   }
-  const body = next.join('\n');
-  return body.endsWith('\n') ? body : `${body}\n`;
+  let body = next.join('\n');
+  if (body.charAt(body.length - 1) !== '\n') {
+    body += '\n';
+  }
+  writeFileSync(file, body);
 }
 
 const runExecutor: PromiseExecutor<GenerateExecutorSchema> = async (
@@ -46,14 +39,14 @@ const runExecutor: PromiseExecutor<GenerateExecutorSchema> = async (
     console.error('[nx-generate-auth-token] key is required');
     return { success: false };
   }
-  if (!options.output) {
-    console.error('[nx-generate-auth-token] output is required');
-    return { success: false };
+  const token = mintAuthToken();
+  if (options.file) {
+    const file = resolve(context.root, options.file);
+    upsertToken(file, options.key, token);
+    console.log(`wrote ${options.key} to ${options.file}`);
+  } else {
+    console.log(token);
   }
-  const out = resolveOutputPath(context, options.output);
-  mkdirSync(dirname(out), { recursive: true });
-  const existing = existsSync(out) ? readFileSync(out, 'utf8') : '';
-  writeFileSync(out, upsertDotenvLine(existing, options.key, mintAuthToken()));
   return { success: true };
 };
 

@@ -16,8 +16,6 @@ import importlib.util
 import os
 import sys
 
-# realtime_voice Beam intentionally declares its own models volume; every
-# other worker file must use the shared_gpu helpers.
 _THINNESS_BANNED = (
     "_INFERENCE_LOCK = threading.Lock()",
     '"HF_HOME"',

@@ -35,7 +35,15 @@
           "outputs": { "type": "array" },
           "executor": { "type": "string" },
           "options": { "type": "object" },
-          "cache": { "type": "boolean" }
+          "cache": { "type": "boolean" },
+          "inheritBase": {
+            "type": "boolean",
+            "description": "When false, skip inheriting base dependsOn/inputs/outputs/cache/options. Defaults to true."
+          },
+          "persistent": {
+            "type": "boolean",
+            "description": "When true, marks the target as a long-running serve process."
+          }
         }
       }
     }

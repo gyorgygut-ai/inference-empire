@@ -2,6 +2,7 @@ import { join } from 'node:path';
 import type { ExecutorContext, PromiseExecutor } from '@nx/devkit';
 import { getProjectRootRel, resolveWorkerFile } from '../resolve-worker';
 import { runCommand } from '../run-command';
+import { writeDeployEndpoints } from '../write-deploy-endpoints';
 import type { DeployBeamExecutorSchema } from './schema';
 
 const runExecutor: PromiseExecutor<DeployBeamExecutorSchema> = async (
@@ -9,6 +10,7 @@ const runExecutor: PromiseExecutor<DeployBeamExecutorSchema> = async (
   context: ExecutorContext
 ) => {
   if (!options.worker) {
+    console.error('[deploy-beam] worker is required');
     return { success: false };
   }
   const projectRootRel = getProjectRootRel(context);
@@ -19,13 +21,26 @@ const runExecutor: PromiseExecutor<DeployBeamExecutorSchema> = async (
     return { success: false };
   }
   const entrypoint = options.entrypoint ?? 'dispatch';
-  return {
-    success: runCommand(
-      `beam deploy --name ${options.name} ${resolved.file}:${entrypoint}`,
-      cwd,
-      { PYTHONPATH: context.root }
-    ),
-  };
+  const relWorker = join(projectRootRel, resolved.file);
+  const ok = runCommand(
+    `beam deploy --name ${options.name} ${relWorker}:${entrypoint}`,
+    context.root,
+    { PYTHONPATH: context.root }
+  );
+  if (!ok) return { success: false };
+  const appUrl = process.env.APP_URL ?? '';
+  const beamUrl = process.env.BEAM_URL ?? appUrl;
+  if (!appUrl) {
+    console.error('[deploy-beam] APP_URL env required so deploy-endpoints.json can be written');
+    return { success: false };
+  }
+  writeDeployEndpoints(context.root, projectRootRel, {
+    producer: 'beam',
+    worker: options.worker,
+    appUrl,
+    beamUrl,
+  });
+  return { success: true };
 };
 
 export default runExecutor;

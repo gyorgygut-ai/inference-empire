@@ -2,12 +2,24 @@
   "$schema": "https://json-schema.org/schema",
   "version": 2,
   "title": "Resolve executor",
-  "description": "Resolve APP_URL from the environment and mint a fresh SECRET_AUTH_TOKEN into a dotenv producer artifact. Overwrites on every run.",
+  "description": "Resolve APP_URL and BEAM_URL from worker deploy-endpoints.json artifact, fallback to env/defaults for dev only.",
   "type": "object",
   "properties": {
     "output": {
       "type": "string",
       "description": "Workspace-relative dotenv artifact path, e.g. {projectRoot}/dist/router-flux2/dev.env"
+    },
+    "defaultAppUrl": {
+      "type": "string",
+      "description": "Dev-only fallback when APP_URL env and endpoints artifact are both empty"
+    },
+    "defaultBeamUrl": {
+      "type": "string",
+      "description": "Dev-only fallback when BEAM_URL env and endpoints artifact are both empty"
+    },
+    "endpoints": {
+      "type": "string",
+      "description": "Workspace-relative path to worker dist/deploy-endpoints.json, e.g. {workspaceRoot}/apps/flux2/dist/deploy-endpoints.json"
     }
   },
   "required": ["output"],

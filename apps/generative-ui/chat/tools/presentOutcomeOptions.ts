@@ -1,31 +1,19 @@
 import { toolDefinition } from "@tanstack/ai"
+import { z } from "zod"
 
 export const presentOutcomeOptionsDef = toolDefinition({
   name: "presentOutcomeOptions",
   description: "Present outcome options in a two-column grid sorted by order",
-  inputSchema: {
-    type: "object",
-    properties: {
-      outcomes: {
-        type: "array",
-        items: {
-          type: "object",
-          properties: {
-            id: { type: "string" },
-            title: { type: "string" },
-            order: { type: "number" },
-          },
-          required: ["id", "title", "order"],
-        },
-      },
-    },
-    required: ["outcomes"],
-  },
-  outputSchema: {
-    type: "object",
-    properties: {
-      outcomeId: { type: "string" },
-    },
-    required: ["outcomeId"],
-  },
+  inputSchema: z.object({
+    outcomes: z.array(
+      z.object({
+        id: z.string(),
+        title: z.string(),
+        order: z.number(),
+      }),
+    ),
+  }),
+  outputSchema: z.object({
+    outcomeId: z.string(),
+  }),
 })

@@ -19,13 +19,13 @@ from typing import NoReturn
 WORKDIR = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(WORKDIR))
 
-from dotenv import load_dotenv  # noqa: E402
+from dotenv import load_dotenv
 
-load_dotenv(WORKDIR / ".env")  # HF_TOKEN etc. for gated repos; never commit .env
+load_dotenv(WORKDIR / ".env")
 
 VOL_RE = re.compile(r"""Volume\.(?:from_name\(\s*["']([^"']+)|\(name\s*=\s*["']([^"']+))|Volume\(\s*name\s*=\s*["']([^"']+)""")
 REPO_RE = re.compile(r"""repo_id\s*=\s*["']([^"']+)["']""")
-PROVIDER_OF = (("worker_modal_", "modal"), ("worker_beam_", "beam"))  # flash has no seedable volumes
+PROVIDER_OF = (("worker_modal_", "modal"), ("worker_beam_", "beam"))
 
 
 def sh(*cmd: str, timeout: int = 120) -> subprocess.CompletedProcess[str]:
@@ -45,7 +45,7 @@ def sh_live(*cmd: str, timeout: int = 3600) -> tuple[int, str]:
             for line in p.stdout:
                 now = time.monotonic()
                 if line.lstrip().startswith("[beam://"):
-                    if now - last_beat >= 60:  # progress redraws -> heartbeat only
+                    if now - last_beat >= 60:
                         print("  | ...still uploading...", flush=True)
                         last_beat = now
                     continue
@@ -78,7 +78,6 @@ def remote_present(provider: str, volume: str, path: str) -> bool:
     if r.returncode != 0 or not combined.strip():
         return False
     if Path(path).name.startswith("models--"):
-        # partial uploads (e.g. killed beam cp) must not pass as present
         return all(d in combined for d in ("blobs", "refs", "snapshots"))
     return True
 
@@ -107,7 +106,6 @@ class InaccessibleError(Exception):
     pass
 
 
-# Full-repo snapshots are banned for buffets: only the files workers resolve.
 ALLOW_PATTERNS = {
     "Comfy-Org/MiniMax-H3": [
         "diffusion_models/minimax_h3_ref2va_pruned_int8_convrot.safetensors",
@@ -125,7 +123,7 @@ def fetch(repo: str, tmp: Path, patterns: list[str] | None = None) -> None:
 
 
 def budget_for(size: int | None) -> int:
-    return max(1800, (size or 0) // 5_000_000)  # >=5MB/s assumed, 30min floor
+    return max(1800, (size or 0) // 5_000_000)
 
 
 def repo_size(repo: str, patterns: list[str] | None = None) -> int | None:
@@ -161,7 +159,6 @@ def main() -> int:
     args = ap.parse_args()
     only = {s for s in args.only.split(",") if s} or None
 
-    # Reap staging dirs from killed runs (SIGKILL skips finally); only one seed runs at a time.
     for stale in Path(tempfile.gettempdir()).glob("seed-*"):
         if stale.is_dir():
             print(f"reaping stale staging dir {stale}")
@@ -199,7 +196,7 @@ def main() -> int:
                 blocked += 1
                 continue
             pending.append((repo, size, slug, path))
-        pending.sort(key=lambda t: (t[1] is None, t[1] or 0))  # smallest first, unknown last
+        pending.sort(key=lambda t: (t[1] is None, t[1] or 0))
         free = shutil.disk_usage(tempfile.gettempdir()).free
         for repo, size, slug, path in pending:
             need = f"{size // 1_000_000_000}G" if size else "unknown-size"

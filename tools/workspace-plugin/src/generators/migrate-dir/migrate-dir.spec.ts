@@ -30,7 +30,6 @@ describe('migrate-dir generator', () => {
       migrateDirGenerator(tree, {
         from: 'legacy/app',
         to: 'apps/demo-app',
-        // @ts-expect-error testing invalid input
         kind: 'gpu',
         skipMove: true,
       })

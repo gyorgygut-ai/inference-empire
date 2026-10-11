@@ -8,7 +8,7 @@ import { ChatMessage } from "./components/ChatMessage"
 import { TextPart } from "./parts/components/TextPart"
 import { PresentOutcomeOptions } from "./tools/components/PresentOutcomeOptions"
 import { PresentImageUpload } from "./tools/components/PresentImageUpload"
-import { GenerateImageApproval } from "./tools/components/GenerateImageApproval"
+import { GenerateImageTool } from "./tools/components/GenerateImageTool"
 import type { PublicOutcome } from "@/outcomes"
 
 export const { useAppChat, useChatContext } = createChatHook({
@@ -23,7 +23,7 @@ export const { useAppChat, useChatContext } = createChatHook({
   toolsComponents: {
     presentOutcomeOptions: PresentOutcomeOptions,
     presentImageUpload: PresentImageUpload,
-    runGenerateImage: GenerateImageApproval,
+    runGenerateImage: GenerateImageTool,
   },
 })
 

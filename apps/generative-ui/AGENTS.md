@@ -20,7 +20,6 @@ NextJS app for chat + inference requests.
 - `./chat/options.ts`: chat ui `options`
 - `./chat/components/`: chat ui `components`
 
-
 - `./chat/options/`: a `chatOption` per file
 - `./chat/messages/`: a `message factory` per file
 
@@ -39,6 +38,7 @@ NextJS app for chat + inference requests.
 - NO inline component customization in chat config; extract it
 - DO let TS infer types; NO `any`, NO `as`; NO `lib|helpers|util`
 - NO auth tokens or other secrets exposed to the browser
+- Message and approval state transitions go through the chat library's APIs — never hand-appended parts or hand-matched state strings
 
 ---
 
@@ -46,9 +46,10 @@ NextJS app for chat + inference requests.
 
 Progressive chat thread, with NO LLM: tool result triggres next tool call.
 
-- **Targets**: multiple, matching naming pattern `router-{worker}`
-- **Depends on**: `{worker}:dev` + `{worker}:deploy`
-- **Generated TS**: types from `inference` plus `api-task-queue` schemas; `generated/face-value_contract.ts`
+**target:generate-ts**:
+
+- **input**: `@apps/router/dist/router_flux2_api.json`
+- **output**: generated TS, `generated/router_flux2_api.ts`
 
 **Environment**:
 
@@ -89,11 +90,12 @@ Progressive chat thread, with NO LLM: tool result triggres next tool call.
 
 - Trigger: `requestReferenceImage` result
 - Tool: `runGenerateImage` -> needs approval
+  - states render in `<GenerateImageTool />`
   - awaiting-input+input-streaming: `<Spinner />`
-  - approval-requested: `<GenerateImageApproval />`
-    - text: `runGenerateImage.requested.assistantMessage`
-    - button: `runGenerateImage.requested.userApprove`
-  - approval-responded: `runGenerateImage.responded.assistantMessage`
-  - error: `runGenerateImage.error.assistantMessage`
-  - streaming: `runGenerateImage.streaming.assistantMessage`
+  - approval-requested: `<GenerateImageApproval />` — approve prompt via the
+    chat library's approval flow (text: `runGenerateImage.requested.assistantMessage`,
+    button: `runGenerateImage.requested.userApprove`)
+  - approval-responded: text `runGenerateImage.responded.assistantMessage`
+  - during generation: text `runGenerateImage.streaming.assistantMessage`
+  - error: text `runGenerateImage.error.assistantMessage`
   - complete: `<GenerateImageArtifact src={presigned url} />`
