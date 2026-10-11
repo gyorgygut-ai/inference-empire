@@ -19,7 +19,7 @@ const runExecutor: PromiseExecutor<DeployFlashExecutorSchema> = async (
     return { success: false };
   }
   return {
-    success: runCommand(`flash deploy`, cwd),
+    success: runCommand(`flash deploy`, cwd, { PYTHONPATH: context.root }),
   };
 };
 

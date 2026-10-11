@@ -5,15 +5,17 @@
   "sourceRoot": "apps/h3_fl2va",
   "tags": ["type:app", "scope:gpu-worker", "model:h3-fl2va"],
   "targets": {
-    "dev": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "modal serve worker_modal_cls_minimax_h3_fl2va.py",
-        "cwd": "apps/h3_fl2va"
-      },
-      "outputs": ["{projectRoot}/dist/dev-endpoint.json"],
+    "dev-modal": {
+      "executor": "@inference/deploy-worker:dev-modal",
       "cache": false,
-      "persistent": true
+      "persistent": true,
+      "options": { "worker": "worker_modal_cls_minimax_h3_fl2va.py" }
+    },
+    "dev-beam": {
+      "executor": "@inference/deploy-worker:dev-beam",
+      "cache": false,
+      "persistent": true,
+      "options": { "worker": "worker_beam_tq_minimax_h3_fl2va.py", "entrypoint": "dispatch" }
     },
     "deploy": {
       "dependsOn": ["deploy-modal", "deploy-beam"],

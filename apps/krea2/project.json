@@ -5,15 +5,23 @@
   "sourceRoot": "apps/krea2",
   "tags": ["type:app", "scope:gpu-worker", "model:krea2"],
   "targets": {
-    "dev": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "modal serve worker_modal_cls_krea2_ref2img.py",
-        "cwd": "apps/krea2"
-      },
-      "outputs": ["{projectRoot}/dist/dev-endpoint.json"],
+    "dev-modal": {
+      "executor": "@inference/deploy-worker:dev-modal",
       "cache": false,
-      "persistent": true
+      "persistent": true,
+      "options": { "worker": "worker_modal_cls_krea2_ref2img.py" }
+    },
+    "dev-beam": {
+      "executor": "@inference/deploy-worker:dev-beam",
+      "cache": false,
+      "persistent": true,
+      "options": { "worker": "worker_beam_tq_krea2_ref2img.py", "entrypoint": "dispatch" }
+    },
+    "dev-flash": {
+      "executor": "@inference/deploy-worker:dev-flash",
+      "cache": false,
+      "persistent": true,
+      "options": { "worker": "worker_flash_cls_krea2_ref2img.py" }
     },
     "deploy": {
       "dependsOn": ["deploy-modal", "deploy-beam", "deploy-flash"],

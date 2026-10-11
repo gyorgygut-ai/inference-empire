@@ -8,7 +8,7 @@
       "options": {
         "output": "{projectRoot}/dist/router-flux2/dev.env"
       },
-      "dependsOn": ["worker-flux2:dev", "router:gen-types-flux2"],
+      "dependsOn": ["worker-flux2:dev-modal", "router:gen-types-flux2"],
       "contract": "packages/contracts/flux2/inference.json",
       "inputs": ["{projectRoot}/dist/router-flux2/dev.env", "{workspaceRoot}/packages/contracts/api-task-queue.json"],
       "outputs": ["{projectRoot}/dist/router-flux2/dev.env"],
@@ -34,7 +34,7 @@
       "options": {
         "output": "{projectRoot}/dist/router-krea2/dev.env"
       },
-      "dependsOn": ["worker-krea2:dev", "router:gen-types-krea2"],
+      "dependsOn": ["worker-krea2:dev-modal", "router:gen-types-krea2"],
       "contract": "packages/contracts/krea2/inference.json",
       "inputs": ["{projectRoot}/dist/router-krea2/dev.env", "{workspaceRoot}/packages/contracts/api-task-queue.json"],
       "outputs": ["{projectRoot}/dist/router-krea2/dev.env"],

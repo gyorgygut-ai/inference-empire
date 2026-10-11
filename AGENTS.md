@@ -1,13 +1,11 @@
 # Inference Empire
 
-**ACTIVATE**: `./opencode/skills/nx-workspace`
-**Value Proposition**: Monorepo for inference workers, tooling and whitelabel frontends.
+**Value Proposition**: Monorepo for inference workers + frontends + tooling.
 
-**Critical**:
-
-- Names in examples are **made up**
-- Assume `{projectRoot}` in relative paths
-- Specs: authoritive. Code always matches specs.
+- **ACTIVATE**: `./opencode/skills/nx-workspace`
+- **Paths**: assume `{projectRoot}` in relative paths
+- **Specs**: specs are always authoritive. Code must match specs
+- **NON-gaps**: good code without specs, example names not coded
 
 ---
 
@@ -48,6 +46,12 @@
 - **Resolve**: apps must declare `{projectRoot}/env.schema.ts`
 - **Outcome**: `.env` validated; `schema` now serves as example
 
+**Audit Env**:
+
+- **Tool**: `@tools/nx-audit-env-variables`
+- **Problem**: need to verify .env values across the repo
+- **Outcome**: outputs a grouped checklist, with masked values
+
 **Auth Tokens**:
 
 - **Tool**: `@tools/nx-generate-auth-token`
@@ -57,28 +61,28 @@
 
 **Provider Tokens**:
 
-- **Tool**: DO NOT start this yet - its a TBD
-- **Problem**: generating vercel, cloudflare tokens is a PITA
-- **Resolve**:
-- **Outcome**:
+- **Tool**: `@tools/nx-obtain-{provider}-token`
+- **Problem**: setting up provider access tokens is tedious
+- **Resolve**: creates token using respective provider cli
+- **Outcome**: token wired into selected project + `gh secrets`,
 
-**Env Verification**:
-
-- **Tool**: DO NOT start this yet - its a TBD
-- **Problem**:
-- **Outcome**:
-
-**Grap Verification**:
+**Static Verification**:
 
 - **Tool**: `verify`
-- **Problem**: need verification after changes, in tiers
-- **Outcome**: `audit` -> `lint` -> `build` -> `test` -> ✅
+- **Problem**: need tiered verification after changes
+- **Resolve**: `audit` -> `lint` -> `build` -> `test`
 
-**Full Verification**:
+**Dev Verification**:
 
-- **Tool**: DO NOT start this yet - its a TBD
-- **Problem**:
-- **Outcome**:
+- **Tool**: `verify-dev`
+- **Problem**: need to verify end-to-end orchestration
+- **Resolve**: `audit` -> `lint` -> `build` -> `test-unit` -> `dev`
+
+**Deploy Verification**:
+
+- **Tool**: `verify-deploy`
+- **Problem**: need to verify end-to-end orchestration + deploy
+- **Resolve**: `audit` -> `lint` -> `build` -> `test` -> `deploy`
 
 ---
 
@@ -94,7 +98,10 @@
 
 **Role**: mediate requests between UI and best provider for request.
 
-- [Router](./apps/router/AGENTS.md)
+**[Router](./apps/router/AGENTS.md) targets**:
+
+- [ ] `router-flux2` 👈🏾 👉🏼 `worker-flux2`:`dev,deploy`
+- [ ] `router-krea2` 👈🏾 👉🏼 `worker-krea2`:`dev-modal,deploy-modal`
 
 ---
 
@@ -102,38 +109,6 @@
 
 **Role**: UIs to interact with cloud inference.
 
-- [Generative UI](./apps/generative-ui/AGENTS.md)
+**[Generative UI](./apps/generative-ui/AGENTS.md) targets**:
 
----
-
-## Examples
-
-**Model Orchestration**:
-
-TODO
-
-**Generated Orchestration**:
-
-TODO
-
----
-
-## Real Targets
-
-**router-flux2**:
-
-- router
-
-**face-value**:
-
-- generative-ui
-
-<!--- `router`: only a template for generated targets:
-  - `router-flux2`: relies on `flux2:dev` + `flux2:deploy`
-  - `router-krea2`: relies on `krea2:dev` + `krea2:deploy`
-
-****:
-
-- `generative-ui` is a template for generated targets
-  - `face-value`: relies on `router-flux2:dev` + `router-flux2:deploy`
-  - `contract`: [Flux2](./packages/contracts/flux2/inference.json)-->
+- [ ] `face-value` 👈🏾 👉🏼 `router-flux2`:`dev,deploy`

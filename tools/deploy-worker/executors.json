@@ -14,6 +14,21 @@
       "implementation": "./src/executors/deploy-flash/deploy-flash",
       "schema": "./src/executors/deploy-flash/schema.json",
       "description": "Deploy a Flash worker via the flash CLI"
+    },
+    "dev-modal": {
+      "implementation": "./src/executors/dev-modal/dev-modal",
+      "schema": "./src/executors/dev-modal/schema.json",
+      "description": "Serve a Modal worker app via the modal CLI for local dev"
+    },
+    "dev-beam": {
+      "implementation": "./src/executors/dev-beam/dev-beam",
+      "schema": "./src/executors/dev-beam/schema.json",
+      "description": "Serve a Beam worker via the beam CLI for local dev"
+    },
+    "dev-flash": {
+      "implementation": "./src/executors/dev-flash/dev-flash",
+      "schema": "./src/executors/dev-flash/schema.json",
+      "description": "Start the Flash dev server via the flash CLI for local dev"
     }
   }
 }

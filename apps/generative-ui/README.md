@@ -31,7 +31,7 @@ See [SPECS.md](./SPECS.md) for full decisions and reasoning.
 
 ### Environment Variables
 
-See [.env.example](./.env.example) for required variables.
+See [env.schema.ts](./env.schema.ts) for required variables.
 
 ### Dev
 

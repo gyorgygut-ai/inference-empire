@@ -22,7 +22,8 @@ const runExecutor: PromiseExecutor<DeployBeamExecutorSchema> = async (
   return {
     success: runCommand(
       `beam deploy --name ${options.name} ${resolved.file}:${entrypoint}`,
-      cwd
+      cwd,
+      { PYTHONPATH: context.root }
     ),
   };
 };

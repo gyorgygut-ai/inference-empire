@@ -19,7 +19,7 @@ const runExecutor: PromiseExecutor<DeployModalExecutorSchema> = async (
     return { success: false };
   }
   return {
-    success: runCommand(`modal deploy ${resolved.file}`, cwd),
+    success: runCommand(`modal deploy ${resolved.file}`, cwd, { PYTHONPATH: context.root }),
   };
 };
 

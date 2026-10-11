@@ -2,7 +2,7 @@
 import React from "react"
 import { createChatHook } from "@tanstack/ai-react/ui"
 import { chatOptions } from "./options"
-import { initialChatMessages } from "./messages/initial-messages"
+import { initialMessage } from "./messages/initialMessage"
 import { ChatLayout } from "./components/ChatLayout"
 import { ChatMessage } from "./components/ChatMessage"
 import { TextPart } from "./parts/components/TextPart"
@@ -29,7 +29,7 @@ export const { useAppChat, useChatContext } = createChatHook({
 
 export const ChatClient = ({ outcomes }: { outcomes: PublicOutcome[] }) => {
   const chat = useAppChat({
-    initialMessages: initialChatMessages(outcomes),
+    initialMessages: [initialMessage(outcomes)],
   })
 
   return <chat.AppChat />

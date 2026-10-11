@@ -5,15 +5,23 @@
   "sourceRoot": "apps/tiny_sd",
   "tags": ["type:app", "scope:gpu-worker", "model:tiny-sd"],
   "targets": {
-    "dev": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "modal serve worker_modal_cls_tiny_sd.py",
-        "cwd": "apps/tiny_sd"
-      },
-      "outputs": ["{projectRoot}/dist/dev-endpoint.json"],
+    "dev-modal": {
+      "executor": "@inference/deploy-worker:dev-modal",
       "cache": false,
-      "persistent": true
+      "persistent": true,
+      "options": { "worker": "worker_modal_cls_tiny_sd.py" }
+    },
+    "dev-beam": {
+      "executor": "@inference/deploy-worker:dev-beam",
+      "cache": false,
+      "persistent": true,
+      "options": { "worker": "worker_beam_tq_tiny_sd.py", "entrypoint": "dispatch" }
+    },
+    "dev-flash": {
+      "executor": "@inference/deploy-worker:dev-flash",
+      "cache": false,
+      "persistent": true,
+      "options": { "worker": "worker_flash_cls_tiny_sd.py" }
     },
     "deploy": {
       "dependsOn": ["deploy-modal", "deploy-beam", "deploy-flash"],

@@ -1,6 +1,6 @@
 import { requestSelectedOutcome } from "./request-selected-outcome"
 import type { PublicOutcome } from "@/outcomes"
 
-export function initialChatMessages(outcomes: PublicOutcome[] = []) {
-  return [requestSelectedOutcome(outcomes)]
+export function initialMessage(outcomes: PublicOutcome[] = []) {
+  return requestSelectedOutcome(outcomes)
 }
