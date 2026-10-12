@@ -3,7 +3,7 @@ import { type Env } from './index'
 import createProvider, { isProviderName, type ProviderConfigs, type ProviderName } from './providers/create-provider'
 import { pickTaskHandler } from './pick-task-handler'
 import { decodeTaskId, encodeTaskId } from './task-id'
-import type { InferRequest, InferResponse, InquireResponse } from '../generated/router_flux2_api'
+import type { InferRequest, InferResponse, InquireResponse } from '../generated/router_api'
 
 export const router = Router()
 

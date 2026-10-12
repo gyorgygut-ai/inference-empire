@@ -3,9 +3,11 @@ import { router } from './router';
 import type { Env } from './index';
 
 function resolveEnv(): Env {
-  return {
-    SECRET_AUTH_TOKEN: process.env.SECRET_AUTH_TOKEN ?? '',
-  };
+  const token = process.env.SECRET_AUTH_TOKEN ?? '';
+  if (!token) {
+    throw new Error('SECRET_AUTH_TOKEN is required');
+  }
+  return { SECRET_AUTH_TOKEN: token };
 }
 
 async function toRequest(req: IncomingMessage): Promise<Request> {
@@ -31,13 +33,12 @@ async function toRequest(req: IncomingMessage): Promise<Request> {
   });
 }
 
-const model = process.argv[2] ?? 'flux2';
-const port = Number(process.argv[3] ?? (model === 'krea2' ? '4202' : '4201'));
+const env = resolveEnv();
 
 const server = createServer(async (req: IncomingMessage, res: ServerResponse) => {
   try {
     const request = await toRequest(req);
-    const response = await router.fetch(request, resolveEnv(), undefined);
+    const response = await router.fetch(request, env, undefined);
     res.writeHead(response.status, Object.fromEntries(response.headers.entries()));
     const buf = Buffer.from(await response.arrayBuffer());
     res.end(buf);
@@ -47,6 +48,8 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
   }
 });
 
-server.listen(port, () => {
-  console.log(`[router-${model}] listening on :${port}`);
+server.listen(0, '127.0.0.1', () => {
+  const addr = server.address();
+  const port = typeof addr === 'object' && addr !== null ? addr.port : 0;
+  console.log(`listening on http://127.0.0.1:${port}`);
 });
