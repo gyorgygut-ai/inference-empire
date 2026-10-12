@@ -1,9 +1,0 @@
-{
-  "executors": {
-    "distribute": {
-      "implementation": "./src/executors/distribute/distribute",
-      "schema": "./src/executors/distribute/schema.json",
-      "description": "Read producer dotenv artifacts from dependsOn targets, autoprefix bare env names, write the consumer dotenv file"
-    }
-  }
-}

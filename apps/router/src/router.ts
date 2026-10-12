@@ -3,7 +3,7 @@ import { type Env } from './index'
 import createProvider, { isProviderName, type ProviderConfigs, type ProviderName } from './providers/create-provider'
 import { pickTaskHandler } from './pick-task-handler'
 import { decodeTaskId, encodeTaskId } from './task-id'
-import type { InferRequest, InferResponse, InquireResponse } from '../generated/router-flux2_contract'
+import type { InferRequest, InferResponse, InquireResponse } from '../generated/router_flux2_api'
 
 export const router = Router()
 
@@ -69,15 +69,15 @@ router.all('*', async () => (
   })
 ))
 
-function resolveConfig<K extends ProviderName>(name: K, env: Env): ProviderConfigs[K] {
+function resolveConfig<K extends ProviderName>(name: K, _env: Env): ProviderConfigs[K] {
   if (name === 'beam') {
     return {
-      url: env.BEAM_URL,
-      taskApi: env.BEAM_TASK_API || 'https://api.beam.cloud'
+      url: '',
+      taskApi: 'https://api.beam.cloud'
     } as ProviderConfigs[K]
   }
   return {
-    url: env.FLASH_URL,
-    endpointName: env.FLASH_ENDPOINT
+    url: '',
+    endpointName: ''
   } as ProviderConfigs[K]
 }

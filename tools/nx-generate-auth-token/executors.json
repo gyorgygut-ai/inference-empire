@@ -1,9 +1,0 @@
-{
-  "executors": {
-    "generate": {
-      "implementation": "./src/executors/generate/generate",
-      "schema": "./src/executors/generate/schema.json",
-      "description": "Mint a fresh auth token and print it to stdout"
-    }
-  }
-}

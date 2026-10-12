@@ -1,21 +1,16 @@
 # GPU Workers
 
-**Apps**:
+**Models**: `flux2`, `krea2`, `tiny_sd`, `vision`, `h3_comfy`, `h3_fl2va`, `h3_ref2va`, `realtime_voice` (`apps/{model}`)
 
-- [Flux2](./apps/flux2/AGENTS.md)
-- [Krea2](./apps/krea2/AGENTS.md)
-- [TinySD](./apps/tiny_sd/AGENTS.md)
-- [Vision](./apps/vision/AGENTS.md)
-- [H3 COMFY](./apps/h3_comfy/AGENTS.md)
-- [H3 FL2VA](./apps/h3_fl2va/AGENTS.md)
-- [H3 REF3VA](./apps/h3_ref2va/AGENTS.md)
-- [RT Voice](./apps/realtime_voice/AGENTS.md)
+**NX Project**:
 
-**Activate**:
+- Project `worker-{model}`, e.g. `worker-flux2`
+- Targets `dev-modal`, `deploy-modal`
+- Each `deploy-*` declares `outputs: [dist/worker-{model}/deploy/deploy-*.env]` plus writes `APP_URL` via `tools/deploy-*`
+- Each `dev-*` is `persistent: true`, `cache: false`
+- Contract: `packages/contracts/{model}/inference.json`
 
-- `.agents/skills/modal`
-- `~/.agents/skills/python-uv`
-- `~/.agents/skills/cloud-gpu-workers`
+**Activate**: `modal`, `python-uv`, `cloud-gpu-workers` skills
 
 **Structure**:
 

@@ -1,6 +1,6 @@
 {
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
-  "name": "gpu-workers-<%= modelTag %>",
+  "name": "worker-<%= family %>",
   "projectType": "application",
   "sourceRoot": "apps/<%= family %>",
   "tags": ["type:app", "scope:gpu-worker", "model:<%= modelTag %>"],
@@ -28,23 +28,18 @@
       "options": { "family": "<%= family %>", "python_version": "<%= pythonVersion %>" },
       "cache": true
     },
+    "dev-modal": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "continuous": true,
+      "outputs": ["{workspaceRoot}/dist/worker-<%= family %>/dev/dev-modal.env"],
+      "options": { "command": "tsx tools/deploy-modal.ts worker-<%= family %> dev dev-modal" }
+    },
     "deploy-modal": {
       "executor": "nx:run-commands",
-      "options": { "command": "uv run --locked modal deploy <%= family %>/worker_modal_cls_<%= family %>.py", "cwd": "." },
-      "dependsOn": ["validate-deps"],
-      "cache": false
-    },
-    "deploy-beam": {
-      "executor": "nx:run-commands",
-      "options": { "command": "echo 'Beam deploys on dispatch.put(); see AGENTS.md'", "cwd": "." },
-      "dependsOn": ["validate-deps"],
-      "cache": false
-    },
-    "deploy-flash": {
-      "executor": "nx:run-commands",
-      "options": { "command": "echo 'flash deploy --name <%= modelTag %>; see AGENTS.md'", "cwd": "." },
-      "dependsOn": ["validate-deps"],
-      "cache": false
+      "cache": false,
+      "outputs": ["{workspaceRoot}/dist/worker-<%= family %>/deploy/deploy-modal.env"],
+      "options": { "command": "tsx tools/deploy-modal.ts worker-<%= family %> deploy deploy-modal" }
     }
   }
 }
