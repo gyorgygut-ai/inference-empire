@@ -3,85 +3,49 @@
 **Value Proposition**: Monorepo for inference workers + frontends + tooling.
 
 - **ACTIVATE**: `./opencode/skills/nx-workspace`
-- **Paths**: assume `{projectRoot}` in relative paths
-- **Specs**: specs are always authoritive. Code must match specs
-- **NON-gaps**: good code without specs, example names not coded
+- **Specs**: always authoritive. Code must match specs
+- **Not gaps**: good code without specs, example names not coded
 
 ---
 
-## Monorepo Orchestration
-
-**Dependence order**:
-
-- **Tool**: `dependsOn plus configurations`
-- **Problem**: consumers start before producers are ready
-- **Resolve**: consumer sets `dependsOn` with matched `configuration`
-- **Outcome**: one run boots full chain
-
-**Variant configurations**:
-
-- **Tool**: `targets.configurations`
-- **Problem**: one project serves many variants
-- **Resolve**: one target per variant, each with `dev`, `deploy` entries holding `command` plus `envFile`
-- **Outcome**: target picks variant, configuration picks mode
-
-**Env artifact contract**:
-
-- **Tool**: `outputs plus envFile`
-- **Problem**: runtime values must flow between targets
-- **Resolve**: producer declares `outputs` plus writes file, consumer declares `envFile` in matched entry
-- **Outcome**: cacheable handoff
-- **Ban**: zero runtime dotenv parsing
-
-**Uniform deploy / start scripts**:
-
-- **Tool**: `tools/deploy-vercel|modal|beam|flash plus tools/start-next|modal|beam|flash`
-- **Problem**: each provider needs identical deploy plus start behavior
-- **Resolve**: script inputs `project, configuration, target`, writes `APP_URL` to contracted path
-- **Outcome**: all listed providers share one write contract
-
-**Orchestration primitives**:
-
-- **Tool**: `tools/orchestration/*` single-file `tsx`, zero executors, zero plugins
-- **Problem**: env file writes scattered across app scripts
-- **Resolve**: only `upsert-artifact.ts` writes files, others print to stdout for composition
-- **Outcome**: one writer, composable one-liners in `project.json`
-
-**Contracts**:
-
-- `generate-auth-token.ts` — zero args, stdout `<token>`, zero file IO
-- `prefix-env-vars.ts` — args `<src-file> <PREFIX>`, stdout `PREFIX_KEY=VAL` lines, zero file IO
-- `upsert-artifact.ts` — args `<project> <configuration> <target> KEY=VAL...`, upserts into `dist/{project}/{configuration}/{target}.env`, sole `mkdirSync` plus `writeFileSync` owner
-
-**Verification**:
-
-- **Tool**: `verify`
-- **Problem**: need tiered verification after changes
-- **Resolve**: `audit` -> `build` -> `test`
-
----
-
-## Workers
-
-**Role**: cloud GPU inference workers.
+## Projects
 
 - [Workers](./apps/WORKERS.md)
-- e.g. `worker-flux2:deploy-modal`, artifact `dist/worker-flux2/deploy/deploy-modal.env`, keys `APP_URL`
-
----
-
-## Routers
-
-**Role**: mediate requests between UI and best provider for request.
-
 - [Router](./apps/router/AGENTS.md)
-- e.g. `router:router-flux2 -c dev|deploy`, artifact `dist/router/dev|deploy/router-flux2.env`, keys `APP_URL` plus `SECRET_AUTH_TOKEN`
+- [Generative UI](./apps/generative-ui/AGENTS.md)
 
 ---
 
-## Frontends
+## Verification
 
-**Role**: UIs to interact with cloud inference.
+**generative-ui:face-value**:
 
-- [Generative UI](./apps/generative-ui/AGENTS.md)
-- e.g. `generative-ui:face-value -c dev|deploy`, artifact `dist/generative-ui/dev|deploy/face-value.env`, keys `ROUTER_FLUX2_APP_URL` plus `ROUTER_FLUX2_SECRET_AUTH_TOKEN`
+- **:dev**: `apps/router/tests/acceptance-dev.e2e.spec.ts`
+- **:deploy**: `apps/router/tests/acceptance-deploy.e2e.spec.ts`
+- **critical**: run in the foreground, always with an empty `dist` folder
+
+
+<!-- nx configuration start-->
+<!-- Leave the start & end comments to automatically receive updates. -->
+
+## General Guidelines for working with Nx
+
+- For navigating/exploring the workspace, invoke the `nx-workspace` skill first - it has patterns for querying projects, targets, and dependencies
+- When running tasks (for example build, lint, test, e2e, etc.), always prefer running the task through `nx` (i.e. `nx run`, `nx run-many`, `nx affected`) instead of using the underlying tooling directly
+- Prefix nx commands with the workspace's package manager (e.g., `pnpm nx build`, `npm exec nx test`) - avoids using globally installed CLI
+- You have access to the Nx MCP server and its tools, use them to help the user
+- For Nx plugin best practices, check `node_modules/@nx/<plugin>/PLUGIN.md`. Not all plugins have this file - proceed without it if unavailable.
+- NEVER guess CLI flags - always check nx_docs or `--help` first when unsure
+
+## Scaffolding & Generators
+
+- For scaffolding tasks (creating apps, libs, project structure, setup), ALWAYS invoke the `nx-generate` skill FIRST before exploring or calling MCP tools
+
+## When to use nx_docs
+
+- USE for: advanced config options, unfamiliar flags, migration guides, plugin configuration, edge cases
+- DON'T USE for: basic generator syntax (`nx g @nx/react:app`), standard commands, things you already know
+- The `nx-generate` skill handles generator discovery internally - don't call nx_docs just to look up generator syntax
+
+
+<!-- nx configuration end-->

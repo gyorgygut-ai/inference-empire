@@ -2,9 +2,9 @@ import { readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
 
-const [project, configuration, target] = process.argv.slice(2);
-if (!project || (configuration !== 'dev' && configuration !== 'deploy') || !target) {
-  console.error('usage: deploy-modal.ts <project> <dev|deploy> <target>');
+const [project, configuration] = process.argv.slice(2);
+if (!project || (configuration !== 'dev' && configuration !== 'deploy')) {
+  console.error('usage: deploy-modal.ts <project> <dev|deploy>');
   process.exit(1);
 }
 
@@ -35,7 +35,7 @@ let seenUrl: string | null = null;
 function upsert(url: string): void {
   const result = spawnSync(
     'tsx',
-    ['tools/orchestration/upsert-artifact.ts', project, configuration, target, `APP_URL=${url}`],
+    ['tools/orchestration/upsert-artifact.ts', project, configuration, `MODAL_WORKER_URL=${url}`],
     { stdio: 'inherit' },
   );
   if (result.status !== 0) {

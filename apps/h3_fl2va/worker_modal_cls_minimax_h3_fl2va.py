@@ -78,3 +78,9 @@ class MiniMaxH3Fl2VAWorker:
         return generate(self.storage, self.pipe, self.write_video_audio, **kwargs)
 
 
+@app.function(image=modal.Image.debian_slim().pip_install("fastapi[standard]==0.141.1"), timeout=3600)
+@modal.fastapi_endpoint(method="POST")
+def generate_web(item: dict) -> dict:
+    return MiniMaxH3Fl2VAWorker().generate.remote(**item)
+
+

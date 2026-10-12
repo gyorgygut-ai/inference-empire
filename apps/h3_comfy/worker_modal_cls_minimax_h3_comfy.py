@@ -85,3 +85,9 @@ class MiniMaxH3ComfyWorker:
         return generate(self.storage, self.comfy_base_url, **kwargs)
 
 
+@app.function(image=modal.Image.debian_slim().pip_install("fastapi[standard]==0.141.1"), timeout=3600)
+@modal.fastapi_endpoint(method="POST")
+def generate_web(item: dict) -> dict:
+    return MiniMaxH3ComfyWorker().generate.remote(**item)
+
+

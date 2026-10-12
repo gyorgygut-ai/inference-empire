@@ -1,5 +1,7 @@
+import { Status, type Provider } from './create-provider'
 import { beamProvider } from './provider-beam'
 import { flashProvider } from './provider-flash'
+import { modalProvider } from './provider-modal'
 
 export const enum Status {
   PENDING = 'PENDING',
@@ -19,9 +21,14 @@ export interface FlashConfig {
   endpointName: string
 }
 
+export interface ModalConfig {
+  url: string
+}
+
 export interface ProviderConfigs {
   beam: BeamConfig
   flash: FlashConfig
+  modal: ModalConfig
 }
 
 export type ProviderName = keyof ProviderConfigs
@@ -35,11 +42,12 @@ export interface Provider<K extends ProviderName> {
 
 const providers: { [K in ProviderName]: Provider<K> } = {
   beam: beamProvider,
-  flash: flashProvider
+  flash: flashProvider,
+  modal: modalProvider
 }
 
 export function isProviderName(value: string): value is ProviderName {
-  return value === 'beam' || value === 'flash'
+  return value === 'beam' || value === 'flash' || value === 'modal'
 }
 
 export default function createProvider<K extends ProviderName>(name: K): Provider<K> {

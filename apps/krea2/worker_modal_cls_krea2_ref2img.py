@@ -57,3 +57,9 @@ class Krea2Ref2ImgWorker:
         return generate(self.storage, self.pipe, self.runtime_dir, self.torch_module, **kwargs)
 
 
+@app.function(image=modal.Image.debian_slim().pip_install("fastapi[standard]==0.141.1"), timeout=300)
+@modal.fastapi_endpoint(method="POST")
+def generate_web(item: dict) -> dict:
+    return Krea2Ref2ImgWorker().generate.remote(**item)
+
+

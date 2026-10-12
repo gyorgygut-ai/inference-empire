@@ -1,1 +1,77 @@
-{"$schema": "../../node_modules/nx/schemas/project-schema.json", "name": "generative-ui", "projectType": "application", "sourceRoot": "apps/generative-ui", "tags": ["type:app", "scope:frontend"], "targets": {"face-value": {"executor": "nx:run-commands", "cache": false, "continuous": true, "defaultConfiguration": "dev", "dependsOn": [{"projects": ["router"], "target": "router-flux2"}, "face-value-setup", "face-value-generate-ts"], "configurations": {"dev": {"command": "npm run dev", "cwd": "apps/generative-ui", "envFile": "dist/generative-ui/dev/face-value.env"}, "deploy": {"command": "npm run build", "cwd": "apps/generative-ui", "envFile": "dist/generative-ui/deploy/face-value.env"}}}, "face-value-setup": {"executor": "nx:run-commands", "cache": false, "dependsOn": [{"projects": ["router"], "target": "router-flux2-env"}, {"projects": ["router"], "target": "router-flux2-generate-api"}], "outputs": ["{workspaceRoot}/dist/generative-ui/dev/face-value.env", "{workspaceRoot}/dist/generative-ui/deploy/face-value.env"], "configurations": {"dev": {"command": "ENVS=$(tsx tools/orchestration/prefix-env-vars.ts dist/router/dev/router-flux2.env ROUTER_FLUX2) && tsx tools/orchestration/upsert-artifact.ts generative-ui dev face-value $ENVS"}, "deploy": {"command": "ENVS=$(tsx tools/orchestration/prefix-env-vars.ts dist/router/deploy/router-flux2.env ROUTER_FLUX2) && tsx tools/orchestration/upsert-artifact.ts generative-ui deploy face-value $ENVS"}}}, "face-value-generate-ts": {"executor": "nx:run-commands", "cache": true, "dependsOn": [{"projects": ["router"], "target": "router-flux2-generate-api"}], "inputs": ["{workspaceRoot}/apps/router/dist/flux2_api.json"], "outputs": ["{projectRoot}/generated/router_flux2_api.ts"], "options": {"command": "tsx tools/generate-json-schema-to-ts/src/cli.ts apps/router/dist/flux2_api.json apps/generative-ui/generated/router_flux2_api.ts"}}}}
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "generative-ui",
+  "projectType": "application",
+  "sourceRoot": "apps/generative-ui",
+  "tags": [
+    "type:app",
+    "scope:frontend"
+  ],
+  "targets": {
+    "face-value": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "continuous": true,
+      "defaultConfiguration": "dev",
+      "dependsOn": [
+        {
+          "projects": [
+            "router"
+          ],
+          "target": "router-flux2",
+          "params": "forward"
+        },
+        "face-value-generate-ts"
+      ],
+      "inputs": [
+        "{workspaceRoot}/dist/router-flux2/dev.env",
+        "{workspaceRoot}/dist/router-flux2/deploy.env"
+      ],
+      "configurations": {
+        "dev": {
+          "command": "npm run dev",
+          "cwd": "apps/generative-ui",
+          "envFile": "dist/router-flux2/dev.env"
+        },
+        "deploy": {
+          "command": "tsx tools/deploy-vercel.ts generative-ui face-value generative-ui deploy APP_URL --env-file dist/router-flux2/deploy.env",
+          "envFile": "dist/router-flux2/deploy.env"
+        }
+      }
+    },
+    "face-value-generate-ts": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "dependsOn": [
+        {
+          "projects": [
+            "router"
+          ],
+          "target": "router-flux2-generate-api"
+        }
+      ],
+      "inputs": [
+        "{workspaceRoot}/dist/router-flux2/api-dev.json"
+      ],
+      "outputs": [
+        "{projectRoot}/generated/router_api.ts"
+      ],
+      "options": {
+        "command": "tsx apps/router/scripts/generate-ts.ts dist/router-flux2/api-dev.json apps/generative-ui/generated/router_api.ts"
+      }
+    },
+    "test-e2e": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "dependsOn": [
+        {
+          "projects": ["router"],
+          "target": "router-flux2:dev"
+        }
+      ],
+      "options": {
+        "command": "npx vitest run --config apps/generative-ui/vitest.e2e.config.mts apps/generative-ui/tests/"
+      }
+    }
+  }
+}

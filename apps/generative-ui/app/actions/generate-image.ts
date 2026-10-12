@@ -3,7 +3,7 @@
 import sharp from "sharp"
 import { inferWithPolling } from "@inference/task-queue-client"
 import { getInferenceOutcome } from "@/outcomes"
-import type { Flux2Klein9BInput, Flux2Klein9BOutput } from "@/generated/router_flux2_api"
+import type { Flux2Klein9BInput, Flux2Klein9BOutput } from "@/generated/router_api"
 
 const MAX_SIZE = 512
 const MAX_BYTES = 5 * 1024 * 1024

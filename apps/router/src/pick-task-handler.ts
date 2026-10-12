@@ -1,3 +1,3 @@
-export function pickTaskHandler(): 'beam' {
-  return 'beam'
+export function pickTaskHandler(): 'modal' {
+  return 'modal'
 }

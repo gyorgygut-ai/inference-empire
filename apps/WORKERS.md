@@ -1,16 +1,27 @@
 # GPU Workers
 
 **Models**: `flux2`, `krea2`, `tiny_sd`, `vision`, `h3_comfy`, `h3_fl2va`, `h3_ref2va`, `realtime_voice` (`apps/{model}`)
+**Contract**: `packages/contracts/{model}/inference.json`
 
-**NX Project**:
+---
 
-- Project `worker-{model}`, e.g. `worker-flux2`
-- Targets `dev-modal`, `deploy-modal`
-- Each `deploy-*` declares `outputs: [dist/worker-{model}/deploy/deploy-*.env]` plus writes `APP_URL` via `tools/deploy-*`
-- Each `dev-*` is `persistent: true`, `cache: false`
-- Contract: `packages/contracts/{model}/inference.json`
+## NX Targets
 
-**Activate**: `modal`, `python-uv`, `cloud-gpu-workers` skills
+**worker-{model}:dev-{modal|beam|flash}**:
+
+- **command**: `@tools/` `serve-modal` `serve-beam` `serve-flash`
+- **upsert artfacts**: `MODAL_WORKER_URL`, `BEAM_WORKER_URL`, `FLASH_WORKER_URL`
+- **artifacts target**: `@dist/worker-{model}/dev.env`
+
+**worker-{model}:deploy-{modal|beam|flash}**:
+
+- **command**: `@tools/` `deploy-modal` `deploy-beam` `deploy-flash`
+- **upsert artfacts**: `MODAL_WORKER_URL`, `BEAM_WORKER_URL`, `FLASH_WORKER_URL`
+- **artifacts target**: `@dist/worker-{model}/deploy.env`
+
+---
+
+## Coding
 
 **Structure**:
 

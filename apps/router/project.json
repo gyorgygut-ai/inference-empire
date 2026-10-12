@@ -3,25 +3,52 @@
   "name": "router",
   "projectType": "application",
   "sourceRoot": "apps/router",
-  "tags": ["type:app", "scope:router"],
+  "tags": [
+    "type:app",
+    "scope:router"
+  ],
   "targets": {
     "router-flux2": {
       "executor": "nx:run-commands",
       "cache": false,
       "continuous": true,
       "defaultConfiguration": "dev",
-      "dependsOn": ["router-flux2-generate-api", "router-flux2-generate-ts"],
+      "dependsOn": [
+        {
+          "projects": [
+            "worker-flux2"
+          ],
+          "target": "dev-modal",
+          "params": "forward"
+        },
+        "router-flux2-generate-api",
+        "router-flux2-generate-ts",
+        "router-flux2-generate-auth-token",
+        "router-flux2-upsert-url"
+      ],
       "outputs": [
-        "{workspaceRoot}/dist/router/dev/router-flux2.env",
-        "{workspaceRoot}/dist/router/deploy/router-flux2.env"
+        "{workspaceRoot}/dist/router-flux2/dev.env",
+        "{workspaceRoot}/dist/router-flux2/deploy.env"
       ],
       "configurations": {
         "dev": {
-          "command": "TOKEN=$(tsx tools/orchestration/generate-auth-token.ts) && rm -f /tmp/router-flux2.log && (SECRET_AUTH_TOKEN=$TOKEN tsx apps/router/src/serve.ts > /tmp/router-flux2.log 2>&1 & echo $! > /tmp/router-flux2.pid) && while ! grep -q 'listening on' /tmp/router-flux2.log 2>/dev/null; do sleep 0.1; done && URL=$(grep -o 'http://[^ ]*' /tmp/router-flux2.log | head -n 1) && tsx tools/orchestration/upsert-artifact.ts router dev router-flux2 APP_URL=$URL SECRET_AUTH_TOKEN=$TOKEN && wait $(cat /tmp/router-flux2.pid)"
+          "command": "set -a && . dist/worker-flux2/dev.env && . dist/router-flux2/dev.env && set +a && PORT=4201 npx tsx watch apps/router/src/serve.ts",
+          "envFile": "dist/worker-flux2/dev.env"
         },
         "deploy": {
-          "command": "TOKEN=$(tsx tools/orchestration/generate-auth-token.ts) && rm -f /tmp/router-flux2.log && (SECRET_AUTH_TOKEN=$TOKEN tsx apps/router/src/serve.ts > /tmp/router-flux2.log 2>&1 & echo $! > /tmp/router-flux2.pid) && while ! grep -q 'listening on' /tmp/router-flux2.log 2>/dev/null; do sleep 0.1; done && URL=$(grep -o 'http://[^ ]*' /tmp/router-flux2.log | head -n 1) && tsx tools/orchestration/upsert-artifact.ts router deploy router-flux2 APP_URL=$URL SECRET_AUTH_TOKEN=$TOKEN && wait $(cat /tmp/router-flux2.pid)"
+          "command": "set -a && . dist/worker-flux2/deploy.env && . dist/router-flux2/deploy.env && set +a && tsx tools/deploy-vercel.ts router router-flux2 router-flux2 deploy ROUTER_URL",
+          "envFile": "dist/worker-flux2/deploy.env"
         }
+      }
+    },
+    "router-flux2-upsert-url": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "outputs": [
+        "{workspaceRoot}/dist/router-flux2/dev.env"
+      ],
+      "options": {
+        "command": "tsx tools/orchestration/upsert-artifact.ts router-flux2 dev ROUTER_URL=http://127.0.0.1:4201"
       }
     },
     "router-flux2-generate-api": {
@@ -31,38 +58,95 @@
         "{workspaceRoot}/packages/contracts/flux2/inference.json",
         "{workspaceRoot}/packages/contracts/api-task-queue.json"
       ],
-      "outputs": ["{workspaceRoot}/dist/router/flux2_api.json"],
+      "outputs": [
+        "{workspaceRoot}/dist/router-flux2/api-dev.json",
+        "{workspaceRoot}/dist/router-flux2/api-deploy.json"
+      ],
       "options": {
-        "command": "tsx apps/router/scripts/generate-api.ts packages/contracts/api-task-queue.json packages/contracts/flux2/inference.json dist/router/flux2_api.json"
+        "command": "tsx apps/router/scripts/generate-api.ts packages/contracts/api-task-queue.json packages/contracts/flux2/inference.json dist/router-flux2/api-dev.json && tsx apps/router/scripts/generate-api.ts packages/contracts/api-task-queue.json packages/contracts/flux2/inference.json dist/router-flux2/api-deploy.json"
       }
     },
     "router-flux2-generate-ts": {
       "executor": "nx:run-commands",
       "cache": true,
-      "dependsOn": ["router-flux2-generate-api"],
-      "inputs": ["{workspaceRoot}/dist/router/flux2_api.json"],
-      "outputs": ["{projectRoot}/generated/router_api.ts"],
-      "options": {
-        "command": "tsx apps/router/scripts/generate-ts.ts dist/router/flux2_api.json apps/router/generated/router_api.ts"
+      "dependsOn": [
+        "router-flux2-generate-api"
+      ],
+      "defaultConfiguration": "dev",
+      "inputs": [
+        "{workspaceRoot}/dist/router-flux2/api-dev.json",
+        "{workspaceRoot}/dist/router-flux2/api-deploy.json"
+      ],
+      "outputs": [
+        "{projectRoot}/generated/api.ts"
+      ],
+      "configurations": {
+        "dev": {
+          "command": "tsx apps/router/scripts/generate-ts.ts dist/router-flux2/api-dev.json apps/router/generated/api.ts"
+        },
+        "deploy": {
+          "command": "tsx apps/router/scripts/generate-ts.ts dist/router-flux2/api-deploy.json apps/router/generated/api.ts"
+        }
+      }
+    },
+    "router-flux2-generate-auth-token": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "defaultConfiguration": "dev",
+      "outputs": [
+        "{workspaceRoot}/dist/router-flux2/dev.env",
+        "{workspaceRoot}/dist/router-flux2/deploy.env"
+      ],
+      "configurations": {
+        "dev": {
+          "command": "TOKEN=$(tsx tools/orchestration/generate-auth-token.ts) && tsx tools/orchestration/upsert-artifact.ts router-flux2 dev SECRET_AUTH_TOKEN=$TOKEN"
+        },
+        "deploy": {
+          "command": "TOKEN=$(tsx tools/orchestration/generate-auth-token.ts) && tsx tools/orchestration/upsert-artifact.ts router-flux2 deploy SECRET_AUTH_TOKEN=$TOKEN"
+        }
       }
     },
     "router-krea2": {
       "executor": "nx:run-commands",
       "cache": false,
       "continuous": true,
-      "dependsOn": ["router-krea2-generate-api", "router-krea2-generate-ts"],
       "defaultConfiguration": "dev",
+      "dependsOn": [
+        {
+          "projects": [
+            "worker-krea2"
+          ],
+          "target": "dev-modal",
+          "params": "forward"
+        },
+        "router-krea2-generate-api",
+        "router-krea2-generate-ts",
+        "router-krea2-generate-auth-token",
+        "router-krea2-upsert-url"
+      ],
       "outputs": [
-        "{workspaceRoot}/dist/router/dev/router-krea2.env",
-        "{workspaceRoot}/dist/router/deploy/router-krea2.env"
+        "{workspaceRoot}/dist/router-krea2/dev.env",
+        "{workspaceRoot}/dist/router-krea2/deploy.env"
       ],
       "configurations": {
         "dev": {
-          "command": "TOKEN=$(tsx tools/orchestration/generate-auth-token.ts) && rm -f /tmp/router-krea2.log && (SECRET_AUTH_TOKEN=$TOKEN tsx apps/router/src/serve.ts > /tmp/router-krea2.log 2>&1 & echo $! > /tmp/router-krea2.pid) && while ! grep -q 'listening on' /tmp/router-krea2.log 2>/dev/null; do sleep 0.1; done && URL=$(grep -o 'http://[^ ]*' /tmp/router-krea2.log | head -n 1) && tsx tools/orchestration/upsert-artifact.ts router dev router-krea2 APP_URL=$URL SECRET_AUTH_TOKEN=$TOKEN && wait $(cat /tmp/router-krea2.pid)"
+          "command": "set -a && . dist/worker-krea2/dev.env && . dist/router-krea2/dev.env && set +a && PORT=4202 npx tsx watch apps/router/src/serve.ts",
+          "envFile": "dist/worker-krea2/dev.env"
         },
         "deploy": {
-          "command": "TOKEN=$(tsx tools/orchestration/generate-auth-token.ts) && rm -f /tmp/router-krea2.log && (SECRET_AUTH_TOKEN=$TOKEN tsx apps/router/src/serve.ts > /tmp/router-krea2.log 2>&1 & echo $! > /tmp/router-krea2.pid) && while ! grep -q 'listening on' /tmp/router-krea2.log 2>/dev/null; do sleep 0.1; done && URL=$(grep -o 'http://[^ ]*' /tmp/router-krea2.log | head -n 1) && tsx tools/orchestration/upsert-artifact.ts router deploy router-krea2 APP_URL=$URL SECRET_AUTH_TOKEN=$TOKEN && wait $(cat /tmp/router-krea2.pid)"
+          "command": "set -a && . dist/worker-krea2/deploy.env && . dist/router-krea2/deploy.env && set +a && tsx tools/deploy-vercel.ts router router-krea2 router-krea2 deploy ROUTER_URL",
+          "envFile": "dist/worker-krea2/deploy.env"
         }
+      }
+    },
+    "router-krea2-upsert-url": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "outputs": [
+        "{workspaceRoot}/dist/router-krea2/dev.env"
+      ],
+      "options": {
+        "command": "tsx tools/orchestration/upsert-artifact.ts router-krea2 dev ROUTER_URL=http://127.0.0.1:4202"
       }
     },
     "router-krea2-generate-api": {
@@ -72,19 +156,67 @@
         "{workspaceRoot}/packages/contracts/krea2/inference.json",
         "{workspaceRoot}/packages/contracts/api-task-queue.json"
       ],
-      "outputs": ["{workspaceRoot}/dist/router/krea2_api.json"],
+      "outputs": [
+        "{workspaceRoot}/dist/router-krea2/api-dev.json",
+        "{workspaceRoot}/dist/router-krea2/api-deploy.json"
+      ],
       "options": {
-        "command": "tsx apps/router/scripts/generate-api.ts packages/contracts/api-task-queue.json packages/contracts/krea2/inference.json dist/router/krea2_api.json"
+        "command": "tsx apps/router/scripts/generate-api.ts packages/contracts/api-task-queue.json packages/contracts/krea2/inference.json dist/router-krea2/api-dev.json && tsx apps/router/scripts/generate-api.ts packages/contracts/api-task-queue.json packages/contracts/krea2/inference.json dist/router-krea2/api-deploy.json"
       }
     },
     "router-krea2-generate-ts": {
       "executor": "nx:run-commands",
       "cache": true,
-      "dependsOn": ["router-krea2-generate-api"],
-      "inputs": ["{workspaceRoot}/dist/router/krea2_api.json"],
-      "outputs": ["{projectRoot}/generated/router_api.ts"],
-      "options": {
-        "command": "tsx apps/router/scripts/generate-ts.ts dist/router/krea2_api.json apps/router/generated/router_api.ts"
+      "dependsOn": [
+        "router-krea2-generate-api"
+      ],
+      "defaultConfiguration": "dev",
+      "inputs": [
+        "{workspaceRoot}/dist/router-krea2/api-dev.json",
+        "{workspaceRoot}/dist/router-krea2/api-deploy.json"
+      ],
+      "outputs": [
+        "{projectRoot}/generated/api.ts"
+      ],
+      "configurations": {
+        "dev": {
+          "command": "tsx apps/router/scripts/generate-ts.ts dist/router-krea2/api-dev.json apps/router/generated/api.ts"
+        },
+        "deploy": {
+          "command": "tsx apps/router/scripts/generate-ts.ts dist/router-krea2/api-deploy.json apps/router/generated/api.ts"
+        }
+      }
+    },
+    "router-krea2-generate-auth-token": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "defaultConfiguration": "dev",
+      "outputs": [
+        "{workspaceRoot}/dist/router-krea2/dev.env",
+        "{workspaceRoot}/dist/router-krea2/deploy.env"
+      ],
+      "configurations": {
+        "dev": {
+          "command": "TOKEN=$(tsx tools/orchestration/generate-auth-token.ts) && tsx tools/orchestration/upsert-artifact.ts router-krea2 dev SECRET_AUTH_TOKEN=$TOKEN"
+        },
+        "deploy": {
+          "command": "TOKEN=$(tsx tools/orchestration/generate-auth-token.ts) && tsx tools/orchestration/upsert-artifact.ts router-krea2 deploy SECRET_AUTH_TOKEN=$TOKEN"
+        }
+      }
+    },
+    "test-e2e": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "defaultConfiguration": "dev",
+      "configurations": {
+        "dev": {
+          "command": "ACCEPTANCE_MODELS=${ACCEPTANCE_MODELS:-flux2} npx vitest run --config vitest.e2e.config.mts tests/acceptance-dev.e2e.spec.ts",
+          "cwd": "apps/router"
+        },
+        "deploy": {
+          "command": "ACCEPTANCE_MODELS=${ACCEPTANCE_MODELS:-flux2} npx vitest run --config vitest.e2e.config.mts tests/acceptance-deploy.e2e.spec.ts",
+          "cwd": "apps/router"
+        }
       }
     }
   }
