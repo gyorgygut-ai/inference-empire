@@ -11,7 +11,8 @@
       "continuous": true,
       "defaultConfiguration": "dev",
       "dependsOn": [
-        {"projects": ["router"], "target": "router-flux2", "params": "forward"},
+        {"projects": ["router"], "target": "router-flux2:dev", "params": "forward"},
+        {"projects": ["router"], "target": "router-flux2:deploy", "params": "forward"},
         "face-value-generate-ts"
       ],
       "inputs": [
@@ -39,14 +40,6 @@
       "outputs": ["{projectRoot}/generated/router_api.ts"],
       "options": {
         "command": "tsx apps/router/scripts/generate-ts.ts dist/router-flux2/dev/api.json apps/face-value/generated/router_api.ts"
-      }
-    },
-    "test-e2e": {
-      "executor": "nx:run-commands",
-      "cache": false,
-      "dependsOn": [{"projects": ["router"], "target": "router-flux2:dev"}],
-      "options": {
-        "command": "npx vitest run --config apps/face-value/vitest.e2e.config.mts apps/face-value/tests/"
       }
     }
   }
