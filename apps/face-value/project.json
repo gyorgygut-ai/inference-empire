@@ -24,11 +24,11 @@
       ],
       "configurations": {
         "dev": {
-          "command": "ROUTER_URL=$(cat dist/router-flux2/dev/ROUTER_URL) SECRET_AUTH_TOKEN=$(cat dist/router-flux2/dev/ROUTER_SECRET_AUTH_TOKEN) npm run dev",
+          "command": "ROUTER_URL=$(cat dist/router-flux2/dev/ROUTER_URL) ROUTER_SECRET_AUTH_TOKEN=$(cat dist/router-flux2/dev/ROUTER_SECRET_AUTH_TOKEN) npm run dev",
           "cwd": "apps/face-value"
         },
         "deploy": {
-          "command": "R=$(cat dist/router-flux2/deploy/ROUTER_URL); S=$(cat dist/router-flux2/deploy/ROUTER_SECRET_AUTH_TOKEN); ROUTER_URL=$R ROUTER_SECRET_AUTH_TOKEN=$S tsx -e \"import('./apps/face-value/env.schema.ts').then(m=>m.envSchema.parse(process.env))\" && tsx tools/deploy-vercel.ts face-value face-value face-value deploy APP_URL --token $FACE_VALUE_VERCEL_TOKEN --org $FACE_VALUE_VERCEL_ORG_ID --project-id $FACE_VALUE_VERCEL_PROJECT_ID"
+          "command": "R=$(cat dist/router-flux2/deploy/ROUTER_URL); S=$(cat dist/router-flux2/deploy/ROUTER_SECRET_AUTH_TOKEN); ROUTER_URL=$R ROUTER_SECRET_AUTH_TOKEN=$S tsx -e \"import('./apps/face-value/env.schema.ts').then(m=>m.envSchema.parse(process.env))\" && tsx -e \"import('./apps/face-value/env.deploy-schema.ts').then(m=>m.deployEnvSchema.parse(process.env))\" && tsx tools/deploy-vercel.ts face-value face-value face-value deploy APP_URL --token $FACE_VALUE_VERCEL_TOKEN --org $FACE_VALUE_VERCEL_ORG_ID --project-id $FACE_VALUE_VERCEL_PROJECT_ID"
         }
       }
     },
