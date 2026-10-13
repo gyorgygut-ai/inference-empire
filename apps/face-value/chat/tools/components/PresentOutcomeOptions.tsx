@@ -1,9 +1,9 @@
 "use client"
 import React from "react"
 import { useChatContext } from "@/chat/client"
-import { vocabulary } from "@packages/ui/chat/vocabulary/en"
+import { vocabulary } from "@/chat/vocabulary/en"
 import { requestReferenceImage } from "../../messages/request-reference-image"
-import { textPart } from "../parts/text"
+import { textPart } from "../../parts/text"
 import type { ToolProps } from "@tanstack/ai-react/ui"
 import type { ChatOptions } from "../../options"
 

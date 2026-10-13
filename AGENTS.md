@@ -16,16 +16,6 @@
 
 ---
 
-## Verification
-
-**face-value**:
-
-- **:dev**: `apps/router/tests/acceptance-dev.e2e.spec.ts`
-- **:deploy**: `apps/router/tests/acceptance-deploy.e2e.spec.ts`
-- **critical**: run in the foreground, always with an empty `dist` folder
-
----
-
 ## End-to-end checklist (every job)
 
 - Scope line names every affected project; nothing silently out of scope

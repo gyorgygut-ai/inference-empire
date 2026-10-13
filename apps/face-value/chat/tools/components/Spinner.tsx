@@ -1,6 +1,6 @@
 "use client"
 import React from "react"
-import { vocabulary } from "@packages/ui/chat/vocabulary/en"
+import { vocabulary } from "@/chat/vocabulary/en"
 
 export const Spinner = () => (
   <div className="my-2 flex items-center gap-2" role="status" aria-labelledby="statusWorking">

@@ -2,8 +2,8 @@
 import React from "react"
 import { useChatContext } from "@/chat/client"
 import { generateImageAction } from "@/app/actions/generate-image"
-import { vocabulary } from "@packages/ui/chat/vocabulary/en"
-import { textPart } from "../parts/text"
+import { vocabulary } from "@/chat/vocabulary/en"
+import { textPart } from "../../parts/text"
 import type { ToolProps } from "@tanstack/ai-react/ui"
 import type { ChatOptions } from "../../options"
 

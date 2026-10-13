@@ -1,6 +1,6 @@
 "use client"
 import React from "react"
-import { vocabulary } from "@packages/ui/chat/vocabulary/en"
+import { vocabulary } from "@/chat/vocabulary/en"
 
 export const GenerateImageArtifact = ({ url }: { url: string }) => (
   <figure className="mb-4 animate-in fade-in-50 slide-in-from-bottom-2 duration-500">

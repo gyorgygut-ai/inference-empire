@@ -6,6 +6,11 @@ import { initialMessage } from "./messages/initialMessage"
 import { Layout, Message } from "@inference/ui/chat/components"
 import { TextPart } from "@inference/ui/chat/parts/components/TextPart"
 import type { PublicOutcome } from "@/outcomes"
+import {
+  PresentOutcomeOptions,
+  PresentImageUpload,
+  GenerateImageTool,
+} from "./tools/components"
 
 export const { useAppChat, useChatContext } = createChatHook({
   options: chatOptions,
@@ -16,6 +21,11 @@ export const { useAppChat, useChatContext } = createChatHook({
   partsComponents: {
     text: TextPart,
   },
+  toolsComponents: {
+    presentOutcomeOptions: PresentOutcomeOptions,
+    presentImageUpload: PresentImageUpload,
+    runGenerateImage: GenerateImageTool,
+  },
 })
 
 export const ChatClient = ({ outcomes }: { outcomes: PublicOutcome[] }) => {
@@ -24,4 +34,4 @@ export const ChatClient = ({ outcomes }: { outcomes: PublicOutcome[] }) => {
   })
 
   return <chat.AppChat />
-}
+};
