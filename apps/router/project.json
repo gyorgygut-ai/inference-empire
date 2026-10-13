@@ -133,7 +133,7 @@
           "projects": [
             "worker-krea2"
           ],
-          "target": "dev-modal",
+          "target": "deploy-modal",
           "params": "forward"
         },
         "router-krea2-generate-api",
