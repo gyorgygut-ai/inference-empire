@@ -17,8 +17,8 @@ type GenerateImageInput = {
 type GenerateImageResult = { presignedUrl: string } | { error: string }
 
 export async function generateImageAction(input: GenerateImageInput): Promise<GenerateImageResult> {
-  const baseUrl = process.env.ROUTER_FLUX2_APP_URL ?? ""
-  const token = process.env.ROUTER_FLUX2_SECRET_AUTH_TOKEN ?? ""
+  const baseUrl = process.env.ROUTER_URL ?? ""
+  const token = process.env.SECRET_AUTH_TOKEN ?? ""
   if (!baseUrl || !token) {
     return { error: "Server misconfigured" }
   }

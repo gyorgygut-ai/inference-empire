@@ -4,11 +4,9 @@ import type { Env } from '../src/index'
 function resolveEnv(): Env {
   return {
     SECRET_AUTH_TOKEN: process.env.SECRET_AUTH_TOKEN ?? '',
-    ROUTER_FAMILY: process.env.ROUTER_FAMILY ?? '',
-    BEAM_URL: process.env.BEAM_URL ?? '',
-    BEAM_TASK_API: process.env.BEAM_TASK_API ?? '',
-    FLASH_URL: process.env.FLASH_URL ?? '',
-    FLASH_ENDPOINT: process.env.FLASH_ENDPOINT ?? ''
+    MODAL_WORKER_URL: process.env.MODAL_WORKER_URL,
+    BEAM_WORKER_URL: process.env.BEAM_WORKER_URL,
+    FLASH_WORKER_URL: process.env.FLASH_WORKER_URL,
   }
 }
 

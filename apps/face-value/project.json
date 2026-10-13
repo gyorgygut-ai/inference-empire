@@ -1,0 +1,52 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "face-value",
+  "projectType": "application",
+  "sourceRoot": "apps/face-value",
+  "tags": ["type:app", "scope:frontend"],
+  "targets": {
+    "face-value": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "continuous": true,
+      "defaultConfiguration": "dev",
+      "dependsOn": [
+        {"projects": ["router"], "target": "router-flux2", "params": "forward"},
+        "face-value-generate-ts"
+      ],
+      "inputs": [
+        "{workspaceRoot}/dist/router-flux2/dev/ROUTER_URL",
+        "{workspaceRoot}/dist/router-flux2/dev/ROUTER_SECRET_AUTH_TOKEN",
+        "{workspaceRoot}/dist/router-flux2/deploy/ROUTER_URL",
+        "{workspaceRoot}/dist/router-flux2/deploy/ROUTER_SECRET_AUTH_TOKEN"
+      ],
+      "configurations": {
+        "dev": {
+          "command": "ROUTER_URL=$(cat dist/router-flux2/dev/ROUTER_URL) SECRET_AUTH_TOKEN=$(cat dist/router-flux2/dev/ROUTER_SECRET_AUTH_TOKEN) npm run dev",
+          "cwd": "apps/face-value"
+        },
+        "deploy": {
+          "command": "ROUTER_URL=$(cat dist/router-flux2/deploy/ROUTER_URL) SECRET_AUTH_TOKEN=$(cat dist/router-flux2/deploy/ROUTER_SECRET_AUTH_TOKEN) tsx tools/deploy-vercel.ts face-value face-value face-value deploy APP_URL"
+        }
+      }
+    },
+    "face-value-generate-ts": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "dependsOn": [{"projects": ["router"], "target": "router-flux2-generate-api"}],
+      "inputs": ["{workspaceRoot}/dist/router-flux2/dev/api.json"],
+      "outputs": ["{projectRoot}/generated/router_api.ts"],
+      "options": {
+        "command": "tsx apps/router/scripts/generate-ts.ts dist/router-flux2/dev/api.json apps/face-value/generated/router_api.ts"
+      }
+    },
+    "test-e2e": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "dependsOn": [{"projects": ["router"], "target": "router-flux2:dev"}],
+      "options": {
+        "command": "npx vitest run --config apps/face-value/vitest.e2e.config.mts apps/face-value/tests/"
+      }
+    }
+  }
+}

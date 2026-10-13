@@ -9,16 +9,34 @@ export const modalProvider: Provider<'modal'> = {
     return { provider, originalTaskId }
   },
   async pushToTaskQueue(input, config) {
-    const response = await fetch(config.url, {
+    const response = await fetch(`${config.url}/infer`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(input),
+      body: JSON.stringify({ input }),
     })
-    const result = await response.json() as Record<string, unknown>
-    return { task_id: result.task_id ?? `modal-${Date.now()}-${Math.random().toString(36).slice(2, 9)}` }
+    const result: { task_id: string } = await response.json()
+    return { task_id: result.task_id }
   },
-  async fetchTaskStatus(_taskId, config) {
-    // Modal worker is synchronous per request; no status polling
-    return { status: Status.COMPLETED, output: undefined }
+  async fetchTaskStatus(taskId, config) {
+    const response = await fetch(`${config.url}/inquire?id=${encodeURIComponent(taskId)}`)
+    const result: { status: string; output?: unknown } = await response.json()
+    return {
+      status: mapTaskStatusToResponse(result.status),
+      output: result.output
+    }
   }
+}
+
+function mapTaskStatusToResponse(providerStatus: string): Status {
+  const mapping: Record<string, Status> = {
+    'completed': Status.COMPLETED,
+    'failed': Status.FAILED,
+    'processing': Status.PROCESSING,
+    'pending': Status.PENDING,
+    'COMPLETED': Status.COMPLETED,
+    'FAILED': Status.FAILED,
+    'PROCESSING': Status.PROCESSING,
+    'PENDING': Status.PENDING
+  }
+  return mapping[providerStatus] || Status.PENDING
 }

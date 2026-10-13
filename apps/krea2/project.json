@@ -1,1 +1,76 @@
-{"$schema": "../../../node_modules/nx/schemas/project-schema.json", "name": "worker-krea2", "projectType": "application", "sourceRoot": "apps/krea2", "tags": ["type:app", "scope:gpu-worker", "model:krea2"], "targets": {"dev-modal": {"executor": "nx:run-commands", "cache": false, "continuous": true, "outputs": ["{workspaceRoot}/dist/worker-krea2/dev.env"], "options": {"command": "uv run --locked python tools/serve-modal.py worker-krea2 dev"}}, "dev-beam": {"executor": "nx:run-commands", "cache": false, "continuous": true, "outputs": ["{workspaceRoot}/dist/worker-krea2/dev.env"], "options": {"command": "uv run --locked python tools/serve-beam.py worker-krea2 dev"}}, "dev-flash": {"executor": "nx:run-commands", "cache": false, "continuous": true, "outputs": ["{workspaceRoot}/dist/worker-krea2/dev.env"], "options": {"command": "uv run --locked python tools/serve-flash.py worker-krea2 dev"}}, "deploy-modal": {"executor": "nx:run-commands", "cache": false, "outputs": ["{workspaceRoot}/dist/worker-krea2/deploy.env"], "options": {"command": "tsx tools/deploy-modal.ts worker-krea2 deploy"}}, "deploy-beam": {"executor": "nx:run-commands", "cache": false, "outputs": ["{workspaceRoot}/dist/worker-krea2/deploy.env"], "options": {"command": "tsx tools/deploy-beam.ts worker-krea2 deploy"}}, "deploy-flash": {"executor": "nx:run-commands", "cache": false, "outputs": ["{workspaceRoot}/dist/worker-krea2/deploy.env"], "options": {"command": "tsx tools/deploy-flash.ts worker-krea2 deploy"}}}}
+{
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "name": "worker-krea2",
+  "projectType": "application",
+  "sourceRoot": "apps/krea2",
+  "tags": [
+    "type:app",
+    "scope:gpu-worker",
+    "model:krea2"
+  ],
+  "targets": {
+    "dev-modal": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "continuous": true,
+      "outputs": [
+        "{workspaceRoot}/dist/worker-krea2/dev/MODAL_WORKER_URL"
+      ],
+      "options": {
+        "command": "uv run --locked python tools/serve-modal.py worker-krea2 dev"
+      }
+    },
+    "dev-beam": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "continuous": true,
+      "outputs": [
+        "{workspaceRoot}/dist/worker-krea2/dev/BEAM_WORKER_URL"
+      ],
+      "options": {
+        "command": "uv run --locked python tools/serve-beam.py worker-krea2 dev"
+      }
+    },
+    "dev-flash": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "continuous": true,
+      "outputs": [
+        "{workspaceRoot}/dist/worker-krea2/dev/FLASH_WORKER_URL"
+      ],
+      "options": {
+        "command": "uv run --locked python tools/serve-flash.py worker-krea2 dev"
+      }
+    },
+    "deploy-modal": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "outputs": [
+        "{workspaceRoot}/dist/worker-krea2/deploy/MODAL_WORKER_URL"
+      ],
+      "options": {
+        "command": "tsx tools/deploy-modal.ts worker-krea2 deploy"
+      }
+    },
+    "deploy-beam": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "outputs": [
+        "{workspaceRoot}/dist/worker-krea2/deploy/BEAM_WORKER_URL"
+      ],
+      "options": {
+        "command": "tsx tools/deploy-beam.ts worker-krea2 deploy"
+      }
+    },
+    "deploy-flash": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "outputs": [
+        "{workspaceRoot}/dist/worker-krea2/deploy/FLASH_WORKER_URL"
+      ],
+      "options": {
+        "command": "tsx tools/deploy-flash.ts worker-krea2 deploy"
+      }
+    }
+  }
+}

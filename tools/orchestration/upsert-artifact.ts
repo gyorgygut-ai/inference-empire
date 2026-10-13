@@ -1,5 +1,5 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 const [project, configuration, ...pairs] = process.argv.slice(2);
 const updates = new Map<string, string>();
@@ -12,22 +12,10 @@ for (const pair of pairs) {
   updates.set(pair.slice(0, eq), pair.slice(eq + 1));
 }
 
-const outPath = join(process.cwd(), 'dist', project, `${configuration}.env`);
-mkdirSync(dirname(outPath), { recursive: true });
-const order: string[] = [];
-const values = new Map<string, string>();
-if (existsSync(outPath)) {
-  for (const line of readFileSync(outPath, 'utf8').split('\n')) {
-    const eq = line.indexOf('=');
-    if (eq === -1) continue;
-    const key = line.slice(0, eq).trim();
-    if (!values.has(key)) order.push(key);
-    values.set(key, line.slice(eq + 1).trim());
-  }
-}
+const outDir = join(process.cwd(), 'dist', project, configuration);
+mkdirSync(outDir, { recursive: true });
 for (const [key, value] of updates) {
-  if (!values.has(key)) order.push(key);
-  values.set(key, value);
+  const outPath = join(outDir, key);
+  writeFileSync(outPath, value.replace(/\x1b\[[0-9;]*m/g, '').trim());
+  console.log(`[upsert-artifact] wrote ${outPath}`);
 }
-writeFileSync(outPath, order.map((key) => `${key}=${values.get(key)}`).join('\n') + '\n');
-console.log(`[upsert-artifact] wrote ${outPath}`);

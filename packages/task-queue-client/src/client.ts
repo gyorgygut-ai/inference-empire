@@ -7,11 +7,11 @@ export interface Config {
 
 export type TaskStatus = "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED" | "CANCELLED"
 
-export interface InferResponse {
+export interface AddToQueueResponse {
   task_id: string
 }
 
-export interface InquireResponse<Output> {
+export interface SupResponse<Output> {
   status: TaskStatus
   output?: Output
 }
@@ -58,7 +58,7 @@ async function submit<Input extends Record<string, unknown>>(input: Input, confi
   if (!response.ok) {
     throw await originalError(response)
   }
-  const body = (await response.json()) as InferResponse
+  const body = (await response.json()) as AddToQueueResponse
   return body.task_id
 }
 
@@ -77,7 +77,7 @@ async function tick<Output>(
   if (!response.ok) {
     throw await originalError(response)
   }
-  const body = (await response.json()) as InquireResponse<Output>
+  const body = (await response.json()) as SupResponse<Output>
   if (body.status === "COMPLETED") {
     return body.output as Output
   }

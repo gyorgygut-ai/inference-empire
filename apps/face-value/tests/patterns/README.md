@@ -1,10 +1,10 @@
 # Acceptance Testing Patterns
 
-This directory contains the acceptance testing patterns for generative-ui:
+This directory contains the acceptance testing patterns for face-value:
 
 ## Overview
 
-This pattern defines the acceptance criteria for the generative-ui:face-value target.
+This pattern defines the acceptance criteria for the face-value target.
 
 ## Required Setup
 
@@ -16,8 +16,8 @@ This pattern defines the acceptance criteria for the generative-ui:face-value ta
 
 Each test file in this directory tests acceptance criteria for a specific target:
 
-- `acceptance-dev.coverage.spec.ts` - Tests for generative-ui:face-value:dev
-- `acceptance-deploy.coverage.spec.ts` - Tests for generative-ui:face-value:deploy
+- `acceptance-dev.coverage.spec.ts` - Tests for face-value:dev
+- `acceptance-deploy.coverage.spec.ts` - Tests for face-value:deploy
 
 ## Test Patterns
 

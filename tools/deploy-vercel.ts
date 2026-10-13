@@ -45,6 +45,13 @@ for (const file of envFiles) {
   }
 }
 
+for (const key of ['ROUTER_URL', 'SECRET_AUTH_TOKEN']) {
+  const value = process.env[key];
+  if (value) {
+    vercelEnv.push('-e', `${key}=${value}`);
+  }
+}
+
 const child = spawn(
   'vercel',
   ['deploy', '--project', vercelProject, '--prod', '--yes', ...vercelEnv, '-F', 'json'],

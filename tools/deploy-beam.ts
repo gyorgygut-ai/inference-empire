@@ -1,4 +1,4 @@
-import { readdirSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
 
@@ -24,7 +24,15 @@ if (workerFiles.length !== 1) {
   process.exit(1);
 }
 
-const child = spawn('uv', ['run', '--locked', 'beam', 'deploy', `${dir}/${workerFiles[0]}`], {
+const workerPath = `${dir}/${workerFiles[0]}`;
+const workerSource = readFileSync(join(process.cwd(), workerPath), 'utf8');
+const handlerMatch = /@task_queue\([\s\S]*?\)\s*\n\s*def\s+(\w+)/.exec(workerSource);
+if (!handlerMatch) {
+  console.error(`[deploy-beam] could not find @task_queue handler in ${workerPath}`);
+  process.exit(1);
+}
+
+const child = spawn('uv', ['run', '--locked', 'beam', 'deploy', `${workerPath}:${handlerMatch[1]}`], {
   stdio: ['inherit', 'pipe', 'pipe'],
 });
 

@@ -1,19 +1,17 @@
-"""Serve a Beam worker via the Python SDK and upsert its live URL.
+"""Serve a Beam worker via the CLI and upsert its live URL.
 
 Usage: serve-beam.py <project> <dev|deploy>
 
-Resolves apps/<model>/worker_beam_*.py, loads it as __mp_main__ (same as
-the beam CLI so the serve container resolves the handler), prepares the
-serve stub, reads the invocation URL from print_invocation_snippet's
-return value (no CLI stdout parsing), upserts BEAM_WORKER_URL with
-tools/orchestration/upsert-artifact.ts, then attaches to the serve
-container (blocks; nx continuous target).
+Resolves apps/<model>/worker_beam_*.py, spawns `beam serve <file>:<handler>`,
+scans stdout/stderr for the invocation URL (no CLI stdout parsing),
+upserts BEAM_WORKER_URL with tools/orchestration/upsert-artifact.ts, then
+holds the serve session until terminated (nx continuous target).
 """
 
 from __future__ import annotations
 
 import os
-import runpy
+import re
 import subprocess
 import sys
 
@@ -43,7 +41,7 @@ def main() -> None:
         fail("usage: serve-beam.py <project> <dev|deploy>")
     project, configuration = sys.argv[1], sys.argv[2]
     if configuration not in ("dev", "deploy"):
-        fail("usage: serve-beam.py <project> <dev|deploy> <target>")
+        fail("usage: serve-beam.py <project> <dev|deploy>")
 
     model = project.removeprefix("worker-").replace("-", "_")
     worker_dir = os.path.join(ROOT, "apps", model)
@@ -57,33 +55,43 @@ def main() -> None:
     if len(files) != 1:
         fail(f"expected exactly one worker_beam_*.py in apps/{model}, found {len(files)}")
 
-    from beta9.abstractions.base.runner import (
-        ASGI_SERVE_STUB_TYPE,
-        ENDPOINT_SERVE_STUB_TYPE,
-        TASKQUEUE_SERVE_STUB_TYPE,
+    # Read the handler name from the worker file (the @task_queue decorated function)
+    handler_name = None
+    worker_path = os.path.join(worker_dir, files[0])
+    with open(worker_path) as f:
+        content = f.read()
+    # Find the function decorated with @task_queue (handles multi-line decorator)
+    match = re.search(r'@task_queue\([\s\S]*?\)\s*\n\s*def\s+(\w+)', content)
+    if match:
+        handler_name = match.group(1)
+    if not handler_name:
+        fail("could not find @task_queue handler function")
+
+    child = subprocess.Popen(
+        ["beam", "serve", f"apps/{model}/{files[0]}:{handler_name}"],
+        cwd=ROOT,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        bufsize=1,
     )
 
-    ns = runpy.run_path(os.path.join(worker_dir, files[0]), run_name="__mp_main__")
-    served = ns.get("dispatch", ns.get("worker"))
-    if served is None:
-        fail("worker exposes neither dispatch nor worker entrypoint")
-    parent = served.parent
-    if hasattr(parent, "taskqueue_stub"):
-        stub_type = TASKQUEUE_SERVE_STUB_TYPE
-    elif getattr(parent, "is_asgi", None):
-        stub_type = ASGI_SERVE_STUB_TYPE
-    else:
-        stub_type = ENDPOINT_SERVE_STUB_TYPE
+    url_pattern = re.compile(r'https://[^\s\'"`]*\.app\.beam\.cloud[^\s\'"`]*')
+    seen_url: str | None = None
 
-    if not parent.prepare_runtime(func=served.func, stub_type=stub_type, force_create_stub=True):
-        fail("prepare_runtime failed")
-    snippet = parent.print_invocation_snippet()
-    url = (getattr(snippet, "url", "") or "").strip()
-    if not url:
-        fail("no invocation URL issued")
-    print(f"[serve-beam] {url}", flush=True)
-    upsert_artifact(project, configuration, url)
-    served._serve(dir=os.getcwd(), timeout=0)
+    for line in child.stdout:
+        print(line, end="", flush=True)
+        if seen_url:
+            continue
+        m = url_pattern.search(line)
+        if m:
+            seen_url = m[0]
+            print(f"[serve-beam] {seen_url}", flush=True)
+            upsert_artifact(project, configuration, seen_url)
+
+    child.wait()
+    if configuration == "dev" and child.returncode != 0:
+        fail(f"beam serve exited with code {child.returncode}")
 
 
 if __name__ == "__main__":

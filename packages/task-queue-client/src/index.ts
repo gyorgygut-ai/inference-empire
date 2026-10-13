@@ -1,2 +1,2 @@
 export { inferWithPolling } from "./client"
-export type { Config, InferResponse, InquireResponse, TaskStatus } from "./client"
+export type { Config, AddToQueueResponse, SupResponse, TaskStatus } from "./client"

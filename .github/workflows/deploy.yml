@@ -6,11 +6,24 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     env:
-      MODAL_TOKEN_ID: ${{ secrets.MODAL_TOKEN_ID }}
-      MODAL_TOKEN_SECRET: ${{ secrets.MODAL_TOKEN_SECRET }}
-      MODAL_PROXY_KEY: ${{ secrets.MODAL_PROXY_KEY }}
-      MODAL_PROXY_SECRET: ${{ secrets.MODAL_PROXY_SECRET }}
-      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      HF_TOKEN: ${{ secrets.HF_TOKEN }}
+
+      R2_ACCESS_KEY: ${{ secrets.R2_ACCESS_KEY }}
+      R2_SECRET_KEY: ${{ secrets.R2_SECRET_KEY }}
+      R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+
+      FLUX2_ROUTER_VERCEL_TOKEN: ${{ secrets.FLUX2_ROUTER_VERCEL_TOKEN }}
+      FLUX2_ROUTER_VERCEL_ORG_ID: ${{ secrets.FLUX2_ROUTER_VERCEL_ORG_ID }}
+      FLUX2_ROUTER_VERCEL_PROJECT_ID: ${{ secrets.FLUX2_ROUTER_VERCEL_PROJECT_ID }}
+
+      KREA2_ROUTER_VERCEL_TOKEN: ${{ secrets.KREA2_ROUTER_VERCEL_TOKEN }}
+      KREA2_ROUTER_VERCEL_ORG_ID: ${{ secrets.KREA2_ROUTER_VERCEL_ORG_ID }}
+      KREA2_ROUTER_VERCEL_PROJECT_ID: ${{ secrets.KREA2_ROUTER_VERCEL_PROJECT_ID }}
+
+      FACE_VALUE_VERCEL_TOKEN: ${{ secrets.FACE_VALUE_VERCEL_TOKEN }}
+      FACE_VALUE_VERCEL_ORG_ID: ${{ secrets.FACE_VALUE_VERCEL_ORG_ID }}
+      FACE_VALUE_VERCEL_PROJECT_ID: ${{ secrets.FACE_VALUE_VERCEL_PROJECT_ID }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -25,46 +38,5 @@ jobs:
           cache-dependency-glob: "uv.lock"
           ignore-nothing-to-cache: true
       - run: npm ci
-      - name: Write Vercel project link file
-        run: |
-          mkdir -p apps/generative-ui/.vercel
-          printf '{"projectId":"%s","orgId":"%s"}' "$FACE_VALUE_UI_VERCEL_PROJECT_ID" "$FACE_VALUE_UI_VERCEL_ORG_ID" > apps/generative-ui/.vercel/project.json
-        env:
-          FACE_VALUE_UI_VERCEL_PROJECT_ID: ${{ secrets.FACE_VALUE_UI_VERCEL_PROJECT_ID }}
-          FACE_VALUE_UI_VERCEL_ORG_ID: ${{ secrets.FACE_VALUE_UI_VERCEL_ORG_ID }}
-      - name: Write worker .env file
-        run: |
-          printf 'HF_TOKEN=%s\nR2_ACCESS_KEY=%s\nR2_SECRET_KEY=%s\nR2_ENDPOINT=%s\nR2_BUCKET=%s\nMODAL_TOKEN_ID=%s\nMODAL_TOKEN_SECRET=%s\nMODAL_PROXY_KEY=%s\nMODAL_PROXY_SECRET=%s\n' "$HF_TOKEN" "$R2_ACCESS_KEY" "$R2_SECRET_KEY" "$R2_ENDPOINT" "$R2_BUCKET" "$MODAL_TOKEN_ID" "$MODAL_TOKEN_SECRET" "$MODAL_PROXY_KEY" "$MODAL_PROXY_SECRET" > .env
-        env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
-          R2_ACCESS_KEY: ${{ secrets.R2_ACCESS_KEY }}
-          R2_SECRET_KEY: ${{ secrets.R2_SECRET_KEY }}
-          R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
-          R2_BUCKET: ${{ secrets.R2_BUCKET }}
-          MODAL_TOKEN_ID: ${{ secrets.MODAL_TOKEN_ID }}
-          MODAL_TOKEN_SECRET: ${{ secrets.MODAL_TOKEN_SECRET }}
-          MODAL_PROXY_KEY: ${{ secrets.MODAL_PROXY_KEY }}
-          MODAL_PROXY_SECRET: ${{ secrets.MODAL_PROXY_SECRET }}
-      - run: npx nx affected -t test-unit,lint,typecheck,validate-deps --base=origin/main~1
-      - run: npx nx affected -t ui-face-value router-flux2 router-krea2 --base=origin/main~1
-        env:
-          FACE_VALUE_UI_VERCEL_TOKEN: ${{ secrets.FACE_VALUE_UI_VERCEL_TOKEN }}
-          FACE_VALUE_UI_VERCEL_PROJECT_ID: ${{ secrets.FACE_VALUE_UI_VERCEL_PROJECT_ID }}
-          FACE_VALUE_UI_VERCEL_ORG_ID: ${{ secrets.FACE_VALUE_UI_VERCEL_ORG_ID }}
-          FLUX2_ROUTER_VERCEL_TOKEN: ${{ secrets.FLUX2_ROUTER_VERCEL_TOKEN }}
-          FLUX2_ROUTER_VERCEL_PROJECT_ID: ${{ secrets.FLUX2_ROUTER_VERCEL_PROJECT_ID }}
-          FLUX2_ROUTER_VERCEL_ORG_ID: ${{ secrets.FLUX2_ROUTER_VERCEL_ORG_ID }}
-          KREA2_ROUTER_VERCEL_TOKEN: ${{ secrets.KREA2_ROUTER_VERCEL_TOKEN }}
-          KREA2_ROUTER_VERCEL_PROJECT_ID: ${{ secrets.KREA2_ROUTER_VERCEL_PROJECT_ID }}
-          KREA2_ROUTER_VERCEL_ORG_ID: ${{ secrets.KREA2_ROUTER_VERCEL_ORG_ID }}
-      - run: npx nx run generative-ui:ui-face-value
-        env:
-          FACE_VALUE_UI_VERCEL_TOKEN: ${{ secrets.FACE_VALUE_UI_VERCEL_TOKEN }}
-          FACE_VALUE_UI_VERCEL_PROJECT_ID: ${{ secrets.FACE_VALUE_UI_VERCEL_PROJECT_ID }}
-          FACE_VALUE_UI_VERCEL_ORG_ID: ${{ secrets.FACE_VALUE_UI_VERCEL_ORG_ID }}
-          FLUX2_ROUTER_VERCEL_TOKEN: ${{ secrets.FLUX2_ROUTER_VERCEL_TOKEN }}
-          FLUX2_ROUTER_VERCEL_PROJECT_ID: ${{ secrets.FLUX2_ROUTER_VERCEL_PROJECT_ID }}
-          FLUX2_ROUTER_VERCEL_ORG_ID: ${{ secrets.FLUX2_ROUTER_VERCEL_ORG_ID }}
-          KREA2_ROUTER_VERCEL_TOKEN: ${{ secrets.KREA2_ROUTER_VERCEL_TOKEN }}
-          KREA2_ROUTER_VERCEL_PROJECT_ID: ${{ secrets.KREA2_ROUTER_VERCEL_PROJECT_ID }}
-          KREA2_ROUTER_VERCEL_ORG_ID: ${{ secrets.KREA2_ROUTER_VERCEL_ORG_ID }}
+      - run: npx nx affected -t test-unit,lint,typecheck,validate-deps --base=${{ github.event.before }}
+      - run: npx nx affected -t deploy --base=${{ github.event.before }} --configuration=deploy

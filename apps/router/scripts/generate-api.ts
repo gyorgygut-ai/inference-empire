@@ -11,9 +11,9 @@ const out = {
   title: api.title,
   endpoints: api.endpoints,
   schemas: {
-    InferRequest: { ...api.inferRequest, properties: { ...api.inferRequest.properties, input: inference.input } },
-    InferResponse: api.inferResponse,
-    InquireResponse: { ...api.inquireResponse, properties: { ...api.inquireResponse.properties, output: inference.output } },
+    AddToQueueRequest: { ...api.addToQueueRequest, properties: { ...api.addToQueueRequest.properties, input: inference.input } },
+    AddToQueueResponse: api.addToQueueResponse,
+    SupResponse: { ...api.supResponse, properties: { ...api.supResponse.properties, output: inference.output } },
   },
 };
 

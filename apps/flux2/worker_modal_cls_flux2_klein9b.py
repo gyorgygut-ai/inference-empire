@@ -11,6 +11,7 @@ from apps.flux2.shared.worker_flux2 import (
     do_inference,
     load_dependencies,
 )
+from packages.modal_bridge import attach_bridge
 from packages.shared_gpu.guard import run_guarded
 from packages.shared_gpu.platform import MODAL_HF_MOUNT, modal_env, modal_volume
 
@@ -31,6 +32,8 @@ image = (
     .apt_install("git", "ffmpeg", "libgl1", "libglib2.0-0")
     .pip_install(*IMAGE_PIP_DEPS)
     .env(modal_env(extra={"SDNQ_USE_TRITON_MM": "0"}))
+    .add_local_python_source("apps", "apps")
+    .add_local_python_source("packages", "packages")
 )
 
 @app.cls(
@@ -53,9 +56,6 @@ class FluxKleinWorker:
         return generate(self.storage, self.pipe, self.torch_module, **kwargs)
 
 
-@app.function(image=modal.Image.debian_slim().pip_install("fastapi[standard]==0.141.1"), timeout=300)
-@modal.fastapi_endpoint(method="POST")
-def generate_web(item: dict) -> dict:
-    return FluxKleinWorker().generate.remote(**item)
+attach_bridge(app, "FluxKleinWorker", requires_proxy_auth=False)
 
 

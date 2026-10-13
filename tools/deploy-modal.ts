@@ -48,9 +48,10 @@ function scan(chunk: Buffer): void {
   if (seenUrl) {
     return;
   }
-  const match = urlPattern.exec(chunk.toString('utf8'));
+  const clean = chunk.toString('utf8').replace(/\x1b\[[0-9;]*m/g, '');
+  const match = urlPattern.exec(clean);
   if (match) {
-    seenUrl = match[0];
+    seenUrl = match[0].replace(/[.,;)]+$/, '');
     if (configuration === 'dev') {
       upsert(seenUrl);
     }

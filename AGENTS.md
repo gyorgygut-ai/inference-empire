@@ -12,18 +12,27 @@
 
 - [Workers](./apps/WORKERS.md)
 - [Router](./apps/router/AGENTS.md)
-- [Generative UI](./apps/generative-ui/AGENTS.md)
+- [Face Value](./apps/face-value/AGENTS.md)
 
 ---
 
 ## Verification
 
-**generative-ui:face-value**:
+**face-value**:
 
 - **:dev**: `apps/router/tests/acceptance-dev.e2e.spec.ts`
 - **:deploy**: `apps/router/tests/acceptance-deploy.e2e.spec.ts`
 - **critical**: run in the foreground, always with an empty `dist` folder
 
+---
+
+## End-to-end checklist (every job)
+
+- Scope line names every affected project; nothing silently out of scope
+- `grep -rn` the removed pattern repo-wide; zero hits outside tool internals
+- `nx show projects` loads (graph-level proof, not file-level)
+- Downstream consumers resolve against artifacts that exist
+- `git status` shows only intended files
 
 <!-- nx configuration start-->
 <!-- Leave the start & end comments to automatically receive updates. -->
@@ -46,6 +55,5 @@
 - USE for: advanced config options, unfamiliar flags, migration guides, plugin configuration, edge cases
 - DON'T USE for: basic generator syntax (`nx g @nx/react:app`), standard commands, things you already know
 - The `nx-generate` skill handles generator discovery internally - don't call nx_docs just to look up generator syntax
-
 
 <!-- nx configuration end-->

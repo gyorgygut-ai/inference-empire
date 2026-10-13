@@ -1,4 +1,3 @@
-import { Status, type Provider } from './create-provider'
 import { beamProvider } from './provider-beam'
 import { flashProvider } from './provider-flash'
 import { modalProvider } from './provider-modal'

@@ -1,4 +1,4 @@
-export interface InferRequest {
+export interface AddToQueueRequest {
   input: Flux2Klein9BInput;
   [k: string]: unknown;
 }
@@ -14,7 +14,7 @@ export interface Flux2Klein9BInput {
   [k: string]: unknown;
 }
 
-export interface InferResponse {
+export interface AddToQueueResponse {
   /**
    * Opaque. base64(provider:originalTaskId)
    */
@@ -22,7 +22,7 @@ export interface InferResponse {
   [k: string]: unknown;
 }
 
-export interface InquireResponse {
+export interface SupResponse {
   status: "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED" | "CANCELLED";
   output?: Flux2Klein9BOutput;
   [k: string]: unknown;

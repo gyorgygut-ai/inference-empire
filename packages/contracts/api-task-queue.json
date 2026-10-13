@@ -5,8 +5,8 @@
     "submit": "POST /q",
     "poll": "GET /sup?id="
   },
-  "inferRequest": {
-    "title": "InferRequest",
+  "addToQueueRequest": {
+    "title": "AddToQueueRequest",
     "type": "object",
     "required": ["input"],
     "properties": {
@@ -16,8 +16,8 @@
       }
     }
   },
-  "inferResponse": {
-    "title": "InferResponse",
+  "addToQueueResponse": {
+    "title": "AddToQueueResponse",
     "type": "object",
     "required": ["task_id"],
     "properties": {
@@ -27,8 +27,8 @@
       }
     }
   },
-  "inquireResponse": {
-    "title": "InquireResponse",
+  "supResponse": {
+    "title": "SupResponse",
     "type": "object",
     "required": ["status"],
     "properties": {

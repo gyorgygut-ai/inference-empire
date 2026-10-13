@@ -3,7 +3,7 @@ import { type Env } from './index'
 import createProvider, { isProviderName, type ProviderConfigs, type ProviderName } from './providers/create-provider'
 import { pickTaskHandler } from './pick-task-handler'
 import { decodeTaskId, encodeTaskId } from './task-id'
-import type { InferRequest, InferResponse, InquireResponse } from '../generated/router_api'
+import type { AddToQueueRequest, AddToQueueResponse, SupResponse } from '../generated/api'
 
 export const router = Router()
 
@@ -24,11 +24,11 @@ router.all('*', async (request: Request, env: Env) => {
 })
 
 router.post('/q', async (request: Request, env: Env) => {
-  const body = await request.json() as InferRequest
+  const body = await request.json() as AddToQueueRequest
   const name = pickTaskHandler()
   const provider = createProvider(name)
   const { task_id } = await provider.pushToTaskQueue(body.input, resolveConfig(name, env))
-  const response: InferResponse = { task_id: encodeTaskId(name, task_id) }
+  const response: AddToQueueResponse = { task_id: encodeTaskId(name, task_id) }
   return new Response(JSON.stringify(response), {
     headers: { 'Content-Type': 'application/json' }
   })
@@ -51,12 +51,10 @@ router.get('/sup', async (request: Request, env: Env) => {
   }
   const provider = createProvider(name)
   const result = await provider.fetchTaskStatus(originalTaskId, resolveConfig(name, env))
-  const response: InquireResponse = { status: result.status as InquireResponse['status'] }
+  const response: SupResponse = { status: result.status as SupResponse['status'] }
   if (result.status === 'COMPLETED') {
-    response.output = result.output as InquireResponse['output']
+    response.output = result.output as SupResponse['output']
   }
-  console.log('request', request)
-  console.log('response', response)
   return new Response(JSON.stringify(response), {
     headers: { 'Content-Type': 'application/json' }
   })
@@ -69,15 +67,20 @@ router.all('*', async () => (
   })
 ))
 
-function resolveConfig<K extends ProviderName>(name: K, _env: Env): ProviderConfigs[K] {
+function resolveConfig<K extends ProviderName>(name: K, env: Env): ProviderConfigs[K] {
   if (name === 'beam') {
     return {
-      url: '',
+      url: env.BEAM_WORKER_URL ?? '',
       taskApi: 'https://api.beam.cloud'
     } as ProviderConfigs[K]
   }
+  if (name === 'flash') {
+    return {
+      url: env.FLASH_WORKER_URL ?? '',
+      endpointName: ''
+    } as ProviderConfigs[K]
+  }
   return {
-    url: '',
-    endpointName: ''
+    url: env.MODAL_WORKER_URL ?? ''
   } as ProviderConfigs[K]
 }

@@ -10,14 +10,13 @@
 **worker-{model}:dev-{modal|beam|flash}**:
 
 - **command**: `@tools/` `serve-modal` `serve-beam` `serve-flash`
-- **upsert artfacts**: `MODAL_WORKER_URL`, `BEAM_WORKER_URL`, `FLASH_WORKER_URL`
-- **artifacts target**: `@dist/worker-{model}/dev.env`
+- **dev artifact**: `@dist/worker-{model}/dev/{MODAL|BEAM|FLASH}_WORKER_URL`
 
 **worker-{model}:deploy-{modal|beam|flash}**:
 
 - **command**: `@tools/` `deploy-modal` `deploy-beam` `deploy-flash`
-- **upsert artfacts**: `MODAL_WORKER_URL`, `BEAM_WORKER_URL`, `FLASH_WORKER_URL`
-- **artifacts target**: `@dist/worker-{model}/deploy.env`
+- **nx cache**: let nx deploy only when there is no url OR code stale
+- **deploy artifact**: `@dist/worker-{model}/deploy/{MODAL|BEAM|FLASH}_WORKER_URL`
 
 ---
 
