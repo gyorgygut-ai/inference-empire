@@ -1,7 +1,7 @@
 import { readFileSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
-const vocabPath = join(process.cwd(), "targets", "face-value", "vocabulary", "en.ts")
+const vocabPath = join(process.cwd(), "chat", "vocabulary", "en.ts")
 const vocabContent = readFileSync(vocabPath, "utf-8")
 
 // Extract meta fields without eval

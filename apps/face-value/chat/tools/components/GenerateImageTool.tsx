@@ -1,6 +1,6 @@
 "use client"
 import React from "react"
-import { vocabulary } from "@/targets/face-value/vocabulary/en"
+import { vocabulary } from "@packages/ui/chat/vocabulary/en"
 import type { ToolProps } from "@tanstack/ai-react/ui"
 import type { ChatOptions } from "../../options"
 import { Spinner } from "./Spinner"

@@ -14,6 +14,8 @@
       "continuous": true,
       "defaultConfiguration": "dev",
       "inputs": [
+        "{projectRoot}/env.schema.ts",
+        "{projectRoot}/env.schema.flux2.ts",
         "{workspaceRoot}/dist/worker-flux2/deploy/MODAL_WORKER_URL",
         "{workspaceRoot}/dist/worker-flux2/deploy/BEAM_WORKER_URL"
       ],
@@ -46,7 +48,7 @@
           "command": "MODAL_WORKER_URL=$(cat dist/worker-flux2/deploy/MODAL_WORKER_URL) BEAM_WORKER_URL=$(cat dist/worker-flux2/deploy/BEAM_WORKER_URL) SECRET_AUTH_TOKEN=$(cat dist/router-flux2/dev/ROUTER_SECRET_AUTH_TOKEN) PORT=4201 npx tsx watch apps/router/src/serve.ts"
         },
         "deploy": {
-          "command": "MODAL_WORKER_URL=$(cat dist/worker-flux2/deploy/MODAL_WORKER_URL) SECRET_AUTH_TOKEN=$(cat dist/router-flux2/deploy/ROUTER_SECRET_AUTH_TOKEN) tsx tools/deploy-vercel.ts router router-flux2 router-flux2 deploy ROUTER_URL"
+          "command": "M=$(cat dist/worker-flux2/deploy/MODAL_WORKER_URL); S=$(cat dist/router-flux2/deploy/ROUTER_SECRET_AUTH_TOKEN); MODAL_WORKER_URL=$M SECRET_AUTH_TOKEN=$S tsx -e \"import('./apps/router/env.schema.flux2.ts').then(m=>m.flux2Schema.parse(process.env))\" && tsx tools/deploy-vercel.ts router router-flux2 router-flux2 deploy ROUTER_URL --token $FLUX2_ROUTER_VERCEL_TOKEN --org $FLUX2_ROUTER_VERCEL_ORG_ID --project-id $FLUX2_ROUTER_VERCEL_PROJECT_ID"
         }
       }
     },
@@ -120,6 +122,12 @@
       "cache": false,
       "continuous": true,
       "defaultConfiguration": "dev",
+      "inputs": [
+        "{projectRoot}/env.schema.ts",
+        "{projectRoot}/env.schema.krea2.ts",
+        "{workspaceRoot}/dist/worker-krea2/deploy/MODAL_WORKER_URL",
+        "{workspaceRoot}/dist/router-krea2/deploy/ROUTER_SECRET_AUTH_TOKEN"
+      ],
       "dependsOn": [
         {
           "projects": [
@@ -142,7 +150,7 @@
           "command": "MODAL_WORKER_URL=$(cat dist/worker-krea2/dev/MODAL_WORKER_URL) SECRET_AUTH_TOKEN=$(cat dist/router-krea2/dev/ROUTER_SECRET_AUTH_TOKEN) PORT=4202 npx tsx watch apps/router/src/serve.ts"
         },
         "deploy": {
-          "command": "MODAL_WORKER_URL=$(cat dist/worker-krea2/deploy/MODAL_WORKER_URL) SECRET_AUTH_TOKEN=$(cat dist/router-krea2/deploy/ROUTER_SECRET_AUTH_TOKEN) tsx tools/deploy-vercel.ts router router-krea2 router-krea2 deploy ROUTER_URL"
+          "command": "M=$(cat dist/worker-krea2/deploy/MODAL_WORKER_URL); S=$(cat dist/router-krea2/deploy/ROUTER_SECRET_AUTH_TOKEN); MODAL_WORKER_URL=$M SECRET_AUTH_TOKEN=$S tsx -e \"import('./apps/router/env.schema.krea2.ts').then(m=>m.flux2Schema.parse(process.env))\" && tsx tools/deploy-vercel.ts router router-krea2 router-krea2 deploy ROUTER_URL --token $KREA2_ROUTER_VERCEL_TOKEN --org $KREA2_ROUTER_VERCEL_ORG_ID --project-id $KREA2_ROUTER_VERCEL_PROJECT_ID"
         }
       }
     },

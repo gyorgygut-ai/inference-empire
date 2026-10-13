@@ -17,6 +17,9 @@
       ],
       "@inference/nx-generate-auth-token": [
         "tools/nx-generate-auth-token/src/index.ts"
+      ],
+      "@inference/ui": [
+        "./packages/ui/src/index.ts"
       ]
     }
   }

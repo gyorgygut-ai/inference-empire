@@ -1,0 +1,27 @@
+{
+  "name": "ui",
+  "root": "packages/ui",
+  "sourceRoot": "packages/ui/src",
+  "projectType": "library",
+  "tags": ["type:ui"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/ui",
+        "main": "packages/ui/src/index.ts",
+        "tsConfig": "packages/ui/tsconfig.lib.json"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    },
+    "test": {
+      "executor": "@nx/vite:test",
+      "options": {
+        "configFile": "packages/ui/vite.config.ts"
+      }
+    }
+  }
+}

@@ -1,5 +1,5 @@
 import type { UIMessage } from "@tanstack/ai-client"
-import { vocabulary } from "@/targets/face-value/vocabulary/en"
+import { vocabulary } from "@packages/ui/chat/vocabulary/en"
 import { textPart } from "../parts/text"
 import type { PublicOutcome } from "@/outcomes"
 import type { ChatOptions } from "../options"
