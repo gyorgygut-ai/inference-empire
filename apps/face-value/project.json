@@ -5,37 +5,61 @@
   "sourceRoot": "apps/face-value",
   "tags": ["type:app", "scope:frontend"],
   "targets": {
-    "face-value": {
+    "dev": {
       "executor": "nx:run-commands",
       "cache": false,
       "continuous": true,
-      "defaultConfiguration": "dev",
       "dependsOn": [
-        {"projects": ["router"], "target": "router-flux2:dev", "params": "forward"},
-        {"projects": ["router"], "target": "router-flux2:deploy", "params": "forward"},
+        {
+          "projects": ["router"],
+          "target": "router-flux2:dev",
+          "params": "forward"
+        },
         "face-value-generate-ts"
       ],
       "inputs": [
         "{projectRoot}/env.schema.ts",
         "{workspaceRoot}/dist/router-flux2/dev/ROUTER_URL",
-        "{workspaceRoot}/dist/router-flux2/dev/ROUTER_SECRET_AUTH_TOKEN",
-        "{workspaceRoot}/dist/router-flux2/deploy/ROUTER_URL",
-        "{workspaceRoot}/dist/router-flux2/deploy/ROUTER_SECRET_AUTH_TOKEN"
+        "{workspaceRoot}/dist/router-flux2/dev/ROUTER_SECRET_AUTH_TOKEN"
       ],
       "configurations": {
         "dev": {
           "command": "ROUTER_URL=$(cat dist/router-flux2/dev/ROUTER_URL) ROUTER_SECRET_AUTH_TOKEN=$(cat dist/router-flux2/dev/ROUTER_SECRET_AUTH_TOKEN) npm run dev",
           "cwd": "apps/face-value"
-        },
-        "deploy": {
-          "command": "R=$(cat dist/router-flux2/deploy/ROUTER_URL); S=$(cat dist/router-flux2/deploy/ROUTER_SECRET_AUTH_TOKEN); ROUTER_URL=$R ROUTER_SECRET_AUTH_TOKEN=$S tsx -e \"import('./apps/face-value/env.schema.ts').then(m=>m.envSchema.parse(process.env))\" && tsx -e \"import('./apps/face-value/env.deploy-schema.ts').then(m=>m.deployEnvSchema.parse(process.env))\" && tsx tools/deploy-vercel.ts face-value face-value face-value deploy APP_URL --token $FACE_VALUE_VERCEL_TOKEN --org $FACE_VALUE_VERCEL_ORG_ID --project-id $FACE_VALUE_VERCEL_PROJECT_ID"
         }
-      }
+      },
+      "parallelism": true
+    },
+    "deploy": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "dependsOn": [
+        {
+          "projects": ["router"],
+          "target": "router-flux2:deploy",
+          "params": "forward"
+        },
+        "face-value-generate-ts"
+      ],
+      "inputs": [
+        "{projectRoot}/env.schema.ts",
+        "{workspaceRoot}/dist/router-flux2/deploy/ROUTER_URL",
+        "{workspaceRoot}/dist/router-flux2/deploy/ROUTER_SECRET_AUTH_TOKEN"
+      ],
+      "configurations": {
+        "deploy": {
+          "command": "R=$(cat dist/router-flux2/deploy/ROUTER_URL); S=$(cat dist/router-flux2/deploy/ROUTER_SECRET_AUTH_TOKEN); ROUTER_URL=$R ROUTER_SECRET_AUTH_TOKEN=$S tsx -e \"import('./apps/face-value/env.schema.ts').then(m=>m.envSchema.parse(process.env))\" && tsx -e \"import('./apps/face-value/env.deploy-schema.ts').then(m=>m.deployEnvSchema.parse(process.env))\" && tsx tools/deploy-vercel.ts face-value face-value face-value deploy APP_URL --token $FACE_VALUE_VERCEL_TOKEN --org $FACE_VALUE_VERCEL_ORG_ID --project-id $FACE_VALUE_VERCEL_PROJECT_ID",
+          "cwd": "apps/face-value"
+        }
+      },
+      "parallelism": true
     },
     "face-value-generate-ts": {
       "executor": "nx:run-commands",
       "cache": true,
-      "dependsOn": [{"projects": ["router"], "target": "router-flux2-generate-api"}],
+      "dependsOn": [
+        { "projects": ["router"], "target": "router-flux2-generate-api" }
+      ],
       "inputs": ["{workspaceRoot}/dist/router-flux2/dev/api.json"],
       "outputs": ["{projectRoot}/generated/router_api.ts"],
       "options": {
