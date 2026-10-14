@@ -1,1 +1,57 @@
-{"$schema": "../../../node_modules/nx/schemas/project-schema.json", "name": "worker-h3_comfy", "projectType": "application", "sourceRoot": "apps/h3_comfy", "tags": ["type:app", "scope:gpu-worker", "model:h3-comfy"], "targets": {"dev-modal": {"executor": "nx:run-commands", "cache": false, "continuous": true, "outputs": ["{workspaceRoot}/dist/worker-h3_comfy/dev.env"], "options": {"command": "uv run --locked python tools/serve-modal.py worker-h3_comfy dev"}}, "dev-beam": {"executor": "nx:run-commands", "cache": false, "continuous": true, "outputs": ["{workspaceRoot}/dist/worker-h3_comfy/dev.env"], "options": {"command": "uv run --locked python tools/serve-beam.py worker-h3_comfy dev"}}, "dev-flash": {"executor": "nx:run-commands", "cache": false, "continuous": true, "outputs": ["{workspaceRoot}/dist/worker-h3_comfy/dev.env"], "options": {"command": "uv run --locked python tools/serve-flash.py worker-h3_comfy dev"}}, "deploy-modal": {"executor": "nx:run-commands", "cache": false, "outputs": ["{workspaceRoot}/dist/worker-h3_comfy/deploy.env"], "options": {"command": "tsx tools/deploy-modal.ts worker-h3_comfy deploy"}}, "deploy-beam": {"executor": "nx:run-commands", "cache": false, "outputs": ["{workspaceRoot}/dist/worker-h3_comfy/deploy.env"], "options": {"command": "tsx tools/deploy-beam.ts worker-h3_comfy deploy"}}, "deploy-flash": {"executor": "nx:run-commands", "cache": false, "outputs": ["{workspaceRoot}/dist/worker-h3_comfy/deploy.env"], "options": {"command": "tsx tools/deploy-flash.ts worker-h3_comfy deploy"}}}}
+{
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "name": "worker-h3_comfy",
+  "projectType": "application",
+  "sourceRoot": "apps/h3_comfy",
+  "tags": ["type:app", "scope:gpu-worker", "model:h3-comfy"],
+  "targets": {
+    "dev-modal": {
+      "executor": "orchestrator:run-command-with-artifact",
+      "options": {
+        "command": "uv run --locked python tools/serve-modal.py",
+        "args": ["worker-h3_comfy", "dev"],
+        "artifact": "{workspaceRoot}/dist/worker-h3_comfy/dev/MODAL_WORKER_URL"
+      }
+    },
+    "dev-beam": {
+      "executor": "orchestrator:run-command-with-artifact",
+      "options": {
+        "command": "uv run --locked python tools/serve-beam.py",
+        "args": ["worker-h3_comfy", "dev"],
+        "artifact": "{workspaceRoot}/dist/worker-h3_comfy/dev/BEAM_WORKER_URL"
+      }
+    },
+    "dev-flash": {
+      "executor": "orchestrator:run-command-with-artifact",
+      "options": {
+        "command": "uv run --locked python tools/serve-flash.py",
+        "args": ["worker-h3_comfy", "dev"],
+        "artifact": "{workspaceRoot}/dist/worker-h3_comfy/dev/FLASH_WORKER_URL"
+      }
+    },
+    "deploy-modal": {
+      "executor": "orchestrator:run-command-with-artifact",
+      "options": {
+        "command": "npx tsx tools/deploy-modal.ts",
+        "args": ["worker-h3_comfy", "deploy"],
+        "artifact": "{workspaceRoot}/dist/worker-h3_comfy/deploy/MODAL_WORKER_URL"
+      }
+    },
+    "deploy-beam": {
+      "executor": "orchestrator:run-command-with-artifact",
+      "options": {
+        "command": "npx tsx tools/deploy-beam.ts",
+        "args": ["worker-h3_comfy", "deploy"],
+        "artifact": "{workspaceRoot}/dist/worker-h3_comfy/deploy/BEAM_WORKER_URL"
+      }
+    },
+    "deploy-flash": {
+      "executor": "orchestrator:run-command-with-artifact",
+      "options": {
+        "command": "npx tsx tools/deploy-flash.ts",
+        "args": ["worker-h3_comfy", "deploy"],
+        "artifact": "{workspaceRoot}/dist/worker-h3_comfy/deploy/FLASH_WORKER_URL"
+      }
+    }
+  }
+}

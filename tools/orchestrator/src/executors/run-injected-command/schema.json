@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/schema",
+  "version": 2,
+  "title": "RunInjectedCommand executor",
+  "description": "Runs a shell command with environment variables that can be generated from scripts or read from artifact files.",
+  "type": "object",
+  "properties": {
+    "command": {
+      "type": "string",
+      "description": "The shell command to execute"
+    },
+    "inject": {
+      "type": "array",
+      "description": "Array of environment variable specifications. Each item provides the env name and source (script or artifact).",
+      "items": {
+        "type": "object",
+        "properties": {
+          "env": {
+            "type": "string",
+            "description": "Environment variable name (e.g., 'API_URL', 'PORT')"
+          },
+          "command": {
+            "type": "string",
+            "description": "Path to script file or shell command with redirection. Script output becomes the env var value."
+          },
+          "artifact": {
+            "type": "string",
+            "description": "Optional path where the script result should be saved as an artifact file"
+          },
+          "args": {
+            "type": "array",
+            "description": "Optional array of arguments passed to the script",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["env", "command"],
+        "additionalProperties": false
+      }
+    },
+    "cwd": {
+      "type": "string",
+      "description": "Working directory (defaults to project root, `{projectRoot}`)",
+      "default": "{projectRoot}"
+    },
+    "timeout": {
+      "type": "number",
+      "description": "Maximum execution time in milliseconds for inject scripts (default 30000); when set, also caps the main command, otherwise the main command runs until it exits",
+      "minimum": 1000,
+      "maximum": 300000
+    }
+  },
+  "required": ["command", "inject"],
+  "additionalProperties": false
+}

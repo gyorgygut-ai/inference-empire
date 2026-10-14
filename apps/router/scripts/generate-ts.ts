@@ -1,4 +1,5 @@
-import { readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { dirname } from 'node:path';
 import { compile } from 'json-schema-to-typescript';
 
 const [inPath, outPath] = process.argv.slice(2);
@@ -14,5 +15,6 @@ for (const name of names) {
   parts.push(await compile(doc.schemas[name], name, { bannerComment: '' }));
 }
 
+mkdirSync(dirname(outPath), { recursive: true });
 writeFileSync(outPath, parts.join('\n') + '\n');
 console.log(`[generate-ts] wrote ${outPath}`);

@@ -1,1 +1,57 @@
-{"$schema": "../../../node_modules/nx/schemas/project-schema.json", "name": "worker-vision", "projectType": "application", "sourceRoot": "apps/vision", "tags": ["type:app", "scope:gpu-worker", "model:vision"], "targets": {"dev-modal": {"executor": "nx:run-commands", "cache": false, "continuous": true, "outputs": ["{workspaceRoot}/dist/worker-vision/dev.env"], "options": {"command": "uv run --locked python tools/serve-modal.py worker-vision dev"}}, "dev-beam": {"executor": "nx:run-commands", "cache": false, "continuous": true, "outputs": ["{workspaceRoot}/dist/worker-vision/dev.env"], "options": {"command": "uv run --locked python tools/serve-beam.py worker-vision dev"}}, "dev-flash": {"executor": "nx:run-commands", "cache": false, "continuous": true, "outputs": ["{workspaceRoot}/dist/worker-vision/dev.env"], "options": {"command": "uv run --locked python tools/serve-flash.py worker-vision dev"}}, "deploy-modal": {"executor": "nx:run-commands", "cache": false, "outputs": ["{workspaceRoot}/dist/worker-vision/deploy.env"], "options": {"command": "tsx tools/deploy-modal.ts worker-vision deploy"}}, "deploy-beam": {"executor": "nx:run-commands", "cache": false, "outputs": ["{workspaceRoot}/dist/worker-vision/deploy.env"], "options": {"command": "tsx tools/deploy-beam.ts worker-vision deploy"}}, "deploy-flash": {"executor": "nx:run-commands", "cache": false, "outputs": ["{workspaceRoot}/dist/worker-vision/deploy.env"], "options": {"command": "tsx tools/deploy-flash.ts worker-vision deploy"}}}}
+{
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "name": "worker-vision",
+  "projectType": "application",
+  "sourceRoot": "apps/vision",
+  "tags": ["type:app", "scope:gpu-worker", "model:vision"],
+  "targets": {
+    "dev-modal": {
+      "executor": "orchestrator:run-command-with-artifact",
+      "options": {
+        "command": "uv run --locked python tools/serve-modal.py",
+        "args": ["worker-vision", "dev"],
+        "artifact": "{workspaceRoot}/dist/worker-vision/dev/MODAL_WORKER_URL"
+      }
+    },
+    "dev-beam": {
+      "executor": "orchestrator:run-command-with-artifact",
+      "options": {
+        "command": "uv run --locked python tools/serve-beam.py",
+        "args": ["worker-vision", "dev"],
+        "artifact": "{workspaceRoot}/dist/worker-vision/dev/BEAM_WORKER_URL"
+      }
+    },
+    "dev-flash": {
+      "executor": "orchestrator:run-command-with-artifact",
+      "options": {
+        "command": "uv run --locked python tools/serve-flash.py",
+        "args": ["worker-vision", "dev"],
+        "artifact": "{workspaceRoot}/dist/worker-vision/dev/FLASH_WORKER_URL"
+      }
+    },
+    "deploy-modal": {
+      "executor": "orchestrator:run-command-with-artifact",
+      "options": {
+        "command": "npx tsx tools/deploy-modal.ts",
+        "args": ["worker-vision", "deploy"],
+        "artifact": "{workspaceRoot}/dist/worker-vision/deploy/MODAL_WORKER_URL"
+      }
+    },
+    "deploy-beam": {
+      "executor": "orchestrator:run-command-with-artifact",
+      "options": {
+        "command": "npx tsx tools/deploy-beam.ts",
+        "args": ["worker-vision", "deploy"],
+        "artifact": "{workspaceRoot}/dist/worker-vision/deploy/BEAM_WORKER_URL"
+      }
+    },
+    "deploy-flash": {
+      "executor": "orchestrator:run-command-with-artifact",
+      "options": {
+        "command": "npx tsx tools/deploy-flash.ts",
+        "args": ["worker-vision", "deploy"],
+        "artifact": "{workspaceRoot}/dist/worker-vision/deploy/FLASH_WORKER_URL"
+      }
+    }
+  }
+}

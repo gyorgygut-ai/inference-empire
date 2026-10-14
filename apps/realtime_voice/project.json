@@ -1,1 +1,65 @@
-{"$schema": "../../../node_modules/nx/schemas/project-schema.json", "name": "worker-realtime_voice", "projectType": "application", "sourceRoot": "apps/realtime_voice", "tags": ["type:app", "scope:gpu-worker", "model:realtime-voice"], "targets": {"build": {"executor": "nx:run-commands", "options": {"command": "mkdir -p dist/apps/realtime-voice && cp -r apps/realtime_voice/* dist/apps/realtime-voice/", "cwd": "."}, "cache": true}, "dev-modal": {"executor": "nx:run-commands", "cache": false, "continuous": true, "outputs": ["{workspaceRoot}/dist/worker-realtime_voice/dev.env"], "options": {"command": "uv run --locked python tools/serve-modal.py worker-realtime_voice dev"}}, "dev-beam": {"executor": "nx:run-commands", "cache": false, "continuous": true, "outputs": ["{workspaceRoot}/dist/worker-realtime_voice/dev.env"], "options": {"command": "uv run --locked python tools/serve-beam.py worker-realtime_voice dev"}}, "dev-flash": {"executor": "nx:run-commands", "cache": false, "continuous": true, "outputs": ["{workspaceRoot}/dist/worker-realtime_voice/dev.env"], "options": {"command": "uv run --locked python tools/serve-flash.py worker-realtime_voice dev"}}, "deploy-modal": {"executor": "nx:run-commands", "cache": false, "outputs": ["{workspaceRoot}/dist/worker-realtime_voice/deploy.env"], "options": {"command": "tsx tools/deploy-modal.ts worker-realtime_voice deploy"}}, "deploy-beam": {"executor": "nx:run-commands", "cache": false, "outputs": ["{workspaceRoot}/dist/worker-realtime_voice/deploy.env"], "options": {"command": "tsx tools/deploy-beam.ts worker-realtime_voice deploy"}}, "deploy-flash": {"executor": "nx:run-commands", "cache": false, "outputs": ["{workspaceRoot}/dist/worker-realtime_voice/deploy.env"], "options": {"command": "tsx tools/deploy-flash.ts worker-realtime_voice deploy"}}}}
+{
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "name": "worker-realtime_voice",
+  "projectType": "application",
+  "sourceRoot": "apps/realtime_voice",
+  "tags": ["type:app", "scope:gpu-worker", "model:realtime-voice"],
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "mkdir -p dist/apps/realtime-voice && cp -r apps/realtime_voice/* dist/apps/realtime-voice/",
+        "cwd": "."
+      },
+      "cache": true
+    },
+    "dev-modal": {
+      "executor": "orchestrator:run-command-with-artifact",
+      "options": {
+        "command": "uv run --locked python tools/serve-modal.py",
+        "args": ["worker-realtime_voice", "dev"],
+        "artifact": "{workspaceRoot}/dist/worker-realtime_voice/dev/MODAL_WORKER_URL"
+      }
+    },
+    "dev-beam": {
+      "executor": "orchestrator:run-command-with-artifact",
+      "options": {
+        "command": "uv run --locked python tools/serve-beam.py",
+        "args": ["worker-realtime_voice", "dev"],
+        "artifact": "{workspaceRoot}/dist/worker-realtime_voice/dev/BEAM_WORKER_URL"
+      }
+    },
+    "dev-flash": {
+      "executor": "orchestrator:run-command-with-artifact",
+      "options": {
+        "command": "uv run --locked python tools/serve-flash.py",
+        "args": ["worker-realtime_voice", "dev"],
+        "artifact": "{workspaceRoot}/dist/worker-realtime_voice/dev/FLASH_WORKER_URL"
+      }
+    },
+    "deploy-modal": {
+      "executor": "orchestrator:run-command-with-artifact",
+      "options": {
+        "command": "npx tsx tools/deploy-modal.ts",
+        "args": ["worker-realtime_voice", "deploy"],
+        "artifact": "{workspaceRoot}/dist/worker-realtime_voice/deploy/MODAL_WORKER_URL"
+      }
+    },
+    "deploy-beam": {
+      "executor": "orchestrator:run-command-with-artifact",
+      "options": {
+        "command": "npx tsx tools/deploy-beam.ts",
+        "args": ["worker-realtime_voice", "deploy"],
+        "artifact": "{workspaceRoot}/dist/worker-realtime_voice/deploy/BEAM_WORKER_URL"
+      }
+    },
+    "deploy-flash": {
+      "executor": "orchestrator:run-command-with-artifact",
+      "options": {
+        "command": "npx tsx tools/deploy-flash.ts",
+        "args": ["worker-realtime_voice", "deploy"],
+        "artifact": "{workspaceRoot}/dist/worker-realtime_voice/deploy/FLASH_WORKER_URL"
+      }
+    }
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "name": "orchestrator",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "tools/orchestrator/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/tools/orchestrator",
+        "main": "tools/orchestrator/src/index.ts",
+        "tsConfig": "tools/orchestrator/tsconfig.lib.json",
+        "assets": [
+          "tools/orchestrator/*.md",
+          {
+            "input": "./tools/orchestrator/src",
+            "glob": "**/!(*.ts)",
+            "output": "./src"
+          },
+          {
+            "input": "./tools/orchestrator/src",
+            "glob": "**/*.d.ts",
+            "output": "./src"
+          },
+          {
+            "input": "./tools/orchestrator",
+            "glob": "generators.json",
+            "output": "."
+          },
+          {
+            "input": "./tools/orchestrator",
+            "glob": "executors.json",
+            "output": "."
+          }
+        ]
+      }
+    }
+  }
+}

@@ -4,30 +4,25 @@ NextJS app for chat + inference requests.
 
 ---
 
-## NX target: `face-value:(dev|deploy)`
+## NX target: `face-value:dev`
 
-**:dev**:
+- **executor**: `orchestrator:run-injected-command`
+- **command**: `npm run dev`, `cwd: apps/face-value`
+- **depends**: `router:router-flux2`
+- **inject**: `../../tools/resolve-local-url.ts 4201` → `ROUTER_URL` (router dev drops `PORT` only, no `ROUTER_URL` artifact)
 
-- **depends**: `router-flux2:dev`
-- **env vars**:
-  - any local env handled by nx
-  - source `@dist/router-flux2/dev/ROUTER_URL`
-  - source `@dist/router-flux2/dev/ROUTER_SECRET_AUTH_TOKEN`
+## NX target: `face-value:deploy`
 
-**:deploy**:
+- **executor**: `orchestrator:run-injected-command`
+- **depends**: `router:router-flux2-deploy`
+- **command**: `tsx tools/deploy-vercel.ts ...`
+- **inject**: `tools/wait-for-artifact.ts input dist/router-flux2/deploy/ROUTER_URL`, `.../deploy/SECRET_AUTH_TOKEN`
 
-- **depends**: `router-flux2:deploy`
-- **command**: `@tools/deploy-vercel`
-- **env vars**:
-  - any local env handled by nx
-  - source `@dist/router-flux2/dev/ROUTER_URL`
-  - source `@dist/router-flux2/dev/ROUTER_SECRET_AUTH_TOKEN`
+**target:face-value-generate-ts**:
 
-**target:generate-ts**:
-
-- **command**: `run-commands` `./scripts/generate-ts`
-- **input: api**: `@dist/router/{dev|deploy}/router-flux2-api.json`
-- **output + artifact**: `./generated/router-api.ts`
+- **executor**: `nx:run-commands` (stays, not orchestrator)
+- **input**: `dist/router-flux2/dev/api.json`
+- **output**: `./generated/router_api.ts`
 
 ---
 

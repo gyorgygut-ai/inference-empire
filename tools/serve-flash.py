@@ -1,10 +1,11 @@
-"""Serve a Flash worker via the Flash CLI and upsert its live URL.
+#!/usr/bin/env python3
 
-Usage: serve-flash.py <project> <dev|deploy>
+"""Serve a Flash worker via the Flash CLI and output its live URL.
+
+Usage: serve-flash.py <worker_script_path> [dev|deploy]
 
 Runs `flash run` in apps/<model>, scans stdout for the endpoint URL,
-upserts FLASH_WORKER_URL with tools/orchestration/upsert-artifact.ts,
-then blocks on the child (nx continuous target).
+outputs URL to stdout, then blocks on the child (nx continuous target).
 """
 
 from __future__ import annotations
@@ -26,50 +27,26 @@ def fail(msg: str) -> "NoReturn":
     raise SystemExit(1)
 
 
-def upsert_artifact(project: str, configuration: str, url: str) -> None:
-    tsx = os.path.join(ROOT, "node_modules", ".bin", "tsx")
-    cmd = [tsx, "tools/orchestration/upsert-artifact.ts"] if os.path.isfile(tsx) else ["npx", "tsx", "tools/orchestration/upsert-artifact.ts"]
-    result = subprocess.run(
-        [*cmd, project, configuration, f"FLASH_WORKER_URL={url}"],
-        cwd=ROOT,
-    )
-    if result.returncode != 0:
-        fail("upsert-artifact failed")
-
-
 def main() -> None:
-    if len(sys.argv) != 3:
-        fail("usage: serve-flash.py <project> <dev|deploy>")
-    project, configuration = sys.argv[1], sys.argv[2]
-    if configuration not in ("dev", "deploy"):
-        fail("usage: serve-flash.py <project> <dev|deploy>")
+    if len(sys.argv) < 2:
+        fail("usage: serve-flash.py <worker_script_path> [dev|deploy]")
 
-    model = project.removeprefix("worker-").replace("-", "_")
-    worker_dir = os.path.join(ROOT, "apps", model)
-    if not os.path.isdir(worker_dir):
-        fail(f"missing worker dir: apps/{model}")
+    worker_script = sys.argv[1]
+    configuration = sys.argv[2] if len(sys.argv) > 2 else "dev"
 
     child = subprocess.Popen(
-        ["uv", "run", "--locked", "flash", "run"],
-        cwd=worker_dir,
+        ["flash", "run", worker_script],
+        cwd=ROOT,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         text=True,
         bufsize=1,
     )
-    assert child.stdout is not None
-    seen: str | None = None
+
     for line in child.stdout:
         print(line, end="", flush=True)
-        if seen is None:
-            match = URL_PATTERN.search(line)
-            if match:
-                seen = match.group(0)
-                upsert_artifact(project, configuration, seen)
-    code = child.wait()
-    if seen is None:
-        fail("no endpoint URL in flash run output")
-    raise SystemExit(code)
+
+    child.wait()
 
 
 if __name__ == "__main__":

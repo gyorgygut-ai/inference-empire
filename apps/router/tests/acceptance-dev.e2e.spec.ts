@@ -7,12 +7,12 @@ import type {
   Flux2Klein9BInput,
   Flux2Klein9BOutput,
   SupResponse,
-} from '../generated/api';
+} from '../generated/api-flux2';
 
 const ROOT = join(process.cwd(), '..', '..');
 const ROUTER_URL = readFileSync(join(ROOT, 'dist', 'router-flux2', 'dev', 'ROUTER_URL'), 'utf8').trim();
 const TOKEN = readFileSync(
-  join(ROOT, 'dist', 'router-flux2', 'dev', 'ROUTER_SECRET_AUTH_TOKEN'),
+  join(ROOT, 'dist', 'router-flux2', 'dev', 'SECRET_AUTH_TOKEN'),
   'utf8',
 ).trim();
 

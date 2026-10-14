@@ -1,0 +1,14 @@
+{
+  "executors": {
+    "run-injected-command": {
+      "implementation": "./src/executors/run-injected-command/run-injected-command",
+      "schema": "./src/executors/run-injected-command/schema.json",
+      "description": "run-injected-command executor"
+    },
+    "run-command-with-artifact": {
+      "implementation": "./src/executors/run-command-with-artifact/run-command-with-artifact",
+      "schema": "./src/executors/run-command-with-artifact/schema.json",
+      "description": "run-command-with-artifact executor"
+    }
+  }
+}

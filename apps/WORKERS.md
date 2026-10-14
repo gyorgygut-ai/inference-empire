@@ -7,16 +7,19 @@
 
 ## NX Targets
 
-**worker-{model}:dev-{modal|beam|flash}**:
+**worker-{model}:dev-modal|dev-beam|dev-flash**:
 
-- **command**: `@tools/` `serve-modal` `serve-beam` `serve-flash`
-- **dev artifact**: `@dist/worker-{model}/dev/{MODAL|BEAM|FLASH}_WORKER_URL`
+- **executor**: `orchestrator:run-command-with-artifact`
+- **command**: `uv run --locked python tools/serve-{modal|beam|flash}.py`
+- **args**: `[worker-{model}, dev]`
+- **artifact**: `dist/worker-{model}/dev/{MODAL|BEAM|FLASH}_WORKER_URL`
 
-**worker-{model}:deploy-{modal|beam|flash}**:
+**worker-{model}:deploy-modal|deploy-beam|deploy-flash**:
 
-- **command**: `@tools/` `deploy-modal` `deploy-beam` `deploy-flash`
-- **nx cache**: let nx deploy only when there is no url OR code stale
-- **deploy artifact**: `@dist/worker-{model}/deploy/{MODAL|BEAM|FLASH}_WORKER_URL`
+- **executor**: `orchestrator:run-command-with-artifact`
+- **command**: `npx tsx tools/deploy-{modal|beam|flash}.ts`
+- **args**: `[worker-{model}, deploy]`
+- **artifact**: `dist/worker-{model}/deploy/{MODAL|BEAM|FLASH}_WORKER_URL`
 
 ---
 

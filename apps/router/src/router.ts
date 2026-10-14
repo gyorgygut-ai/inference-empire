@@ -3,7 +3,8 @@ import { type Env } from './index'
 import createProvider, { isProviderName, type ProviderConfigs, type ProviderName } from './providers/create-provider'
 import { pickTaskHandler } from './pick-task-handler'
 import { decodeTaskId, encodeTaskId } from './task-id'
-import type { AddToQueueRequest, AddToQueueResponse, SupResponse } from '../generated/api'
+import type { AddToQueueRequest as Flux2Request, AddToQueueResponse, SupResponse } from '../generated/api-flux2'
+import type { AddToQueueRequest as Krea2Request } from '../generated/api-krea2'
 
 export const router = Router()
 
@@ -24,7 +25,7 @@ router.all('*', async (request: Request, env: Env) => {
 })
 
 router.post('/q', async (request: Request, env: Env) => {
-  const body = await request.json() as AddToQueueRequest
+  const body = await request.json() as Flux2Request | Krea2Request
   const name = pickTaskHandler()
   const provider = createProvider(name)
   const { task_id } = await provider.pushToTaskQueue(body.input, resolveConfig(name, env))

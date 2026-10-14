@@ -1,4 +1,4 @@
-import { spawn, spawnSync } from 'node:child_process';
+import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -47,6 +47,5 @@ child.on('close', (code) => {
   }
   if (!url) { console.error(output); console.error('[deploy-vercel] no url in vercel deploy output'); process.exit(1); }
   if (!url.startsWith('http')) url = `https://${url}`;
-  const up = spawnSync('tsx', ['tools/orchestration/upsert-artifact.ts', artifactProject, configuration, `${key}=${url}`], { stdio: 'inherit' });
-  if (up.status !== 0) { console.error('[deploy-vercel] upsert-artifact failed'); process.exit(up.status ?? 1); }
+  console.log(url);
 });

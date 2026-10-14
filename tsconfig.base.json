@@ -20,6 +20,9 @@
       ],
       "@inference/ui": [
         "./packages/ui/src/index.ts"
+      ],
+      "orchestrator": [
+        "./tools/orchestrator/src/index.ts"
       ]
     }
   }

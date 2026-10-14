@@ -1,5 +1,5 @@
 import { existsSync } from 'node:fs';
-import { spawn, spawnSync } from 'node:child_process';
+import { spawn } from 'node:child_process';
 
 const [project, configuration] = process.argv.slice(2);
 if (!project || (configuration !== 'dev' && configuration !== 'deploy')) {
@@ -21,25 +21,14 @@ const child = spawn('uv', ['run', '--locked', 'flash', 'deploy'], {
 const urlPattern = /https:\/\/[^\s'"`]+/;
 let seenUrl: string | null = null;
 
-function upsert(url: string): void {
-  const result = spawnSync(
-    'tsx',
-    ['tools/orchestration/upsert-artifact.ts', project, configuration, `FLASH_WORKER_URL=${url}`],
-    { stdio: 'inherit', cwd: process.cwd() },
-  );
-  if (result.status !== 0) {
-    console.error('[deploy-flash] upsert-artifact failed');
-    process.exit(result.status ?? 1);
-  }
-}
-
 function scan(chunk: Buffer): void {
   if (seenUrl) {
     return;
   }
-  const match = urlPattern.exec(chunk.toString('utf8'));
+  const clean = chunk.toString('utf8').replace(/\x1b\[[0-9;]*m/g, '');
+  const match = urlPattern.exec(clean);
   if (match) {
-    seenUrl = match[0];
+    seenUrl = match[0].replace(/[.,;)]+$/, '');
   }
 }
 
@@ -55,22 +44,18 @@ child.on('error', (err) => {
   console.error(`[deploy-flash] failed to start flash: ${err.message}`);
   process.exit(1);
 });
-child.on('close', (code, signal) => {
-  if (code !== 0) {
-    process.exit(code ?? 1);
-  }
+child.on('close', (code) => {
   if (!seenUrl) {
-    const fallback = process.env.APP_URL ?? '';
-    if (!fallback) {
-      console.error('[deploy-flash] no URL in output and APP_URL unset');
-      process.exit(1);
+    const fallback = process.env.FLASH_URL ?? '';
+    if (fallback) {
+      seenUrl = fallback;
     }
-    upsert(fallback);
-  } else {
-    upsert(seenUrl);
   }
-  if (signal) {
-    process.exit(0);
+  if (seenUrl) {
+    console.log(seenUrl);
+  } else {
+    console.error('[deploy-flash] no flash URL found in output');
+    process.exit(1);
   }
   process.exit(code ?? 0);
 });
