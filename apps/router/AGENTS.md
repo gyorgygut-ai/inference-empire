@@ -37,14 +37,15 @@ Stateless router routing across worker implementations of a contract.
 
 ## NX target: `router:router-flux2-deploy`, `router:router-krea2-deploy`
 
-**executor**: `orchestrator:run-command-with-artifact`
-**command**: `tsx tools/deploy-vercel.ts router router-{model} router-{model} deploy ROUTER_URL --token $ROUTER_VERCEL_TOKEN --org $ROUTER_VERCEL_ORG_ID --project-id $ROUTER_VERCEL_PROJECT_ID`
+**executor**: `orchestrator:run-injected-command`
+**command**: `tsx tools/deploy-vercel.ts router --token $..._TOKEN --org $..._ORG_ID --project-id $..._PROJECT_ID` (no `-e`; runtime env comes from injected `process.env`, forwarded centrally by `deploy-vercel.ts`)
 **artifact**: `dist/router-{model}/deploy/ROUTER_URL` (deploy-vercel prints URL last line)
-**depends**: `router-{model}-generate-api`, `router-{model}-generate-ts`, `router-{model}-generate-auth-token-deploy`
+**depends**: `worker-{model}:deploy-modal`, `worker-{model}:deploy-beam`, `router-{model}-generate-api`, `router-{model}-generate-ts`, `router-{model}-generate-auth-token-deploy`
+**inject**: `tools/wait-for-artifact.ts input dist/worker-{model}/deploy/MODAL_WORKER_URL` → `MODAL_WORKER_URL`; `tools/wait-for-artifact.ts input dist/worker-{model}/deploy/BEAM_WORKER_URL` → `BEAM_WORKER_URL`; `tools/wait-for-artifact.ts input dist/router-{model}/deploy/SECRET_AUTH_TOKEN` → `SECRET_AUTH_TOKEN`
 
 **target:generate-auth-token-deploy**:
 
 - **executor**: `orchestrator:run-command-with-artifact`
 - **command**: `tsx tools/generate-auth-token.ts`
 - **artifact**: `dist/router-{model}/deploy/SECRET_AUTH_TOKEN`
-- NOTE: `SECRET_AUTH_TOKEN` must also be set as Vercel env on the router projects (out of nx scope)
+- runtime env (`SECRET_AUTH_TOKEN`, `MODAL/BEAM_WORKER_URL`) forwarded centrally by `deploy-vercel.ts` from injected `process.env`; no `-e` flags in `project.json`, no manual step

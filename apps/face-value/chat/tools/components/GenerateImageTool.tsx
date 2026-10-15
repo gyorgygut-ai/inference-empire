@@ -9,7 +9,7 @@ import { GenerateImageApproval } from "./GenerateImageApproval"
 
 type RunGenerateImageProps = ToolProps<ChatOptions, "runGenerateImage">
 
-export const GenerateImageTool = ({ part }: RunGenerateImageProps) => {
+export const GenerateImageTool = ({ part, result }: RunGenerateImageProps) => {
   if (part.state === "awaiting-input" || part.state === "input-streaming") {
     return <Spinner />
   }
@@ -17,10 +17,11 @@ export const GenerateImageTool = ({ part }: RunGenerateImageProps) => {
     return <GenerateImageApproval part={part} />
   }
   if (part.state === "error") {
+    const detail = result?.error?.trim() ? result.error : vocabulary.runGenerateImage.error.assistantMessage
     return (
       <p className="my-2 text-sm italic" aria-labelledby="errorRejected">
-        <span id="errorRejected" className="sr-only">{vocabulary.runGenerateImage.error.assistantMessage}</span>
-        {vocabulary.runGenerateImage.error.assistantMessage}
+        <span id="errorRejected" className="sr-only">{detail}</span>
+        {detail}
       </p>
     )
   }
@@ -28,7 +29,12 @@ export const GenerateImageTool = ({ part }: RunGenerateImageProps) => {
     return <GenerateImageArtifact url={part.output.presignedUrl} />
   }
   if (part.state === "approval-responded") {
-    return <p className="my-2 text-sm italic">{vocabulary.runGenerateImage.responded.assistantMessage}</p>
+    return (
+      <div className="my-2 flex items-center gap-2" role="status">
+        <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        <span className="text-sm italic">{vocabulary.runGenerateImage.responded.assistantMessage}</span>
+      </div>
+    )
   }
   return null
 }

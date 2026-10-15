@@ -3,14 +3,13 @@ import React from "react"
 import { useChatContext } from "@/chat/client"
 import { generateImageAction } from "@/app/actions/generate-image"
 import { vocabulary } from "@/chat/vocabulary/en"
-import { textPart } from "../../parts/text"
 import type { ToolProps } from "@tanstack/ai-react/ui"
 import type { ChatOptions } from "../../options"
 
 type ApprovalPart = ToolProps<ChatOptions, "runGenerateImage">["part"]
 
 export const GenerateImageApproval = ({ part }: { part: ApprovalPart }) => {
-  const { append, addToolApprovalResponse, addToolResult } = useChatContext()
+  const { addToolApprovalResponse, addToolResult } = useChatContext()
   const approval = part.approval
   const input = part.input
 
@@ -20,11 +19,6 @@ export const GenerateImageApproval = ({ part }: { part: ApprovalPart }) => {
 
   const approve = async () => {
     await addToolApprovalResponse({ id: approval.id, approved: true })
-    await append({
-      id: crypto.randomUUID(),
-      role: "assistant",
-      parts: [textPart(vocabulary.runGenerateImage.streaming.assistantMessage)],
-    })
     const generation = await generateImageAction(input)
     if ("presignedUrl" in generation) {
       await addToolResult({

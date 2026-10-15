@@ -17,7 +17,7 @@
   },
   "dependencies": {
     "@inference/task-queue-client": "*",
-    "@tanstack/ai": "^0.68.0",
+    "@tanstack/ai": "^0.69.0",
     "@tanstack/ai-react": "^0.30.3",
     "gray-matter": "^4.0.3",
     "jose": "^6.2.3",

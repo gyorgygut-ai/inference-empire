@@ -44,13 +44,36 @@ const runExecutor: PromiseExecutor<RunInjectedCommandExecutorSchema> = async (op
 
   // The main command is long-lived on continuous targets: only cap it when
   // `timeout` is explicitly configured. Inject scripts above keep the default.
-  return new Promise<{ success: boolean }>(resolve => {
-    const child = spawn(options.command, { cwd, shell: true, env: { ...process.env, ...envVars }, stdio: 'inherit' });
-    child.on('close', c => resolve({ success: c === 0 }));
-    child.on('error', () => resolve({ success: false }));
-    if (options.timeout !== undefined) {
-      setTimeout(() => { child.kill(); resolve({ success: false }); }, timeoutMs);
-    }
+  // One-shot (artifact set): pipe + stream + capture last line → artifact.
+  // Continuous (no artifact): inherit, run until exit, as before.
+  if (options.artifact === undefined) {
+    return new Promise<{ success: boolean }>(resolve => {
+      const child = spawn(options.command, { cwd, shell: true, env: { ...process.env, ...envVars }, stdio: 'inherit' });
+      child.on('close', c => resolve({ success: c === 0 }));
+      child.on('error', () => resolve({ success: false }));
+      if (options.timeout !== undefined) {
+        setTimeout(() => { child.kill(); resolve({ success: false }); }, timeoutMs);
+      }
+    });
+  }
+  return new Promise<{ success: boolean }>(res => {
+    const child = spawn(options.command, { cwd, shell: true, env: { ...process.env, ...envVars }, stdio: ['inherit', 'pipe', 'pipe'] });
+    let stdout = '';
+    child.stdout?.on('data', (d: Buffer) => { process.stdout.write(d); stdout += d.toString('utf8'); });
+    child.stderr?.on('data', (d: Buffer) => { process.stderr.write(d); });
+    child.on('close', c => {
+      if (c !== 0) { res({ success: false }); return; }
+      const lines = stdout.split('\n').map(l => l.trim()).filter(Boolean);
+      const value = lines.length ? (lines[lines.length - 1] as string) : '';
+      const rawArtifact = resolveToken(options.artifact as string, context.root, projectRoot);
+      const p = isAbsolute(rawArtifact) ? rawArtifact : resolve(context.root, rawArtifact);
+      const dir = dirname(p);
+      if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+      writeFileSync(p, value);
+      res({ success: true });
+    });
+    child.on('error', () => res({ success: false }));
+    setTimeout(() => { child.kill(); res({ success: false }); }, options.timeout ?? 600000);
   });
 };
 

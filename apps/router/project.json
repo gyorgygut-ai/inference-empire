@@ -3,10 +3,7 @@
   "name": "router",
   "projectType": "application",
   "sourceRoot": "apps/router",
-  "tags": [
-    "type:app",
-    "scope:router"
-  ],
+  "tags": ["type:app", "scope:router"],
   "targets": {
     "router-flux2": {
       "executor": "orchestrator:run-injected-command",
@@ -20,25 +17,19 @@
       ],
       "dependsOn": [
         {
-          "projects": [
-            "worker-flux2"
-          ],
+          "projects": ["worker-flux2"],
           "target": "deploy-modal",
           "params": "forward"
         },
         {
-          "projects": [
-            "worker-flux2"
-          ],
+          "projects": ["worker-flux2"],
           "target": "deploy-beam",
           "params": "forward"
         },
         "router-flux2-generate-api",
         "router-flux2-generate-ts"
       ],
-      "outputs": [
-        "{workspaceRoot}/dist/router-flux2/dev/PORT"
-      ],
+      "outputs": ["{workspaceRoot}/dist/router-flux2/dev/PORT"],
       "options": {
         "command": "npx tsx watch src/serve.ts",
         "cwd": "apps/router",
@@ -46,18 +37,12 @@
           {
             "env": "MODAL_WORKER_URL",
             "command": "../../tools/wait-for-artifact.ts",
-            "args": [
-              "input",
-              "../../dist/worker-flux2/deploy/MODAL_WORKER_URL"
-            ]
+            "args": ["input", "../../dist/worker-flux2/deploy/MODAL_WORKER_URL"]
           },
           {
             "env": "BEAM_WORKER_URL",
             "command": "../../tools/wait-for-artifact.ts",
-            "args": [
-              "input",
-              "../../dist/worker-flux2/deploy/BEAM_WORKER_URL"
-            ]
+            "args": ["input", "../../dist/worker-flux2/deploy/BEAM_WORKER_URL"]
           },
           {
             "env": "SECRET_AUTH_TOKEN",
@@ -91,17 +76,13 @@
     "router-flux2-generate-ts": {
       "executor": "nx:run-commands",
       "cache": true,
-      "dependsOn": [
-        "router-flux2-generate-api"
-      ],
+      "dependsOn": ["router-flux2-generate-api"],
       "defaultConfiguration": "dev",
       "inputs": [
         "{workspaceRoot}/dist/router-flux2/dev/api.json",
         "{workspaceRoot}/dist/router-flux2/deploy/api.json"
       ],
-      "outputs": [
-        "{projectRoot}/generated/api-flux2.ts"
-      ],
+      "outputs": ["{projectRoot}/generated/api-flux2.ts"],
       "configurations": {
         "dev": {
           "command": "tsx apps/router/scripts/generate-ts.ts dist/router-flux2/dev/api.json apps/router/generated/api-flux2.ts"
@@ -119,19 +100,49 @@
       }
     },
     "router-flux2-deploy": {
-      "executor": "orchestrator:run-command-with-artifact",
+      "executor": "orchestrator:run-injected-command",
       "cache": false,
       "dependsOn": [
+        {
+          "projects": ["worker-flux2"],
+          "target": "deploy-modal",
+          "params": "forward"
+        },
+        {
+          "projects": ["worker-flux2"],
+          "target": "deploy-beam",
+          "params": "forward"
+        },
         "router-flux2-generate-api",
         "router-flux2-generate-ts",
         "router-flux2-generate-auth-token-deploy"
       ],
       "inputs": [
+        "{workspaceRoot}/dist/worker-flux2/deploy/MODAL_WORKER_URL",
+        "{workspaceRoot}/dist/worker-flux2/deploy/BEAM_WORKER_URL",
         "{workspaceRoot}/dist/router-flux2/deploy/SECRET_AUTH_TOKEN"
       ],
       "options": {
-        "command": "tsx tools/deploy-vercel.ts router router-flux2 router-flux2 deploy ROUTER_URL --token $ROUTER_VERCEL_TOKEN --org $ROUTER_VERCEL_ORG_ID --project-id $ROUTER_VERCEL_PROJECT_ID",
-        "artifact": "{workspaceRoot}/dist/router-flux2/deploy/ROUTER_URL"
+        "command": "tsx tools/deploy-vercel.ts router --token $FLUX2_ROUTER_VERCEL_TOKEN --org $FLUX2_ROUTER_VERCEL_ORG_ID --project-id $FLUX2_ROUTER_VERCEL_PROJECT_ID",
+        "artifact": "{workspaceRoot}/dist/router-flux2/deploy/ROUTER_URL",
+        "cwd": ".",
+        "inject": [
+          {
+            "env": "MODAL_WORKER_URL",
+            "command": "tools/wait-for-artifact.ts",
+            "args": ["input", "dist/worker-flux2/deploy/MODAL_WORKER_URL"]
+          },
+          {
+            "env": "BEAM_WORKER_URL",
+            "command": "tools/wait-for-artifact.ts",
+            "args": ["input", "dist/worker-flux2/deploy/BEAM_WORKER_URL"]
+          },
+          {
+            "env": "SECRET_AUTH_TOKEN",
+            "command": "tools/wait-for-artifact.ts",
+            "args": ["input", "dist/router-flux2/deploy/SECRET_AUTH_TOKEN"]
+          }
+        ]
       }
     },
     "router-krea2": {
@@ -146,9 +157,7 @@
       ],
       "dependsOn": [
         {
-          "projects": [
-            "worker-krea2"
-          ],
+          "projects": ["worker-krea2"],
           "target": "deploy-modal",
           "params": "forward"
         },
@@ -166,10 +175,7 @@
           {
             "env": "MODAL_WORKER_URL",
             "command": "../../tools/wait-for-artifact.ts",
-            "args": [
-              "input",
-              "../../dist/worker-krea2/deploy/MODAL_WORKER_URL"
-            ]
+            "args": ["input", "../../dist/worker-krea2/deploy/MODAL_WORKER_URL"]
           },
           {
             "env": "SECRET_AUTH_TOKEN",
@@ -203,17 +209,13 @@
     "router-krea2-generate-ts": {
       "executor": "nx:run-commands",
       "cache": true,
-      "dependsOn": [
-        "router-krea2-generate-api"
-      ],
+      "dependsOn": ["router-krea2-generate-api"],
       "defaultConfiguration": "dev",
       "inputs": [
         "{workspaceRoot}/dist/router-krea2/dev/api.json",
         "{workspaceRoot}/dist/router-krea2/deploy/api.json"
       ],
-      "outputs": [
-        "{projectRoot}/generated/api-krea2.ts"
-      ],
+      "outputs": ["{projectRoot}/generated/api-krea2.ts"],
       "configurations": {
         "dev": {
           "command": "tsx apps/router/scripts/generate-ts.ts dist/router-krea2/dev/api.json apps/router/generated/api-krea2.ts"
@@ -231,19 +233,49 @@
       }
     },
     "router-krea2-deploy": {
-      "executor": "orchestrator:run-command-with-artifact",
+      "executor": "orchestrator:run-injected-command",
       "cache": false,
       "dependsOn": [
+        {
+          "projects": ["worker-krea2"],
+          "target": "deploy-modal",
+          "params": "forward"
+        },
+        {
+          "projects": ["worker-krea2"],
+          "target": "deploy-beam",
+          "params": "forward"
+        },
         "router-krea2-generate-api",
         "router-krea2-generate-ts",
         "router-krea2-generate-auth-token-deploy"
       ],
       "inputs": [
+        "{workspaceRoot}/dist/worker-krea2/deploy/MODAL_WORKER_URL",
+        "{workspaceRoot}/dist/worker-krea2/deploy/BEAM_WORKER_URL",
         "{workspaceRoot}/dist/router-krea2/deploy/SECRET_AUTH_TOKEN"
       ],
       "options": {
-        "command": "tsx tools/deploy-vercel.ts router router-krea2 router-krea2 deploy ROUTER_URL --token $ROUTER_VERCEL_TOKEN --org $ROUTER_VERCEL_ORG_ID --project-id $ROUTER_VERCEL_PROJECT_ID",
-        "artifact": "{workspaceRoot}/dist/router-krea2/deploy/ROUTER_URL"
+        "command": "tsx tools/deploy-vercel.ts router --token $KREA2_ROUTER_VERCEL_TOKEN --org $KREA2_ROUTER_VERCEL_ORG_ID --project-id $KREA2_ROUTER_VERCEL_PROJECT_ID",
+        "artifact": "{workspaceRoot}/dist/router-krea2/deploy/ROUTER_URL",
+        "cwd": ".",
+        "inject": [
+          {
+            "env": "MODAL_WORKER_URL",
+            "command": "tools/wait-for-artifact.ts",
+            "args": ["input", "dist/worker-krea2/deploy/MODAL_WORKER_URL"]
+          },
+          {
+            "env": "BEAM_WORKER_URL",
+            "command": "tools/wait-for-artifact.ts",
+            "args": ["input", "dist/worker-krea2/deploy/BEAM_WORKER_URL"]
+          },
+          {
+            "env": "SECRET_AUTH_TOKEN",
+            "command": "tools/wait-for-artifact.ts",
+            "args": ["input", "dist/router-krea2/deploy/SECRET_AUTH_TOKEN"]
+          }
+        ]
       }
     }
   }

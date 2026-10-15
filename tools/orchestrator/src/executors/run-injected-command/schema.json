@@ -44,6 +44,10 @@
       "description": "Working directory (defaults to project root, `{projectRoot}`)",
       "default": "{projectRoot}"
     },
+    "artifact": {
+      "type": "string",
+      "description": "Optional path to write last stdout line of main command as artifact (supports {workspaceRoot} token). Omit on continuous dev targets."
+    },
     "timeout": {
       "type": "number",
       "description": "Maximum execution time in milliseconds for inject scripts (default 30000); when set, also caps the main command, otherwise the main command runs until it exits",

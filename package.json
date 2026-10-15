@@ -23,7 +23,6 @@
     "@cloudflare/vitest-pool-workers": "^0.22.0",
     "@eslint/js": "^9.8.0",
     "@next/eslint-plugin-next": "^16.1.6",
-    "@nx-devkit": "^23.2.1",
     "@nx-extend/vercel": "^17.0.0",
     "@nx/esbuild": "23.2.1",
     "@nx/eslint": "^23.2.1",

@@ -27,4 +27,12 @@ describe('RunInjectedCommand Executor', () => {
     const output = await executor(options, context);
     expect(output.success).toBe(true);
   });
+
+  it('writes top-level artifact', async () => {
+    const out = await executor(
+      { command: 'echo https://example.com', inject: [], artifact: '/tmp/nx-inject-artifact-test' },
+      context
+    );
+    expect(out.success).toBe(true);
+  });
 });

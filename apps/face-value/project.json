@@ -67,7 +67,7 @@
         "{workspaceRoot}/dist/router-flux2/deploy/SECRET_AUTH_TOKEN"
       ],
       "options": {
-        "command": "tsx tools/deploy-vercel.ts face-value face-value face-value deploy APP_URL --token $FACE_VALUE_VERCEL_TOKEN --org $FACE_VALUE_VERCEL_ORG_ID --project-id $FACE_VALUE_VERCEL_PROJECT_ID",
+        "command": "tsx tools/deploy-vercel.ts face-value from-root --token $FACE_VALUE_VERCEL_TOKEN --org $FACE_VALUE_VERCEL_ORG_ID --project-id $FACE_VALUE_VERCEL_PROJECT_ID",
         "cwd": ".",
         "inject": [
           {
