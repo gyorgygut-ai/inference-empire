@@ -18,7 +18,7 @@ NextJS app for chat + inference requests.
 - **command**: `tsx tools/deploy-vercel.ts ...`
 - **inject**: `tools/wait-for-artifact.ts input dist/router-flux2/deploy/ROUTER_URL`, `.../deploy/SECRET_AUTH_TOKEN`
 
-**target:face-value-generate-ts**:
+**target:generate-ts**:
 
 - **executor**: `nx:run-commands` (stays, not orchestrator)
 - **input**: `dist/router-flux2/dev/api.json`

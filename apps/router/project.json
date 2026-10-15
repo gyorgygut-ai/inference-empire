@@ -37,8 +37,7 @@
         "router-flux2-generate-ts"
       ],
       "outputs": [
-        "{workspaceRoot}/dist/router-flux2/dev/PORT",
-        "{workspaceRoot}/dist/router-flux2/deploy/ROUTER_URL"
+        "{workspaceRoot}/dist/router-flux2/dev/PORT"
       ],
       "options": {
         "command": "npx tsx watch src/serve.ts",

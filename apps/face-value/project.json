@@ -19,7 +19,7 @@
           "target": "router-flux2",
           "params": "forward"
         },
-        "face-value-generate-ts"
+        "generate-ts"
       ],
       "inputs": [
         "{projectRoot}/env.schema.ts",
@@ -59,7 +59,7 @@
           "target": "router-flux2-deploy",
           "params": "forward"
         },
-        "face-value-generate-ts"
+        "generate-ts"
       ],
       "inputs": [
         "{projectRoot}/env.schema.ts",
@@ -89,7 +89,7 @@
         ]
       }
     },
-    "face-value-generate-ts": {
+    "generate-ts": {
       "executor": "nx:run-commands",
       "cache": true,
       "dependsOn": [
