@@ -14,5 +14,5 @@ Vanilla-TS Vite frontend for `router-krea2`.
 
 **:dev**:
 
-- **depends**: `router:router-krea2` (ordering only)
+- **depends**: `router:dev-krea2` (ordering only)
 - **command**: `vite --port 4300 --strictPort`

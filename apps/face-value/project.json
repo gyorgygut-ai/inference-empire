@@ -9,84 +9,38 @@
   ],
   "targets": {
     "dev": {
-      "executor": "orchestrator:run-injected-command",
+      "executor": "nx:run-commands",
       "cache": false,
+      "continuous": true,
       "dependsOn": [
         {
           "projects": [
             "router"
           ],
-          "target": "router-flux2",
+          "target": "dev-flux2",
           "params": "forward"
         },
         "generate-ts"
       ],
-      "inputs": [
-        "{projectRoot}/env.schema.ts",
-        "{workspaceRoot}/dist/router-flux2/dev/PORT",
-        "{workspaceRoot}/dist/router-flux2/dev/SECRET_AUTH_TOKEN"
-      ],
       "options": {
-        "command": "npm run dev",
-        "cwd": "apps/face-value",
-        "inject": [
-          {
-            "env": "ROUTER_URL",
-            "command": "../../tools/resolve-local-url.ts",
-            "args": [
-              "4201"
-            ]
-          },
-          {
-            "env": "ROUTER_SECRET_AUTH_TOKEN",
-            "command": "../../tools/wait-for-artifact.ts",
-            "args": [
-              "input",
-              "../../dist/router-flux2/dev/SECRET_AUTH_TOKEN"
-            ]
-          }
-        ]
+        "command": "npx tsx tools/export-artifacts.ts --exclude PORT dist/router-flux2/dev -- npm --prefix apps/face-value run dev"
       }
     },
     "deploy": {
-      "executor": "orchestrator:run-injected-command",
+      "executor": "nx:run-commands",
       "cache": false,
       "dependsOn": [
         {
           "projects": [
             "router"
           ],
-          "target": "router-flux2-deploy",
+          "target": "deploy-flux2",
           "params": "forward"
         },
         "generate-ts"
       ],
-      "inputs": [
-        "{projectRoot}/env.schema.ts",
-        "{workspaceRoot}/dist/router-flux2/deploy/ROUTER_URL",
-        "{workspaceRoot}/dist/router-flux2/deploy/SECRET_AUTH_TOKEN"
-      ],
       "options": {
-        "command": "tsx tools/deploy-vercel.ts face-value from-root --token $FACE_VALUE_VERCEL_TOKEN --org $FACE_VALUE_VERCEL_ORG_ID --project-id $FACE_VALUE_VERCEL_PROJECT_ID",
-        "cwd": ".",
-        "inject": [
-          {
-            "env": "ROUTER_URL",
-            "command": "tools/wait-for-artifact.ts",
-            "args": [
-              "input",
-              "dist/router-flux2/deploy/ROUTER_URL"
-            ]
-          },
-          {
-            "env": "ROUTER_SECRET_AUTH_TOKEN",
-            "command": "tools/wait-for-artifact.ts",
-            "args": [
-              "input",
-              "dist/router-flux2/deploy/SECRET_AUTH_TOKEN"
-            ]
-          }
-        ]
+        "command": "npx tsx tools/export-artifacts.ts dist/router-flux2/deploy -- npx tsx tools/deploy-vercel.ts face-value from-root --token $FACE_VALUE_VERCEL_TOKEN --org $FACE_VALUE_VERCEL_ORG_ID --project-id $FACE_VALUE_VERCEL_PROJECT_ID"
       }
     },
     "generate-ts": {
@@ -97,17 +51,17 @@
           "projects": [
             "router"
           ],
-          "target": "router-flux2-generate-api"
+          "target": "generate-api-flux2"
         }
       ],
       "inputs": [
-        "{workspaceRoot}/dist/router-flux2/dev/api.json"
+        "{workspaceRoot}/dist/router-flux2/api.json"
       ],
       "outputs": [
         "{projectRoot}/generated/router_api.ts"
       ],
       "options": {
-        "command": "tsx apps/router/scripts/generate-ts.ts dist/router-flux2/dev/api.json apps/face-value/generated/router_api.ts"
+        "command": "tsx apps/router/scripts/generate-ts.ts dist/router-flux2/api.json apps/face-value/generated/router_api.ts"
       }
     }
   }

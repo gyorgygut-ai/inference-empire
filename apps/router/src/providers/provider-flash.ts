@@ -1,4 +1,4 @@
-import { Status, type Provider } from './create-provider'
+import { Status, type Provider } from './create-provider.js'
 
 export const flashProvider: Provider<'flash'> = {
   encodeTaskId(originalTaskId: string): string {

@@ -1,6 +1,6 @@
-import { beamProvider } from './provider-beam'
-import { flashProvider } from './provider-flash'
-import { modalProvider } from './provider-modal'
+import { beamProvider } from './provider-beam.js'
+import { flashProvider } from './provider-flash.js'
+import { modalProvider } from './provider-modal.js'
 
 export const enum Status {
   PENDING = 'PENDING',

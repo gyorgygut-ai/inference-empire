@@ -16,13 +16,25 @@
 
 ---
 
-## End-to-end checklist (every job)
+## Verification
 
-- Scope line names every affected project; nothing silently out of scope
-- `grep -rn` the removed pattern repo-wide; zero hits outside tool internals
-- `nx show projects` loads (graph-level proof, not file-level)
-- Downstream consumers resolve against artifacts that exist
-- `git status` shows only intended files
+**router**:
+
+- [ ] Clear: dist artifacts + generated types
+- [ ] Run: `router:dev-flux2`
+- [ ] Assert: [Per-target Criteria](./apps/ACCEPTANCE.md)
+- [ ] Run: `router:dev-flux2` + `router:dev-flux2` in parallel
+- [ ] Assert: [Per-target Criteria](./apps/ACCEPTANCE.md)
+
+**face-value**:
+
+- [ ] Clear: dist artifacts + generated types
+- [ ] Run: `face-value:dev`
+- [ ] Assert: [Per-target Criteria](./apps/ACCEPTANCE.md)
+- [ ] Run: `face-value:deploy`
+- [ ] Assert: [Per-target Criteria](./apps/ACCEPTANCE.md)
+
+---
 
 <!-- nx configuration start-->
 <!-- Leave the start & end comments to automatically receive updates. -->

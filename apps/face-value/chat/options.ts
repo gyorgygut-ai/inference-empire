@@ -1,8 +1,8 @@
 "use client"
 
-import { presentOutcomeOptionsDef } from "./tools/presentOutcomeOptions"
-import { presentImageUploadDef } from "./tools/presentImageUpload"
-import { runGenerateImageDef } from "./tools/runGenerateImage"
+import { presentOutcomeOptionsDef } from "./tools/presentOutcomeOptions/definition"
+import { presentImageUploadDef } from "./tools/presentImageUpload/definition"
+import { runGenerateImageDef } from "./tools/runGenerateImage/definition"
 
 const chatFetcher = async () => {
   throw new Error("Append-only chat: no LLM transport")

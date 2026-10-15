@@ -1,5 +1,5 @@
-import { router } from '../src/router'
-import type { Env } from '../src/index'
+import { loadModel } from '../src/models/index.js'
+import type { Env } from '../src/index.js'
 
 function resolveEnv(): Env {
   return {
@@ -10,6 +10,9 @@ function resolveEnv(): Env {
   }
 }
 
+let loaded: Awaited<ReturnType<typeof loadModel>> | undefined
+
 export default async function handler(request: Request): Promise<Response> {
-  return router.fetch(request, resolveEnv(), undefined)
+  loaded ??= await loadModel()
+  return loaded.router.fetch(request, resolveEnv(), undefined)
 }

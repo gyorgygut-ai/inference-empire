@@ -6,51 +6,48 @@
   "tags": ["type:app", "scope:gpu-worker", "model:flux2"],
   "targets": {
     "dev-modal": {
-      "executor": "orchestrator:run-command-with-artifact",
+      "executor": "nx:run-commands",
+      "cache": false,
+      "continuous": true,
       "options": {
-        "command": "uv run --locked python tools/serve-modal.py",
-        "args": ["worker-flux2", "dev"],
-        "artifact": "{workspaceRoot}/dist/worker-flux2/dev/MODAL_WORKER_URL"
+        "command": "mkdir -p dist/worker-flux2/dev && uv run --locked python tools/serve-modal.py worker-flux2 dev | tail -n1 > dist/worker-flux2/dev/MODAL_WORKER_URL"
       }
     },
     "dev-beam": {
-      "executor": "orchestrator:run-command-with-artifact",
+      "executor": "nx:run-commands",
+      "cache": false,
+      "continuous": true,
       "options": {
-        "command": "uv run --locked python tools/serve-beam.py",
-        "args": ["worker-flux2", "dev"],
-        "artifact": "{workspaceRoot}/dist/worker-flux2/dev/BEAM_WORKER_URL"
+        "command": "mkdir -p dist/worker-flux2/dev && uv run --locked python tools/serve-beam.py worker-flux2 dev | tail -n1 > dist/worker-flux2/dev/BEAM_WORKER_URL"
       }
     },
     "dev-flash": {
-      "executor": "orchestrator:run-command-with-artifact",
+      "executor": "nx:run-commands",
+      "cache": false,
+      "continuous": true,
       "options": {
-        "command": "uv run --locked python tools/serve-flash.py",
-        "args": ["worker-flux2", "dev"],
-        "artifact": "{workspaceRoot}/dist/worker-flux2/dev/FLASH_WORKER_URL"
+        "command": "mkdir -p dist/worker-flux2/dev && uv run --locked python tools/serve-flash.py worker-flux2 dev | tail -n1 > dist/worker-flux2/dev/FLASH_WORKER_URL"
       }
     },
     "deploy-modal": {
-      "executor": "orchestrator:run-command-with-artifact",
+      "executor": "nx:run-commands",
+      "cache": false,
       "options": {
-        "command": "npx tsx tools/deploy-modal.ts",
-        "args": ["worker-flux2", "deploy"],
-        "artifact": "{workspaceRoot}/dist/worker-flux2/deploy/MODAL_WORKER_URL"
+        "command": "mkdir -p dist/worker-flux2/deploy && npx tsx tools/deploy-modal.ts worker-flux2 deploy > dist/worker-flux2/deploy/MODAL_WORKER_URL"
       }
     },
     "deploy-beam": {
-      "executor": "orchestrator:run-command-with-artifact",
+      "executor": "nx:run-commands",
+      "cache": false,
       "options": {
-        "command": "npx tsx tools/deploy-beam.ts",
-        "args": ["worker-flux2", "deploy"],
-        "artifact": "{workspaceRoot}/dist/worker-flux2/deploy/BEAM_WORKER_URL"
+        "command": "mkdir -p dist/worker-flux2/deploy && npx tsx tools/deploy-beam.ts worker-flux2 deploy > dist/worker-flux2/deploy/BEAM_WORKER_URL"
       }
     },
     "deploy-flash": {
-      "executor": "orchestrator:run-command-with-artifact",
+      "executor": "nx:run-commands",
+      "cache": false,
       "options": {
-        "command": "npx tsx tools/deploy-flash.ts",
-        "args": ["worker-flux2", "deploy"],
-        "artifact": "{workspaceRoot}/dist/worker-flux2/deploy/FLASH_WORKER_URL"
+        "command": "mkdir -p dist/worker-flux2/deploy && npx tsx tools/deploy-flash.ts worker-flux2 deploy > dist/worker-flux2/deploy/FLASH_WORKER_URL"
       }
     }
   }

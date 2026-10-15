@@ -14,51 +14,48 @@
       "cache": true
     },
     "dev-modal": {
-      "executor": "orchestrator:run-command-with-artifact",
+      "executor": "nx:run-commands",
+      "cache": false,
+      "continuous": true,
       "options": {
-        "command": "uv run --locked python tools/serve-modal.py",
-        "args": ["worker-realtime_voice", "dev"],
-        "artifact": "{workspaceRoot}/dist/worker-realtime_voice/dev/MODAL_WORKER_URL"
+        "command": "mkdir -p dist/worker-realtime_voice/dev && uv run --locked python tools/serve-modal.py worker-realtime_voice dev | tail -n1 > dist/worker-realtime_voice/dev/MODAL_WORKER_URL"
       }
     },
     "dev-beam": {
-      "executor": "orchestrator:run-command-with-artifact",
+      "executor": "nx:run-commands",
+      "cache": false,
+      "continuous": true,
       "options": {
-        "command": "uv run --locked python tools/serve-beam.py",
-        "args": ["worker-realtime_voice", "dev"],
-        "artifact": "{workspaceRoot}/dist/worker-realtime_voice/dev/BEAM_WORKER_URL"
+        "command": "mkdir -p dist/worker-realtime_voice/dev && uv run --locked python tools/serve-beam.py worker-realtime_voice dev | tail -n1 > dist/worker-realtime_voice/dev/BEAM_WORKER_URL"
       }
     },
     "dev-flash": {
-      "executor": "orchestrator:run-command-with-artifact",
+      "executor": "nx:run-commands",
+      "cache": false,
+      "continuous": true,
       "options": {
-        "command": "uv run --locked python tools/serve-flash.py",
-        "args": ["worker-realtime_voice", "dev"],
-        "artifact": "{workspaceRoot}/dist/worker-realtime_voice/dev/FLASH_WORKER_URL"
+        "command": "mkdir -p dist/worker-realtime_voice/dev && uv run --locked python tools/serve-flash.py worker-realtime_voice dev | tail -n1 > dist/worker-realtime_voice/dev/FLASH_WORKER_URL"
       }
     },
     "deploy-modal": {
-      "executor": "orchestrator:run-command-with-artifact",
+      "executor": "nx:run-commands",
+      "cache": false,
       "options": {
-        "command": "npx tsx tools/deploy-modal.ts",
-        "args": ["worker-realtime_voice", "deploy"],
-        "artifact": "{workspaceRoot}/dist/worker-realtime_voice/deploy/MODAL_WORKER_URL"
+        "command": "mkdir -p dist/worker-realtime_voice/deploy && npx tsx tools/deploy-modal.ts worker-realtime_voice deploy > dist/worker-realtime_voice/deploy/MODAL_WORKER_URL"
       }
     },
     "deploy-beam": {
-      "executor": "orchestrator:run-command-with-artifact",
+      "executor": "nx:run-commands",
+      "cache": false,
       "options": {
-        "command": "npx tsx tools/deploy-beam.ts",
-        "args": ["worker-realtime_voice", "deploy"],
-        "artifact": "{workspaceRoot}/dist/worker-realtime_voice/deploy/BEAM_WORKER_URL"
+        "command": "mkdir -p dist/worker-realtime_voice/deploy && npx tsx tools/deploy-beam.ts worker-realtime_voice deploy > dist/worker-realtime_voice/deploy/BEAM_WORKER_URL"
       }
     },
     "deploy-flash": {
-      "executor": "orchestrator:run-command-with-artifact",
+      "executor": "nx:run-commands",
+      "cache": false,
       "options": {
-        "command": "npx tsx tools/deploy-flash.ts",
-        "args": ["worker-realtime_voice", "deploy"],
-        "artifact": "{workspaceRoot}/dist/worker-realtime_voice/deploy/FLASH_WORKER_URL"
+        "command": "mkdir -p dist/worker-realtime_voice/deploy && npx tsx tools/deploy-flash.ts worker-realtime_voice deploy > dist/worker-realtime_voice/deploy/FLASH_WORKER_URL"
       }
     }
   }

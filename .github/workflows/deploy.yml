@@ -38,5 +38,5 @@ jobs:
           cache-dependency-glob: "uv.lock"
           ignore-nothing-to-cache: true
       - run: npm ci
-      - run: npx nx affected -t test-unit,lint,typecheck,validate-deps --base=${{ github.event.before }}
-      - run: npx nx affected -t deploy --base=${{ github.event.before }} --configuration=deploy
+      - run: npx nx affected -t test-unit,lint,typecheck,validate-deps --base=origin/main~1 --head=HEAD
+      - run: npx nx affected -t deploy --base=origin/main~1 --head=HEAD --configuration=deploy

@@ -33,7 +33,7 @@ function scan(chunk: Buffer): void {
 }
 
 child.stdout?.on('data', (chunk: Buffer) => {
-  process.stdout.write(chunk);
+  process.stderr.write(chunk);
   scan(chunk);
 });
 child.stderr?.on('data', (chunk: Buffer) => {

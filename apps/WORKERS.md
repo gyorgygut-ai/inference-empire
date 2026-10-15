@@ -9,17 +9,14 @@
 
 **worker-{model}:dev-modal|dev-beam|dev-flash**:
 
-- **executor**: `orchestrator:run-command-with-artifact`
-- **command**: `uv run --locked python tools/serve-{modal|beam|flash}.py`
-- **args**: `[worker-{model}, dev]`
-- **artifact**: `dist/worker-{model}/dev/{MODAL|BEAM|FLASH}_WORKER_URL`
+- **executor**: `nx:run-commands`, `continuous: true`, `cache: false`
+- **command**: `uv run --locked python tools/serve-{modal|beam|flash}.py worker-{model} dev | tail -n1 > dist/worker-{model}/dev/{MODAL|BEAM|FLASH}_WORKER_URL`
 
 **worker-{model}:deploy-modal|deploy-beam|deploy-flash**:
 
-- **executor**: `orchestrator:run-command-with-artifact`
-- **command**: `npx tsx tools/deploy-{modal|beam|flash}.ts`
-- **args**: `[worker-{model}, deploy]`
-- **artifact**: `dist/worker-{model}/deploy/{MODAL|BEAM|FLASH}_WORKER_URL`
+- **executor**: `nx:run-commands`, `cache: false`
+- **command**: `npx tsx tools/deploy-{modal|beam|flash}.ts worker-{model} deploy > dist/worker-{model}/deploy/{MODAL|BEAM|FLASH}_WORKER_URL`
+- `tools/deploy-*.ts` print nothing but the deployed URL on stdout (child logs go to stderr)
 
 ---
 

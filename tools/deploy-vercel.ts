@@ -27,7 +27,7 @@ if (!existsSync(resolvedAppDir)) { console.error(`[deploy-vercel] missing app di
 // (e.g. apps/face-value) then scopes the build. Default stays app-dir only.
 const deployCwd = scope === 'from-root' ? process.cwd() : resolvedAppDir;
 
-const RUNTIME_KEYS = ['SECRET_AUTH_TOKEN', 'MODAL_WORKER_URL', 'BEAM_WORKER_URL', 'FLASH_WORKER_URL'];
+const RUNTIME_KEYS = ['SECRET_AUTH_TOKEN', 'ROUTER_URL', 'ROUTER_MODEL', 'MODAL_WORKER_URL', 'BEAM_WORKER_URL', 'FLASH_WORKER_URL'];
 const envRun = RUNTIME_KEYS.filter((k) => process.env[k]).map((k) => `${k}=${process.env[k]}`);
 
 const child = spawn(
@@ -37,7 +37,7 @@ const child = spawn(
 );
 let stdout = '';
 let stderr = '';
-child.stdout?.on('data', (c: Buffer) => { process.stdout.write(c); stdout += c.toString('utf8'); });
+child.stdout?.on('data', (c: Buffer) => { process.stderr.write(c); stdout += c.toString('utf8'); });
 child.stderr?.on('data', (c: Buffer) => { process.stderr.write(c); stderr += c.toString('utf8'); });
 child.on('error', (e) => { console.error(`[deploy-vercel] failed to start vercel: ${e.message}`); process.exit(1); });
 child.on('close', (code) => {

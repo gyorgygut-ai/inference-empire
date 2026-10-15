@@ -12,7 +12,7 @@
       "dependsOn": [
         {
           "projects": ["router"],
-          "target": "router-krea2",
+          "target": "dev-krea2",
           "params": "forward"
         }
       ],

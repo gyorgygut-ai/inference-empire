@@ -1,4 +1,4 @@
-import { Status, type Provider } from './create-provider'
+import { Status, type Provider } from './create-provider.js'
 
 export const beamProvider: Provider<'beam'> = {
   encodeTaskId(originalTaskId: string): string {

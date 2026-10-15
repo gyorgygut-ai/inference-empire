@@ -6,22 +6,23 @@ NextJS app for chat + inference requests.
 
 ## NX target: `face-value:dev`
 
-- **executor**: `orchestrator:run-injected-command`
-- **command**: `npm run dev`, `cwd: apps/face-value`
-- **depends**: `router:router-flux2`
-- **inject**: `../../tools/resolve-local-url.ts 4201` → `ROUTER_URL` (router dev drops `PORT` only, no `ROUTER_URL` artifact)
+- **executor**: `nx:run-commands`, `continuous: true`, `cache: false`
+- **command**: `npx tsx tools/export-artifacts.ts --exclude PORT dist/router-flux2/dev -- npm --prefix apps/face-value run dev`
+- **depends**: `router:dev-flux2`
+- **env**: `ROUTER_URL`, `SECRET_AUTH_TOKEN` read from `dist/router-flux2/dev` (`PORT` excluded: `next dev` honors `PORT` and would collide with the router)
 
 ## NX target: `face-value:deploy`
 
-- **executor**: `orchestrator:run-injected-command`
-- **depends**: `router:router-flux2-deploy`
-- **command**: `tsx tools/deploy-vercel.ts face-value from-root --token $FACE_VALUE_VERCEL_TOKEN --org $FACE_VALUE_VERCEL_ORG_ID --project-id $FACE_VALUE_VERCEL_PROJECT_ID`
-- **inject**: `tools/wait-for-artifact.ts input dist/router-flux2/deploy/ROUTER_URL`, `.../deploy/SECRET_AUTH_TOKEN`
+- **executor**: `nx:run-commands`, `cache: false`
+- **depends**: `router:deploy-flux2`
+- **command**: `npx tsx tools/export-artifacts.ts dist/router-flux2/deploy -- npx tsx tools/deploy-vercel.ts face-value from-root --token $FACE_VALUE_VERCEL_TOKEN --org $FACE_VALUE_VERCEL_ORG_ID --project-id $FACE_VALUE_VERCEL_PROJECT_ID`
+- **env**: `ROUTER_URL`, `SECRET_AUTH_TOKEN` read from `dist/router-flux2/deploy`
 
 **target:generate-ts**:
 
-- **executor**: `nx:run-commands` (stays, not orchestrator)
-- **input**: `dist/router-flux2/dev/api.json`
+- **executor**: `nx:run-commands`, `cache: true`
+- **depends**: `router:generate-api-flux2`
+- **input**: `dist/router-flux2/api.json`
 - **output**: `./generated/router_api.ts`
 
 ---
@@ -59,11 +60,7 @@ NextJS app for chat + inference requests.
   - fm: (`id`, `title`, `order`, `width`, `height`);
   - prompt: markdown body, can never be exposed to browser
 - `./outcomes/index.ts`: server-only loader (`getPublicOutcomes`, `getInferenceOutcome`)
-- `chat/tools/`: a tool per file, `toolDefinition` + `schema`
-- `chat/tools/runGenerateImage`
-- `chat/tools/presentImageUpload`
-- `chat/tools/presentOutcomeOptions`
-- `chat/tools/components/`: `toolsComponents`, one per file
+- `chat/tools/{tool}/`: `{index.ts|definition.ts|components/|results/}`, one fn per file
 
 ---
 
@@ -74,7 +71,7 @@ Progressive chat thread, with NO LLM: tool result triggres next tool call.
 **Inference Requests**:
 
 - Url: `env.ROUTER_URL` from env
-- Auth: `env.ROUTER_SECRET_AUTH_TOKEN` from env
+- Auth: `env.SECRET_AUTH_TOKEN` from env
 - Client: use `@packages/worker-router-client` to send requests
 - Action: `./app/actions/generate-image`, returning `error` OR `presignedUrl`
 - Types: TS api types auto-generated (TO BE DISCUSSED)

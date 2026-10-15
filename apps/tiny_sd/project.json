@@ -6,51 +6,48 @@
   "tags": ["type:app", "scope:gpu-worker", "model:tiny-sd"],
   "targets": {
     "dev-modal": {
-      "executor": "orchestrator:run-command-with-artifact",
+      "executor": "nx:run-commands",
+      "cache": false,
+      "continuous": true,
       "options": {
-        "command": "uv run --locked python tools/serve-modal.py",
-        "args": ["worker-tiny_sd", "dev"],
-        "artifact": "{workspaceRoot}/dist/worker-tiny_sd/dev/MODAL_WORKER_URL"
+        "command": "mkdir -p dist/worker-tiny_sd/dev && uv run --locked python tools/serve-modal.py worker-tiny_sd dev | tail -n1 > dist/worker-tiny_sd/dev/MODAL_WORKER_URL"
       }
     },
     "dev-beam": {
-      "executor": "orchestrator:run-command-with-artifact",
+      "executor": "nx:run-commands",
+      "cache": false,
+      "continuous": true,
       "options": {
-        "command": "uv run --locked python tools/serve-beam.py",
-        "args": ["worker-tiny_sd", "dev"],
-        "artifact": "{workspaceRoot}/dist/worker-tiny_sd/dev/BEAM_WORKER_URL"
+        "command": "mkdir -p dist/worker-tiny_sd/dev && uv run --locked python tools/serve-beam.py worker-tiny_sd dev | tail -n1 > dist/worker-tiny_sd/dev/BEAM_WORKER_URL"
       }
     },
     "dev-flash": {
-      "executor": "orchestrator:run-command-with-artifact",
+      "executor": "nx:run-commands",
+      "cache": false,
+      "continuous": true,
       "options": {
-        "command": "uv run --locked python tools/serve-flash.py",
-        "args": ["worker-tiny_sd", "dev"],
-        "artifact": "{workspaceRoot}/dist/worker-tiny_sd/dev/FLASH_WORKER_URL"
+        "command": "mkdir -p dist/worker-tiny_sd/dev && uv run --locked python tools/serve-flash.py worker-tiny_sd dev | tail -n1 > dist/worker-tiny_sd/dev/FLASH_WORKER_URL"
       }
     },
     "deploy-modal": {
-      "executor": "orchestrator:run-command-with-artifact",
+      "executor": "nx:run-commands",
+      "cache": false,
       "options": {
-        "command": "npx tsx tools/deploy-modal.ts",
-        "args": ["worker-tiny_sd", "deploy"],
-        "artifact": "{workspaceRoot}/dist/worker-tiny_sd/deploy/MODAL_WORKER_URL"
+        "command": "mkdir -p dist/worker-tiny_sd/deploy && npx tsx tools/deploy-modal.ts worker-tiny_sd deploy > dist/worker-tiny_sd/deploy/MODAL_WORKER_URL"
       }
     },
     "deploy-beam": {
-      "executor": "orchestrator:run-command-with-artifact",
+      "executor": "nx:run-commands",
+      "cache": false,
       "options": {
-        "command": "npx tsx tools/deploy-beam.ts",
-        "args": ["worker-tiny_sd", "deploy"],
-        "artifact": "{workspaceRoot}/dist/worker-tiny_sd/deploy/BEAM_WORKER_URL"
+        "command": "mkdir -p dist/worker-tiny_sd/deploy && npx tsx tools/deploy-beam.ts worker-tiny_sd deploy > dist/worker-tiny_sd/deploy/BEAM_WORKER_URL"
       }
     },
     "deploy-flash": {
-      "executor": "orchestrator:run-command-with-artifact",
+      "executor": "nx:run-commands",
+      "cache": false,
       "options": {
-        "command": "npx tsx tools/deploy-flash.ts",
-        "args": ["worker-tiny_sd", "deploy"],
-        "artifact": "{workspaceRoot}/dist/worker-tiny_sd/deploy/FLASH_WORKER_URL"
+        "command": "mkdir -p dist/worker-tiny_sd/deploy && npx tsx tools/deploy-flash.ts worker-tiny_sd deploy > dist/worker-tiny_sd/deploy/FLASH_WORKER_URL"
       }
     }
   }
