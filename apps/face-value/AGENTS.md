@@ -50,13 +50,15 @@ NextJS app for chat + inference requests.
   - from md: 2/3 `aside > HeroImage` + 1/3 `chat/Client`
 - `./chat/shell/HeroImage.tsx`: hero image fills space
 - `./chat/client.tsx`: `chat.AppChat`
-- `./chat/options.ts`: chat ui `options`
-- `./chat/adapters/`: an `adapter` per file
+- `./chat/options.ts`: chat ui `options` (append-only fetcher inline, no LLM transport)
 - `./chat/messages/`: a `message factory` per file
-- `./chat/vocabulary/`: `en.ts` (default) + `hu.ts`
+- `./chat/parts/`: a `part factory` per file
+- `./messages/`: vocabulary entrypoint (re-exports default locale)
+- `./chat/vocabulary/`: `en.ts` (default)
 - `./outcomes/`: one `.md` per outcome
   - fm: (`id`, `title`, `order`, `width`, `height`);
   - prompt: markdown body, can never be exposed to browser
+- `./outcomes/index.ts`: server-only loader (`getPublicOutcomes`, `getInferenceOutcome`)
 - `chat/tools/`: a tool per file, `toolDefinition` + `schema`
 - `chat/tools/runGenerateImage`
 - `chat/tools/presentImageUpload`

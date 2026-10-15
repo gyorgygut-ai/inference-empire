@@ -14,6 +14,8 @@ lib/
 !apps/face-value/lib/
 lib64/
 parts/
+!apps/face-value/chat/parts/
+!packages/ui/src/chat/parts/
 sdist/
 var/
 wheels/

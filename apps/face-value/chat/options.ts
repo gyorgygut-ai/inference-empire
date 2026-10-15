@@ -1,9 +1,12 @@
 "use client"
 
-import { chatFetcher } from "./options/fetcher"
 import { presentOutcomeOptionsDef } from "./tools/presentOutcomeOptions"
 import { presentImageUploadDef } from "./tools/presentImageUpload"
 import { runGenerateImageDef } from "./tools/runGenerateImage"
+
+const chatFetcher = async () => {
+  throw new Error("Append-only chat: no LLM transport")
+}
 
 export const chatOptions = {
   fetcher: chatFetcher,

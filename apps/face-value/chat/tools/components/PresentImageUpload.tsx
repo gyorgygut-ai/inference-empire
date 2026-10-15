@@ -51,7 +51,6 @@ export const PresentImageUpload = ({ part }: PresentImageUploadProps) => {
   return (
     <div className="mb-4 animate-in fade-in-50 slide-in-from-bottom-2 duration-500 bg-surface italic rounded-xl p-4" aria-labelledby="uploadReference">
       <span id="uploadReference" className="sr-only">{vocabulary.messages.uploadReference}</span>
-      {vocabulary.messages.uploadReference}
       <input
         ref={inputRef}
         type="file"
