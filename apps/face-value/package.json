@@ -17,8 +17,10 @@
   },
   "dependencies": {
     "@inference/task-queue-client": "*",
-    "@tanstack/ai": "^0.68.0",
+    "@inference/ui": "*",
+    "@tanstack/ai": "^0.69.0",
     "@tanstack/ai-react": "^0.30.3",
+    "clsx": "^2.1.1",
     "gray-matter": "^4.0.3",
     "jose": "^6.2.3",
     "next": "16.2.12",
@@ -26,8 +28,7 @@
     "react-dom": "19.2.8",
     "server-only": "^0.0.1",
     "sharp": "^0.35.5",
-    "zod": "^4.6.5",
-    "@inference/ui": "*"
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

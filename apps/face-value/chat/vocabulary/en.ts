@@ -8,7 +8,7 @@ export const vocabulary = {
     uploadReference: "Upload your photo...",
     uploadCta: "Click or drag & drop an image",
     outcomesAria: "Outcomes",
-    userPickedOutcome: "I want {title}",
+
     working: "Working on it...",
     resultAlt: "Generated",
     download: "Download",

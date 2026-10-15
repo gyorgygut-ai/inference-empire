@@ -57,13 +57,9 @@ child.on('error', (err) => {
 });
 child.on('close', (code) => {
   if (!seenUrl) {
-    const fallback = process.env.APP_URL ?? '';
-    if (fallback) {
-      seenUrl = fallback;
-    }
+    console.error('[deploy-modal] no modal URL found in output');
+    process.exit(1);
   }
-  if (seenUrl) {
-    console.log(seenUrl);
-  }
+  console.log(seenUrl);
   process.exit(code ?? 0);
 });
