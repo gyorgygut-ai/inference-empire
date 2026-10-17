@@ -1,6 +1,7 @@
 import { Status, type Provider } from './create-provider.js'
 
 export const modalProvider: Provider<'modal'> = {
+  resolveConfig: (env) => (env.MODAL_WORKER_URL ? { url: env.MODAL_WORKER_URL } : undefined),
   encodeTaskId(originalTaskId: string): string {
     return btoa(`modal:${originalTaskId}`)
   },

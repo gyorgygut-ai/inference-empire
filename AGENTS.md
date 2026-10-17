@@ -16,23 +16,53 @@
 
 ---
 
-## Verification
+## Root `.env`
 
-**router**:
+- `HF_TOKEN`
+- `R2_ACCESS_KEY`
+- `R2_SECRET_KEY`
+- `R2_ENDPOINT`
+- `R2_BUCKET`
+- `FLUX2_ROUTER_URL`
+- `FLUX2_ROUTER_VERCEL_TOKEN`
+- `FLUX2_ROUTER_VERCEL_ORG_ID`
+- `FLUX2_ROUTER_VERCEL_PROJECT_ID`
+- `KREA_ROUTER_URL`
+- `KREA2_ROUTER_VERCEL_TOKEN`
+- `KREA2_ROUTER_VERCEL_ORG_ID`
+- `KREA2_ROUTER_VERCEL_PROJECT_ID`
+- `FACE_VALUE_VERCEL_TOKEN`
+- `FACE_VALUE_VERCEL_ORG_ID`
+- `FACE_VALUE_VERCEL_PROJECT_ID`
 
-- [ ] Clear: dist artifacts + generated types
-- [ ] Run: `router:dev-flux2`
-- [ ] Assert: [Per-target Criteria](./apps/ACCEPTANCE.md)
-- [ ] Run: `router:dev-flux2` + `router:dev-flux2` in parallel
-- [ ] Assert: [Per-target Criteria](./apps/ACCEPTANCE.md)
+## Acceptance Criteria
 
-**face-value**:
+**face-value:dev**:
 
-- [ ] Clear: dist artifacts + generated types
-- [ ] Run: `face-value:dev`
-- [ ] Assert: [Per-target Criteria](./apps/ACCEPTANCE.md)
-- [ ] Run: `face-value:deploy`
-- [ ] Assert: [Per-target Criteria](./apps/ACCEPTANCE.md)
+- [ ] `{workspaceRoot}/dist/flux2/dev.env`:
+  - [ ] `packages/schemas/flux2/schema.ts` exists
+  - [ ] `MODAL_WORKER_URL` is a valid modal worker url
+  - [ ] `BEAM_WORKER_URL` is a valid beam worker url
+  - [ ] `ROUTER_AUTH_TOKEN` equals `router:generate-auth-token`
+- [ ] `router:dev-flux2` listening on `.env.FLUX2_ROUTER_URL`
+- [ ] `.env.FLUX2_ROUTER_URL` accepts `ROUTER_AUTH_TOKEN`
+- [ ] `face-value:dev` 200 at `http://127.0.0.1:3000`
+- [ ] `face-value:dev` requests `router:dev-flux2` url
+- [ ] `face-value:dev` uses `ROUTER_AUTH_TOKEN`
+
+**face-value:deploy**:
+
+- [ ] `{workspaceRoot}/dist/flux2/deploy.env`:
+  - [ ] `packages/schemas/flux2/schema.ts` exists
+  - [ ] `MODAL_WORKER_URL` is a valid modal worker url
+  - [ ] `BEAM_WORKER_URL` is a valid beam worker url
+  - [ ] `ROUTER_AUTH_TOKEN` equals `router:generate-auth-token`
+  - [ ] `ROUTER_URL` accepts `ROUTER_AUTH_TOKEN`
+  - [ ] `router:deploy-flux2` listening on `ROUTER_URL`
+  - [ ] `ROUTER_URL`+`ROUTER_AUTH_TOKEN` responds
+- [ ] `face-value:deploy` 200 at `http://127.0.0.1:3000`
+- [ ] `face-value:deploy` requests `router:deploy-flux2` url
+- [ ] `face-value:deploy` uses `ROUTER_AUTH_TOKEN`
 
 ---
 

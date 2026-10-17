@@ -3,7 +3,7 @@
     "gpu-family": {
       "factory": "./src/generators/gpu-family/gpu-family",
       "schema": "./src/generators/gpu-family/schema.json",
-      "description": "Scaffold a new GPU worker family (workers/ + apps/ + contract stub)"
+      "description": "Scaffold a new GPU worker family (workers/ + apps/ + schema stub)"
     },
     "ts-app": {
       "factory": "./src/generators/ts-app/ts-app",

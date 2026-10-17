@@ -5,40 +5,70 @@
   "sourceRoot": "apps/router",
   "tags": ["type:app", "scope:router"],
   "targets": {
-    "generate-api-flux2": {
-      "executor": "nx:run-commands",
-      "cache": true,
-      "inputs": [
-        "{workspaceRoot}/packages/contracts/api-task-queue.json",
-        "{workspaceRoot}/packages/contracts/flux2/inference.json"
-      ],
-      "outputs": ["{workspaceRoot}/dist/router-flux2/api.json"],
-      "options": {
-        "command": "tsx apps/router/scripts/generate-api.ts packages/contracts/api-task-queue.json packages/contracts/flux2/inference.json dist/router-flux2/api.json"
-      }
-    },
-    "generate-ts-flux2": {
-      "executor": "nx:run-commands",
-      "cache": true,
-      "dependsOn": ["generate-api-flux2"],
-      "inputs": ["{workspaceRoot}/dist/router-flux2/api.json"],
-      "outputs": ["{projectRoot}/generated/api-flux2.ts"],
-      "options": {
-        "command": "tsx apps/router/scripts/generate-ts.ts dist/router-flux2/api.json apps/router/generated/api-flux2.ts"
-      }
-    },
-    "env-dev-flux2": {
-      "executor": "nx:run-commands",
+    "generate-flux2-auth-token-dev": {
+      "executor": "orchestrator:run-command",
       "cache": false,
+      "inputs": ["default"],
+      "outputs": ["{workspaceRoot}/dist/flux2/dev.env"],
       "options": {
-        "command": "tsx tools/router-env.ts flux2 dev"
+        "command": "npx tsx tools/generate-auth-token.ts",
+        "envFile": "dist/flux2/dev.env",
+        "envKey": "ROUTER_AUTH_TOKEN"
       }
     },
-    "env-deploy-flux2": {
-      "executor": "nx:run-commands",
+    "generate-flux2-auth-token-deploy": {
+      "executor": "orchestrator:run-command",
       "cache": false,
+      "inputs": ["default"],
+      "outputs": ["{workspaceRoot}/dist/flux2/deploy.env"],
       "options": {
-        "command": "tsx tools/router-env.ts flux2 deploy"
+        "command": "npx tsx tools/generate-auth-token.ts",
+        "envFile": "dist/flux2/deploy.env",
+        "envKey": "ROUTER_AUTH_TOKEN"
+      }
+    },
+    "generate-krea2-auth-token-dev": {
+      "executor": "orchestrator:run-command",
+      "cache": false,
+      "inputs": ["default"],
+      "outputs": ["{workspaceRoot}/dist/krea2/dev.env"],
+      "options": {
+        "command": "npx tsx tools/generate-auth-token.ts",
+        "envFile": "dist/krea2/dev.env",
+        "envKey": "ROUTER_AUTH_TOKEN"
+      }
+    },
+    "generate-krea2-auth-token-deploy": {
+      "executor": "orchestrator:run-command",
+      "cache": false,
+      "inputs": ["default"],
+      "outputs": ["{workspaceRoot}/dist/krea2/deploy.env"],
+      "options": {
+        "command": "npx tsx tools/generate-auth-token.ts",
+        "envFile": "dist/krea2/deploy.env",
+        "envKey": "ROUTER_AUTH_TOKEN"
+      }
+    },
+    "dev-flux2-generate-router-url": {
+      "executor": "orchestrator:run-command",
+      "cache": false,
+      "inputs": ["default"],
+      "outputs": ["{workspaceRoot}/dist/flux2/dev.env"],
+      "options": {
+        "command": "echo http://127.0.0.1:5040",
+        "envFile": "dist/flux2/dev.env",
+        "envKey": "ROUTER_URL"
+      }
+    },
+    "dev-krea2-generate-router-url": {
+      "executor": "orchestrator:run-command",
+      "cache": false,
+      "inputs": ["default"],
+      "outputs": ["{workspaceRoot}/dist/flux2/dev.env"],
+      "options": {
+        "command": "echo http://127.0.0.1:5042",
+        "envFile": "dist/flux2/dev.env",
+        "envKey": "ROUTER_URL"
       }
     },
     "dev-flux2": {
@@ -46,118 +76,59 @@
       "cache": false,
       "continuous": true,
       "dependsOn": [
-        {
-          "projects": ["worker-flux2"],
-          "target": "deploy-modal",
-          "params": "forward"
-        },
-        {
-          "projects": ["worker-flux2"],
-          "target": "deploy-beam",
-          "params": "forward"
-        },
-        "env-dev-flux2",
-        "generate-ts-flux2"
+        { "target": "worker-flux2:deploy-modal", "options": "forward" },
+        { "target": "generate-flux2-*", "options": "forward" },
+        "dev-flux2-generate-router-url",
+        "schemas:generate-flux2-*"
       ],
       "options": {
-        "command": "ROUTER_MODEL=flux2 npx tsx tools/export-artifacts.ts dist/worker-flux2/deploy dist/router-flux2/dev -- npx tsx watch apps/router/src/serve.ts",
-        "readyWhen": "listening on"
+        "command": "PORT=5040 npm run dev",
+        "cwd": "apps/router",
+        "envFile": "dist/flux2/dev.env"
       }
     },
     "deploy-flux2": {
-      "executor": "nx:run-commands",
+      "executor": "orchestrator:run-command",
       "cache": false,
       "dependsOn": [
-        {
-          "projects": ["worker-flux2"],
-          "target": "deploy-modal",
-          "params": "forward"
-        },
-        {
-          "projects": ["worker-flux2"],
-          "target": "deploy-beam",
-          "params": "forward"
-        },
-        "env-deploy-flux2",
-        "generate-ts-flux2"
+        { "target": "worker-flux2:deploy-modal", "options": "forward" },
+        { "target": "generate-flux2-*", "options": "forward" },
+        "schemas:generate-flux2-*"
       ],
       "options": {
-        "command": "ROUTER_MODEL=flux2 npx tsx tools/export-artifacts.ts dist/worker-flux2/deploy dist/router-flux2/deploy -- npx tsx tools/deploy-vercel.ts router --token $FLUX2_ROUTER_VERCEL_TOKEN --org $FLUX2_ROUTER_VERCEL_ORG_ID --project-id $FLUX2_ROUTER_VERCEL_PROJECT_ID > dist/router-flux2/deploy/ROUTER_URL"
-      }
-    },
-    "generate-api-krea2": {
-      "executor": "nx:run-commands",
-      "cache": true,
-      "inputs": [
-        "{workspaceRoot}/packages/contracts/api-task-queue.json",
-        "{workspaceRoot}/packages/contracts/krea2/inference.json"
-      ],
-      "outputs": ["{workspaceRoot}/dist/router-krea2/api.json"],
-      "options": {
-        "command": "tsx apps/router/scripts/generate-api.ts packages/contracts/api-task-queue.json packages/contracts/krea2/inference.json dist/router-krea2/api.json"
-      }
-    },
-    "generate-ts-krea2": {
-      "executor": "nx:run-commands",
-      "cache": true,
-      "dependsOn": ["generate-api-krea2"],
-      "inputs": ["{workspaceRoot}/dist/router-krea2/api.json"],
-      "outputs": ["{projectRoot}/generated/api-krea2.ts"],
-      "options": {
-        "command": "tsx apps/router/scripts/generate-ts.ts dist/router-krea2/api.json apps/router/generated/api-krea2.ts"
-      }
-    },
-    "env-dev-krea2": {
-      "executor": "nx:run-commands",
-      "cache": false,
-      "options": {
-        "command": "tsx tools/router-env.ts krea2 dev"
-      }
-    },
-    "env-deploy-krea2": {
-      "executor": "nx:run-commands",
-      "cache": false,
-      "options": {
-        "command": "tsx tools/router-env.ts krea2 deploy"
+        "command": "tools/deploy-vercel.ts --token $FLUX2_ROUTER_VERCEL_TOKEN --org $FLUX2_ROUTER_VERCEL_ORG_ID --project-id $FLUX2_ROUTER_VERCEL_PROJECT_ID",
+        "envKey": "ROUTER_URL",
+        "envFile": "dist/flux2/deploy.env"
       }
     },
     "dev-krea2": {
-      "executor": "nx:run-commands",
+      "executor": "orchestrator:run-command",
       "cache": false,
       "continuous": true,
       "dependsOn": [
-        {
-          "projects": ["worker-krea2"],
-          "target": "deploy-modal",
-          "params": "forward"
-        },
-        "env-dev-krea2",
-        "generate-ts-krea2"
+        { "target": "worker-krea2:deploy-modal", "options": "forward" },
+        { "target": "generate-krea2-*", "options": "forward" },
+        "dev-krea2-generate-router-url",
+        "schemas:generate-krea2-*"
       ],
       "options": {
-        "command": "ROUTER_MODEL=krea2 npx tsx tools/export-artifacts.ts dist/worker-krea2/deploy dist/router-krea2/dev -- npx tsx watch apps/router/src/serve.ts",
-        "readyWhen": "listening on"
+        "command": "PORT=5042 npm run dev",
+        "cwd": "apps/router",
+        "envFile": "dist/krea2/dev.env"
       }
     },
     "deploy-krea2": {
-      "executor": "nx:run-commands",
+      "executor": "orchestrator:run-command",
       "cache": false,
       "dependsOn": [
-        {
-          "projects": ["worker-krea2"],
-          "target": "deploy-modal",
-          "params": "forward"
-        },
-        {
-          "projects": ["worker-krea2"],
-          "target": "deploy-beam",
-          "params": "forward"
-        },
-        "env-deploy-krea2",
-        "generate-ts-krea2"
+        { "target": "worker-krea2:deploy-modal", "options": "forward" },
+        { "target": "generate-krea2-*", "options": "forward" },
+        "schemas:generate-krea2-*"
       ],
       "options": {
-        "command": "ROUTER_MODEL=krea2 npx tsx tools/export-artifacts.ts dist/worker-krea2/deploy dist/router-krea2/deploy -- npx tsx tools/deploy-vercel.ts router --token $KREA2_ROUTER_VERCEL_TOKEN --org $KREA2_ROUTER_VERCEL_ORG_ID --project-id $KREA2_ROUTER_VERCEL_PROJECT_ID > dist/router-krea2/deploy/ROUTER_URL"
+        "command": "tools/deploy-vercel.ts --token $KREA2_ROUTER_VERCEL_TOKEN --org $KREA2_ROUTER_VERCEL_ORG_ID --project-id $KREA2_ROUTER_VERCEL_PROJECT_ID",
+        "envKey": "ROUTER_URL",
+        "envFile": "dist/krea2/deploy.env"
       }
     }
   }

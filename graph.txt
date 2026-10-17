@@ -1,0 +1,3573 @@
+{
+  "graph": {
+    "nodes": {
+      "task-queue-client": {
+        "name": "task-queue-client",
+        "type": "lib",
+        "data": {
+          "root": "packages/task-queue-client",
+          "targets": {
+            "oxlint": {
+              "cache": true,
+              "inputs": [
+                {
+                  "fileset": "{projectRoot}/**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx,vue,svelte,astro}"
+                },
+                {
+                  "fileset": "{projectRoot}/**/{.oxlintrc.json,.oxlintrc.jsonc,oxlint.config.ts,oxlint.config.mts,.eslintignore,.gitignore,tsconfig*.json}"
+                },
+                "{workspaceRoot}/.oxlintrc.json",
+                "{workspaceRoot}/packages/task-queue-client/.oxlintrc.json",
+                "{workspaceRoot}/packages/.eslintignore",
+                "{workspaceRoot}/packages/.gitignore",
+                "{workspaceRoot}/.eslintignore",
+                "{workspaceRoot}/.gitignore",
+                {
+                  "externalDependencies": [
+                    "oxlint"
+                  ]
+                }
+              ],
+              "metadata": {
+                "technologies": [
+                  "oxlint"
+                ],
+                "description": "Runs Oxlint on project",
+                "help": {
+                  "command": "npx oxlint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "options": {
+                "cwd": "packages/task-queue-client",
+                "command": "oxlint ."
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "eslint:lint": {
+              "cache": true,
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/eslint.config.mjs",
+                "{workspaceRoot}/packages/task-queue-client/eslint.config.mjs",
+                "{workspaceRoot}/tools/eslint-rules/**/*",
+                {
+                  "externalDependencies": [
+                    "eslint"
+                  ]
+                }
+              ],
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "metadata": {
+                "technologies": [
+                  "eslint"
+                ],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "npx eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "options": {
+                "cwd": "packages/task-queue-client",
+                "command": "eslint ."
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "cache": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ],
+              "executor": "@nx/js:tsc",
+              "outputs": [
+                "{options.outputPath}"
+              ],
+              "options": {
+                "outputPath": "dist/packages/task-queue-client",
+                "main": "packages/task-queue-client/src/index.ts",
+                "tsConfig": "packages/task-queue-client/tsconfig.lib.json",
+                "assets": [
+                  "packages/task-queue-client/*.md"
+                ]
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "lint": {
+              "cache": true,
+              "executor": "@nx/eslint:lint",
+              "configurations": {},
+              "options": {},
+              "parallelism": true
+            }
+          },
+          "name": "task-queue-client",
+          "tags": [
+            "npm:private"
+          ],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "@inference/task-queue-client",
+              "packageVersion": "0.0.1",
+              "packageMain": "./src/index.js",
+              "isInPackageManagerWorkspaces": true
+            }
+          },
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "packages/task-queue-client/src",
+          "projectType": "library",
+          "implicitDependencies": []
+        }
+      },
+      "apple-shortcuts": {
+        "name": "apple-shortcuts",
+        "type": "app",
+        "data": {
+          "root": "packages/apple-shortcuts",
+          "targets": {
+            "lint": {
+              "cache": true,
+              "executor": "@nx/eslint:lint",
+              "configurations": {},
+              "options": {},
+              "parallelism": true
+            },
+            "sign": {
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "shortcuts sign -i artifacts/test-time-notification_unsigned.shortcut -o artifacts/test-time-notification.shortcut",
+                "cwd": "packages/apple-shortcuts"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "sign:dirigera-list-devices": {
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "shortcuts sign -i artifacts/dirigera-list-devices_unsigned.shortcut -o artifacts/dirigera-list-devices.shortcut",
+                "cwd": "packages/apple-shortcuts"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "sign:dirigera-toggle-plug": {
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "shortcuts sign -i artifacts/dirigera-toggle-plug_unsigned.shortcut -o artifacts/dirigera-toggle-plug.shortcut",
+                "cwd": "packages/apple-shortcuts"
+              },
+              "configurations": {},
+              "parallelism": true
+            }
+          },
+          "name": "apple-shortcuts",
+          "projectType": "application",
+          "sourceRoot": "packages/apple-shortcuts/src",
+          "tags": [
+            "type:tool",
+            "scope:shortcuts"
+          ],
+          "implicitDependencies": []
+        }
+      },
+      "workspace-plugin": {
+        "name": "workspace-plugin",
+        "type": "lib",
+        "data": {
+          "root": "tools/workspace-plugin",
+          "targets": {
+            "oxlint": {
+              "cache": true,
+              "inputs": [
+                {
+                  "fileset": "{projectRoot}/**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx,vue,svelte,astro}"
+                },
+                {
+                  "fileset": "{projectRoot}/**/{.oxlintrc.json,.oxlintrc.jsonc,oxlint.config.ts,oxlint.config.mts,.eslintignore,.gitignore,tsconfig*.json}"
+                },
+                "{workspaceRoot}/.oxlintrc.json",
+                "{workspaceRoot}/tools/workspace-plugin/.oxlintrc.json",
+                "{workspaceRoot}/tools/.eslintignore",
+                "{workspaceRoot}/tools/.gitignore",
+                "{workspaceRoot}/.eslintignore",
+                "{workspaceRoot}/.gitignore",
+                {
+                  "externalDependencies": [
+                    "oxlint"
+                  ]
+                }
+              ],
+              "metadata": {
+                "technologies": [
+                  "oxlint"
+                ],
+                "description": "Runs Oxlint on project",
+                "help": {
+                  "command": "npx oxlint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "options": {
+                "cwd": "tools/workspace-plugin",
+                "command": "oxlint ."
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "eslint:lint": {
+              "cache": true,
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/eslint.config.mjs",
+                "{workspaceRoot}/tools/workspace-plugin/eslint.config.mjs",
+                "{workspaceRoot}/tools/eslint-rules/**/*",
+                {
+                  "externalDependencies": [
+                    "eslint"
+                  ]
+                }
+              ],
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "metadata": {
+                "technologies": [
+                  "eslint"
+                ],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "npx eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "options": {
+                "cwd": "tools/workspace-plugin",
+                "command": "eslint ."
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "cache": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ],
+              "executor": "@nx/js:tsc",
+              "outputs": [
+                "{options.outputPath}"
+              ],
+              "options": {
+                "outputPath": "dist/tools/workspace-plugin",
+                "main": "tools/workspace-plugin/src/index.ts",
+                "tsConfig": "tools/workspace-plugin/tsconfig.lib.json",
+                "assets": [
+                  "tools/workspace-plugin/*.md",
+                  {
+                    "input": "./tools/workspace-plugin/src",
+                    "glob": "**/!(*.ts)",
+                    "output": "./src"
+                  },
+                  {
+                    "input": "./tools/workspace-plugin/src",
+                    "glob": "**/*.d.ts",
+                    "output": "./src"
+                  },
+                  {
+                    "input": "./tools/workspace-plugin",
+                    "glob": "generators.json",
+                    "output": "."
+                  },
+                  {
+                    "input": "./tools/workspace-plugin",
+                    "glob": "executors.json",
+                    "output": "."
+                  }
+                ]
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "lint": {
+              "cache": true,
+              "executor": "@nx/eslint:lint",
+              "configurations": {},
+              "options": {},
+              "parallelism": true
+            },
+            "test-unit": {
+              "executor": "@nx/vitest:test",
+              "inputs": [
+                "default"
+              ],
+              "cache": true,
+              "options": {
+                "config": "tools/workspace-plugin/vitest.config.mts"
+              },
+              "configurations": {},
+              "parallelism": true
+            }
+          },
+          "name": "workspace-plugin",
+          "tags": [
+            "npm:private"
+          ],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "@inference/workspace-plugin",
+              "packageVersion": "0.0.1",
+              "packageMain": "./src/index.js",
+              "isInPackageManagerWorkspaces": true
+            }
+          },
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "tools/workspace-plugin/src",
+          "projectType": "library",
+          "implicitDependencies": []
+        }
+      },
+      "worker-realtime_voice": {
+        "name": "worker-realtime_voice",
+        "type": "app",
+        "data": {
+          "root": "apps/realtime_voice",
+          "targets": {
+            "audit-uv": {
+              "executor": "@inference/workspace-plugin:audit-uv",
+              "inputs": [
+                "default",
+                "{workspaceRoot}/uv.lock"
+              ],
+              "cache": true,
+              "options": {},
+              "configurations": {},
+              "parallelism": true
+            },
+            "ruff": {
+              "executor": "@inference/workspace-plugin:ruff",
+              "cache": true,
+              "options": {
+                "family": "realtime_voice"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "ty": {
+              "executor": "@inference/workspace-plugin:ty",
+              "cache": true,
+              "options": {
+                "family": "realtime_voice"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "vulture": {
+              "executor": "@inference/workspace-plugin:vulture",
+              "cache": true,
+              "options": {
+                "family": "realtime_voice"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "audit": {
+              "dependsOn": [
+                "audit-uv",
+                "validate-deps"
+              ],
+              "cache": true,
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "executor": "nx:noop"
+            },
+            "lint": {
+              "dependsOn": [
+                "audit",
+                "ruff",
+                "ty",
+                "vulture"
+              ],
+              "cache": true,
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "executor": "nx:noop"
+            },
+            "build": {
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ],
+              "cache": true,
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "mkdir -p dist/apps/realtime-voice && cp -r apps/realtime_voice/* dist/apps/realtime-voice/",
+                "cwd": "."
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "test": {
+              "dependsOn": [
+                "test-unit",
+                "test-e2e"
+              ],
+              "cache": false,
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "executor": "nx:noop"
+            },
+            "verify": {
+              "dependsOn": [
+                "audit",
+                "lint",
+                "build",
+                "test"
+              ],
+              "cache": false,
+              "executor": "nx:noop",
+              "configurations": {},
+              "options": {},
+              "parallelism": true
+            },
+            "validate-deps": {
+              "executor": "@inference/workspace-plugin:validate-deps",
+              "cache": true,
+              "options": {
+                "family": "realtime_voice",
+                "python_version": "3.10"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "test-unit": {
+              "executor": "@inference/workspace-plugin:pytest",
+              "inputs": [
+                "default"
+              ],
+              "cache": true,
+              "options": {
+                "family": "realtime_voice",
+                "mode": "unit"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "test-e2e": {
+              "executor": "nx:run-commands",
+              "inputs": [
+                "default"
+              ],
+              "cache": false,
+              "options": {
+                "command": "uv run --locked --group test pytest apps/realtime_voice/tests/ -k \"e2e\" -q",
+                "cwd": "."
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "dev-modal": {
+              "executor": "orchestrator:run-command",
+              "cache": false,
+              "continuous": true,
+              "inputs": [
+                "default"
+              ],
+              "outputs": [
+                "{workspaceRoot}/dist/realtime_voice/dev.env"
+              ],
+              "options": {
+                "command": "uv run --locked python tools/serve-modal.py",
+                "args": "apps/realtime_voice/worker_modal_cls_realtime_voice_qwen.py",
+                "envFile": "dist/realtime_voice/dev.env",
+                "envKey": "MODAL_WORKER_URL"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "dev-beam": {
+              "executor": "orchestrator:run-command",
+              "cache": false,
+              "continuous": true,
+              "inputs": [
+                "default"
+              ],
+              "outputs": [
+                "{workspaceRoot}/dist/realtime_voice/dev.env"
+              ],
+              "options": {
+                "command": "uv run --locked python tools/serve-beam.py",
+                "args": "apps/realtime_voice/worker_beam_asgi_realtime_voice_qwen.py",
+                "envFile": "dist/realtime_voice/dev.env",
+                "envKey": "BEAM_WORKER_URL"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "dev-flash": {
+              "executor": "orchestrator:run-command",
+              "cache": false,
+              "continuous": true,
+              "inputs": [
+                "default"
+              ],
+              "outputs": [
+                "{workspaceRoot}/dist/realtime_voice/dev.env"
+              ],
+              "options": {
+                "command": "uv run --locked python tools/serve-flash.py",
+                "args": "apps/realtime_voice/worker_flash_cls_realtime_voice_qwen.py",
+                "envFile": "dist/realtime_voice/dev.env",
+                "envKey": "FLASH_WORKER_URL"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "deploy-modal": {
+              "executor": "orchestrator:run-command",
+              "cache": false,
+              "inputs": [
+                "default"
+              ],
+              "outputs": [
+                "{workspaceRoot}/dist/realtime_voice/deploy.env"
+              ],
+              "options": {
+                "command": "npx tsx tools/deploy-modal.ts",
+                "args": "apps/realtime_voice/worker_modal_cls_realtime_voice_qwen.py",
+                "envFile": "dist/realtime_voice/deploy.env",
+                "envKey": "MODAL_WORKER_URL"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "deploy-beam": {
+              "executor": "orchestrator:run-command",
+              "cache": false,
+              "inputs": [
+                "default"
+              ],
+              "outputs": [
+                "{workspaceRoot}/dist/realtime_voice/deploy.env"
+              ],
+              "options": {
+                "command": "npx tsx tools/deploy-beam.ts",
+                "args": "apps/realtime_voice/worker_beam_asgi_realtime_voice_qwen.py",
+                "envFile": "dist/realtime_voice/deploy.env",
+                "envKey": "BEAM_WORKER_URL"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "deploy-flash": {
+              "executor": "orchestrator:run-command",
+              "cache": false,
+              "inputs": [
+                "default"
+              ],
+              "outputs": [
+                "{workspaceRoot}/dist/realtime_voice/deploy.env"
+              ],
+              "options": {
+                "command": "npx tsx tools/deploy-flash.ts",
+                "args": "apps/realtime_voice/worker_flash_cls_realtime_voice_qwen.py",
+                "envFile": "dist/realtime_voice/deploy.env",
+                "envKey": "FLASH_WORKER_URL"
+              },
+              "configurations": {},
+              "parallelism": true
+            }
+          },
+          "name": "worker-realtime_voice",
+          "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+          "projectType": "application",
+          "sourceRoot": "apps/realtime_voice",
+          "tags": [
+            "type:app",
+            "scope:gpu-worker",
+            "model:realtime-voice"
+          ],
+          "implicitDependencies": []
+        }
+      },
+      "orchestrator": {
+        "name": "orchestrator",
+        "type": "lib",
+        "data": {
+          "root": "tools/orchestrator",
+          "targets": {
+            "oxlint": {
+              "cache": true,
+              "inputs": [
+                {
+                  "fileset": "{projectRoot}/**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx,vue,svelte,astro}"
+                },
+                {
+                  "fileset": "{projectRoot}/**/{.oxlintrc.json,.oxlintrc.jsonc,oxlint.config.ts,oxlint.config.mts,.eslintignore,.gitignore,tsconfig*.json}"
+                },
+                "{workspaceRoot}/.oxlintrc.json",
+                "{workspaceRoot}/tools/.eslintignore",
+                "{workspaceRoot}/tools/.gitignore",
+                "{workspaceRoot}/.eslintignore",
+                "{workspaceRoot}/.gitignore",
+                {
+                  "externalDependencies": [
+                    "oxlint"
+                  ]
+                }
+              ],
+              "metadata": {
+                "technologies": [
+                  "oxlint"
+                ],
+                "description": "Runs Oxlint on project",
+                "help": {
+                  "command": "npx oxlint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "options": {
+                "cwd": "tools/orchestrator",
+                "command": "oxlint ."
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "eslint:lint": {
+              "cache": true,
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/eslint.config.mjs",
+                "{workspaceRoot}/tools/eslint-rules/**/*",
+                {
+                  "externalDependencies": [
+                    "eslint"
+                  ]
+                }
+              ],
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "metadata": {
+                "technologies": [
+                  "eslint"
+                ],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "npx eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "options": {
+                "cwd": "tools/orchestrator",
+                "command": "eslint ."
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "test-unit": {
+              "executor": "@nx/vitest:test",
+              "inputs": [
+                "default"
+              ],
+              "cache": true,
+              "options": {
+                "config": "tools/orchestrator/vitest.config.mts"
+              },
+              "configurations": {},
+              "parallelism": true
+            }
+          },
+          "name": "orchestrator",
+          "tags": [
+            "npm:private",
+            "type:tool",
+            "scope:orchestrator"
+          ],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "orchestrator",
+              "packageVersion": "0.0.1",
+              "packageMain": "./src/index.js",
+              "isInPackageManagerWorkspaces": true
+            }
+          },
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "tools/orchestrator/src",
+          "projectType": "library",
+          "implicitDependencies": []
+        }
+      },
+      "seed-volumes": {
+        "name": "seed-volumes",
+        "type": "app",
+        "data": {
+          "root": "tools/seed-volumes",
+          "targets": {
+            "lint": {
+              "cache": true,
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "uvx ruff check tools/seed-volumes/seed-volumes.py --line-length 100",
+                "cwd": "."
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "seed": {
+              "executor": "nx:run-commands",
+              "cache": false,
+              "options": {
+                "command": "uv run --locked python tools/seed-volumes/seed-volumes.py",
+                "cwd": "."
+              },
+              "configurations": {},
+              "parallelism": true
+            }
+          },
+          "name": "seed-volumes",
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "projectType": "application",
+          "sourceRoot": "tools/seed-volumes",
+          "tags": [
+            "type:tool",
+            "scope:seed-volumes"
+          ],
+          "implicitDependencies": []
+        }
+      },
+      "dirigera": {
+        "name": "dirigera",
+        "type": "app",
+        "data": {
+          "root": "packages/dirigera",
+          "name": "dirigera",
+          "projectType": "application",
+          "sourceRoot": "packages/dirigera",
+          "tags": [
+            "type:tool",
+            "scope:dirigera"
+          ],
+          "targets": {
+            "auth": {
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "./dirigera-auth.sh",
+                "cwd": "packages/dirigera"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "api": {
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "./dirigera",
+                "cwd": "packages/dirigera"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "find": {
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "./dirigera-find",
+                "cwd": "packages/dirigera"
+              },
+              "configurations": {},
+              "parallelism": true
+            }
+          },
+          "implicitDependencies": []
+        }
+      },
+      "schemas": {
+        "name": "schemas",
+        "type": "lib",
+        "data": {
+          "root": "packages/schemas",
+          "targets": {
+            "oxlint": {
+              "cache": true,
+              "inputs": [
+                {
+                  "fileset": "{projectRoot}/**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx,vue,svelte,astro}"
+                },
+                {
+                  "fileset": "{projectRoot}/**/{.oxlintrc.json,.oxlintrc.jsonc,oxlint.config.ts,oxlint.config.mts,.eslintignore,.gitignore,tsconfig*.json}"
+                },
+                "{workspaceRoot}/.oxlintrc.json",
+                "{workspaceRoot}/packages/.eslintignore",
+                "{workspaceRoot}/packages/.gitignore",
+                "{workspaceRoot}/.eslintignore",
+                "{workspaceRoot}/.gitignore",
+                {
+                  "externalDependencies": [
+                    "oxlint"
+                  ]
+                }
+              ],
+              "metadata": {
+                "technologies": [
+                  "oxlint"
+                ],
+                "description": "Runs Oxlint on project",
+                "help": {
+                  "command": "npx oxlint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "options": {
+                "cwd": "packages/schemas",
+                "command": "oxlint ."
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "eslint:lint": {
+              "cache": true,
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/eslint.config.mjs",
+                "{workspaceRoot}/tools/eslint-rules/**/*",
+                {
+                  "externalDependencies": [
+                    "eslint"
+                  ]
+                }
+              ],
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "metadata": {
+                "technologies": [
+                  "eslint"
+                ],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "npx eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "options": {
+                "cwd": "packages/schemas",
+                "command": "eslint ."
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "generate-flux2-api-types": {
+              "executor": "orchestrator:run-command",
+              "cache": true,
+              "inputs": [
+                "{workspaceRoot}/packages/schemas/flux2/schema.json",
+                "{projectRoot}/tools/generate-zod-from-json.ts"
+              ],
+              "outputs": [
+                "{workspaceRoot}/packages/schemas/flux2/schema.ts"
+              ],
+              "options": {
+                "command": "packages/schemas/tools/generate-zod-from-json.ts",
+                "args": "packages/schemas/flux2/schema.json packages/schemas/flux2/schema.ts"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "generate-krea2-api-types": {
+              "executor": "orchestrator:run-command",
+              "cache": true,
+              "inputs": [
+                "{workspaceRoot}/packages/schemas/krea2/schema.json",
+                "{projectRoot}/tools/generate-zod-from-json.ts"
+              ],
+              "outputs": [
+                "{workspaceRoot}/packages/schemas/krea2/schema.ts"
+              ],
+              "options": {
+                "command": "packages/schemas/tools/generate-zod-from-json.ts",
+                "args": "packages/schemas/krea2/schema.json packages/schemas/krea2/schema.ts"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "generate-h3_comfy-api-types": {
+              "executor": "orchestrator:run-command",
+              "cache": true,
+              "inputs": [
+                "{workspaceRoot}/packages/schemas/h3_comfy/schema.json",
+                "{projectRoot}/tools/generate-zod-from-json.ts"
+              ],
+              "outputs": [
+                "{workspaceRoot}/packages/schemas/h3_comfy/schema.ts"
+              ],
+              "options": {
+                "command": "packages/schemas/tools/generate-zod-from-json.ts",
+                "args": "packages/schemas/h3_comfy/schema.json packages/schemas/h3_comfy/schema.ts"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "generate-h3_fl2va-api-types": {
+              "executor": "orchestrator:run-command",
+              "cache": true,
+              "inputs": [
+                "{workspaceRoot}/packages/schemas/h3_fl2va/schema.json",
+                "{projectRoot}/tools/generate-zod-from-json.ts"
+              ],
+              "outputs": [
+                "{workspaceRoot}/packages/schemas/h3_fl2va/schema.ts"
+              ],
+              "options": {
+                "command": "packages/schemas/tools/generate-zod-from-json.ts",
+                "args": "packages/schemas/h3_fl2va/schema.json packages/schemas/h3_fl2va/schema.ts"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "generate-h3_ref2va-api-types": {
+              "executor": "orchestrator:run-command",
+              "cache": true,
+              "inputs": [
+                "{workspaceRoot}/packages/schemas/h3_ref2va/schema.json",
+                "{projectRoot}/tools/generate-zod-from-json.ts"
+              ],
+              "outputs": [
+                "{workspaceRoot}/packages/schemas/h3_ref2va/schema.ts"
+              ],
+              "options": {
+                "command": "packages/schemas/tools/generate-zod-from-json.ts",
+                "args": "packages/schemas/h3_ref2va/schema.json packages/schemas/h3_ref2va/schema.ts"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "generate-realtime_voice-api-types": {
+              "executor": "orchestrator:run-command",
+              "cache": true,
+              "inputs": [
+                "{workspaceRoot}/packages/schemas/realtime_voice/schema.json",
+                "{projectRoot}/tools/generate-zod-from-json.ts"
+              ],
+              "outputs": [
+                "{workspaceRoot}/packages/schemas/realtime_voice/schema.ts"
+              ],
+              "options": {
+                "command": "packages/schemas/tools/generate-zod-from-json.ts",
+                "args": "packages/schemas/realtime_voice/schema.json packages/schemas/realtime_voice/schema.ts"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "generate-tiny_sd-api-types": {
+              "executor": "orchestrator:run-command",
+              "cache": true,
+              "inputs": [
+                "{workspaceRoot}/packages/schemas/tiny_sd/schema.json",
+                "{projectRoot}/tools/generate-zod-from-json.ts"
+              ],
+              "outputs": [
+                "{workspaceRoot}/packages/schemas/tiny_sd/schema.ts"
+              ],
+              "options": {
+                "command": "packages/schemas/tools/generate-zod-from-json.ts",
+                "args": "packages/schemas/tiny_sd/schema.json packages/schemas/tiny_sd/schema.ts"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "generate-vision-api-types": {
+              "executor": "orchestrator:run-command",
+              "cache": true,
+              "inputs": [
+                "{workspaceRoot}/packages/schemas/vision/schema.json",
+                "{projectRoot}/tools/generate-zod-from-json.ts"
+              ],
+              "outputs": [
+                "{workspaceRoot}/packages/schemas/vision/schema.ts"
+              ],
+              "options": {
+                "command": "packages/schemas/tools/generate-zod-from-json.ts",
+                "args": "packages/schemas/vision/schema.json packages/schemas/vision/schema.ts"
+              },
+              "configurations": {},
+              "parallelism": true
+            }
+          },
+          "name": "schemas",
+          "tags": [
+            "npm:private",
+            "type:schemas"
+          ],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "@inference/schemas",
+              "isInPackageManagerWorkspaces": false
+            }
+          },
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "projectType": "library",
+          "sourceRoot": "packages/schemas",
+          "implicitDependencies": []
+        }
+      },
+      "face-value": {
+        "name": "face-value",
+        "type": "app",
+        "data": {
+          "root": "apps/face-value",
+          "targets": {
+            "oxlint": {
+              "cache": true,
+              "inputs": [
+                {
+                  "fileset": "{projectRoot}/**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx,vue,svelte,astro}"
+                },
+                {
+                  "fileset": "{projectRoot}/**/{.oxlintrc.json,.oxlintrc.jsonc,oxlint.config.ts,oxlint.config.mts,.eslintignore,.gitignore,tsconfig*.json}"
+                },
+                "{workspaceRoot}/.oxlintrc.json",
+                "{workspaceRoot}/apps/face-value/.oxlintrc.json",
+                "{workspaceRoot}/apps/.eslintignore",
+                "{workspaceRoot}/apps/.gitignore",
+                "{workspaceRoot}/.eslintignore",
+                "{workspaceRoot}/.gitignore",
+                {
+                  "externalDependencies": [
+                    "oxlint"
+                  ]
+                }
+              ],
+              "metadata": {
+                "technologies": [
+                  "oxlint"
+                ],
+                "description": "Runs Oxlint on project",
+                "help": {
+                  "command": "npx oxlint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "options": {
+                "cwd": "apps/face-value",
+                "command": "oxlint ."
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "eslint:lint": {
+              "cache": true,
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/eslint.config.mjs",
+                "{workspaceRoot}/tools/eslint-rules/**/*",
+                {
+                  "externalDependencies": [
+                    "eslint"
+                  ]
+                }
+              ],
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "metadata": {
+                "technologies": [
+                  "eslint"
+                ],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "npx eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "options": {
+                "cwd": "apps/face-value",
+                "command": "eslint ."
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "lint": {
+              "cache": true,
+              "executor": "nx:run-script",
+              "metadata": {
+                "scriptContent": "oxlint",
+                "runCommand": "npm run lint"
+              },
+              "options": {
+                "script": "lint"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ],
+              "cache": true,
+              "executor": "nx:run-script",
+              "metadata": {
+                "scriptContent": "npm run build:manifest && NODE_ENV=production next build",
+                "runCommand": "npm run build"
+              },
+              "options": {
+                "script": "build"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "build:manifest": {
+              "executor": "nx:run-script",
+              "metadata": {
+                "scriptContent": "node --experimental-strip-types scripts/generate-manifest.mjs",
+                "runCommand": "npm run build:manifest"
+              },
+              "options": {
+                "script": "build:manifest"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "start": {
+              "executor": "nx:run-script",
+              "metadata": {
+                "scriptContent": "next start",
+                "runCommand": "npm run start"
+              },
+              "options": {
+                "script": "start"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "lint:fix": {
+              "executor": "nx:run-script",
+              "metadata": {
+                "scriptContent": "oxlint --fix",
+                "runCommand": "npm run lint:fix"
+              },
+              "options": {
+                "script": "lint:fix"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "test:run": {
+              "executor": "nx:run-script",
+              "metadata": {
+                "scriptContent": "echo 'no tests'",
+                "runCommand": "npm run test:run"
+              },
+              "options": {
+                "script": "test:run"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "dev": {
+              "executor": "nx/run-commands",
+              "cache": false,
+              "continuous": true,
+              "dependsOn": [
+                {
+                  "target": "router:dev-flux2",
+                  "options": "forward"
+                },
+                "dev-flux2-generate-router-url",
+                "schemas:generate-flux2-*"
+              ],
+              "options": {
+                "command": "npm run dev",
+                "envFile": "dist/flux2/dev.env"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "deploy": {
+              "executor": "nx/run-commands",
+              "cache": false,
+              "dependsOn": [
+                {
+                  "target": "router:deploy-flux2",
+                  "options": "forward"
+                },
+                "schemas:generate-flux2-*"
+              ],
+              "options": {
+                "command": "tools/deploy-vercel.ts --token $FACE_VALUE_VERCEL_TOKEN --org $FACE_VALUE_VERCEL_ORG_ID --project-id $FACE_VALUE_VERCEL_PROJECT_ID",
+                "envKey": "FACE_VALUE_URL",
+                "envFile": "dist/flux2/deploy.env"
+              },
+              "configurations": {},
+              "parallelism": true
+            }
+          },
+          "name": "face-value",
+          "tags": [
+            "npm:private",
+            "type:app",
+            "scope:face-value"
+          ],
+          "metadata": {
+            "targetGroups": {
+              "NPM Scripts": [
+                "build:manifest",
+                "build",
+                "start",
+                "lint",
+                "lint:fix",
+                "test:run"
+              ]
+            },
+            "js": {
+              "packageName": "face-value",
+              "packageVersion": "0.1.0",
+              "isInPackageManagerWorkspaces": true
+            }
+          },
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "projectType": "application",
+          "sourceRoot": "apps/face-value",
+          "implicitDependencies": []
+        }
+      },
+      "worker-h3_ref2va": {
+        "name": "worker-h3_ref2va",
+        "type": "app",
+        "data": {
+          "root": "apps/h3_ref2va",
+          "targets": {
+            "audit-uv": {
+              "executor": "@inference/workspace-plugin:audit-uv",
+              "inputs": [
+                "default",
+                "{workspaceRoot}/uv.lock"
+              ],
+              "cache": true,
+              "options": {},
+              "configurations": {},
+              "parallelism": true
+            },
+            "ruff": {
+              "executor": "@inference/workspace-plugin:ruff",
+              "cache": true,
+              "options": {
+                "family": "h3_ref2va"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "ty": {
+              "executor": "@inference/workspace-plugin:ty",
+              "cache": true,
+              "options": {
+                "family": "h3_ref2va"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "vulture": {
+              "executor": "@inference/workspace-plugin:vulture",
+              "cache": true,
+              "options": {
+                "family": "h3_ref2va"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "audit": {
+              "dependsOn": [
+                "audit-uv"
+              ],
+              "cache": true,
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "executor": "nx:noop"
+            },
+            "lint": {
+              "dependsOn": [
+                "audit",
+                "ruff",
+                "ty",
+                "vulture"
+              ],
+              "cache": true,
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "executor": "nx:noop"
+            },
+            "build": {
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ],
+              "cache": true,
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "executor": "nx:noop"
+            },
+            "test": {
+              "dependsOn": [
+                "test-unit",
+                "test-e2e"
+              ],
+              "cache": false,
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "executor": "nx:noop"
+            },
+            "verify": {
+              "dependsOn": [
+                "audit",
+                "lint",
+                "build",
+                "test"
+              ],
+              "cache": false,
+              "executor": "nx:noop",
+              "configurations": {},
+              "options": {},
+              "parallelism": true
+            },
+            "test-unit": {
+              "executor": "@inference/workspace-plugin:pytest",
+              "inputs": [
+                "default"
+              ],
+              "cache": true,
+              "options": {
+                "family": "h3_ref2va",
+                "mode": "unit"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "test-e2e": {
+              "executor": "nx:run-commands",
+              "inputs": [
+                "default"
+              ],
+              "cache": false,
+              "options": {
+                "command": "uv run --locked --group test pytest apps/h3_ref2va/tests/ -k \"e2e\" -q",
+                "cwd": "."
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "dev-modal": {
+              "executor": "orchestrator:run-command",
+              "cache": false,
+              "continuous": true,
+              "inputs": [
+                "default"
+              ],
+              "outputs": [
+                "{workspaceRoot}/dist/h3_ref2va/dev.env"
+              ],
+              "options": {
+                "command": "uv run --locked python tools/serve-modal.py",
+                "args": "apps/h3_ref2va/worker_modal_cls_minimax_h3_ref2va.py",
+                "envFile": "dist/h3_ref2va/dev.env",
+                "envKey": "MODAL_WORKER_URL"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "dev-beam": {
+              "executor": "orchestrator:run-command",
+              "cache": false,
+              "continuous": true,
+              "inputs": [
+                "default"
+              ],
+              "outputs": [
+                "{workspaceRoot}/dist/h3_ref2va/dev.env"
+              ],
+              "options": {
+                "command": "uv run --locked python tools/serve-beam.py",
+                "args": "apps/h3_ref2va/worker_beam_tq_minimax_h3_ref2va.py",
+                "envFile": "dist/h3_ref2va/dev.env",
+                "envKey": "BEAM_WORKER_URL"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "deploy-modal": {
+              "executor": "orchestrator:run-command",
+              "cache": false,
+              "inputs": [
+                "default"
+              ],
+              "outputs": [
+                "{workspaceRoot}/dist/h3_ref2va/deploy.env"
+              ],
+              "options": {
+                "command": "npx tsx tools/deploy-modal.ts",
+                "args": "apps/h3_ref2va/worker_modal_cls_minimax_h3_ref2va.py",
+                "envFile": "dist/h3_ref2va/deploy.env",
+                "envKey": "MODAL_WORKER_URL"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "deploy-beam": {
+              "executor": "orchestrator:run-command",
+              "cache": false,
+              "inputs": [
+                "default"
+              ],
+              "outputs": [
+                "{workspaceRoot}/dist/h3_ref2va/deploy.env"
+              ],
+              "options": {
+                "command": "npx tsx tools/deploy-beam.ts",
+                "args": "apps/h3_ref2va/worker_beam_tq_minimax_h3_ref2va.py",
+                "envFile": "dist/h3_ref2va/deploy.env",
+                "envKey": "BEAM_WORKER_URL"
+              },
+              "configurations": {},
+              "parallelism": true
+            }
+          },
+          "name": "worker-h3_ref2va",
+          "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+          "projectType": "application",
+          "sourceRoot": "apps/h3_ref2va",
+          "tags": [
+            "type:app",
+            "scope:gpu-worker",
+            "model:h3-ref2va"
+          ],
+          "implicitDependencies": []
+        }
+      },
+      "worker-h3_comfy": {
+        "name": "worker-h3_comfy",
+        "type": "app",
+        "data": {
+          "root": "apps/h3_comfy",
+          "targets": {
+            "audit-uv": {
+              "executor": "@inference/workspace-plugin:audit-uv",
+              "inputs": [
+                "default",
+                "{workspaceRoot}/uv.lock"
+              ],
+              "cache": true,
+              "options": {},
+              "configurations": {},
+              "parallelism": true
+            },
+            "ruff": {
+              "executor": "@inference/workspace-plugin:ruff",
+              "cache": true,
+              "options": {
+                "family": "h3_comfy"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "ty": {
+              "executor": "@inference/workspace-plugin:ty",
+              "cache": true,
+              "options": {
+                "family": "h3_comfy"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "vulture": {
+              "executor": "@inference/workspace-plugin:vulture",
+              "cache": true,
+              "options": {
+                "family": "h3_comfy"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "audit": {
+              "dependsOn": [
+                "audit-uv"
+              ],
+              "cache": true,
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "executor": "nx:noop"
+            },
+            "lint": {
+              "dependsOn": [
+                "audit",
+                "ruff",
+                "ty",
+                "vulture"
+              ],
+              "cache": true,
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "executor": "nx:noop"
+            },
+            "build": {
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ],
+              "cache": true,
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "executor": "nx:noop"
+            },
+            "test": {
+              "dependsOn": [
+                "test-unit",
+                "test-e2e"
+              ],
+              "cache": false,
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "executor": "nx:noop"
+            },
+            "verify": {
+              "dependsOn": [
+                "audit",
+                "lint",
+                "build",
+                "test"
+              ],
+              "cache": false,
+              "executor": "nx:noop",
+              "configurations": {},
+              "options": {},
+              "parallelism": true
+            },
+            "test-unit": {
+              "executor": "@inference/workspace-plugin:pytest",
+              "inputs": [
+                "default"
+              ],
+              "cache": true,
+              "options": {
+                "family": "h3_comfy",
+                "mode": "unit"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "test-e2e": {
+              "executor": "nx:run-commands",
+              "inputs": [
+                "default"
+              ],
+              "cache": false,
+              "options": {
+                "command": "uv run --locked --group test pytest apps/h3_comfy/tests/ -k \"e2e\" -q",
+                "cwd": "."
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "dev-modal": {
+              "executor": "orchestrator:run-command",
+              "cache": false,
+              "continuous": true,
+              "inputs": [
+                "default"
+              ],
+              "outputs": [
+                "{workspaceRoot}/dist/h3_comfy/dev.env"
+              ],
+              "options": {
+                "command": "uv run --locked python tools/serve-modal.py",
+                "args": "apps/h3_comfy/worker_modal_cls_minimax_h3_comfy.py",
+                "envFile": "dist/h3_comfy/dev.env",
+                "envKey": "MODAL_WORKER_URL"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "dev-beam": {
+              "executor": "orchestrator:run-command",
+              "cache": false,
+              "continuous": true,
+              "inputs": [
+                "default"
+              ],
+              "outputs": [
+                "{workspaceRoot}/dist/h3_comfy/dev.env"
+              ],
+              "options": {
+                "command": "uv run --locked python tools/serve-beam.py",
+                "args": "apps/h3_comfy/worker_beam_tq_minimax_h3_comfy.py",
+                "envFile": "dist/h3_comfy/dev.env",
+                "envKey": "BEAM_WORKER_URL"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "deploy-modal": {
+              "executor": "orchestrator:run-command",
+              "cache": false,
+              "inputs": [
+                "default"
+              ],
+              "outputs": [
+                "{workspaceRoot}/dist/h3_comfy/deploy.env"
+              ],
+              "options": {
+                "command": "npx tsx tools/deploy-modal.ts",
+                "args": "apps/h3_comfy/worker_modal_cls_minimax_h3_comfy.py",
+                "envFile": "dist/h3_comfy/deploy.env",
+                "envKey": "MODAL_WORKER_URL"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "deploy-beam": {
+              "executor": "orchestrator:run-command",
+              "cache": false,
+              "inputs": [
+                "default"
+              ],
+              "outputs": [
+                "{workspaceRoot}/dist/h3_comfy/deploy.env"
+              ],
+              "options": {
+                "command": "npx tsx tools/deploy-beam.ts",
+                "args": "apps/h3_comfy/worker_beam_tq_minimax_h3_comfy.py",
+                "envFile": "dist/h3_comfy/deploy.env",
+                "envKey": "BEAM_WORKER_URL"
+              },
+              "configurations": {},
+              "parallelism": true
+            }
+          },
+          "name": "worker-h3_comfy",
+          "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+          "projectType": "application",
+          "sourceRoot": "apps/h3_comfy",
+          "tags": [
+            "type:app",
+            "scope:gpu-worker",
+            "model:h3-comfy"
+          ],
+          "implicitDependencies": []
+        }
+      },
+      "worker-h3_fl2va": {
+        "name": "worker-h3_fl2va",
+        "type": "app",
+        "data": {
+          "root": "apps/h3_fl2va",
+          "targets": {
+            "audit-uv": {
+              "executor": "@inference/workspace-plugin:audit-uv",
+              "inputs": [
+                "default",
+                "{workspaceRoot}/uv.lock"
+              ],
+              "cache": true,
+              "options": {},
+              "configurations": {},
+              "parallelism": true
+            },
+            "ruff": {
+              "executor": "@inference/workspace-plugin:ruff",
+              "cache": true,
+              "options": {
+                "family": "h3_fl2va"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "ty": {
+              "executor": "@inference/workspace-plugin:ty",
+              "cache": true,
+              "options": {
+                "family": "h3_fl2va"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "vulture": {
+              "executor": "@inference/workspace-plugin:vulture",
+              "cache": true,
+              "options": {
+                "family": "h3_fl2va"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "audit": {
+              "dependsOn": [
+                "audit-uv"
+              ],
+              "cache": true,
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "executor": "nx:noop"
+            },
+            "lint": {
+              "dependsOn": [
+                "audit",
+                "ruff",
+                "ty",
+                "vulture"
+              ],
+              "cache": true,
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "executor": "nx:noop"
+            },
+            "build": {
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ],
+              "cache": true,
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "executor": "nx:noop"
+            },
+            "test": {
+              "dependsOn": [
+                "test-unit",
+                "test-e2e"
+              ],
+              "cache": false,
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "executor": "nx:noop"
+            },
+            "verify": {
+              "dependsOn": [
+                "audit",
+                "lint",
+                "build",
+                "test"
+              ],
+              "cache": false,
+              "executor": "nx:noop",
+              "configurations": {},
+              "options": {},
+              "parallelism": true
+            },
+            "test-unit": {
+              "executor": "@inference/workspace-plugin:pytest",
+              "inputs": [
+                "default"
+              ],
+              "cache": true,
+              "options": {
+                "family": "h3_fl2va",
+                "mode": "unit"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "test-e2e": {
+              "executor": "nx:run-commands",
+              "inputs": [
+                "default"
+              ],
+              "cache": false,
+              "options": {
+                "command": "uv run --locked --group test pytest apps/h3_fl2va/tests/ -k \"e2e\" -q",
+                "cwd": "."
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "dev-modal": {
+              "executor": "orchestrator:run-command",
+              "cache": false,
+              "continuous": true,
+              "inputs": [
+                "default"
+              ],
+              "outputs": [
+                "{workspaceRoot}/dist/h3_fl2va/dev.env"
+              ],
+              "options": {
+                "command": "uv run --locked python tools/serve-modal.py",
+                "args": "apps/h3_fl2va/worker_modal_cls_minimax_h3_fl2va.py",
+                "envFile": "dist/h3_fl2va/dev.env",
+                "envKey": "MODAL_WORKER_URL"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "dev-beam": {
+              "executor": "orchestrator:run-command",
+              "cache": false,
+              "continuous": true,
+              "inputs": [
+                "default"
+              ],
+              "outputs": [
+                "{workspaceRoot}/dist/h3_fl2va/dev.env"
+              ],
+              "options": {
+                "command": "uv run --locked python tools/serve-beam.py",
+                "args": "apps/h3_fl2va/worker_beam_tq_minimax_h3_fl2va.py",
+                "envFile": "dist/h3_fl2va/dev.env",
+                "envKey": "BEAM_WORKER_URL"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "deploy-modal": {
+              "executor": "orchestrator:run-command",
+              "cache": false,
+              "inputs": [
+                "default"
+              ],
+              "outputs": [
+                "{workspaceRoot}/dist/h3_fl2va/deploy.env"
+              ],
+              "options": {
+                "command": "npx tsx tools/deploy-modal.ts",
+                "args": "apps/h3_fl2va/worker_modal_cls_minimax_h3_fl2va.py",
+                "envFile": "dist/h3_fl2va/deploy.env",
+                "envKey": "MODAL_WORKER_URL"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "deploy-beam": {
+              "executor": "orchestrator:run-command",
+              "cache": false,
+              "inputs": [
+                "default"
+              ],
+              "outputs": [
+                "{workspaceRoot}/dist/h3_fl2va/deploy.env"
+              ],
+              "options": {
+                "command": "npx tsx tools/deploy-beam.ts",
+                "args": "apps/h3_fl2va/worker_beam_tq_minimax_h3_fl2va.py",
+                "envFile": "dist/h3_fl2va/deploy.env",
+                "envKey": "BEAM_WORKER_URL"
+              },
+              "configurations": {},
+              "parallelism": true
+            }
+          },
+          "name": "worker-h3_fl2va",
+          "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+          "projectType": "application",
+          "sourceRoot": "apps/h3_fl2va",
+          "tags": [
+            "type:app",
+            "scope:gpu-worker",
+            "model:h3-fl2va"
+          ],
+          "implicitDependencies": []
+        }
+      },
+      "worker-tiny_sd": {
+        "name": "worker-tiny_sd",
+        "type": "app",
+        "data": {
+          "root": "apps/tiny_sd",
+          "targets": {
+            "audit-uv": {
+              "executor": "@inference/workspace-plugin:audit-uv",
+              "inputs": [
+                "default",
+                "{workspaceRoot}/uv.lock"
+              ],
+              "cache": true,
+              "options": {},
+              "configurations": {},
+              "parallelism": true
+            },
+            "ruff": {
+              "executor": "@inference/workspace-plugin:ruff",
+              "cache": true,
+              "options": {
+                "family": "tiny_sd"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "ty": {
+              "executor": "@inference/workspace-plugin:ty",
+              "cache": true,
+              "options": {
+                "family": "tiny_sd"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "vulture": {
+              "executor": "@inference/workspace-plugin:vulture",
+              "cache": true,
+              "options": {
+                "family": "tiny_sd"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "audit": {
+              "dependsOn": [
+                "audit-uv",
+                "validate-deps"
+              ],
+              "cache": true,
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "executor": "nx:noop"
+            },
+            "lint": {
+              "dependsOn": [
+                "audit",
+                "ruff",
+                "ty",
+                "vulture"
+              ],
+              "cache": true,
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "executor": "nx:noop"
+            },
+            "build": {
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ],
+              "cache": true,
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "executor": "nx:noop"
+            },
+            "test": {
+              "dependsOn": [
+                "test-unit",
+                "test-e2e"
+              ],
+              "cache": false,
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "executor": "nx:noop"
+            },
+            "verify": {
+              "dependsOn": [
+                "audit",
+                "lint",
+                "build",
+                "test"
+              ],
+              "cache": false,
+              "executor": "nx:noop",
+              "configurations": {},
+              "options": {},
+              "parallelism": true
+            },
+            "validate-deps": {
+              "executor": "@inference/workspace-plugin:validate-deps",
+              "cache": true,
+              "options": {
+                "family": "tiny_sd",
+                "python_version": "3.11"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "test-unit": {
+              "executor": "@inference/workspace-plugin:pytest",
+              "inputs": [
+                "default"
+              ],
+              "cache": true,
+              "options": {
+                "family": "tiny_sd",
+                "mode": "unit"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "test-e2e": {
+              "executor": "nx:run-commands",
+              "inputs": [
+                "default"
+              ],
+              "cache": false,
+              "options": {
+                "command": "uv run --locked --group test pytest apps/tiny_sd/tests/ -k \"e2e\" -q",
+                "cwd": "."
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "dev-modal": {
+              "executor": "orchestrator:run-command",
+              "cache": false,
+              "continuous": true,
+              "inputs": [
+                "default"
+              ],
+              "outputs": [
+                "{workspaceRoot}/dist/tiny_sd/dev.env"
+              ],
+              "options": {
+                "command": "uv run --locked python tools/serve-modal.py",
+                "args": "apps/tiny_sd/worker_modal_cls_tiny_sd.py",
+                "envFile": "dist/tiny_sd/dev.env",
+                "envKey": "MODAL_WORKER_URL"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "dev-beam": {
+              "executor": "orchestrator:run-command",
+              "cache": false,
+              "continuous": true,
+              "inputs": [
+                "default"
+              ],
+              "outputs": [
+                "{workspaceRoot}/dist/tiny_sd/dev.env"
+              ],
+              "options": {
+                "command": "uv run --locked python tools/serve-beam.py",
+                "args": "apps/tiny_sd/worker_beam_tq_tiny_sd.py",
+                "envFile": "dist/tiny_sd/dev.env",
+                "envKey": "BEAM_WORKER_URL"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "dev-flash": {
+              "executor": "orchestrator:run-command",
+              "cache": false,
+              "continuous": true,
+              "inputs": [
+                "default"
+              ],
+              "outputs": [
+                "{workspaceRoot}/dist/tiny_sd/dev.env"
+              ],
+              "options": {
+                "command": "uv run --locked python tools/serve-flash.py",
+                "args": "apps/tiny_sd/worker_flash_cls_tiny_sd.py",
+                "envFile": "dist/tiny_sd/dev.env",
+                "envKey": "FLASH_WORKER_URL"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "deploy-modal": {
+              "executor": "orchestrator:run-command",
+              "cache": false,
+              "inputs": [
+                "default"
+              ],
+              "outputs": [
+                "{workspaceRoot}/dist/tiny_sd/deploy.env"
+              ],
+              "options": {
+                "command": "npx tsx tools/deploy-modal.ts",
+                "args": "apps/tiny_sd/worker_modal_cls_tiny_sd.py",
+                "envFile": "dist/tiny_sd/deploy.env",
+                "envKey": "MODAL_WORKER_URL"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "deploy-beam": {
+              "executor": "orchestrator:run-command",
+              "cache": false,
+              "inputs": [
+                "default"
+              ],
+              "outputs": [
+                "{workspaceRoot}/dist/tiny_sd/deploy.env"
+              ],
+              "options": {
+                "command": "npx tsx tools/deploy-beam.ts",
+                "args": "apps/tiny_sd/worker_beam_tq_tiny_sd.py",
+                "envFile": "dist/tiny_sd/deploy.env",
+                "envKey": "BEAM_WORKER_URL"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "deploy-flash": {
+              "executor": "orchestrator:run-command",
+              "cache": false,
+              "inputs": [
+                "default"
+              ],
+              "outputs": [
+                "{workspaceRoot}/dist/tiny_sd/deploy.env"
+              ],
+              "options": {
+                "command": "npx tsx tools/deploy-flash.ts",
+                "args": "apps/tiny_sd/worker_flash_cls_tiny_sd.py",
+                "envFile": "dist/tiny_sd/deploy.env",
+                "envKey": "FLASH_WORKER_URL"
+              },
+              "configurations": {},
+              "parallelism": true
+            }
+          },
+          "name": "worker-tiny_sd",
+          "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+          "projectType": "application",
+          "sourceRoot": "apps/tiny_sd",
+          "tags": [
+            "type:app",
+            "scope:gpu-worker",
+            "model:tiny-sd"
+          ],
+          "implicitDependencies": []
+        }
+      },
+      "router": {
+        "name": "router",
+        "type": "app",
+        "data": {
+          "root": "apps/router",
+          "targets": {
+            "oxlint": {
+              "cache": true,
+              "inputs": [
+                {
+                  "fileset": "{projectRoot}/**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx,vue,svelte,astro}"
+                },
+                {
+                  "fileset": "{projectRoot}/**/{.oxlintrc.json,.oxlintrc.jsonc,oxlint.config.ts,oxlint.config.mts,.eslintignore,.gitignore,tsconfig*.json}"
+                },
+                "{workspaceRoot}/.oxlintrc.json",
+                "{workspaceRoot}/apps/router/.oxlintrc.json",
+                "{workspaceRoot}/apps/.eslintignore",
+                "{workspaceRoot}/apps/.gitignore",
+                "{workspaceRoot}/.eslintignore",
+                "{workspaceRoot}/.gitignore",
+                {
+                  "externalDependencies": [
+                    "oxlint"
+                  ]
+                }
+              ],
+              "metadata": {
+                "technologies": [
+                  "oxlint"
+                ],
+                "description": "Runs Oxlint on project",
+                "help": {
+                  "command": "npx oxlint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "options": {
+                "cwd": "apps/router",
+                "command": "oxlint ."
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "eslint:lint": {
+              "cache": true,
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/eslint.config.mjs",
+                "{workspaceRoot}/apps/router/eslint.config.mjs",
+                "{workspaceRoot}/tools/eslint-rules/**/*",
+                {
+                  "externalDependencies": [
+                    "eslint"
+                  ]
+                }
+              ],
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "metadata": {
+                "technologies": [
+                  "eslint"
+                ],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "npx eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "options": {
+                "cwd": "apps/router",
+                "command": "eslint ."
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "test": {
+              "cache": false,
+              "executor": "nx:run-script",
+              "metadata": {
+                "scriptContent": "vitest run",
+                "runCommand": "npm run test"
+              },
+              "options": {
+                "script": "test"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ],
+              "cache": true,
+              "executor": "nx:run-script",
+              "metadata": {
+                "scriptContent": "tsc -p tsconfig.build.${ROUTER_MODEL:-flux2}.json",
+                "runCommand": "npm run build"
+              },
+              "options": {
+                "script": "build"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "generate-flux2-auth-token-dev": {
+              "executor": "orchestrator:run-command",
+              "cache": false,
+              "inputs": [
+                "default"
+              ],
+              "outputs": [
+                "{workspaceRoot}/dist/flux2/dev.env"
+              ],
+              "options": {
+                "command": "npx tsx tools/generate-auth-token.ts",
+                "envFile": "dist/flux2/dev.env",
+                "envKey": "ROUTER_AUTH_TOKEN"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "generate-flux2-auth-token-deploy": {
+              "executor": "orchestrator:run-command",
+              "cache": false,
+              "inputs": [
+                "default"
+              ],
+              "outputs": [
+                "{workspaceRoot}/dist/flux2/deploy.env"
+              ],
+              "options": {
+                "command": "npx tsx tools/generate-auth-token.ts",
+                "envFile": "dist/flux2/deploy.env",
+                "envKey": "ROUTER_AUTH_TOKEN"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "generate-krea2-auth-token-dev": {
+              "executor": "orchestrator:run-command",
+              "cache": false,
+              "inputs": [
+                "default"
+              ],
+              "outputs": [
+                "{workspaceRoot}/dist/krea2/dev.env"
+              ],
+              "options": {
+                "command": "npx tsx tools/generate-auth-token.ts",
+                "envFile": "dist/krea2/dev.env",
+                "envKey": "ROUTER_AUTH_TOKEN"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "generate-krea2-auth-token-deploy": {
+              "executor": "orchestrator:run-command",
+              "cache": false,
+              "inputs": [
+                "default"
+              ],
+              "outputs": [
+                "{workspaceRoot}/dist/krea2/deploy.env"
+              ],
+              "options": {
+                "command": "npx tsx tools/generate-auth-token.ts",
+                "envFile": "dist/krea2/deploy.env",
+                "envKey": "ROUTER_AUTH_TOKEN"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "dev-flux2-generate-router-url": {
+              "executor": "orchestrator/run-command",
+              "cache": false,
+              "inputs": [
+                "default"
+              ],
+              "outputs": [
+                "{workspaceRoot}/dist/flux2/dev.env"
+              ],
+              "options": {
+                "command": "echo http://127.0.0.1:5040",
+                "envFile": "dist/flux2/dev.env",
+                "envKey": "ROUTER_URL"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "dev-krea2-generate-router-url": {
+              "executor": "orchestrator/run-command",
+              "cache": false,
+              "inputs": [
+                "default"
+              ],
+              "outputs": [
+                "{workspaceRoot}/dist/flux2/dev.env"
+              ],
+              "options": {
+                "command": "echo http://127.0.0.1:5042",
+                "envFile": "dist/flux2/dev.env",
+                "envKey": "ROUTER_URL"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "dev-flux2": {
+              "executor": "nx/run-commands",
+              "cache": false,
+              "continuous": true,
+              "dependsOn": [
+                {
+                  "target": "worker-flux2:deploy-modal",
+                  "options": "forward"
+                },
+                {
+                  "target": "generate-flux2-*",
+                  "options": "forward"
+                },
+                "dev-flux2-generate-router-url",
+                "schemas:generate-flux2-*"
+              ],
+              "options": {
+                "command": "PORT=5040 npm run dev",
+                "envFile": "dist/flux2/dev.env"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "deploy-flux2": {
+              "executor": "orchestrator/run-command",
+              "cache": false,
+              "dependsOn": [
+                {
+                  "target": "worker-flux2:deploy-modal",
+                  "options": "forward"
+                },
+                {
+                  "target": "generate-flux2-*",
+                  "options": "forward"
+                },
+                "schemas:generate-flux2-*"
+              ],
+              "options": {
+                "command": "tools/deploy-vercel.ts --token $FLUX2_ROUTER_VERCEL_TOKEN --org $FLUX2_ROUTER_VERCEL_ORG_ID --project-id $FLUX2_ROUTER_VERCEL_PROJECT_ID",
+                "envKey": "ROUTER_URL",
+                "envFile": "dist/flux2/deploy.env"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "dev-krea2": {
+              "executor": "orchestrator/run-command",
+              "cache": false,
+              "continuous": true,
+              "dependsOn": [
+                {
+                  "target": "worker-krea2:deploy-modal",
+                  "options": "forward"
+                },
+                {
+                  "target": "generate-krea2-*",
+                  "options": "forward"
+                },
+                "dev-krea2-generate-router-url",
+                "schemas:generate-krea2-*"
+              ],
+              "options": {
+                "command": "PORT=5042 npm run dev",
+                "envFile": "dist/krea2/dev.env"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "deploy-krea2": {
+              "executor": "orchestrator/run-command",
+              "cache": false,
+              "dependsOn": [
+                {
+                  "target": "worker-krea2:deploy-modal",
+                  "options": "forward"
+                },
+                {
+                  "target": "generate-krea2-*",
+                  "options": "forward"
+                },
+                "schemas:generate-krea2-*"
+              ],
+              "options": {
+                "command": "tools/deploy-vercel.ts --token $KREA2_ROUTER_VERCEL_TOKEN --org $KREA2_ROUTER_VERCEL_ORG_ID --project-id $KREA2_ROUTER_VERCEL_PROJECT_ID",
+                "envKey": "ROUTER_URL",
+                "envFile": "dist/krea2/deploy.env"
+              },
+              "configurations": {},
+              "parallelism": true
+            }
+          },
+          "name": "router",
+          "tags": [
+            "npm:private",
+            "type:app",
+            "scope:router"
+          ],
+          "metadata": {
+            "targetGroups": {
+              "NPM Scripts": [
+                "build",
+                "test"
+              ]
+            },
+            "js": {
+              "packageName": "router",
+              "packageVersion": "0.1.0",
+              "packageMain": "./src/router.ts",
+              "isInPackageManagerWorkspaces": true
+            }
+          },
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "projectType": "application",
+          "sourceRoot": "apps/router",
+          "implicitDependencies": []
+        }
+      },
+      "ui": {
+        "name": "ui",
+        "type": "lib",
+        "data": {
+          "root": "packages/ui",
+          "targets": {
+            "oxlint": {
+              "cache": true,
+              "inputs": [
+                {
+                  "fileset": "{projectRoot}/**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx,vue,svelte,astro}"
+                },
+                {
+                  "fileset": "{projectRoot}/**/{.oxlintrc.json,.oxlintrc.jsonc,oxlint.config.ts,oxlint.config.mts,.eslintignore,.gitignore,tsconfig*.json}"
+                },
+                "{workspaceRoot}/.oxlintrc.json",
+                "{workspaceRoot}/packages/.eslintignore",
+                "{workspaceRoot}/packages/.gitignore",
+                "{workspaceRoot}/.eslintignore",
+                "{workspaceRoot}/.gitignore",
+                {
+                  "externalDependencies": [
+                    "oxlint"
+                  ]
+                }
+              ],
+              "metadata": {
+                "technologies": [
+                  "oxlint"
+                ],
+                "description": "Runs Oxlint on project",
+                "help": {
+                  "command": "npx oxlint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "options": {
+                "cwd": "packages/ui",
+                "command": "oxlint ."
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "eslint:lint": {
+              "cache": true,
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/eslint.config.mjs",
+                "{workspaceRoot}/tools/eslint-rules/**/*",
+                {
+                  "externalDependencies": [
+                    "eslint"
+                  ]
+                }
+              ],
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "metadata": {
+                "technologies": [
+                  "eslint"
+                ],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "npx eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "options": {
+                "cwd": "packages/ui",
+                "command": "eslint ."
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "cache": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ],
+              "executor": "@nx/js:tsc",
+              "outputs": [
+                "{options.outputPath}"
+              ],
+              "options": {
+                "outputPath": "dist/packages/ui",
+                "main": "packages/ui/src/index.ts",
+                "tsConfig": "packages/ui/tsconfig.lib.json"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "lint": {
+              "cache": true,
+              "executor": "@nx/eslint:lint",
+              "configurations": {},
+              "options": {},
+              "parallelism": true
+            },
+            "test": {
+              "cache": false,
+              "executor": "@nx/vite:test",
+              "options": {
+                "configFile": "packages/ui/vite.config.ts"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "verify": {
+              "executor": "nx:run-script",
+              "metadata": {
+                "scriptContent": "nx run ui:verify",
+                "runCommand": "npm run verify"
+              },
+              "options": {
+                "script": "verify"
+              },
+              "configurations": {},
+              "parallelism": true
+            }
+          },
+          "name": "ui",
+          "tags": [
+            "npm:private",
+            "type:ui"
+          ],
+          "metadata": {
+            "targetGroups": {
+              "NPM Scripts": [
+                "verify"
+              ]
+            },
+            "js": {
+              "packageName": "@inference/ui",
+              "packageVersion": "0.1.0",
+              "packageMain": "./dist/index.js",
+              "isInPackageManagerWorkspaces": true
+            }
+          },
+          "sourceRoot": "packages/ui/src",
+          "projectType": "library",
+          "implicitDependencies": []
+        }
+      },
+      "worker-vision": {
+        "name": "worker-vision",
+        "type": "app",
+        "data": {
+          "root": "apps/vision",
+          "targets": {
+            "audit-uv": {
+              "executor": "@inference/workspace-plugin:audit-uv",
+              "inputs": [
+                "default",
+                "{workspaceRoot}/uv.lock"
+              ],
+              "cache": true,
+              "options": {},
+              "configurations": {},
+              "parallelism": true
+            },
+            "ruff": {
+              "executor": "@inference/workspace-plugin:ruff",
+              "cache": true,
+              "options": {
+                "family": "vision"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "ty": {
+              "executor": "@inference/workspace-plugin:ty",
+              "cache": true,
+              "options": {
+                "family": "vision"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "vulture": {
+              "executor": "@inference/workspace-plugin:vulture",
+              "cache": true,
+              "options": {
+                "family": "vision"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "audit": {
+              "dependsOn": [
+                "audit-uv",
+                "validate-deps"
+              ],
+              "cache": true,
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "executor": "nx:noop"
+            },
+            "lint": {
+              "dependsOn": [
+                "audit",
+                "ruff",
+                "ty",
+                "vulture"
+              ],
+              "cache": true,
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "executor": "nx:noop"
+            },
+            "build": {
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ],
+              "cache": true,
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "executor": "nx:noop"
+            },
+            "test": {
+              "dependsOn": [
+                "test-unit",
+                "test-e2e"
+              ],
+              "cache": false,
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "executor": "nx:noop"
+            },
+            "verify": {
+              "dependsOn": [
+                "audit",
+                "lint",
+                "build",
+                "test"
+              ],
+              "cache": false,
+              "executor": "nx:noop",
+              "configurations": {},
+              "options": {},
+              "parallelism": true
+            },
+            "validate-deps": {
+              "executor": "@inference/workspace-plugin:validate-deps",
+              "cache": true,
+              "options": {
+                "family": "vision",
+                "python_version": "3.11"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "test-unit": {
+              "executor": "@inference/workspace-plugin:pytest",
+              "inputs": [
+                "default"
+              ],
+              "cache": true,
+              "options": {
+                "family": "vision",
+                "mode": "unit"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "test-e2e": {
+              "executor": "nx:run-commands",
+              "inputs": [
+                "default"
+              ],
+              "cache": false,
+              "options": {
+                "command": "uv run --locked --group test pytest apps/vision/tests/ -k \"e2e\" -q",
+                "cwd": "."
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "dev-modal": {
+              "executor": "orchestrator:run-command",
+              "cache": false,
+              "continuous": true,
+              "inputs": [
+                "default"
+              ],
+              "outputs": [
+                "{workspaceRoot}/dist/vision/dev.env"
+              ],
+              "options": {
+                "command": "uv run --locked python tools/serve-modal.py",
+                "args": "apps/vision/worker_modal_cls_small_vision.py",
+                "envFile": "dist/vision/dev.env",
+                "envKey": "MODAL_WORKER_URL"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "dev-beam": {
+              "executor": "orchestrator:run-command",
+              "cache": false,
+              "continuous": true,
+              "inputs": [
+                "default"
+              ],
+              "outputs": [
+                "{workspaceRoot}/dist/vision/dev.env"
+              ],
+              "options": {
+                "command": "uv run --locked python tools/serve-beam.py",
+                "args": "apps/vision/worker_beam_tq_small_vision.py",
+                "envFile": "dist/vision/dev.env",
+                "envKey": "BEAM_WORKER_URL"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "dev-flash": {
+              "executor": "orchestrator:run-command",
+              "cache": false,
+              "continuous": true,
+              "inputs": [
+                "default"
+              ],
+              "outputs": [
+                "{workspaceRoot}/dist/vision/dev.env"
+              ],
+              "options": {
+                "command": "uv run --locked python tools/serve-flash.py",
+                "args": "apps/vision/worker_flash_cls_small_vision.py",
+                "envFile": "dist/vision/dev.env",
+                "envKey": "FLASH_WORKER_URL"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "deploy-modal": {
+              "executor": "orchestrator:run-command",
+              "cache": false,
+              "inputs": [
+                "default"
+              ],
+              "outputs": [
+                "{workspaceRoot}/dist/vision/deploy.env"
+              ],
+              "options": {
+                "command": "npx tsx tools/deploy-modal.ts",
+                "args": "apps/vision/worker_modal_cls_small_vision.py",
+                "envFile": "dist/vision/deploy.env",
+                "envKey": "MODAL_WORKER_URL"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "deploy-beam": {
+              "executor": "orchestrator:run-command",
+              "cache": false,
+              "inputs": [
+                "default"
+              ],
+              "outputs": [
+                "{workspaceRoot}/dist/vision/deploy.env"
+              ],
+              "options": {
+                "command": "npx tsx tools/deploy-beam.ts",
+                "args": "apps/vision/worker_beam_tq_small_vision.py",
+                "envFile": "dist/vision/deploy.env",
+                "envKey": "BEAM_WORKER_URL"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "deploy-flash": {
+              "executor": "orchestrator:run-command",
+              "cache": false,
+              "inputs": [
+                "default"
+              ],
+              "outputs": [
+                "{workspaceRoot}/dist/vision/deploy.env"
+              ],
+              "options": {
+                "command": "npx tsx tools/deploy-flash.ts",
+                "args": "apps/vision/worker_flash_cls_small_vision.py",
+                "envFile": "dist/vision/deploy.env",
+                "envKey": "FLASH_WORKER_URL"
+              },
+              "configurations": {},
+              "parallelism": true
+            }
+          },
+          "name": "worker-vision",
+          "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+          "projectType": "application",
+          "sourceRoot": "apps/vision",
+          "tags": [
+            "type:app",
+            "scope:gpu-worker",
+            "model:vision"
+          ],
+          "implicitDependencies": []
+        }
+      },
+      "worker-flux2": {
+        "name": "worker-flux2",
+        "type": "app",
+        "data": {
+          "root": "apps/flux2",
+          "targets": {
+            "audit-uv": {
+              "executor": "@inference/workspace-plugin:audit-uv",
+              "inputs": [
+                "default",
+                "{workspaceRoot}/uv.lock"
+              ],
+              "cache": true,
+              "options": {},
+              "configurations": {},
+              "parallelism": true
+            },
+            "ruff": {
+              "executor": "@inference/workspace-plugin:ruff",
+              "cache": true,
+              "options": {
+                "family": "flux2"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "ty": {
+              "executor": "@inference/workspace-plugin:ty",
+              "cache": true,
+              "options": {
+                "family": "flux2"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "vulture": {
+              "executor": "@inference/workspace-plugin:vulture",
+              "cache": true,
+              "options": {
+                "family": "flux2"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "audit": {
+              "dependsOn": [
+                "audit-uv",
+                "validate-deps"
+              ],
+              "cache": true,
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "executor": "nx:noop"
+            },
+            "lint": {
+              "dependsOn": [
+                "audit",
+                "ruff",
+                "ty",
+                "vulture"
+              ],
+              "cache": true,
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "executor": "nx:noop"
+            },
+            "build": {
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ],
+              "cache": true,
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "executor": "nx:noop"
+            },
+            "test": {
+              "dependsOn": [
+                "test-unit",
+                "test-e2e"
+              ],
+              "cache": false,
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "executor": "nx:noop"
+            },
+            "verify": {
+              "dependsOn": [
+                "audit",
+                "lint",
+                "build",
+                "test"
+              ],
+              "cache": false,
+              "executor": "nx:noop",
+              "configurations": {},
+              "options": {},
+              "parallelism": true
+            },
+            "validate-deps": {
+              "executor": "@inference/workspace-plugin:validate-deps",
+              "cache": true,
+              "options": {
+                "family": "flux2",
+                "python_version": "3.11"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "test-unit": {
+              "executor": "@inference/workspace-plugin:pytest",
+              "inputs": [
+                "default"
+              ],
+              "cache": true,
+              "options": {
+                "family": "flux2",
+                "mode": "unit"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "test-e2e": {
+              "executor": "nx:run-commands",
+              "inputs": [
+                "default"
+              ],
+              "cache": false,
+              "options": {
+                "command": "uv run --locked --group test pytest apps/flux2/tests/ -k \"e2e\" -q",
+                "cwd": "."
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "dev-modal": {
+              "executor": "orchestrator:run-command",
+              "cache": false,
+              "continuous": true,
+              "inputs": [
+                "default"
+              ],
+              "outputs": [
+                "{workspaceRoot}/dist/flux2/dev.env"
+              ],
+              "options": {
+                "command": "uv run --locked python tools/serve-modal.py",
+                "args": "apps/flux2/worker_modal_cls_flux2_klein9b.py",
+                "envFile": "dist/flux2/dev.env",
+                "envKey": "MODAL_WORKER_URL"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "dev-beam": {
+              "executor": "orchestrator:run-command",
+              "cache": false,
+              "continuous": true,
+              "inputs": [
+                "default"
+              ],
+              "outputs": [
+                "{workspaceRoot}/dist/flux2/dev.env"
+              ],
+              "options": {
+                "command": "uv run --locked python tools/serve-beam.py",
+                "args": "apps/flux2/worker_beam_tq_flux2_klein9b.py",
+                "envFile": "dist/flux2/dev.env",
+                "envKey": "BEAM_WORKER_URL"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "dev-flash": {
+              "executor": "orchestrator:run-command",
+              "cache": false,
+              "continuous": true,
+              "inputs": [
+                "default"
+              ],
+              "outputs": [
+                "{workspaceRoot}/dist/flux2/dev.env"
+              ],
+              "options": {
+                "command": "uv run --locked python tools/serve-flash.py",
+                "args": "apps/flux2/worker_flash_cls_flux2_klein9b.py",
+                "envFile": "dist/flux2/dev.env",
+                "envKey": "FLASH_WORKER_URL"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "deploy-modal": {
+              "executor": "orchestrator:run-command",
+              "cache": false,
+              "inputs": [
+                "default"
+              ],
+              "outputs": [
+                "{workspaceRoot}/dist/flux2/deploy.env"
+              ],
+              "options": {
+                "command": "npx tsx tools/deploy-modal.ts",
+                "args": "apps/flux2/worker_modal_cls_flux2_klein9b.py",
+                "envFile": "dist/flux2/deploy.env",
+                "envKey": "MODAL_WORKER_URL"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "deploy-beam": {
+              "executor": "orchestrator:run-command",
+              "cache": false,
+              "inputs": [
+                "default"
+              ],
+              "outputs": [
+                "{workspaceRoot}/dist/flux2/deploy.env"
+              ],
+              "options": {
+                "command": "npx tsx tools/deploy-beam.ts",
+                "args": "apps/flux2/worker_beam_tq_flux2_klein9b.py",
+                "envFile": "dist/flux2/deploy.env",
+                "envKey": "BEAM_WORKER_URL"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "deploy-flash": {
+              "executor": "orchestrator:run-command",
+              "cache": false,
+              "inputs": [
+                "default"
+              ],
+              "outputs": [
+                "{workspaceRoot}/dist/flux2/deploy.env"
+              ],
+              "options": {
+                "command": "npx tsx tools/deploy-flash.ts",
+                "args": "apps/flux2/worker_flash_cls_flux2_klein9b.py",
+                "envFile": "dist/flux2/deploy.env",
+                "envKey": "FLASH_WORKER_URL"
+              },
+              "configurations": {},
+              "parallelism": true
+            }
+          },
+          "name": "worker-flux2",
+          "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+          "projectType": "application",
+          "sourceRoot": "apps/flux2",
+          "tags": [
+            "type:app",
+            "scope:gpu-worker",
+            "model:flux2"
+          ],
+          "implicitDependencies": []
+        }
+      },
+      "worker-krea2": {
+        "name": "worker-krea2",
+        "type": "app",
+        "data": {
+          "root": "apps/krea2",
+          "targets": {
+            "audit-uv": {
+              "executor": "@inference/workspace-plugin:audit-uv",
+              "inputs": [
+                "default",
+                "{workspaceRoot}/uv.lock"
+              ],
+              "cache": true,
+              "options": {},
+              "configurations": {},
+              "parallelism": true
+            },
+            "ruff": {
+              "executor": "@inference/workspace-plugin:ruff",
+              "cache": true,
+              "options": {
+                "family": "krea2"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "ty": {
+              "executor": "@inference/workspace-plugin:ty",
+              "cache": true,
+              "options": {
+                "family": "krea2"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "vulture": {
+              "executor": "@inference/workspace-plugin:vulture",
+              "cache": true,
+              "options": {
+                "family": "krea2"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "audit": {
+              "dependsOn": [
+                "audit-uv",
+                "validate-deps"
+              ],
+              "cache": true,
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "executor": "nx:noop"
+            },
+            "lint": {
+              "dependsOn": [
+                "audit",
+                "ruff",
+                "ty",
+                "vulture"
+              ],
+              "cache": true,
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "executor": "nx:noop"
+            },
+            "build": {
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ],
+              "cache": true,
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "executor": "nx:noop"
+            },
+            "test": {
+              "dependsOn": [
+                "test-unit",
+                "test-e2e"
+              ],
+              "cache": false,
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "executor": "nx:noop"
+            },
+            "verify": {
+              "dependsOn": [
+                "audit",
+                "lint",
+                "build",
+                "test"
+              ],
+              "cache": false,
+              "executor": "nx:noop",
+              "configurations": {},
+              "options": {},
+              "parallelism": true
+            },
+            "validate-deps": {
+              "executor": "@inference/workspace-plugin:validate-deps",
+              "cache": true,
+              "options": {
+                "family": "krea2",
+                "python_version": "3.11"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "test-unit": {
+              "executor": "@inference/workspace-plugin:pytest",
+              "inputs": [
+                "default"
+              ],
+              "cache": true,
+              "options": {
+                "family": "krea2",
+                "mode": "unit"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "test-e2e": {
+              "executor": "nx:run-commands",
+              "inputs": [
+                "default"
+              ],
+              "cache": false,
+              "options": {
+                "command": "uv run --locked --group test pytest apps/krea2/tests/ -k \"e2e\" -q",
+                "cwd": "."
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "dev-modal": {
+              "executor": "orchestrator:run-command",
+              "cache": false,
+              "continuous": true,
+              "inputs": [
+                "default"
+              ],
+              "outputs": [
+                "{workspaceRoot}/dist/krea2/dev.env"
+              ],
+              "options": {
+                "command": "uv run --locked python tools/serve-modal.py",
+                "args": "apps/krea2/worker_modal_cls_krea2_ref2img.py",
+                "envFile": "dist/krea2/dev.env",
+                "envKey": "MODAL_WORKER_URL"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "dev-beam": {
+              "executor": "orchestrator:run-command",
+              "cache": false,
+              "continuous": true,
+              "inputs": [
+                "default"
+              ],
+              "outputs": [
+                "{workspaceRoot}/dist/krea2/dev.env"
+              ],
+              "options": {
+                "command": "uv run --locked python tools/serve-beam.py",
+                "args": "apps/krea2/worker_beam_tq_krea2_ref2img.py",
+                "envFile": "dist/krea2/dev.env",
+                "envKey": "BEAM_WORKER_URL"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "dev-flash": {
+              "executor": "orchestrator:run-command",
+              "cache": false,
+              "continuous": true,
+              "inputs": [
+                "default"
+              ],
+              "outputs": [
+                "{workspaceRoot}/dist/krea2/dev.env"
+              ],
+              "options": {
+                "command": "uv run --locked python tools/serve-flash.py",
+                "args": "apps/krea2/worker_flash_cls_krea2_ref2img.py",
+                "envFile": "dist/krea2/dev.env",
+                "envKey": "FLASH_WORKER_URL"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "deploy-modal": {
+              "executor": "orchestrator:run-command",
+              "cache": false,
+              "inputs": [
+                "default"
+              ],
+              "outputs": [
+                "{workspaceRoot}/dist/krea2/deploy.env"
+              ],
+              "options": {
+                "command": "npx tsx tools/deploy-modal.ts",
+                "args": "apps/krea2/worker_modal_cls_krea2_ref2img.py",
+                "envFile": "dist/krea2/deploy.env",
+                "envKey": "MODAL_WORKER_URL"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "deploy-beam": {
+              "executor": "orchestrator:run-command",
+              "cache": false,
+              "inputs": [
+                "default"
+              ],
+              "outputs": [
+                "{workspaceRoot}/dist/krea2/deploy.env"
+              ],
+              "options": {
+                "command": "npx tsx tools/deploy-beam.ts",
+                "args": "apps/krea2/worker_beam_tq_krea2_ref2img.py",
+                "envFile": "dist/krea2/deploy.env",
+                "envKey": "BEAM_WORKER_URL"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "deploy-flash": {
+              "executor": "orchestrator:run-command",
+              "cache": false,
+              "inputs": [
+                "default"
+              ],
+              "outputs": [
+                "{workspaceRoot}/dist/krea2/deploy.env"
+              ],
+              "options": {
+                "command": "npx tsx tools/deploy-flash.ts",
+                "args": "apps/krea2/worker_flash_cls_krea2_ref2img.py",
+                "envFile": "dist/krea2/deploy.env",
+                "envKey": "FLASH_WORKER_URL"
+              },
+              "configurations": {},
+              "parallelism": true
+            }
+          },
+          "name": "worker-krea2",
+          "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+          "projectType": "application",
+          "sourceRoot": "apps/krea2",
+          "tags": [
+            "type:app",
+            "scope:gpu-worker",
+            "model:krea2"
+          ],
+          "implicitDependencies": []
+        }
+      }
+    },
+    "dependencies": {
+      "task-queue-client": [],
+      "apple-shortcuts": [],
+      "workspace-plugin": [],
+      "worker-realtime_voice": [],
+      "orchestrator": [
+        {
+          "source": "orchestrator",
+          "target": "workspace-plugin",
+          "type": "static"
+        }
+      ],
+      "seed-volumes": [],
+      "dirigera": [],
+      "schemas": [],
+      "face-value": [
+        {
+          "source": "face-value",
+          "target": "task-queue-client",
+          "type": "static"
+        },
+        {
+          "source": "face-value",
+          "target": "schemas",
+          "type": "static"
+        },
+        {
+          "source": "face-value",
+          "target": "ui",
+          "type": "static"
+        }
+      ],
+      "worker-h3_ref2va": [],
+      "worker-h3_comfy": [],
+      "worker-h3_fl2va": [],
+      "worker-tiny_sd": [],
+      "router": [],
+      "ui": [],
+      "worker-vision": [],
+      "worker-flux2": [],
+      "worker-krea2": []
+    }
+  }
+}

@@ -1,9 +1,10 @@
 import { z } from "zod";
 
 export const envSchema = z.object({
+  MODAL_WORKER_URL: z.url().optional(),
+  BEAM_WORKER_URL: z.url().optional(),
   ROUTER_URL: z.url(),
-  SECRET_AUTH_TOKEN: z.string().min(32),
-  FACE_VALUE_VERCEL_TOKEN: z.string().min(1),
-  FACE_VALUE_VERCEL_ORG_ID: z.string().min(1),
-  FACE_VALUE_VERCEL_PROJECT_ID: z.string().min(1),
+  ROUTER_AUTH_TOKEN: z.string().min(32),
 });
+
+export type Env = z.infer<typeof envSchema>;

@@ -27,7 +27,7 @@ export async function gpuFamilyGenerator(tree: Tree, options: GpuFamilyGenerator
   });
   await formatFiles(tree);
   logger.info(
-    `Scaffolded family "${family}". Next: fill packages/contracts/${family}/contract.json, ` +
+    `Scaffolded family "${family}". Next: fill packages/schemas/${family}/schema.json, ` +
       `implement apps/${family}/shared/worker_${family}.py and apps/${family}/ workers.`
   );
 }

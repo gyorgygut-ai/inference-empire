@@ -1,6 +1,7 @@
 import { Status, type Provider } from './create-provider.js'
 
 export const beamProvider: Provider<'beam'> = {
+  resolveConfig: (env) => (env.BEAM_WORKER_URL ? { url: env.BEAM_WORKER_URL } : undefined),
   encodeTaskId(originalTaskId: string): string {
     return btoa(`beam:${originalTaskId}`)
   },

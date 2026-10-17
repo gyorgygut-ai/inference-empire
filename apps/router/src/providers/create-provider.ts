@@ -1,3 +1,4 @@
+import type { Env } from '../../env.schema.js'
 import { beamProvider } from './provider-beam.js'
 import { flashProvider } from './provider-flash.js'
 import { modalProvider } from './provider-modal.js'
@@ -12,12 +13,10 @@ export const enum Status {
 
 export interface BeamConfig {
   url: string
-  taskApi: string
 }
 
 export interface FlashConfig {
   url: string
-  endpointName: string
 }
 
 export interface ModalConfig {
@@ -33,6 +32,7 @@ export interface ProviderConfigs {
 export type ProviderName = keyof ProviderConfigs
 
 export interface Provider<K extends ProviderName> {
+  resolveConfig(env: Env): ProviderConfigs[K] | undefined
   encodeTaskId(originalTaskId: string): string
   decodeTaskId(encoded: string): { provider: string; originalTaskId: string }
   pushToTaskQueue(input: Record<string, unknown>, config: ProviderConfigs[K]): Promise<{ task_id: string }>
@@ -46,7 +46,11 @@ const providers: { [K in ProviderName]: Provider<K> } = {
 }
 
 export function isProviderName(value: string): value is ProviderName {
-  return value === 'beam' || value === 'flash' || value === 'modal'
+  return Object.hasOwn(providers, value)
+}
+
+export function decodeProviderName(encoded: string): string {
+  return atob(encoded).split(':', 1)[0]
 }
 
 export default function createProvider<K extends ProviderName>(name: K): Provider<K> {

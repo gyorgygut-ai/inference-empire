@@ -1,0 +1,131 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "schemas",
+  "projectType": "library",
+  "sourceRoot": "packages/schemas",
+  "tags": [
+    "type:schemas"
+  ],
+  "targets": {
+    "generate-flux2-api-types": {
+      "executor": "orchestrator:run-command",
+      "cache": true,
+      "inputs": [
+        "{workspaceRoot}/packages/schemas/flux2/schema.json",
+        "{projectRoot}/tools/generate-zod-from-json.ts"
+      ],
+      "outputs": [
+        "{workspaceRoot}/packages/schemas/flux2/schema.ts"
+      ],
+      "options": {
+        "command": "packages/schemas/tools/generate-zod-from-json.ts",
+        "args": "packages/schemas/flux2/schema.json packages/schemas/flux2/schema.ts"
+      }
+    },
+    "generate-krea2-api-types": {
+      "executor": "orchestrator:run-command",
+      "cache": true,
+      "inputs": [
+        "{workspaceRoot}/packages/schemas/krea2/schema.json",
+        "{projectRoot}/tools/generate-zod-from-json.ts"
+      ],
+      "outputs": [
+        "{workspaceRoot}/packages/schemas/krea2/schema.ts"
+      ],
+      "options": {
+        "command": "packages/schemas/tools/generate-zod-from-json.ts",
+        "args": "packages/schemas/krea2/schema.json packages/schemas/krea2/schema.ts"
+      }
+    },
+    "generate-h3_comfy-api-types": {
+      "executor": "orchestrator:run-command",
+      "cache": true,
+      "inputs": [
+        "{workspaceRoot}/packages/schemas/h3_comfy/schema.json",
+        "{projectRoot}/tools/generate-zod-from-json.ts"
+      ],
+      "outputs": [
+        "{workspaceRoot}/packages/schemas/h3_comfy/schema.ts"
+      ],
+      "options": {
+        "command": "packages/schemas/tools/generate-zod-from-json.ts",
+        "args": "packages/schemas/h3_comfy/schema.json packages/schemas/h3_comfy/schema.ts"
+      }
+    },
+    "generate-h3_fl2va-api-types": {
+      "executor": "orchestrator:run-command",
+      "cache": true,
+      "inputs": [
+        "{workspaceRoot}/packages/schemas/h3_fl2va/schema.json",
+        "{projectRoot}/tools/generate-zod-from-json.ts"
+      ],
+      "outputs": [
+        "{workspaceRoot}/packages/schemas/h3_fl2va/schema.ts"
+      ],
+      "options": {
+        "command": "packages/schemas/tools/generate-zod-from-json.ts",
+        "args": "packages/schemas/h3_fl2va/schema.json packages/schemas/h3_fl2va/schema.ts"
+      }
+    },
+    "generate-h3_ref2va-api-types": {
+      "executor": "orchestrator:run-command",
+      "cache": true,
+      "inputs": [
+        "{workspaceRoot}/packages/schemas/h3_ref2va/schema.json",
+        "{projectRoot}/tools/generate-zod-from-json.ts"
+      ],
+      "outputs": [
+        "{workspaceRoot}/packages/schemas/h3_ref2va/schema.ts"
+      ],
+      "options": {
+        "command": "packages/schemas/tools/generate-zod-from-json.ts",
+        "args": "packages/schemas/h3_ref2va/schema.json packages/schemas/h3_ref2va/schema.ts"
+      }
+    },
+    "generate-realtime_voice-api-types": {
+      "executor": "orchestrator:run-command",
+      "cache": true,
+      "inputs": [
+        "{workspaceRoot}/packages/schemas/realtime_voice/schema.json",
+        "{projectRoot}/tools/generate-zod-from-json.ts"
+      ],
+      "outputs": [
+        "{workspaceRoot}/packages/schemas/realtime_voice/schema.ts"
+      ],
+      "options": {
+        "command": "packages/schemas/tools/generate-zod-from-json.ts",
+        "args": "packages/schemas/realtime_voice/schema.json packages/schemas/realtime_voice/schema.ts"
+      }
+    },
+    "generate-tiny_sd-api-types": {
+      "executor": "orchestrator:run-command",
+      "cache": true,
+      "inputs": [
+        "{workspaceRoot}/packages/schemas/tiny_sd/schema.json",
+        "{projectRoot}/tools/generate-zod-from-json.ts"
+      ],
+      "outputs": [
+        "{workspaceRoot}/packages/schemas/tiny_sd/schema.ts"
+      ],
+      "options": {
+        "command": "packages/schemas/tools/generate-zod-from-json.ts",
+        "args": "packages/schemas/tiny_sd/schema.json packages/schemas/tiny_sd/schema.ts"
+      }
+    },
+    "generate-vision-api-types": {
+      "executor": "orchestrator:run-command",
+      "cache": true,
+      "inputs": [
+        "{workspaceRoot}/packages/schemas/vision/schema.json",
+        "{projectRoot}/tools/generate-zod-from-json.ts"
+      ],
+      "outputs": [
+        "{workspaceRoot}/packages/schemas/vision/schema.ts"
+      ],
+      "options": {
+        "command": "packages/schemas/tools/generate-zod-from-json.ts",
+        "args": "packages/schemas/vision/schema.json packages/schemas/vision/schema.ts"
+      }
+    }
+  }
+}

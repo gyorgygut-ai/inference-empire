@@ -6,48 +6,53 @@
   "tags": ["type:app", "scope:gpu-worker", "model:h3-fl2va"],
   "targets": {
     "dev-modal": {
-      "executor": "nx:run-commands",
+      "executor": "orchestrator:run-command",
       "cache": false,
       "continuous": true,
+      "inputs": ["default"],
+      "outputs": ["{workspaceRoot}/dist/h3_fl2va/dev.env"],
       "options": {
-        "command": "mkdir -p dist/worker-h3_fl2va/dev && uv run --locked python tools/serve-modal.py worker-h3_fl2va dev | tail -n1 > dist/worker-h3_fl2va/dev/MODAL_WORKER_URL"
+        "command": "uv run --locked python tools/serve-modal.py",
+        "args": "apps/h3_fl2va/worker_modal_cls_minimax_h3_fl2va.py",
+        "envFile": "dist/h3_fl2va/dev.env",
+        "envKey": "MODAL_WORKER_URL"
       }
     },
     "dev-beam": {
-      "executor": "nx:run-commands",
+      "executor": "orchestrator:run-command",
       "cache": false,
       "continuous": true,
+      "inputs": ["default"],
+      "outputs": ["{workspaceRoot}/dist/h3_fl2va/dev.env"],
       "options": {
-        "command": "mkdir -p dist/worker-h3_fl2va/dev && uv run --locked python tools/serve-beam.py worker-h3_fl2va dev | tail -n1 > dist/worker-h3_fl2va/dev/BEAM_WORKER_URL"
-      }
-    },
-    "dev-flash": {
-      "executor": "nx:run-commands",
-      "cache": false,
-      "continuous": true,
-      "options": {
-        "command": "mkdir -p dist/worker-h3_fl2va/dev && uv run --locked python tools/serve-flash.py worker-h3_fl2va dev | tail -n1 > dist/worker-h3_fl2va/dev/FLASH_WORKER_URL"
+        "command": "uv run --locked python tools/serve-beam.py",
+        "args": "apps/h3_fl2va/worker_beam_tq_minimax_h3_fl2va.py",
+        "envFile": "dist/h3_fl2va/dev.env",
+        "envKey": "BEAM_WORKER_URL"
       }
     },
     "deploy-modal": {
-      "executor": "nx:run-commands",
+      "executor": "orchestrator:run-command",
       "cache": false,
+      "inputs": ["default"],
+      "outputs": ["{workspaceRoot}/dist/h3_fl2va/deploy.env"],
       "options": {
-        "command": "mkdir -p dist/worker-h3_fl2va/deploy && npx tsx tools/deploy-modal.ts worker-h3_fl2va deploy > dist/worker-h3_fl2va/deploy/MODAL_WORKER_URL"
+        "command": "npx tsx tools/deploy-modal.ts",
+        "args": "apps/h3_fl2va/worker_modal_cls_minimax_h3_fl2va.py",
+        "envFile": "dist/h3_fl2va/deploy.env",
+        "envKey": "MODAL_WORKER_URL"
       }
     },
     "deploy-beam": {
-      "executor": "nx:run-commands",
+      "executor": "orchestrator:run-command",
       "cache": false,
+      "inputs": ["default"],
+      "outputs": ["{workspaceRoot}/dist/h3_fl2va/deploy.env"],
       "options": {
-        "command": "mkdir -p dist/worker-h3_fl2va/deploy && npx tsx tools/deploy-beam.ts worker-h3_fl2va deploy > dist/worker-h3_fl2va/deploy/BEAM_WORKER_URL"
-      }
-    },
-    "deploy-flash": {
-      "executor": "nx:run-commands",
-      "cache": false,
-      "options": {
-        "command": "mkdir -p dist/worker-h3_fl2va/deploy && npx tsx tools/deploy-flash.ts worker-h3_fl2va deploy > dist/worker-h3_fl2va/deploy/FLASH_WORKER_URL"
+        "command": "npx tsx tools/deploy-beam.ts",
+        "args": "apps/h3_fl2va/worker_beam_tq_minimax_h3_fl2va.py",
+        "envFile": "dist/h3_fl2va/deploy.env",
+        "envKey": "BEAM_WORKER_URL"
       }
     }
   }

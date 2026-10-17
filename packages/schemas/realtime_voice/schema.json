@@ -1,0 +1,56 @@
+{
+  "title": "Api",
+  "type": "object",
+  "required": [
+    "input",
+    "output"
+  ],
+  "properties": {
+    "input": {
+      "title": "RealtimeVoiceInput",
+      "type": "object",
+      "required": [
+        "audio",
+        "voice"
+      ],
+      "properties": {
+        "audio": {
+          "type": "string",
+          "description": "Base64 pcm16 mono audio input"
+        },
+        "sample_rate": {
+          "type": "integer",
+          "default": 24000
+        },
+        "voice": {
+          "type": "string"
+        },
+        "language": {
+          "type": "string",
+          "default": "en"
+        }
+      }
+    },
+    "output": {
+      "title": "RealtimeVoiceOutput",
+      "type": "object",
+      "required": [
+        "audio",
+        "transcript"
+      ],
+      "properties": {
+        "audio": {
+          "type": "string",
+          "description": "Base64 pcm16 mono reply audio"
+        },
+        "transcript": {
+          "type": "string"
+        },
+        "sample_rate": {
+          "type": "integer",
+          "default": 24000
+        }
+      }
+    }
+  }
+}

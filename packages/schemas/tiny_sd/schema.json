@@ -1,0 +1,69 @@
+{
+  "title": "Api",
+  "type": "object",
+  "required": [
+    "input",
+    "output"
+  ],
+  "properties": {
+    "input": {
+      "title": "TinySDInput",
+      "type": "object",
+      "required": [
+        "prompt"
+      ],
+      "properties": {
+        "prompt": {
+          "type": "string"
+        },
+        "negative_prompt": {
+          "type": "string",
+          "default": ""
+        },
+        "height": {
+          "type": "integer",
+          "default": 512
+        },
+        "width": {
+          "type": "integer",
+          "default": 512
+        },
+        "num_inference_steps": {
+          "type": "integer",
+          "default": 20
+        },
+        "guidance_scale": {
+          "type": "number",
+          "default": 7.5
+        },
+        "seed": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "default": null
+        }
+      }
+    },
+    "output": {
+      "title": "TinySDOutput",
+      "type": "object",
+      "required": [
+        "artifact"
+      ],
+      "properties": {
+        "artifact": {
+          "type": "object",
+          "required": [
+            "presigned_url"
+          ],
+          "properties": {
+            "presigned_url": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  }
+}

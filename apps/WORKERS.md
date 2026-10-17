@@ -1,7 +1,7 @@
 # GPU Workers
 
 **Models**: `flux2`, `krea2`, `tiny_sd`, `vision`, `h3_comfy`, `h3_fl2va`, `h3_ref2va`, `realtime_voice` (`apps/{model}`)
-**Contract**: `packages/contracts/{model}/inference.json`
+**Schema**: `packages/schemas/{model}/schema.json`
 
 ---
 
@@ -9,14 +9,19 @@
 
 **worker-{model}:dev-modal|dev-beam|dev-flash**:
 
-- **executor**: `nx:run-commands`, `continuous: true`, `cache: false`
-- **command**: `uv run --locked python tools/serve-{modal|beam|flash}.py worker-{model} dev | tail -n1 > dist/worker-{model}/dev/{MODAL|BEAM|FLASH}_WORKER_URL`
+- **executor**: `orchestrator/run-command`
+- **command**: `tools/serve-{modal|beam|flash}.ts`
+- **envKey**: `{MODAL|BEAM|FLASH}_WORKER_URL`
+- **critical**: command must output served dev url to stdout
+- **outcome**: the executor writes the output to `envFile`
 
 **worker-{model}:deploy-modal|deploy-beam|deploy-flash**:
 
-- **executor**: `nx:run-commands`, `cache: false`
-- **command**: `npx tsx tools/deploy-{modal|beam|flash}.ts worker-{model} deploy > dist/worker-{model}/deploy/{MODAL|BEAM|FLASH}_WORKER_URL`
-- `tools/deploy-*.ts` print nothing but the deployed URL on stdout (child logs go to stderr)
+- **executor**: `orchestrator/run-command`
+- **command**: `tools/deploy-{modal|beam|flash}.ts`
+- **envKey**: `{MODAL|BEAM|FLASH}_WORKER_URL`
+- **critical**: command must output deployed url to stdout
+- **outcome**: the executor writes the output to `envFile`
 
 ---
 
@@ -25,11 +30,9 @@
 **Structure**:
 
 - Naming: `worker_{model}_{platform}.py` (`apps/{model}`)
-- Contract: has ONLY `input` and `output` (`packages/contracts/{model}/inference.json`)
 - Logic: thin wrapper over provider, logic shared (`apps/{model}|shared/worker_{model}.pu`)
-- Types: `Pydantic` generated. consumers generate their own types from contract
+- Types: `Pydantic` generated
 - Queue: always use task queue and return task id, except realtime workers
-- Output: produced files must be delivered as artifact (`packages/artifacts`)
 
 **Worker Config**:
 

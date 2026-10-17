@@ -1,11 +1,11 @@
 # Router App
 
-Stateless router routing across worker implementations of a contract.
+Stateless router routing across worker implementations of a schema.
 
 **Endpoints**:
 
-- POST `/q`; auth against `env.SECRET_AUTH_TOKEN`
-- GET `/sup`; auth against `env.SECRET_AUTH_TOKEN`
+- POST `/q`; auth against `env.ROUTER_AUTH_TOKEN`
+- GET `/sup`; auth against `env.ROUTER_AUTH_TOKEN`
 
 **Business Logic**:
 
@@ -15,49 +15,57 @@ Stateless router routing across worker implementations of a contract.
 
 ---
 
-## Per-model builds
+## Source layout
 
-One `router` codebase, built once per model. `createRouter<TAddRequest, TAddResponse, TSupResponse>()` (`src/router.ts`) is model-agnostic; each entry (`src/models/{model}.ts`) binds the three types from its own `generated/api-{model}.ts`; `loadModel()` (`src/models/index.ts`) selects the entry from `ROUTER_MODEL`. A router build imports only its own contract.
+- `src/router.ts`: routing behaviour, `createRouter`
+- `src/serve.ts`: dev transport; prints `listening on http://127.0.0.1:{env.PORT}` on stdout
+- `api/[[...route]].ts`: deployed entry; `createRouter()`
+- `src/providers/`: worker providers
 
-## NX targets (task-first, `{model}` suffix)
+---
 
-**env-dev-{model}**:
+## NX Targets
 
-- **executor**: `nx:run-commands`, `cache: false`
-- **command**: `tsx tools/router-env.ts {model} dev`
-- **reads**: `FLUX2_ROUTER_PORT` / `KREA2_ROUTER_PORT` from `apps/router/.env.local`, validated by `routerPortsSchema` (`env.schema.ts`)
-- **writes**: `dist/router-{model}/dev/{PORT,ROUTER_URL,SECRET_AUTH_TOKEN}` — `PORT` = that model's port, `ROUTER_URL` = `http://localhost:$PORT`
+**Option Forwarding**:
 
-**env-deploy-{model}**:
+- **problem**: deps in the chain must read and write the same `envFile`
+- **outcome**: one `envFile` across the chain; no target bloat
 
-- **executor**: `nx:run-commands`, `cache: false`
-- **command**: `tsx tools/router-env.ts {model} deploy`
-- **writes**: `dist/router-{model}/deploy/SECRET_AUTH_TOKEN`
+**router:generate-auth-token**:
 
-**generate-api-{model}**:
+- **executor**: `orchestrator/run-command`
+- **command**: `tools/generate-auth-token.ts`
+- **envKey**: `ROUTER_AUTH_TOKEN`
+- **output**: brand-new auth token to stdout
 
-- **executor**: `nx:run-commands`, `cache: true`
-- **input: api**: `packages/contracts/api-task-queue.json`
-- **input: worker**: `packages/contracts/{model}/inference.json`
-- **output**: `dist/router-{model}/api.json`
+**router:dev-flux2**:
 
-**generate-ts-{model}**:
+- **deps**: `{ target: "worker-flux2:deploy-modal", options: "forward" }`, `{ target: "generate-*", options: "forward" }`, `dev-flux2-generate-*`, `schemas:generate-flux2-*`
+- **executor**: `nx/run-commands`
+- **command**: `PORT=$(node -p \"new URL(process.env.FLUX2_ROUTER_URL).port\")  npm run dev`
+- **envFile**: `{workspaceRoot}/dist/flux2/dev.env`
 
-- **executor**: `nx:run-commands`, `cache: true`
-- **input**: `dist/router-{model}/api.json`
-- **output**: `./generated/api-{model}.ts`
+**router:dev-krea2**:
 
-**dev-{model}**:
+- **deps**: `{ target: "worker-krea2:deploy-modal", options: "forward" }`, `{ target: "generate-*", options: "forward" }`, `dev-krea2-generate-*`, `schemas:generate-krea2-*`
+- **executor**: `orchestrator/run-command`
+- **command**: `PORT=$(node -p \"new URL(process.env.KREA2_ROUTER_URL).port\") npm run dev`
+- **envFile**: `{workspaceRoot}/dist/krea2/dev.env`
 
-- **executor**: `nx:run-commands`, `cache: false`, `continuous: true`
-- **command**: `ROUTER_MODEL={model} npx tsx tools/export-artifacts.ts dist/worker-{model}/deploy dist/router-{model}/dev -- npx tsx watch apps/router/src/serve.ts`
-- **readyWhen**: `listening on` (`[router-{model}] listening on http://127.0.0.1:{$PORT} modal=… beam=… flash=…`)
-- **depends**: `worker-{model}:deploy-modal` (flux2 also `deploy-beam`), `env-dev-{model}`, `generate-ts-{model}`
+**router:deploy-flux2**:
 
-**deploy-{model}**:
+- **deps**: `{ target: "worker-flux2:deploy-modal", options: "forward" }`, `{ target: "generate-*", options: "forward" }`, `schemas:generate-flux2-*`
+- **executor**: `orchestrator/run-command`
+- **command**: `tools/deploy-vercel.ts` `--token $FLUX2_ROUTER_VERCEL_TOKEN --org $FLUX2_ROUTER_VERCEL_ORG_ID --project-id $FLUX2_ROUTER_VERCEL_PROJECT_ID`
+- **envKey**: `ROUTER_URL`
+- **envFile**: `{workspaceRoot}/dist/flux2/deploy.env`
+- **output**: command must output deployed url to stdout
 
-- **executor**: `nx:run-commands`, `cache: false`
-- **command**: `ROUTER_MODEL={model} npx tsx tools/export-artifacts.ts dist/worker-{model}/deploy dist/router-{model}/deploy -- npx tsx tools/deploy-vercel.ts router --token $..._TOKEN --org $..._ORG_ID --project-id $..._PROJECT_ID > dist/router-{model}/deploy/ROUTER_URL`
-- **depends**: `worker-{model}:deploy-modal`, `worker-{model}:deploy-beam`, `env-deploy-{model}`, `generate-ts-{model}`
+**router:deploy-krea2**:
 
-**Env**: `PORT`/`ROUTER_MODEL` are validated in `env.schema.ts`; `serve.ts` reads `PORT` from env with no fallback. `ROUTER_MODEL` is a per-target command constant, never an artifact. No `nx:run-commands` target-level `env:` is used anywhere. The boot line prints the loaded `PORT` and the non-secret worker URLs (`modal=`, `beam=`, `flash=`) so the runtime's held values are directly comparable; `SECRET_AUTH_TOKEN` is never logged. Runtime env (`SECRET_AUTH_TOKEN`, `ROUTER_URL`, `ROUTER_MODEL`, `MODAL/BEAM/FLASH_WORKER_URL`) is forwarded centrally by `deploy-vercel.ts` from `process.env`; no `-e` flags in `project.json`.
+- **deps**: `{ target: "worker-krea2:deploy-modal", options: "forward" }`, `{ target: "generate-*", options: "forward" }`, `schemas:generate-krea2-*`
+- **executor**: `orchestrator/run-command`
+- **command**: `tools/deploy-vercel.ts` `--token $KREA2_ROUTER_VERCEL_TOKEN --org $KREA2_ROUTER_VERCEL_ORG_ID --project-id $KREA2_ROUTER_VERCEL_PROJECT_ID`
+- **envKey**: `ROUTER_URL`
+- **envFile**: `{workspaceRoot}/dist/krea2/deploy.env`
+- **output**: command must output deployed url to stdout

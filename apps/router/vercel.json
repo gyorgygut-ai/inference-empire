@@ -1,3 +1,4 @@
 {
+  "buildCommand": "npx tsx ../../packages/schemas/tools/generate-zod-from-json.ts ../../packages/schemas/${ROUTER_MODEL:-flux2}/schema.json ../../packages/schemas/${ROUTER_MODEL:-flux2}/schema.ts && npm run build",
   "outputDirectory": "dist"
 }

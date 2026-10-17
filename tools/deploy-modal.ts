@@ -1,37 +1,13 @@
 #!/usr/bin/env -S npx tsx
-import { readdirSync } from 'node:fs';
-import { dirname, join } from 'node:path';
 import { spawn } from 'node:child_process';
 
-const raw = process.argv.slice(2);
-let worker = '';
-let mode = 'deploy';
-for (const arg of raw) {
-  if (arg.startsWith('--worker=')) worker = arg.slice('--worker='.length);
-  else if (arg.startsWith('--mode=')) mode = arg.slice('--mode='.length);
-}
-if (!worker || (mode !== 'dev' && mode !== 'deploy')) {
-  console.error('usage: deploy-modal.ts --worker=<path|glob.py> [--mode=dev|deploy]');
+const [workerFile] = process.argv.slice(2);
+if (!workerFile) {
+  console.error('usage: deploy-modal.ts <worker_modal.py>');
   process.exit(1);
 }
 
-function resolveWorker(spec: string): string {
-  if (!spec.includes('*')) {
-    return spec;
-  }
-  const dir = dirname(spec);
-  const pattern = new RegExp(`^${spec.slice(dir.length + 1).replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*')}$`);
-  const matches = readdirSync(dir).filter((name) => pattern.test(name));
-  if (matches.length !== 1) {
-    console.error(`[deploy-modal] expected one worker matching ${spec}, found ${matches.length}`);
-    process.exit(1);
-  }
-  return join(dir, matches[0] ?? '');
-}
-
-const workerFile = resolveWorker(worker);
-const subcommand = mode === 'dev' ? 'serve' : 'deploy';
-const child = spawn('uv', ['run', '--locked', 'modal', subcommand, workerFile], {
+const child = spawn('uv', ['run', '--locked', 'modal', 'deploy', workerFile], {
   stdio: ['inherit', 'pipe', 'pipe'],
 });
 

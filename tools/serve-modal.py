@@ -6,12 +6,12 @@ import os
 import re
 import subprocess
 import sys
-from pathlib import Path
+from typing import NoReturn
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
-def fail(msg: str) -> "NoReturn":
+def fail(msg: str) -> NoReturn:
     print(f"[serve-modal] {msg}", file=sys.stderr)
     raise SystemExit(1)
 
@@ -26,7 +26,7 @@ def stop_stale_ephemerals(app_name: str) -> None:
             timeout=60,
         )
         if listed.returncode != 0:
-            print(f"[serve-modal] warning: app list failed, skipping cleanup", flush=True)
+            print("[serve-modal] warning: app list failed, skipping cleanup", file=sys.stderr, flush=True)
             return
         for app in json.loads(listed.stdout or "[]"):
             if app.get("description") == app_name and app.get("state") == "ephemeral":
@@ -36,23 +36,19 @@ def stop_stale_ephemerals(app_name: str) -> None:
                     capture_output=True,
                     timeout=120,
                 )
-                print(f"[serve-modal] stopped stale ephemeral {app['app_id']}", flush=True)
+                print(f"[serve-modal] stopped stale ephemeral {app['app_id']}", file=sys.stderr, flush=True)
     except Exception as e:
-        print(f"[serve-modal] warning: app list cleanup skipped: {e}", flush=True)
+        print(f"[serve-modal] warning: app list cleanup skipped: {e}", file=sys.stderr, flush=True)
 
 
 def main() -> None:
     if len(sys.argv) < 2:
-        fail("usage: serve-modal.py <worker_script_path> [dev|deploy]")
+        fail("usage: serve-modal.py <worker_modal.py>")
 
     worker_script = sys.argv[1]
-    configuration = sys.argv[2] if len(sys.argv) > 2 else "dev"
-
-    if configuration not in ("dev", "deploy"):
-        fail("configuration must be 'dev' or 'deploy'")
 
     try:
-        worker_content = open(worker_script, "r", encoding="utf-8").read()
+        worker_content = open(worker_script, encoding="utf-8").read()
     except Exception as e:
         fail(f"could not read worker script: {e}")
 
@@ -61,15 +57,15 @@ def main() -> None:
         fail("could not find modal.App name in worker script")
     app_name = match[1]
 
-    worker_dir = os.path.dirname(worker_script)
+    stop_stale_ephemerals(app_name)
 
     try:
-        asyncio.run(serve_app(app_name, worker_script, configuration))
+        asyncio.run(serve_app(app_name, worker_script))
     except Exception as e:
         fail(f"error running serve_app: {e}")
 
 
-async def serve_app(app_name: str, worker_script: str, configuration: str) -> None:
+async def serve_app(app_name: str, worker_script: str) -> None:
     try:
         from modal.cli.import_refs import import_app_from_ref, parse_import_ref
         from modal.serving import serve_app as serve_app_func
@@ -85,15 +81,16 @@ async def serve_app(app_name: str, worker_script: str, configuration: str) -> No
                 url = ""
             if url:
                 urls[tag] = url
-                print(f"[serve-modal] {tag} => {url}", flush=True)
+                print(f"[serve-modal] {tag} => {url}", file=sys.stderr, flush=True)
 
         if not urls:
             fail("no web URL issued (worker needs a fastapi_endpoint/asgi_app)")
 
         url = urls.get("generate_web") or sorted(urls.values())[0]
-        print(f"[serve-modal] serving {app_name} with URL {url} (Ctrl-C to stop)", flush=True)
+        print(url, flush=True)
+        print(f"[serve-modal] serving {app_name} (Ctrl-C to stop)", file=sys.stderr, flush=True)
 
-        async with serve_app_func(app) as _:
+        async with serve_app_func(app, ref) as _:
             await asyncio.Future()  # Wait indefinitely
 
     except Exception as e:

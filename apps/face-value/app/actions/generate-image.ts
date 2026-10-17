@@ -4,10 +4,11 @@ import sharp from "sharp";
 import { inferWithPolling } from "@inference/task-queue-client";
 import { getInferenceOutcome } from "@/outcomes";
 import { config } from "@/config";
-import type {
-  Flux2Klein9BInput,
-  Flux2Klein9BOutput,
-} from "@/generated/router_api";
+import type { z } from "zod";
+import { api } from "@packages/schemas/flux2/schema";
+
+type InferenceInput = z.input<typeof api>["input"];
+type InferenceOutput = z.infer<typeof api>["output"];
 
 const MAX_SIZE = 512;
 const MAX_BYTES = 5 * 1024 * 1024;
@@ -23,9 +24,8 @@ type GenerateImageResult = { presignedUrl: string } | { error: string };
 export async function generateImageAction(
   input: GenerateImageInput,
 ): Promise<GenerateImageResult> {
-  console.log(config);
   const baseUrl = config.ROUTER_URL;
-  const token = config.SECRET_AUTH_TOKEN;
+  const token = config.ROUTER_AUTH_TOKEN;
   if (!baseUrl || !token) {
     return { error: "Server misconfigured" };
   }
@@ -53,15 +53,15 @@ export async function generateImageAction(
   }
 
   try {
-    const request: Flux2Klein9BInput = {
+    const request: InferenceInput = {
       prompt: outcome.prompt,
       width: outcome.width,
       height: outcome.height,
       input_image: resized.toString("base64"),
     };
     const output = await inferWithPolling<
-      Flux2Klein9BInput,
-      Flux2Klein9BOutput
+      InferenceInput,
+      InferenceOutput
     >(request, {
       baseUrl,
       token,

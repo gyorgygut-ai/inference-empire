@@ -7,19 +7,22 @@ const raw = process.argv.slice(2);
 let token = process.env.VERCEL_TOKEN ?? '';
 let org = process.env.VERCEL_ORG_ID ?? '';
 let projectId = process.env.VERCEL_PROJECT_ID ?? '';
+let model = process.env.ROUTER_MODEL ?? '';
 const head: string[] = [];
 for (let i = 0; i < raw.length; i++) {
   const a = raw[i] ?? '';
   if (a === '--token') token = raw[++i] ?? token;
   else if (a === '--org') org = raw[++i] ?? org;
   else if (a === '--project-id') projectId = raw[++i] ?? projectId;
+  else if (a === '--model') model = raw[++i] ?? model;
+  else if (a.startsWith('--model=')) model = a.slice('--model='.length);
   else head.push(a);
 }
 
 const [appDir, scope] = head;
 if (!appDir || !token || !org || !projectId || head.length > 2) {
   console.error(
-    'usage: deploy-vercel.ts <app-dir> [from-root] (VERCEL_TOKEN/VERCEL_ORG_ID/VERCEL_PROJECT_ID env or --token/--org/--project-id)',
+    'usage: deploy-vercel.ts <app-dir> [from-root] [--model=<model>] (VERCEL_TOKEN/VERCEL_ORG_ID/VERCEL_PROJECT_ID env or --token/--org/--project-id)',
   );
   process.exit(1);
 }
@@ -30,8 +33,9 @@ if (!existsSync(resolvedAppDir)) { console.error(`[deploy-vercel] missing app di
 // (e.g. apps/face-value) then scopes the build. Default stays app-dir only.
 const deployCwd = scope === 'from-root' ? process.cwd() : resolvedAppDir;
 
-const RUNTIME_KEYS = ['SECRET_AUTH_TOKEN', 'ROUTER_URL', 'ROUTER_MODEL', 'MODAL_WORKER_URL', 'BEAM_WORKER_URL', 'FLASH_WORKER_URL'];
-const envRun = RUNTIME_KEYS.filter((k) => process.env[k]).map((k) => `${k}=${process.env[k]}`);
+const RUNTIME_KEYS = ['ROUTER_AUTH_TOKEN', 'ROUTER_URL', 'ROUTER_MODEL', 'MODAL_WORKER_URL', 'BEAM_WORKER_URL', 'FLASH_WORKER_URL'];
+const runtime: NodeJS.ProcessEnv = model ? { ...process.env, ROUTER_MODEL: model } : process.env;
+const envRun = RUNTIME_KEYS.filter((k) => runtime[k]).map((k) => `${k}=${runtime[k]}`);
 
 const child = spawn(
   'vercel',

@@ -4,26 +4,26 @@ NextJS app for chat + inference requests.
 
 ---
 
-## NX target: `face-value:dev`
+## NX Targets
 
-- **executor**: `nx:run-commands`, `continuous: true`, `cache: false`
-- **command**: `npx tsx tools/export-artifacts.ts --exclude PORT dist/router-flux2/dev -- npm --prefix apps/face-value run dev`
-- **depends**: `router:dev-flux2`
-- **env**: `ROUTER_URL`, `SECRET_AUTH_TOKEN` read from `dist/router-flux2/dev` (`PORT` excluded: `next dev` honors `PORT` and would collide with the router)
+**Option Forwarding**:
 
-## NX target: `face-value:deploy`
+- **problem**: deps in the chain must read and write the same `envFile`
+- **outcome**: one `envFile` across the chain; no target bloat
 
-- **executor**: `nx:run-commands`, `cache: false`
-- **depends**: `router:deploy-flux2`
-- **command**: `npx tsx tools/export-artifacts.ts dist/router-flux2/deploy -- npx tsx tools/deploy-vercel.ts face-value from-root --token $FACE_VALUE_VERCEL_TOKEN --org $FACE_VALUE_VERCEL_ORG_ID --project-id $FACE_VALUE_VERCEL_PROJECT_ID`
-- **env**: `ROUTER_URL`, `SECRET_AUTH_TOKEN` read from `dist/router-flux2/deploy`
+**face-value:dev**:
 
-**target:generate-ts**:
+- **deps**: `{ target: "router:dev-flux2", options: "forward" }`, `dev-flux2-generate-*`, `schemas:generate-flux2-*`
+- **executor**: `nx/run-commands`
+- **command**: `ROUTER_URL=$FLUX2_ROUTER_URL npm run dev`
+- **envFile**: `{workspaceRoot}/dist/flux2/dev.env`
 
-- **executor**: `nx:run-commands`, `cache: true`
-- **depends**: `router:generate-api-flux2`
-- **input**: `dist/router-flux2/api.json`
-- **output**: `./generated/router_api.ts`
+**face-value:deploy**:
+
+- **deps**: `{ target: "router:deploy-flux2", options: "forward" }`, `schemas:generate-flux2-*`
+- **executor**: `nx/run-commands`
+- **command**: `tools/deploy-vercel.ts` `--token $FACE_VALUE_VERCEL_TOKEN --org $FACE_VALUE_VERCEL_ORG_ID --project-id $FACE_VALUE_VERCEL_PROJECT_ID`
+- **envFile**: `{workspaceRoot}/dist/flux2/deploy.env`
 
 ---
 
@@ -71,7 +71,7 @@ Progressive chat thread, with NO LLM: tool result triggres next tool call.
 **Inference Requests**:
 
 - Url: `env.ROUTER_URL` from env
-- Auth: `env.SECRET_AUTH_TOKEN` from env
+- Auth: `env.ROUTER_AUTH_TOKEN` from env
 - Client: use `@packages/worker-router-client` to send requests
 - Action: `./app/actions/generate-image`, returning `error` OR `presignedUrl`
 - Types: TS api types auto-generated (TO BE DISCUSSED)

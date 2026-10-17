@@ -3,9 +3,10 @@
   "version": "0.1.0",
   "type": "module",
   "private": true,
-  "main": "./src/index.ts",
+  "main": "./src/router.ts",
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsx watch src/serve.ts",
+    "build": "tsc -p tsconfig.build.${ROUTER_MODEL:-flux2}.json",
     "test": "vitest run"
   },
   "dependencies": {

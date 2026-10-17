@@ -29,17 +29,29 @@
       "cache": true
     },
     "dev-modal": {
-      "executor": "nx:run-commands",
+      "executor": "orchestrator:run-command",
       "cache": false,
       "continuous": true,
-      "outputs": ["{workspaceRoot}/dist/worker-<%= family %>/dev/dev-modal.env"],
-      "options": { "command": "tsx tools/deploy-modal.ts worker-<%= family %> dev dev-modal" }
+      "inputs": ["default"],
+      "outputs": ["{workspaceRoot}/dist/<%= family %>/dev.env"],
+      "options": {
+        "command": "uv",
+        "args": ["run", "--locked", "python", "tools/serve-modal.py", "--worker=apps/<%= family %>/worker_modal_*.py"],
+        "envFile": "dist/<%= family %>/dev.env",
+        "envKey": "MODAL_WORKER_URL"
+      }
     },
     "deploy-modal": {
-      "executor": "nx:run-commands",
+      "executor": "orchestrator:run-command",
       "cache": false,
-      "outputs": ["{workspaceRoot}/dist/worker-<%= family %>/deploy/deploy-modal.env"],
-      "options": { "command": "tsx tools/deploy-modal.ts worker-<%= family %> deploy deploy-modal" }
+      "inputs": ["default"],
+      "outputs": ["{workspaceRoot}/dist/<%= family %>/deploy.env"],
+      "options": {
+        "command": "tools/deploy-modal.ts",
+        "args": ["--worker=apps/<%= family %>/worker_modal_*.py"],
+        "envFile": "dist/<%= family %>/deploy.env",
+        "envKey": "MODAL_WORKER_URL"
+      }
     }
   }
 }

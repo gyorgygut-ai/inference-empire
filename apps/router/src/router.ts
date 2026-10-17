@@ -1,93 +1,79 @@
 import { Router } from 'itty-router'
-import { type Env } from './index.js'
-import createProvider, { isProviderName, type ProviderConfigs, type ProviderName } from './providers/create-provider.js'
+import { z } from 'zod'
+import { api } from '@schema'
+import type { Env } from '../env.schema.js'
+import createProvider, { decodeProviderName, isProviderName } from './providers/create-provider.js'
 import { pickTaskHandler } from './pick-task-handler.js'
-import { decodeTaskId, encodeTaskId } from './task-id.js'
+import type { TaskQueueApi } from './task-queue-api.js'
 
-export function createRouter<
-  TAddRequest extends { input: Record<string, unknown> },
-  TAddResponse extends { task_id: string },
-  TSupResponse extends { status: string; output?: unknown },
->() {
+type Schema = TaskQueueApi<z.infer<typeof api>['input'], z.infer<typeof api>['output']>
+
+const addToQueueRequest = z.object({ input: api.shape.input })
+
+function json(body: unknown, status = 200): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { 'Content-Type': 'application/json' }
+  })
+}
+
+export function createRouter() {
   const router = Router()
 
   router.all('*', async (request: Request, env: Env) => {
     const authHeader = request.headers.get('Authorization')
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' }
-      })
+      return json({ error: 'Unauthorized' }, 401)
     }
-    if (authHeader.substring(7) !== env.SECRET_AUTH_TOKEN) {
-      return new Response(JSON.stringify({ error: 'Invalid token' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' }
-      })
+    if (authHeader.substring(7) !== env.ROUTER_AUTH_TOKEN) {
+      return json({ error: 'Invalid token' }, 401)
     }
   })
 
   router.post('/q', async (request: Request, env: Env) => {
-    const body = await request.json() as TAddRequest
+    const parsed = addToQueueRequest.safeParse(await request.json())
+    if (!parsed.success) {
+      return json({ error: 'Invalid body' }, 400)
+    }
     const name = pickTaskHandler()
     const provider = createProvider(name)
-    const { task_id } = await provider.pushToTaskQueue(body.input, resolveConfig(name, env))
-    const response = { task_id: encodeTaskId(name, task_id) } as TAddResponse
-    return new Response(JSON.stringify(response), {
-      headers: { 'Content-Type': 'application/json' }
-    })
+    const config = provider.resolveConfig(env)
+    if (!config) {
+      return json({ error: `${name} worker not configured` }, 503)
+    }
+    const { task_id } = await provider.pushToTaskQueue(parsed.data.input, config)
+    const response: Schema['AddToQueueResponse'] = { task_id: provider.encodeTaskId(task_id) }
+    return json(response)
   })
 
   router.get('/sup', async (request: Request, env: Env) => {
     const id = new URL(request.url).searchParams.get('id')
     if (!id) {
-      return new Response(JSON.stringify({ error: 'Missing id' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      })
+      return json({ error: 'Missing id' }, 400)
     }
-    const { provider: name, originalTaskId } = decodeTaskId(id)
+    const name = decodeProviderName(id)
     if (!isProviderName(name)) {
-      return new Response(JSON.stringify({ error: 'Unknown provider' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      })
+      return json({ error: 'Unknown provider' }, 400)
     }
     const provider = createProvider(name)
-    const result = await provider.fetchTaskStatus(originalTaskId, resolveConfig(name, env))
-    const response = { status: result.status } as TSupResponse
-    if (result.status === 'COMPLETED') {
-      response.output = result.output
+    const config = provider.resolveConfig(env)
+    if (!config) {
+      return json({ error: `${name} worker not configured` }, 503)
     }
-    return new Response(JSON.stringify(response), {
-      headers: { 'Content-Type': 'application/json' }
-    })
+    const { originalTaskId } = provider.decodeTaskId(id)
+    const result = await provider.fetchTaskStatus(originalTaskId, config)
+    const response: Schema['SupResponse'] = { status: result.status }
+    if (result.status === 'COMPLETED') {
+      const output = api.shape.output.safeParse(result.output)
+      if (!output.success) {
+        return json({ error: 'Invalid worker output' }, 502)
+      }
+      response.output = output.data
+    }
+    return json(response)
   })
 
-  router.all('*', async () => (
-    new Response(JSON.stringify({ error: 'Not Found' }), {
-      status: 404,
-      headers: { 'Content-Type': 'application/json' }
-    })
-  ))
+  router.all('*', async () => json({ error: 'Not Found' }, 404))
 
   return router
-}
-
-function resolveConfig<K extends ProviderName>(name: K, env: Env): ProviderConfigs[K] {
-  if (name === 'beam') {
-    return {
-      url: env.BEAM_WORKER_URL ?? '',
-      taskApi: 'https://api.beam.cloud'
-    } as ProviderConfigs[K]
-  }
-  if (name === 'flash') {
-    return {
-      url: env.FLASH_WORKER_URL ?? '',
-      endpointName: ''
-    } as ProviderConfigs[K]
-  }
-  return {
-    url: env.MODAL_WORKER_URL ?? ''
-  } as ProviderConfigs[K]
 }
