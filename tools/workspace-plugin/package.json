@@ -3,11 +3,11 @@
   "version": "0.0.1",
   "private": true,
   "type": "module",
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     "./package.json": "./package.json",
-    ".": "./src/index.ts"
+    ".": "./dist/index.js"
   },
   "dependencies": {
     "@nx/devkit": "23.2.1"

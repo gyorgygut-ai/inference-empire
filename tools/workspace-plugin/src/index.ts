@@ -1,2 +1,2 @@
-export { createNodes, createNodesV2 } from './inference/python.ts';
-export { runCommand, runCommandCapture } from './executors/run-command.ts';
+export { createNodes, createNodesV2 } from './inference/python';
+export { runCommand, runCommandCapture } from './executors/run-command';
