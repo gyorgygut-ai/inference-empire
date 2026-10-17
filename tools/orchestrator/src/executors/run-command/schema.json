@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/schema",
+  "version": 2,
+  "title": "Orchestrator run-command executor",
+  "description": "Run a command with an env file and write its captured stdout value into that env file",
+  "type": "object",
+  "properties": {
+    "command": {
+      "type": "string",
+      "description": "Executable to spawn (no shell)"
+    },
+    "args": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Arguments passed to the command"
+    },
+    "envFile": {
+      "type": "string",
+      "description": "Env file loaded into the child env and written by key"
+    },
+    "key": {
+      "type": "string",
+      "description": "Env file key that receives the captured stdout value"
+    },
+    "env": {
+      "type": "object",
+      "additionalProperties": { "type": "string" },
+      "description": "Extra env vars; $VAR references resolve from process.env"
+    }
+  },
+  "required": ["command"]
+}

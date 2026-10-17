@@ -1,0 +1,14 @@
+{
+  "executors": {
+    "run-command": {
+      "implementation": "./src/executors/run-command/run-command",
+      "schema": "./src/executors/run-command/schema.json",
+      "description": "Run a command with an env file and write its captured stdout value into that env file"
+    },
+    "run-node-server": {
+      "implementation": "./src/executors/run-node-server/run-node-server",
+      "schema": "./src/executors/run-node-server/schema.json",
+      "description": "Run a long-lived node server, capture its ready URL and write it into the env file"
+    }
+  }
+}

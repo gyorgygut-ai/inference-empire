@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/schema",
+  "version": 2,
+  "title": "Orchestrator run-node-server executor",
+  "description": "Run a long-lived node server, capture its ready URL and write it into the env file",
+  "type": "object",
+  "properties": {
+    "command": {
+      "type": "string",
+      "description": "Executable to spawn (no shell)"
+    },
+    "args": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Arguments passed to the command"
+    },
+    "envFile": {
+      "type": "string",
+      "description": "Env file loaded into the child env and written by key"
+    },
+    "key": {
+      "type": "string",
+      "description": "Env file key that receives the captured ready URL"
+    },
+    "env": {
+      "type": "object",
+      "additionalProperties": { "type": "string" },
+      "description": "Extra env vars; $VAR references resolve from process.env"
+    }
+  },
+  "required": ["command"]
+}

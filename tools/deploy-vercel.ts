@@ -1,23 +1,26 @@
+#!/usr/bin/env -S npx tsx
 import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 
 const raw = process.argv.slice(2);
-let token = '';
-let org = '';
-let projectId = '';
+let token = process.env.VERCEL_TOKEN ?? '';
+let org = process.env.VERCEL_ORG_ID ?? '';
+let projectId = process.env.VERCEL_PROJECT_ID ?? '';
 const head: string[] = [];
 for (let i = 0; i < raw.length; i++) {
   const a = raw[i] ?? '';
-  if (a === '--token') token = raw[++i] ?? '';
-  else if (a === '--org') org = raw[++i] ?? '';
-  else if (a === '--project-id') projectId = raw[++i] ?? '';
+  if (a === '--token') token = raw[++i] ?? token;
+  else if (a === '--org') org = raw[++i] ?? org;
+  else if (a === '--project-id') projectId = raw[++i] ?? projectId;
   else head.push(a);
 }
 
 const [appDir, scope] = head;
 if (!appDir || !token || !org || !projectId || head.length > 2) {
-  console.error('usage: deploy-vercel.ts <app-dir> [from-root] --token <t> --org <o> --project-id <p>');
+  console.error(
+    'usage: deploy-vercel.ts <app-dir> [from-root] (VERCEL_TOKEN/VERCEL_ORG_ID/VERCEL_PROJECT_ID env or --token/--org/--project-id)',
+  );
   process.exit(1);
 }
 const resolvedAppDir = join(process.cwd(), 'apps', appDir);

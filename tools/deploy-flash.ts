@@ -1,13 +1,34 @@
-import { existsSync } from 'node:fs';
+#!/usr/bin/env -S npx tsx
+import { existsSync, readdirSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { spawn } from 'node:child_process';
 
-const [project, configuration] = process.argv.slice(2);
-if (!project || (configuration !== 'dev' && configuration !== 'deploy')) {
-  console.error('usage: deploy-flash.ts <project> <dev|deploy>');
+const raw = process.argv.slice(2);
+let worker = '';
+for (const arg of raw) {
+  if (arg.startsWith('--worker=')) worker = arg.slice('--worker='.length);
+}
+if (!worker) {
+  console.error('usage: deploy-flash.ts --worker=<path|glob.py>');
   process.exit(1);
 }
 
-const dir = `apps/${project.replace(/^worker-/, '').replace(/-/g, '_')}`;
+function resolveWorker(spec: string): string {
+  if (!spec.includes('*')) {
+    return spec;
+  }
+  const dir = dirname(spec);
+  const pattern = new RegExp(`^${spec.slice(dir.length + 1).replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*')}$`);
+  const matches = readdirSync(dir).filter((name) => pattern.test(name));
+  if (matches.length !== 1) {
+    console.error(`[deploy-flash] expected one worker matching ${spec}, found ${matches.length}`);
+    process.exit(1);
+  }
+  return join(dir, matches[0] ?? '');
+}
+
+const workerFile = resolveWorker(worker);
+const dir = dirname(workerFile);
 if (!existsSync(dir)) {
   console.error(`[deploy-flash] missing worker dir: ${dir}`);
   process.exit(1);

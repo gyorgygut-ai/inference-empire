@@ -1,5 +1,4 @@
+#!/usr/bin/env -S npx tsx
 import { randomBytes } from 'node:crypto';
 
-export function generateAuthToken(): string {
-  return randomBytes(32).toString('base64url');
-}
+console.log(randomBytes(32).toString('base64url'));
