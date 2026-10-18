@@ -11,11 +11,11 @@
       "continuous": true,
       "dependsOn": [
         { "target": "router:dev-flux2", "options": "forward" },
-        "dev-flux2-generate-router-url",
+        "router:dev-flux2-generate-router-url",
         "schemas:generate-flux2-*"
       ],
       "options": {
-        "command": "npm run dev",
+        "command": "ROUTER_URL=$FLUX2_ROUTER_URL npm run dev",
         "cwd": "apps/face-value",
         "envFile": "dist/flux2/dev.env"
       }
