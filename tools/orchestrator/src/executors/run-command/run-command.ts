@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 import { parse } from 'dotenv';
 import type { PromiseExecutor } from '@nx/devkit';
 import { runCommandCapture } from '@inference/workspace-plugin';
-import { updateEnvFile } from '../../../../update-env-file';
+import { updateEnvFile } from '../../../../update-env-file.ts';
 import type { RunCommandExecutorSchema } from './schema';
 
 const runExecutor: PromiseExecutor<RunCommandExecutorSchema> = async (options, context) => {
