@@ -1,0 +1,14 @@
+[project]
+name = "shared-gpu"
+version = "0.1.0"
+requires-python = ">=3.11,<3.12"
+description = "Shared GPU helpers for all inference workers"
+dependencies = ["pydantic"]
+
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["shared_gpu"]
+package-dir = { "shared_gpu" = "." }

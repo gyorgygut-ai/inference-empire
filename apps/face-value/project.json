@@ -10,25 +10,25 @@
       "cache": false,
       "continuous": true,
       "dependsOn": [
-        { "target": "router:dev-flux2", "options": "forward" },
+        "router:dev-flux2",
         "router:dev-flux2-generate-router-url",
         "schemas:generate-flux2-*"
       ],
       "options": {
-        "command": "ROUTER_URL=$FLUX2_ROUTER_URL npm run dev",
+        "command": "npm run dev",
         "cwd": "apps/face-value",
         "envFile": "dist/flux2/dev.env"
       }
     },
     "deploy": {
-      "executor": "nx:run-commands",
+      "executor": "orchestrator:run-command",
       "cache": false,
       "dependsOn": [
-        { "target": "router:deploy-flux2", "options": "forward" },
+        { "projects": ["router"], "target": "deploy-flux2", "options": "forward" },
         "schemas:generate-flux2-*"
       ],
       "options": {
-        "command": "tools/deploy-vercel.ts --token $FACE_VALUE_VERCEL_TOKEN --org $FACE_VALUE_VERCEL_ORG_ID --project-id $FACE_VALUE_VERCEL_PROJECT_ID",
+        "command": "tools/deploy-vercel.ts face-value from-root --token $FACE_VALUE_VERCEL_TOKEN --org $FACE_VALUE_VERCEL_ORG_ID --project-id $FACE_VALUE_VERCEL_PROJECT_ID",
         "envKey": "FACE_VALUE_URL",
         "envFile": "dist/flux2/deploy.env"
       }

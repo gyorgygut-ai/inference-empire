@@ -1,0 +1,19 @@
+[build]
+publish = "public"
+command = "echo 'no build needed'"
+
+[dev]
+port = 8888
+
+[functions]
+directory = "functions/"
+
+[[redirects]]
+from = "/flux2/*"
+to = "/.netlify/functions/router"
+status = 200
+
+[[redirects]]
+from = "/krea2/*"
+to = "/.netlify/functions/router"
+status = 200

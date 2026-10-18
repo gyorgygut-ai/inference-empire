@@ -2,90 +2,93 @@
 
 **Value Proposition**: Monorepo for inference workers + frontends + tooling.
 
-- **ACTIVATE**: `./opencode/skills/nx-workspace`
-- **Specs**: always authoritive. Code must match specs
-- **Not gaps**: good code without specs, example names not coded
-
 ---
 
-## Projects
+## Key Projects
 
-- [Workers](./apps/WORKERS.md)
 - [Router](./apps/router/AGENTS.md)
+- [Workers](./apps/workers/AGENTS.md)
 - [Face Value](./apps/face-value/AGENTS.md)
 
 ---
 
-## Root `.env`
+## Non-negotiables
 
-- `HF_TOKEN`
-- `R2_ACCESS_KEY`
-- `R2_SECRET_KEY`
-- `R2_ENDPOINT`
-- `R2_BUCKET`
-- `FLUX2_ROUTER_URL`
-- `FLUX2_ROUTER_VERCEL_TOKEN`
-- `FLUX2_ROUTER_VERCEL_ORG_ID`
-- `FLUX2_ROUTER_VERCEL_PROJECT_ID`
-- `KREA_ROUTER_URL`
-- `KREA2_ROUTER_VERCEL_TOKEN`
-- `KREA2_ROUTER_VERCEL_ORG_ID`
-- `KREA2_ROUTER_VERCEL_PROJECT_ID`
-- `FACE_VALUE_VERCEL_TOKEN`
-- `FACE_VALUE_VERCEL_ORG_ID`
-- `FACE_VALUE_VERCEL_PROJECT_ID`
+**Correct**:
 
-## Acceptance Criteria
+- **Goal**: Spec adherence across the codebase without gaps
+- **Approach**: Code matched to authoritive specs; NOT specs to code
+- **Outcome**: Code fulfilling acceptance criteria as specs dictate
 
-**face-value:dev**:
+**No guesses**:
 
-- [ ] `{workspaceRoot}/dist/flux2/dev.env`:
-  - [ ] `packages/schemas/flux2/schema.ts` exists
-  - [ ] `MODAL_WORKER_URL` is a valid modal worker url
-  - [ ] `BEAM_WORKER_URL` is a valid beam worker url
-  - [ ] `ROUTER_AUTH_TOKEN` equals `router:generate-auth-token`
-- [ ] `router:dev-flux2` listening on `.env.FLUX2_ROUTER_URL`
-- [ ] `.env.FLUX2_ROUTER_URL` accepts `ROUTER_AUTH_TOKEN`
-- [ ] `face-value:dev` 200 at `http://127.0.0.1:3000`
-- [ ] `face-value:dev` requests `router:dev-flux2` url
-- [ ] `face-value:dev` uses `ROUTER_AUTH_TOKEN`
-
-**face-value:deploy**:
-
-- [ ] `{workspaceRoot}/dist/flux2/deploy.env`:
-  - [ ] `packages/schemas/flux2/schema.ts` exists
-  - [ ] `MODAL_WORKER_URL` is a valid modal worker url
-  - [ ] `BEAM_WORKER_URL` is a valid beam worker url
-  - [ ] `ROUTER_AUTH_TOKEN` equals `router:generate-auth-token`
-  - [ ] `ROUTER_URL` accepts `ROUTER_AUTH_TOKEN`
-  - [ ] `router:deploy-flux2` listening on `ROUTER_URL`
-  - [ ] `ROUTER_URL`+`ROUTER_AUTH_TOKEN` responds
-- [ ] `face-value:deploy` 200 at `http://127.0.0.1:3000`
-- [ ] `face-value:deploy` requests `router:deploy-flux2` url
-- [ ] `face-value:deploy` uses `ROUTER_AUTH_TOKEN`
+- **Goal**: Idiomatic, documented patterns instead of hand-rolling and guesses
+- **Approach**: Use the `nx-*`, `python-uv` skills and the `nx mcp` to verify
+- **Outcome**: Trial-and-error loops eliminated; simple, reliable codebase
 
 ---
 
-<!-- nx configuration start-->
-<!-- Leave the start & end comments to automatically receive updates. -->
+## Orchestration
 
-## General Guidelines for working with Nx
+**Dependencies**:
 
-- For navigating/exploring the workspace, invoke the `nx-workspace` skill first - it has patterns for querying projects, targets, and dependencies
-- When running tasks (for example build, lint, test, e2e, etc.), always prefer running the task through `nx` (i.e. `nx run`, `nx run-many`, `nx affected`) instead of using the underlying tooling directly
-- Prefix nx commands with the workspace's package manager (e.g., `pnpm nx build`, `npm exec nx test`) - avoids using globally installed CLI
-- You have access to the Nx MCP server and its tools, use them to help the user
-- For Nx plugin best practices, check `node_modules/@nx/<plugin>/PLUGIN.md`. Not all plugins have this file - proceed without it if unavailable.
-- NEVER guess CLI flags - always check nx_docs or `--help` first when unsure
+- **Tool**: `dependsOn`, `targetDefaults`, `(implicit)Dependencies` 
+- **Problem**: Apps need to run / deploy in a clearly defined order 
+- **Approach**: `build`;`dev`;`deploy` defined per project; otherwise not needed
+- **Outcome**: Chained tasks triggering their dependencies; NO repetitive boilerplate
+- **`dependsOn` patterns**: 
+  - `dev`: 
+  - `build`: 
+  - `deploy`: 
 
-## Scaffolding & Generators
+**Service Contract**:
 
-- For scaffolding tasks (creating apps, libs, project structure, setup), ALWAYS invoke the `nx-generate` skill FIRST before exploring or calling MCP tools
+- **Package**: [packages/contracts](packages/contracts/AGENTS.md)
+- **Problem**: Apps need to locate each other and talk
+- **Approach**: `contract.ts` materializes `zod` `schema.ts`
+- **Outcome**: One app declares need; another fulfills it
 
-## When to use nx_docs
+**Contract Delegation**:
 
-- USE for: advanced config options, unfamiliar flags, migration guides, plugin configuration, edge cases
-- DON'T USE for: basic generator syntax (`nx g @nx/react:app`), standard commands, things you already know
-- The `nx-generate` skill handles generator discovery internally - don't call nx_docs just to look up generator syntax
+- **Package**: [orchestrator/run-command](tools/orchestrator/AGENTS.md)
+- **Problem**: Contract needs and fulfillments need declared
+- **Approach**: Executor delegates artifacts, non-cacheable 
+- **Outcome**: Pain-free, type-safe contracts across apps
 
-<!-- nx configuration end-->
+**Data Schemas**:
+
+- **Package**: [packages/schemas](packages/schemas/AGENTS.md)
+- **Problem**: Apps need to know how to communicate
+- **Approach**: JSON schemas -> zod / TS generated on-demand
+- **Outcome**: Schema changes propagate; end-to-end type safety
+
+---
+
+## Key Targets
+
+**Acceptance**: `npx nx run router:dev-flux2`
+
+- `flux2` `WorkerServiceContract` fulfilled
+  -> ping `WORKER_RESOLVED_BEAM_URL` suceeds
+  -> `flux2` `TaskQueueServiceContract` fulfilled
+    -> `ROUTER_RESOLVED_URL` eq `http://127.0.0.1:5050`
+    -> ping `ROUTER_RESOLVED_URL` suceeds
+      -> ping `face-value` `http://127.0.0.1:3000` succeeds
+
+**Acceptance**: `npx nx run router:deploy-flux2`
+
+  - `flux2` `WorkerServiceContract` fulfilled
+    -> ping `WORKER_RESOLVED_BEAM_URL` suceeds
+    -> `flux2` `TaskQueueServiceContract` fulfilled
+      -> ping `ROUTER_RESOLVED_URL` suceeds
+        -> ping `face-value` succeeds
+
+**VERIFICATION**:
+
+- **Tool**: `tools/acceptance.{dev|deploy}.test.ts`
+- **Approach**:
+  - CLEAN `dist` folders before all
+  - NO test runs before NX chain finishes
+  - NO hand-rolled polling for waiting; relying on NX
+  - MAX. 6 lines per test case: setup \n act \n assert
+- **Outcome**: Deterministic change verification

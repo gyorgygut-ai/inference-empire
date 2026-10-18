@@ -1,6 +1,5 @@
 #!/usr/bin/env -S npx tsx
 import { readFileSync } from "node:fs";
-import { basename, dirname } from "node:path";
 import { spawn } from "node:child_process";
 
 const [workerFile] = process.argv.slice(2);
@@ -20,9 +19,9 @@ if (!match) {
 
 const child = spawn(
   "uv",
-  ["run", "--locked", "beam", "deploy", `${basename(workerFile)}:${match[1]}`],
+  ["run", "--locked", "beam", "deploy", `${workerFile}:${match[1]}`],
   {
-    cwd: dirname(workerFile),
+    cwd: process.cwd(),
     env: {
       ...process.env,
       PYTHONPATH: [process.cwd(), process.env.PYTHONPATH]

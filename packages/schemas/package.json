@@ -2,6 +2,9 @@
   "name": "@inference/schemas",
   "private": true,
   "type": "module",
+  "scripts": {
+    "build": "tsx tools/generate-zod-from-json.ts"
+  },
   "dependencies": {
     "zod": "^4.2.0"
   }

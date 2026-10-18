@@ -7,6 +7,23 @@
     "type:schemas"
   ],
   "targets": {
+    "build": {
+      "command": "tsx packages/schemas/tools/generate-zod-from-json.ts",
+      "options": {
+        "model": "flux2"
+      }
+    },
+    "dild": {
+      "dependsOn": [
+        {
+          "target": "build",
+          "options": "forward"
+        }
+      ],
+      "options": {
+        "args": "--model=krea2"
+      }
+    },
     "generate-flux2-api-types": {
       "executor": "orchestrator:run-command",
       "cache": true,

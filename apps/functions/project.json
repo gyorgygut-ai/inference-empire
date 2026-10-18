@@ -1,0 +1,148 @@
+{
+  "name": "functions",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/functions/src",
+  "projectType": "application",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/esbuild:esbuild",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "defaultConfiguration": "production",
+      "options": {
+        "platform": "node",
+        "outputPath": "dist/apps/functions",
+        "format": [
+          "cjs"
+        ],
+        "bundle": false,
+        "main": "apps/functions/src/main.ts",
+        "tsConfig": "apps/functions/tsconfig.app.json",
+        "assets": [
+          "apps/functions/src/assets"
+        ],
+        "generatePackageJson": true,
+        "esbuildOptions": {
+          "sourcemap": true,
+          "outExtension": {
+            ".js": ".js"
+          }
+        }
+      },
+      "configurations": {
+        "development": {},
+        "production": {
+          "esbuildOptions": {
+            "sourcemap": false,
+            "outExtension": {
+              ".js": ".js"
+            }
+          }
+        }
+      }
+    },
+    "prune-lockfile": {
+      "dependsOn": [
+        "build"
+      ],
+      "cache": true,
+      "executor": "@nx/js:prune-lockfile",
+      "outputs": [
+        "{workspaceRoot}/dist/apps/functions/package.json",
+        "{workspaceRoot}/dist/apps/functions/package-lock.json"
+      ],
+      "options": {
+        "buildTarget": "build"
+      }
+    },
+    "copy-workspace-modules": {
+      "dependsOn": [
+        "build"
+      ],
+      "cache": true,
+      "outputs": [
+        "{workspaceRoot}/dist/apps/functions/workspace_modules"
+      ],
+      "executor": "@nx/js:copy-workspace-modules",
+      "options": {
+        "buildTarget": "build"
+      }
+    },
+    "prune": {
+      "dependsOn": [
+        "prune-lockfile",
+        "copy-workspace-modules"
+      ],
+      "executor": "nx:noop"
+    },
+    "serve": {
+      "continuous": true,
+      "executor": "@nx/js:node",
+      "defaultConfiguration": "development",
+      "dependsOn": [
+        "build"
+      ],
+      "options": {
+        "buildTarget": "functions:build",
+        "runBuildTargetDependencies": false
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "functions:build:development"
+        },
+        "production": {
+          "buildTarget": "functions:build:production"
+        }
+      }
+    },
+    "serve-functions": {
+      "command": "npx netlify dev",
+      "options": {
+        "cwd": "apps/functions"
+      }
+    },
+    "deploy-functions": {
+      "dependsOn": [],
+      "command": "npx netlify deploy --site=cd41f060-bbdf-49fa-82a6-20d7ba136853",
+      "options": {
+        "cwd": "apps/functions"
+      },
+      "configurations": {
+        "production": {
+          "command": "npx netlify deploy --prod --site=cd41f060-bbdf-49fa-82a6-20d7ba136853",
+          "cwd": "apps/functions"
+        }
+      }
+    },
+    "dev-flux2-router-url": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "{workspaceRoot}",
+        "command": "mkdir -p dist/dev/flux2 && echo \"ROUTER_URL=http://127.0.0.1:8888\" >> dist/dev/flux2/router.env"
+      }
+    },
+    "deploy-flux2-router-url": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "apps/functions",
+        "command": "mkdir -p dist/deploy/flux2 && URL=$(npx netlify deploy --site=cd41f060-bbdf-49fa-82a6-20d7ba136853 2>&1 | grep -oE 'https://[^[:space:]]+' | head -n1) && echo \"ROUTER_URL=$URL\" >> dist/deploy/flux2/router.env"
+      }
+    },
+    "dev-krea2-router-url": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "{workspaceRoot}",
+        "command": "mkdir -p dist/dev/krea2 && echo \"ROUTER_URL=http://127.0.0.1:8888\" >> dist/dev/krea2/router.env"
+      }
+    },
+    "deploy-krea2-router-url": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "apps/functions",
+        "command": "mkdir -p dist/deploy/krea2 && URL=$(npx netlify deploy --site=cd41f060-bbdf-49fa-82a6-20d7ba136853 2>&1 | grep -oE 'https://[^[:space:]]+' | head -n1) && echo \"ROUTER_URL=$URL\" >> dist/deploy/krea2/router.env"
+      }
+    }
+  }
+}

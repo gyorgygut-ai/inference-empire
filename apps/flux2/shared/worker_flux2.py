@@ -101,6 +101,8 @@ def load_pipeline():
 
     token = os.environ.get("HF_TOKEN")
 
+    from sdnq import SDNQConfig  # noqa: F401  importing sdnq registers its quantizer with transformers
+
     try:
         pipe = diffusers.Flux2KleinPipeline.from_pretrained(
             MODEL_ID,

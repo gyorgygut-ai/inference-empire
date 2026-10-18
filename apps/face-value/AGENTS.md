@@ -2,28 +2,31 @@
 
 NextJS app for chat + inference requests.
 
+**Contracts**: `TaskQueueServiceContract`
+
 ---
 
-## NX Targets
+## NX: `face-value:dev`
 
-**Option Forwarding**:
+**Cmd**: inferred `dev` -> `next dev`
 
-- **problem**: deps in the chain must read and write the same `envFile`
-- **outcome**: one `envFile` across the chain; no target bloat
+**Before `:dev`**: 
 
-**face-value:dev**:
+  - **Wait**: `router:predev` must be finished
+  - **Wait** `router:dev-flux2` must listen + be READY
+  - **Needs** `flux2` `TaskQueueServiceContract`
+  - **Generates** flux2 api types to `{projectRoot}/dist/`
 
-- **deps**: `{ target: "router:dev-flux2", options: "forward" }`, `dev-flux2-generate-*`, `schemas:generate-flux2-*`
-- **executor**: `nx/run-commands`
-- **command**: `ROUTER_URL=$FLUX2_ROUTER_URL npm run dev`
-- **envFile**: `{workspaceRoot}/dist/flux2/dev.env`
+## NX: `face-value:deploy`
 
-**face-value:deploy**:
+**Command**: `vercel deploy`
 
-- **deps**: `{ target: "router:deploy-flux2", options: "forward" }`, `schemas:generate-flux2-*`
-- **executor**: `nx/run-commands`
-- **command**: `tools/deploy-vercel.ts` `--token $FACE_VALUE_VERCEL_TOKEN --org $FACE_VALUE_VERCEL_ORG_ID --project-id $FACE_VALUE_VERCEL_PROJECT_ID`
-- **envFile**: `{workspaceRoot}/dist/flux2/deploy.env`
+**Before `:deploy`**: 
+
+  - **Wait**: `router:prebuild` must be finished
+  - **Wait** `router:deploy-flux2` must be finished
+  - **Needs** `flux2` `TaskQueueServiceContract`
+  - **Generates** flux2 api types to `{projectRoot}/dist/`
 
 ---
 
@@ -70,8 +73,8 @@ Progressive chat thread, with NO LLM: tool result triggres next tool call.
 
 **Inference Requests**:
 
-- Url: `env.ROUTER_URL` from env
-- Auth: `env.ROUTER_AUTH_TOKEN` from env
+- Url: `TaskQueueServiceContract.ROUTER_RESOLVED_URL`
+- Auth: `TaskQueueServiceContract.ROUTER_GENERATED_AUTH_TOKEN`
 - Client: use `@packages/worker-router-client` to send requests
 - Action: `./app/actions/generate-image`, returning `error` OR `presignedUrl`
 - Types: TS api types auto-generated (TO BE DISCUSSED)

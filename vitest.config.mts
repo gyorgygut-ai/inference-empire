@@ -6,6 +6,7 @@ export default defineConfig({
       '**/vitest.config.{mjs,js,ts,mts}',
       '!vite.config.{mjs,js,ts,mts}',
       '!apps/chat-ui/**',
+      '!tests/acceptance/**',
     ],
   },
 })

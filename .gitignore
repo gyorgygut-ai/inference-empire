@@ -102,3 +102,6 @@ out
 .vercel
 
 proof
+
+# Local Netlify folder
+.netlify

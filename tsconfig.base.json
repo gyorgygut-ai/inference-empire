@@ -6,24 +6,16 @@
     "strict": true,
     "skipLibCheck": true,
     "paths": {
-      "@packages/schemas/*": [
-        "./packages/schemas/*"
-      ],
-      "@inference/types": [
-        "./packages/types/src/index.ts"
-      ],
-      "@inference/workspace-plugin": [
-        "./tools/workspace-plugin/src/index.ts"
+      "@inference/nx-generate-auth-token": [
+        "./tools/nx-generate-auth-token/src/index.ts"
       ],
       "@inference/task-queue-client": [
         "./packages/task-queue-client/src/index.ts"
       ],
-      "@inference/nx-generate-auth-token": [
-        "./tools/nx-generate-auth-token/src/index.ts"
-      ],
-      "@inference/ui": [
-        "./packages/ui/src/index.ts"
-      ]
+      "@inference/types": ["./packages/types/src/index.ts"],
+      "@inference/ui": ["./packages/ui/src/index.ts"],
+      "@inference/workspace-plugin": ["./tools/workspace-plugin/src/index.ts"],
+      "@packages/schemas/*": ["./packages/schemas/*"]
     }
   }
 }
