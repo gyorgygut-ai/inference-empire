@@ -23,13 +23,13 @@
 **1. Contract**:
 
 - **File**: `packages/contracts/some-service.contract.ts`
-- `envFilePath`: `{workspaceRoot}/dist/{taskName}/contract.env`
+- `envFilePath`: (taskName: string) => `{workspaceRoot}/dist/${taskName}/contract.env`
 
 **2. Producer**:
 `"producer-app:deploy": {
   "command": "tools/deploy-some-service.ts",
   "options": {
-    fulfills: { "contract": "some-service", "key": "SOME_SERVICE_RESOLVED_URL" }
+    fulfills: { "contract": "some-service", "contractKey": "SOME_SERVICE_RESOLVED_URL" }
   } 
 }`
 - **Flow**: `deploy-some-service.ts` -> `SOME_SERVICE_RESOLVED_URL` -> `{workspaceRoot}/dist/{taskName}/contract.env`
@@ -42,4 +42,4 @@
     needs: { "contract": "some-service" }
   } 
 }`
-- **Flow**: `nx:run-commands` -> `envFile: {workspaceRoot}/dist/{taskName}/contract.env` -> `my-dev-server`
+- **Flow**: `nx:run-commands` -> `envFile: {workspaceRoot}/dist/{taskName}/contract.env` (envFilePath(taskName)) -> `my-dev-server`

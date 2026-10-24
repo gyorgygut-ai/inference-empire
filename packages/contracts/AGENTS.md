@@ -4,7 +4,7 @@
 
 - **Files**: `{workspaceRoot}/packages/contracts/worker-service/worker-service.{schema|contract}.ts`
 - **Schema**: `WORKER_RESOLVED_{BEAM|MODAL|FLASH}_URL`; `envFilePath`
-- **Contract.envFilePath.**: `{workspaceRoot}/dist/{taskName}/`
+- **Contract.envFilePath**: `(taskName: string) => '{workspaceRoot}/dist/${taskName}/contract.env'`
 
 **Task Queue Service**:
 

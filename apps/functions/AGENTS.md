@@ -4,26 +4,38 @@ Stateless task queue api router, routing across urls from `WorkerServiceContract
 
 ---
 
-## NX: `router:dev-flux2`
+## NX: `router`
 
-**Cmd**: `netlify dev`
-**Before `dev-flux2`**:
+**Tasks**:
 
-  - **Needs** `flux2` `WorkerServiceContract`
-  - **Fulfills** `WorkerServiceContract.ROUTER_RESOLVED_URL`
-  - **Fulfills** `WorkerServiceContract.ROUTER_GENERATED_AUTH_TOKEN`
-  - **Generates** flux2 api types to `{projectRoot}/dist/`
+- `dev-flux2`:
+  - dependsOn `predev`
+  - cmd: `tools/serve-netlify-functions.ts`
+  - waits: `router:dev-flux2` must listen + READY
+  - needs[]: `flux2` `WorkerServiceContract`
+  - needs[]: `flux2` `TaskQueueServiceContract`
+  - fulfills.contract: `TaskQueueServiceContract`
+  - fulfills.contractKey: `ROUTER_RESOLVED_URL`
+- `predev`
+  - dependsOn `prebuild`
+- `build`:
+  - dependsOn `prebuild`
+- `generate-auth-token`
+  - cmd: `tools/geneate-auth-token.ts`
+  - fulfills.contract: `TaskQueueServiceContract`
+  - fulfills.contractKey: `ROUTER_GENERATED_AUTH_TOKEN`
+- `prebuild`:
+  - dependsOn `["^prebuild", "generate-*"]`
+- `deploy-flux2`:
+  - dependsOn `build`
+  - cmd: `netlify deploy`
+  - needs[]: `flux2` `WorkerServiceContract`
+  - needs[]: `flux2` `TaskQueueServiceContract`
+  - fulfills.contract: `TaskQueueServiceContract`
+  - fulfills.contractKey: `ROUTER_RESOLVED_URL`
 
-## NX: `router:deploy-flux2`
-
-**Command**: `netlify deploy`
-
-**MUST DO before `deploy-flux2`**:
-
-  - **Needs** `flux2` `WorkerServiceContract`
-  - **Fulfills** `WorkerServiceContract.ROUTER_RESOLVED_URL`
-  - **Fulfills** `WorkerServiceContract.ROUTER_GENERATED_AUTH_TOKEN`
-  - **Generates** flux2 api types to `{projectRoot}/dist/`
+- `dev-krea2`: same as `dev-flux2`; but with `krea2`
+- `deploy-krea2`: same as `deploy-flux2`; but with `krea2`
 
 ---
 

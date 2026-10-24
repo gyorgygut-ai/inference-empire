@@ -6,7 +6,7 @@
 
 ## Key Projects
 
-- [Router](./apps/router/AGENTS.md)
+- [Router](./apps/functions/AGENTS.md)
 - [Workers](./apps/workers/AGENTS.md)
 - [Face Value](./apps/face-value/AGENTS.md)
 
@@ -36,12 +36,12 @@
 - **Problem**: Apps need to run / deploy in a clearly defined order 
 - **Approach**: `build`;`dev`;`deploy` defined per project; otherwise not needed
 - **Outcome**: Chained tasks triggering their dependencies; NO repetitive boilerplate
-- **`dependsOn` patterns**: 
-  - `dev`: 
-  - `build`: 
-  - `deploy`: 
+- **Generic Examples**: 
+  - `deploy` -> dependsOn `build`
+  - `build` -> dependsOn `prebuild` -> dependsOn `^build`
+  - `dev` -> dependsOn `predev` -> dependsOn `^build`
 
-**Service Contract**:
+**Service Contracts**:
 
 - **Package**: [packages/contracts](packages/contracts/AGENTS.md)
 - **Problem**: Apps need to locate each other and talk

@@ -19,3 +19,5 @@ const code = jsonSchemaToZod(schema, {
 mkdirSync(dirname(outPath), { recursive: true });
 writeFileSync(outPath, `${code.trimEnd()}\n`);
 console.log(outPath);
+
+process.exit(0); // Explicitly exit successfully
