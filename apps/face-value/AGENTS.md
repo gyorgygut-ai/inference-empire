@@ -2,31 +2,24 @@
 
 NextJS app for chat + inference requests.
 
-**Contracts**: `TaskQueueServiceContract`
-
 ---
 
-## NX: `face-value:dev`
+## NX: `face-value`
 
-**Cmd**: inferred `dev` -> `next dev`
+**Tasks**:
 
-**Before `:dev`**: 
-
-  - **Wait**: `router:predev` must be finished
-  - **Wait** `router:dev-flux2` must listen + be READY
-  - **Needs** `flux2` `TaskQueueServiceContract`
-  - **Generates** flux2 api types to `{projectRoot}/dist/`
-
-## NX: `face-value:deploy`
-
-**Command**: `vercel deploy`
-
-**Before `:deploy`**: 
-
-  - **Wait**: `router:prebuild` must be finished
-  - **Wait** `router:deploy-flux2` must be finished
-  - **Needs** `flux2` `TaskQueueServiceContract`
-  - **Generates** flux2 api types to `{projectRoot}/dist/`
+- `dev`:
+  - cmd: infer `dev` -> `next dev`
+  - dependsOn `["predev", "functions:dev-flux2"]`
+  - needs[]: `TaskQueueServiceContractFlux2Dev`
+- `predev`, `prebuild`:
+  - dependsOn `^prebuild`
+- `build`:
+  - dependsOn `prebuild`
+- `deploy`:
+  - cmd: `vercel deploy`
+  - dependsOn `["build", "functions:deploy-flux2"]`
+  - needs[]: `TaskQueueServiceContractFlux2Deploy`
 
 ---
 

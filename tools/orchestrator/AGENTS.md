@@ -5,14 +5,14 @@
 **orchestrator:run-command**:
 
 - **Problem**: A task needs to declare it depends a contract or fulfills it
-- **Approach**: `options.needs`, `options.fulfills` 
+- **Approach**: `options.needs[]`, `options.fulfills[]`
 - **Outcome**: 
 - **Acceptance**:
   - `execute`: composes unaltered `nx:run-command`
-  - `needs`: looks up `contract.env` using `envFilePath`
-  -> `envFile`: injects `envFilePath || options.envFile` as `envFile`
+  - `needs[]`: resolves each contract `envFilePath` against `context.root`, merges into the command env
+  -> `envFile`: read and injected, not forwarded
   - `output`: captures any output via `terminalOutput`
-  -> `fulfills`: upserts `output value` into `envFile`
+  -> `fulfills[]`: upserts `output value` into `envFilePath` under `contractKey`
 
 ---
 
@@ -22,24 +22,24 @@
 
 **1. Contract**:
 
-- **File**: `packages/contracts/some-service.contract.ts`
-- `envFilePath`: `{workspaceRoot}/dist/{taskName}/contract.env`
+- **File**: `packages/contracts/worker-service/flux2-dev.contract.ts`
+- `envFilePath`: `dist/flux2/dev.env`
 
 **2. Producer**:
 `"producer-app:deploy": {
   "command": "tools/deploy-some-service.ts",
   "options": {
-    fulfills: { "contract": "some-service", "key": "SOME_SERVICE_RESOLVED_URL" }
+    fulfills: [{ "contract": "WorkerServiceContractFlux2Deploy", "contractKey": "WORKER_RESOLVED_BEAM_URL" }]
   } 
 }`
-- **Flow**: `deploy-some-service.ts` -> `SOME_SERVICE_RESOLVED_URL` -> `{workspaceRoot}/dist/{taskName}/contract.env`
+- **Flow**: `deploy-some-service.ts` -> `WORKER_RESOLVED_BEAM_URL` -> the contract's `envFilePath`
 
 **3. Consumer**:
 
 - **Task**: `"consumer-app:deploy": {
 "command": "npm run my-dev-server",
 "options": {
-    needs: { "contract": "some-service" }
+    needs: [{ "contract": "WorkerServiceContractFlux2Dev" }, { "contract": "TaskQueueServiceContractFlux2Dev" }]
   } 
 }`
-- **Flow**: `nx:run-commands` -> `envFile: {workspaceRoot}/dist/{taskName}/contract.env` -> `my-dev-server`
+- **Flow**: `run-command` -> `needs[]` -> `my-dev-server`

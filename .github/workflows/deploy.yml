@@ -8,6 +8,17 @@ jobs:
     env:
       HF_TOKEN: ${{ secrets.HF_TOKEN }}
 
+      MODAL_TOKEN_ID: ${{ secrets.MODAL_TOKEN_ID }}
+      MODAL_TOKEN_SECRET: ${{ secrets.MODAL_TOKEN_SECRET }}
+      MODAL_WORKSPACE: ${{ secrets.MODAL_WORKSPACE }}
+      MODAL_PROFILE: ${{ secrets.MODAL_PROFILE }}
+
+      CEREBRIUM_SERVICE_TOKEN: ${{ secrets.CEREBRIUM_SERVICE_TOKEN }}
+      CEREBRIUM_INFERENCE_TOKEN: ${{ secrets.CEREBRIUM_INFERENCE_TOKEN }}
+
+      BEAM_API_KEY: ${{ secrets.BEAM_API_KEY }}
+      BEAM_WORKSPACE: ${{ secrets.BEAM_WORKSPACE }}
+
       R2_ACCESS_KEY: ${{ secrets.R2_ACCESS_KEY }}
       R2_SECRET_KEY: ${{ secrets.R2_SECRET_KEY }}
       R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}

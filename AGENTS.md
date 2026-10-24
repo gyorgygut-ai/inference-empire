@@ -6,7 +6,7 @@
 
 ## Key Projects
 
-- [Router](./apps/router/AGENTS.md)
+- [Router](./apps/functions/AGENTS.md)
 - [Workers](./apps/workers/AGENTS.md)
 - [Face Value](./apps/face-value/AGENTS.md)
 
@@ -36,23 +36,23 @@
 - **Problem**: Apps need to run / deploy in a clearly defined order 
 - **Approach**: `build`;`dev`;`deploy` defined per project; otherwise not needed
 - **Outcome**: Chained tasks triggering their dependencies; NO repetitive boilerplate
-- **`dependsOn` patterns**: 
-  - `dev`: 
-  - `build`: 
-  - `deploy`: 
+- **Generic Examples**: 
+  - `deploy` -> dependsOn `build`
+  - `build` -> dependsOn `prebuild` -> dependsOn `^build`
+  - `dev` -> dependsOn `predev` -> dependsOn `^build`
 
-**Service Contract**:
+**Service Contracts**:
 
 - **Package**: [packages/contracts](packages/contracts/AGENTS.md)
 - **Problem**: Apps need to locate each other and talk
-- **Approach**: `contract.ts` materializes `zod` `schema.ts`
+- **Approach**: one `{family}-{env}.contract.ts` per service scope, constant `envFilePath`
 - **Outcome**: One app declares need; another fulfills it
 
 **Contract Delegation**:
 
 - **Package**: [orchestrator/run-command](tools/orchestrator/AGENTS.md)
 - **Problem**: Contract needs and fulfillments need declared
-- **Approach**: Executor delegates artifacts, non-cacheable 
+- **Approach**: Executor reads `needs[]`, upserts `fulfills[]`, non-cacheable 
 - **Outcome**: Pain-free, type-safe contracts across apps
 
 **Data Schemas**:
@@ -68,18 +68,18 @@
 
 **Acceptance**: `npx nx run router:dev-flux2`
 
-- `flux2` `WorkerServiceContract` fulfilled
+- `flux2-dev` `WorkerServiceContract` fulfilled
   -> ping `WORKER_RESOLVED_BEAM_URL` suceeds
-  -> `flux2` `TaskQueueServiceContract` fulfilled
+  -> `flux2-dev` `TaskQueueServiceContract` fulfilled
     -> `ROUTER_RESOLVED_URL` eq `http://127.0.0.1:5050`
     -> ping `ROUTER_RESOLVED_URL` suceeds
       -> ping `face-value` `http://127.0.0.1:3000` succeeds
 
 **Acceptance**: `npx nx run router:deploy-flux2`
 
-  - `flux2` `WorkerServiceContract` fulfilled
+  - `flux2-deploy` `WorkerServiceContract` fulfilled
     -> ping `WORKER_RESOLVED_BEAM_URL` suceeds
-    -> `flux2` `TaskQueueServiceContract` fulfilled
+    -> `flux2-deploy` `TaskQueueServiceContract` fulfilled
       -> ping `ROUTER_RESOLVED_URL` suceeds
         -> ping `face-value` succeeds
 

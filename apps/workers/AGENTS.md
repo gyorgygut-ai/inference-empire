@@ -10,17 +10,17 @@
 **MUST DO before `:deploy-modal`**:
 
   - **Build** must build `{projectRoot}/dist/modal` and deploy from there
-  - **Fulfills** `WorkerServiceContract.WORKER_RESOLVED_MODAL_URL`
+  - **Fulfills** `WORKER_RESOLVED_MODAL_URL` in the family's `deploy` worker contract, through the executor
 
 **MUST DO before `:deploy-beam`**:
 
   - **Build** must build `{projectRoot}/dist/modal` and deploy from there
-  - **Fulfills** `WorkerServiceContract.WORKER_RESOLVED_BEAM_URL`
+  - **Fulfills** `WORKER_RESOLVED_BEAM_URL` in the family's `deploy` worker contract, through the executor
 
 **MUST DO before `:deploy-flash`**:
 
   - **Build** must build `{projectRoot}/dist/modal` and deploy from there
-  - **Fulfills** `WorkerServiceContract.WORKER_RESOLVED_FLASH_URL`
+  - **Fulfills** `WORKER_RESOLVED_FLASH_URL` in the family's `deploy` worker contract, through the executor
 
 ---
 

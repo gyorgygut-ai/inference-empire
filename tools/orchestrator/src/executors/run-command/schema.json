@@ -4,7 +4,36 @@
   "title": "Orchestrator run-command executor",
   "description": "",
   "type": "object",
-  "properties": {},
+  "properties": {
+    "command": "string",
+    "args"?: "string",
+    "env"?: "Record<string, string>",
+    "envFile"?: "string",
+    "envKey"?: "string",
+    "cwd"?: "string",
+    "needs"?: {
+      "type": "object",
+      "properties": {
+        "contract": "string",
+        "contractKey": "string"
+      },
+      "required": [
+        "contract",
+        "contractKey"
+      ]
+    },
+    "fulfills"?: {
+      "type": "object",
+      "properties": {
+        "contract": "string",
+        "contractKey": "string"
+      },
+      "required": [
+        "contract",
+        "contractKey"
+      ]
+    }
+  },
   "required": [
     "command"
   ]

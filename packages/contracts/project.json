@@ -3,5 +3,16 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "packages/contracts/src",
   "projectType": "library",
-  "tags": []
+  "tags": ["type:contracts"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/contracts",
+        "main": "packages/contracts/src/index.ts",
+        "tsConfig": "packages/contracts/tsconfig.lib.json"
+      }
+    }
+  }
 }
