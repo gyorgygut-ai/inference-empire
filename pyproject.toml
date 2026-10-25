@@ -79,7 +79,7 @@ ignore = [
 # GPU-only deps live in worker images (IMAGE_PIP_DEPS), never in the local
 # venv. Silence unresolvable imports for exactly these modules; everything
 # else (PIL, numpy, boto3, apps.*) stays a hard error.
-allowed-unresolved-imports = ["torch.**", "diffusers.**", "transformers.**", "diffsynth.**", "huggingface_hub.**", "fastrtc.**"]
+allowed-unresolved-imports = ["torch.**", "diffusers.**", "transformers.**", "diffsynth.**", "huggingface_hub.**", "fastrtc.**", "aiortc.**"]
 
 [tool.ty.environment]
 python-version = "3.11"

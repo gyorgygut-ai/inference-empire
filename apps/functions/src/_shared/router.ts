@@ -40,7 +40,8 @@ export function createRouter<Api extends z.ZodObject<{ input: z.ZodTypeAny; outp
       const { task_id } = await strategy.pushToTaskQueue(parsed.data, config);
       const encodedTaskId = strategy.encodeTaskId(task_id);
       return json({ task_id: encodedTaskId });
-    } catch {
+    } catch (error) {
+      console.error("[router] /q failed:", error);
       return json({ error: "Internal error" }, 500);
     }
   });

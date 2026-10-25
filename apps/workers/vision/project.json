@@ -1,0 +1,92 @@
+{
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "name": "workers-vision",
+  "projectType": "application",
+  "sourceRoot": "apps/workers/vision",
+  "tags": ["type:app", "scope:gpu-worker", "model:vision"],
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "defaultConfiguration": "modal",
+      "cache": false,
+      "inputs": [
+        "{projectRoot}/**/*.py",
+        "{projectRoot}/pyproject.toml",
+        "{projectRoot}/uv.lock",
+        "{workspaceRoot}/packages/workers/**/*",
+        "{workspaceRoot}/tools/uv-build"
+      ],
+      "outputs": ["{projectRoot}/dist"],
+      "options": {
+        "cwd": "{workspaceRoot}",
+        "command": "python3 tools/uv-build {args.entry} {args.out}"
+      },
+      "configurations": {
+        "modal": {
+          "entry": "apps/workers/vision/worker_modal_cls_vision.py",
+          "out": "apps/workers/vision/dist/modal"
+        },
+        "beam": {
+          "entry": "apps/workers/vision/worker_beam_tq_vision.py",
+          "out": "apps/workers/vision/dist/beam"
+        },
+        "flash": {
+          "entry": "apps/workers/vision/worker_flash_cls_vision.py",
+          "out": "apps/workers/vision/dist/flash"
+        }
+      }
+    },
+    "deploy-modal": {
+      "executor": "orchestrator:run-command",
+      "dependsOn": ["build:modal"],
+      "cache": false,
+      "options": {
+        "cwd": "{workspaceRoot}",
+        "command": "npx tsx tools/deploy-modal.ts",
+        "args": "apps/workers/vision/dist/modal/worker_modal_cls_vision.py",
+        "env": {
+          "MODAL_ENV_FILE": ".env",
+          "PYTHONPATH": "."
+        },
+        "fulfills": [
+          {
+            "contract": "worker-service/vision-deploy",
+            "contractKey": "WORKER_RESOLVED_MODAL_URL"
+          }
+        ]
+      }
+    },
+    "deploy-beam": {
+      "executor": "orchestrator:run-command",
+      "dependsOn": ["build:beam"],
+      "cache": false,
+      "options": {
+        "cwd": "{workspaceRoot}",
+        "command": "npx tsx tools/deploy-beam.ts",
+        "args": "apps/workers/vision/dist/beam/worker_beam_tq_vision.py",
+        "fulfills": [
+          {
+            "contract": "worker-service/vision-deploy",
+            "contractKey": "WORKER_RESOLVED_BEAM_URL"
+          }
+        ]
+      }
+    },
+    "deploy-flash": {
+      "executor": "orchestrator:run-command",
+      "dependsOn": ["build:flash"],
+      "cache": false,
+      "options": {
+        "cwd": "{workspaceRoot}",
+        "command": "npx tsx tools/deploy-flash.ts",
+        "args": "apps/workers/vision/dist/flash/worker_flash_cls_vision.py",
+        "fulfills": [
+          {
+            "contract": "worker-service/vision-deploy",
+            "contractKey": "WORKER_RESOLVED_FLASH_URL"
+          }
+        ]
+      }
+    }
+  }
+}

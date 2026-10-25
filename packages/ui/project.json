@@ -13,6 +13,10 @@
       "executor": "nx:noop",
       "dependsOn": ["vitest:test"]
     },
+    "verify": {
+      "executor": "nx:noop",
+      "dependsOn": ["audit", "lint", "build", "test"]
+    },
     "build": {
       "executor": "@nx/js:tsc",
       "outputs": ["{options.outputPath}"],

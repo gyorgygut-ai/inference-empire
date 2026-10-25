@@ -10,7 +10,11 @@ export const handler: Handler = async (event) => {
   const req = new Request(rawUrl, {
     method: event.httpMethod,
     headers: new Headers(event.headers as any),
-    body: event.body ? Buffer.from(event.body, "base64") : undefined,
+    body: event.body
+      ? event.isBase64Encoded
+        ? Buffer.from(event.body, "base64")
+        : event.body
+      : undefined,
   });
   const res = await router.fetch(req);
   return {

@@ -1,4 +1,5 @@
 #!/usr/bin/env -S npx tsx
+import { basename, dirname, resolve } from "node:path";
 import { readFileSync } from "node:fs";
 import { spawn as defaultSpawn, type ChildProcess } from "node:child_process";
 
@@ -21,16 +22,16 @@ export async function run(workerFile: string, options: DeployBeamOptions = {}): 
     process.exit(1);
   }
 
+  const workerDir = dirname(resolve(workerFile));
+
   const child = spawnImpl(
     "uv",
-    ["run", "--locked", "beam", "deploy", `${workerFile}:${match[1]}`],
+    ["run", "--locked", "beam", "deploy", `${basename(workerFile)}:${match[1]}`],
     {
-      cwd: process.cwd(),
+      cwd: workerDir,
       env: {
         ...process.env,
-        PYTHONPATH: [process.cwd(), process.env.PYTHONPATH]
-          .filter(Boolean)
-          .join(":"),
+        PYTHONPATH: [workerDir, process.env.PYTHONPATH].filter(Boolean).join(":"),
       },
       stdio: ["inherit", "pipe", "pipe"],
     },

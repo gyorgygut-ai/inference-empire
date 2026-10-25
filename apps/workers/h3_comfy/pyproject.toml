@@ -1,0 +1,14 @@
+[project]
+name = "workers-h3_comfy"
+version = "0.1.0"
+requires-python = ">=3.11,<3.12"
+dependencies = [
+    "boto3==1.43.83",
+    "pydantic==2.13.5",
+]
+
+[tool.uv.sources]
+shared-gpu = { path = "../../../packages/workers/shared_gpu" }
+artifacts = { path = "../../../packages/workers/artifacts" }
+media = { path = "../../../packages/workers/media" }
+modal-bridge = { path = "../../../packages/workers/modal_bridge" }

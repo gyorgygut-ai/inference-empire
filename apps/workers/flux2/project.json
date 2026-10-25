@@ -35,10 +35,43 @@
           "out": "apps/workers/flux2/dist/flash"
         }
       }
-    },    "deploy-modal": {
+    },
+    "build-beam": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "inputs": [
+        "{projectRoot}/**/*.py",
+        "{projectRoot}/pyproject.toml",
+        "{projectRoot}/uv.lock",
+        "{workspaceRoot}/packages/workers/**/*",
+        "{workspaceRoot}/tools/uv-build"
+      ],
+      "outputs": ["{projectRoot}/dist"],
+      "options": {
+        "cwd": "{workspaceRoot}",
+        "command": "python3 tools/uv-build apps/workers/flux2/worker_beam_tq_flux2_klein9b.py apps/workers/flux2/dist/beam"
+      }
+    },
+    "build-flash": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "inputs": [
+        "{projectRoot}/**/*.py",
+        "{projectRoot}/pyproject.toml",
+        "{projectRoot}/uv.lock",
+        "{workspaceRoot}/packages/workers/**/*",
+        "{workspaceRoot}/tools/uv-build"
+      ],
+      "outputs": ["{projectRoot}/dist"],
+      "options": {
+        "cwd": "{workspaceRoot}",
+        "command": "python3 tools/uv-build apps/workers/flux2/worker_flash_cls_flux2_klein9b.py apps/workers/flux2/dist/flash"
+      }
+    },
+    "deploy-modal": {
       "executor": "orchestrator:run-command",
       "dependsOn": [
-        "build:modal"
+        "build"
       ],
       "cache": false,
       "options": {
@@ -59,7 +92,7 @@
     },    "deploy-beam": {
       "executor": "orchestrator:run-command",
       "dependsOn": [
-        "build:beam"
+        "build-beam"
       ],
       "cache": false,
       "options": {
@@ -76,7 +109,7 @@
     },    "deploy-flash": {
       "executor": "orchestrator:run-command",
       "dependsOn": [
-        "build:flash"
+        "build-flash"
       ],
       "cache": false,
       "options": {

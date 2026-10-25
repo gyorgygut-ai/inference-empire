@@ -1,0 +1,67 @@
+{
+  "input": {
+    "title": "MiniMaxH3TurboFl2vaInput",
+    "required": [
+      "prompt"
+    ],
+    "properties": {
+      "prompt": {
+        "type": "string"
+      },
+      "first_frame": {
+        "type": "string",
+        "nullable": true
+      },
+      "last_frame": {
+        "type": "string",
+        "nullable": true
+      },
+      "negative_prompt": {
+        "type": "string",
+        "default": ""
+      },
+      "height": {
+        "type": "integer",
+        "default": 1024
+      },
+      "width": {
+        "type": "integer",
+        "default": 1024
+      },
+      "num_inference_steps": {
+        "type": "integer",
+        "default": 4
+      },
+      "seed": {
+        "type": [
+          "integer",
+          "null"
+        ],
+        "default": null
+      },
+      "duration": {
+        "type": "number",
+        "default": 4.0
+      }
+    }
+  },
+  "output": {
+    "title": "MiniMaxH3TurboFl2vaOutput",
+    "required": [
+      "artifact"
+    ],
+    "properties": {
+      "artifact": {
+        "type": "object",
+        "required": [
+          "presigned_url"
+        ],
+        "properties": {
+          "presigned_url": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

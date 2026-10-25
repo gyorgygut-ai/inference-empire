@@ -1,5 +1,19 @@
 # Orchestrator
 
+## URL Resolvers
+
+**Problem**: A deployed URL must be resolvable anytime, without re-deploying, dashboard, or SDK scripts
+**Approach**: `src/get-{provider}-url.ts` — one executable per provider; prints the deployed URL as the last line of stdout; diagnostics on stderr; non-zero exit on failure
+**Outcome**: project.json targets only invoke the tool and echo its output into an env var
+
+- **get-beam-url <app-name>**: ``
+- **get-modal-url <app-name> <function-name>**: ``
+- **get-flash-url <endpoint-name>**: ``
+- **get-netlify-url <site-id>**: ``
+- **get-vercel-url <project-id>**: ``
+
+---
+
 ## Executors
 
 **orchestrator:run-command**:

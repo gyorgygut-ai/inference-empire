@@ -3,7 +3,7 @@ import { ROUTER_GENERATED_AUTH_TOKEN, ROUTER_RESOLVED_URL } from './keys.ts';
 
 export const TaskQueueServiceContractFlux2Deploy = {
   keys: [ROUTER_RESOLVED_URL, ROUTER_GENERATED_AUTH_TOKEN] as const,
-  envFilePath: 'dist/flux2/deploy.env',
+  envFilePath: 'dist/functions/flux2-deploy.env',
 };
 
 export const taskQueueServiceFlux2DeploySchema = z.object({

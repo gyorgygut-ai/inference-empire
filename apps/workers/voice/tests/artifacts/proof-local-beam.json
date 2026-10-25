@@ -1,0 +1,235 @@
+{
+  "target": "local-beam",
+  "url": "http://127.0.0.1:8765",
+  "started_at": 1793012511.0941372,
+  "healthz": {
+    "status_code": 200,
+    "body": {
+      "status": "ok",
+      "mode": "proof",
+      "models": []
+    }
+  },
+  "turn_credentials": {
+    "status_code": 200,
+    "turn_urls": [
+      "turn:turn.cloudflare.com:3478?transport=udp",
+      "turn:turn.cloudflare.com:3478?transport=tcp",
+      "turns:turn.cloudflare.com:5349?transport=tcp",
+      "turn:turn.cloudflare.com:443?transport=udp",
+      "turn:turn.cloudflare.com:80?transport=tcp",
+      "turns:turn.cloudflare.com:443?transport=tcp"
+    ],
+    "has_username": true,
+    "has_credential": true
+  },
+  "wrong_content_type": {
+    "status_code": 415
+  },
+  "malformed_sdp": {
+    "status_code": 400
+  },
+  "session_1": {
+    "status_code": 201,
+    "ice_connection_state": "connected",
+    "answer_candidate_types": [
+      "host",
+      "relay",
+      "srflx"
+    ],
+    "event_types": [
+      "session.created",
+      "input_audio_buffer.speech_started",
+      "input_audio_buffer.speech_stopped",
+      "conversation.item.input_audio_transcription.completed",
+      "response.created",
+      "response.output_audio_transcript.delta",
+      "response.output_audio_transcript.done",
+      "response.done",
+      "error",
+      "input_audio_buffer.speech_started",
+      "input_audio_buffer.speech_stopped",
+      "conversation.item.input_audio_transcription.completed",
+      "response.created",
+      "response.output_audio_transcript.delta",
+      "response.output_audio_transcript.done",
+      "response.done"
+    ],
+    "events": [
+      {
+        "event_id": "evt_e29349cdc1314fd7",
+        "type": "session.created",
+        "session": {
+          "id": "proof-b14acd6886c0",
+          "mode": "proof"
+        }
+      },
+      {
+        "event_id": "evt_e878ff3fe8824e96",
+        "type": "input_audio_buffer.speech_started"
+      },
+      {
+        "event_id": "evt_a4eef7ed444c4c0d",
+        "type": "input_audio_buffer.speech_stopped"
+      },
+      {
+        "event_id": "evt_1485a05e13634083",
+        "type": "conversation.item.input_audio_transcription.completed",
+        "transcript": "proof-turn-1"
+      },
+      {
+        "event_id": "evt_0de84e89b89f4488",
+        "type": "response.created"
+      },
+      {
+        "event_id": "evt_6dfdb5b116364e2d",
+        "type": "response.output_audio_transcript.delta",
+        "delta": "proof-reply-1"
+      },
+      {
+        "event_id": "evt_90538bb6b2df4ac0",
+        "type": "response.output_audio_transcript.done",
+        "transcript": "proof-reply-1"
+      },
+      {
+        "event_id": "evt_654760349e4940a7",
+        "type": "response.done",
+        "status": "completed"
+      },
+      {
+        "event_id": "evt_5f3f3286fd2244a0",
+        "type": "error",
+        "error": {
+          "type": "invalid_request_error",
+          "code": "invalid_event_for_transport",
+          "message": "input_audio_buffer.append is not supported over WebRTC; send audio on the RTP track."
+        }
+      },
+      {
+        "event_id": "evt_cfdd9ee06d73453c",
+        "type": "input_audio_buffer.speech_started"
+      },
+      {
+        "event_id": "evt_957f17d05fa243b5",
+        "type": "input_audio_buffer.speech_stopped"
+      },
+      {
+        "event_id": "evt_b1dd4fc2295a473d",
+        "type": "conversation.item.input_audio_transcription.completed",
+        "transcript": "proof-turn-2"
+      },
+      {
+        "event_id": "evt_500093e7e78f4bc1",
+        "type": "response.created"
+      },
+      {
+        "event_id": "evt_660f747b68ca436b",
+        "type": "response.output_audio_transcript.delta",
+        "delta": "proof-reply-2"
+      },
+      {
+        "event_id": "evt_917973a1b3e44868",
+        "type": "response.output_audio_transcript.done",
+        "transcript": "proof-reply-2"
+      },
+      {
+        "event_id": "evt_bd9d2a0937d1414e",
+        "type": "response.done",
+        "status": "completed"
+      }
+    ],
+    "transcripts": [
+      "proof-turn-1",
+      "proof-reply-1",
+      "proof-reply-1",
+      "proof-turn-2",
+      "proof-reply-2",
+      "proof-reply-2"
+    ],
+    "audio": {
+      "frames": 9253,
+      "voiced_frames": 202,
+      "voiced_seconds": 4.04,
+      "rms": 0.061
+    },
+    "append_rejection": {
+      "code": "invalid_event_for_transport",
+      "dc_state_after": "open"
+    },
+    "idle_seconds": 180.0,
+    "state_after_idle": "connected"
+  },
+  "session_2": {
+    "status_code": 201,
+    "ice_connection_state": "connected",
+    "answer_candidate_types": [
+      "host",
+      "relay",
+      "srflx"
+    ],
+    "event_types": [
+      "session.created",
+      "input_audio_buffer.speech_started",
+      "input_audio_buffer.speech_stopped",
+      "conversation.item.input_audio_transcription.completed",
+      "response.created",
+      "response.output_audio_transcript.delta",
+      "response.output_audio_transcript.done",
+      "response.done"
+    ],
+    "events": [
+      {
+        "event_id": "evt_caa70f64b72042bc",
+        "type": "session.created",
+        "session": {
+          "id": "proof-74c2785b8326",
+          "mode": "proof"
+        }
+      },
+      {
+        "event_id": "evt_e4b285eadf5945ee",
+        "type": "input_audio_buffer.speech_started"
+      },
+      {
+        "event_id": "evt_ae1ae5671a88436a",
+        "type": "input_audio_buffer.speech_stopped"
+      },
+      {
+        "event_id": "evt_3ed2258916af4e40",
+        "type": "conversation.item.input_audio_transcription.completed",
+        "transcript": "proof-turn-1"
+      },
+      {
+        "event_id": "evt_01841989f4364fd4",
+        "type": "response.created"
+      },
+      {
+        "event_id": "evt_acb0da090fc445af",
+        "type": "response.output_audio_transcript.delta",
+        "delta": "proof-reply-1"
+      },
+      {
+        "event_id": "evt_3cdf56ec9f8f4b13",
+        "type": "response.output_audio_transcript.done",
+        "transcript": "proof-reply-1"
+      },
+      {
+        "event_id": "evt_85ce1e30a1eb4796",
+        "type": "response.done",
+        "status": "completed"
+      }
+    ],
+    "transcripts": [
+      "proof-turn-1",
+      "proof-reply-1",
+      "proof-reply-1"
+    ],
+    "audio": {
+      "frames": 139,
+      "voiced_frames": 101,
+      "voiced_seconds": 2.02,
+      "rms": 0.061
+    }
+  },
+  "duration_seconds": 195.1
+}

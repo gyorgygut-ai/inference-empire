@@ -1,0 +1,92 @@
+{
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "name": "workers-h3_ref2va",
+  "projectType": "application",
+  "sourceRoot": "apps/workers/h3_ref2va",
+  "tags": ["type:app", "scope:gpu-worker", "model:h3_ref2va"],
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "defaultConfiguration": "modal",
+      "cache": false,
+      "inputs": [
+        "{projectRoot}/**/*.py",
+        "{projectRoot}/pyproject.toml",
+        "{projectRoot}/uv.lock",
+        "{workspaceRoot}/packages/workers/**/*",
+        "{workspaceRoot}/tools/uv-build"
+      ],
+      "outputs": ["{projectRoot}/dist"],
+      "options": {
+        "cwd": "{workspaceRoot}",
+        "command": "python3 tools/uv-build {args.entry} {args.out}"
+      },
+      "configurations": {
+        "modal": {
+          "entry": "apps/workers/h3_ref2va/worker_modal_cls_h3_ref2va.py",
+          "out": "apps/workers/h3_ref2va/dist/modal"
+        },
+        "beam": {
+          "entry": "apps/workers/h3_ref2va/worker_beam_tq_h3_ref2va.py",
+          "out": "apps/workers/h3_ref2va/dist/beam"
+        },
+        "flash": {
+          "entry": "apps/workers/h3_ref2va/worker_flash_cls_h3_ref2va.py",
+          "out": "apps/workers/h3_ref2va/dist/flash"
+        }
+      }
+    },
+    "deploy-modal": {
+      "executor": "orchestrator:run-command",
+      "dependsOn": ["build:modal"],
+      "cache": false,
+      "options": {
+        "cwd": "{workspaceRoot}",
+        "command": "npx tsx tools/deploy-modal.ts",
+        "args": "apps/workers/h3_ref2va/dist/modal/worker_modal_cls_h3_ref2va.py",
+        "env": {
+          "MODAL_ENV_FILE": ".env",
+          "PYTHONPATH": "."
+        },
+        "fulfills": [
+          {
+            "contract": "worker-service/h3_ref2va-deploy",
+            "contractKey": "WORKER_RESOLVED_MODAL_URL"
+          }
+        ]
+      }
+    },
+    "deploy-beam": {
+      "executor": "orchestrator:run-command",
+      "dependsOn": ["build:beam"],
+      "cache": false,
+      "options": {
+        "cwd": "{workspaceRoot}",
+        "command": "npx tsx tools/deploy-beam.ts",
+        "args": "apps/workers/h3_ref2va/dist/beam/worker_beam_tq_h3_ref2va.py",
+        "fulfills": [
+          {
+            "contract": "worker-service/h3_ref2va-deploy",
+            "contractKey": "WORKER_RESOLVED_BEAM_URL"
+          }
+        ]
+      }
+    },
+    "deploy-flash": {
+      "executor": "orchestrator:run-command",
+      "dependsOn": ["build:flash"],
+      "cache": false,
+      "options": {
+        "cwd": "{workspaceRoot}",
+        "command": "npx tsx tools/deploy-flash.ts",
+        "args": "apps/workers/h3_ref2va/dist/flash/worker_flash_cls_h3_ref2va.py",
+        "fulfills": [
+          {
+            "contract": "worker-service/h3_ref2va-deploy",
+            "contractKey": "WORKER_RESOLVED_FLASH_URL"
+          }
+        ]
+      }
+    }
+  }
+}

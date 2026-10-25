@@ -1,0 +1,32 @@
+[project]
+name = "workers-realtime_voice"
+version = "0.1.0"
+requires-python = ">=3.11,<3.12"
+dependencies = [
+    "fastapi==0.141.1",
+    "uvicorn[standard]==0.52.4",
+    "numpy==1.26.4",
+    "setuptools==84.0.0",
+    "soundfile==0.14.0",
+    "faster-whisper==1.2.1",
+    "ctranslate2==4.4.0",
+    "transformers==5.2.0",
+    "torch==2.6.0",
+    "torchaudio==2.6.0",
+    "accelerate==1.14.0",
+    "bitsandbytes==0.50.2",
+    "librosa==0.11.0",
+    "diffusers==0.29.0",
+    "conformer==0.3.2",
+    "safetensors==0.5.3",
+    "pykakasi==2.3.0",
+    "s3tokenizer==0.3.0",
+    "resemble-perth==1.0.1",
+    "spacy-pkuseg==1.0.1",
+]
+
+[tool.uv.sources]
+shared-gpu = { path = "../../../packages/workers/shared_gpu" }
+artifacts = { path = "../../../packages/workers/artifacts" }
+media = { path = "../../../packages/workers/media" }
+modal-bridge = { path = "../../../packages/workers/modal_bridge" }

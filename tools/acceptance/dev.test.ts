@@ -1,22 +1,33 @@
-import { readFileSync } from "node:fs";
-import { test, expect } from "vitest";
-import { WorkerServiceContractFlux2Dev, workerServiceFlux2DevSchema, TaskQueueServiceContractFlux2Dev, taskQueueServiceFlux2DevSchema } from "file:///Users/gyorgygutai/Projects/personal/inference-empire/packages/contracts/src/index.ts";
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { parse } from 'dotenv';
+import { expect, test } from 'vitest';
+import { createRequire } from 'node:module';
+import { TaskQueueServiceContractFlux2Dev, taskQueueServiceFlux2DevSchema } from '../../packages/contracts/task-queue-service/flux2-dev.contract.ts';
 
-const readEnv = (contract) => Object.fromEntries(readFileSync(contract.envFilePath, "utf-8").split("\n").filter(Boolean).map(l => l.split("=")));
+const require = createRequire(import.meta.url);
+const { getReadyUrl } = require('/Users/gyorgygutai/Projects/personal/inference-empire/node_modules/nx/dist/src/tasks-runner/readiness/ready-signal');
 
-const workerEnv = readEnv(WorkerServiceContractFlux2Dev);
-const queueEnv = readEnv(TaskQueueServiceContractFlux2Dev);
+const readEnv = (path: string) => parse(readFileSync(fileURLToPath(new URL(path, import.meta.url))));
 
-test("flux2-dev WorkerServiceContract fulfilled", () => {
-  const parsed = workerServiceFlux2DevSchema.parse(workerEnv);
-  expect(parsed).toEqual(workerEnv);
+const devEnv = readEnv(`../../${TaskQueueServiceContractFlux2Dev.envFilePath}`);
+const routerUrl = devEnv.ROUTER_RESOLVED_URL;
+const faceValueUrl = getReadyUrl('http://127.0.0.1:3000');
+
+test('flux2-dev TaskQueueServiceContract fulfilled', () => {
+  expect(taskQueueServiceFlux2DevSchema.parse(devEnv)).toEqual(devEnv);
 });
 
-test("flux2-dev TaskQueueServiceContract fulfilled", () => {
-  const parsed = taskQueueServiceFlux2DevSchema.parse(queueEnv);
-  expect(parsed).toEqual(queueEnv);
+test('ROUTER_RESOLVED_URL eq http://127.0.0.1:5050', () => {
+  expect(routerUrl).toBe('http://127.0.0.1:5050');
 });
 
-test("ROUTER_RESOLVED_URL eq http://127.0.0.1:5050", () => {
-  expect(queueEnv.ROUTER_RESOLVED_URL).toBe("http://127.0.0.1:5050");
+test('router responds', async () => {
+  const response = await fetch(`${routerUrl}/sup`);
+  expect(response.ok).toBe(true);
+});
+
+test('face-value responds', async () => {
+  const response = await fetch(faceValueUrl);
+  expect(response.ok).toBe(true);
 });

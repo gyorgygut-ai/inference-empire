@@ -1,4 +1,0 @@
-import { z } from "zod"
-
-export const api = z.object({ "input": z.object({ "image_base64": z.string(), "prompt": z.union([z.string().meta({"description":"Custom analyze instruction override. Null uses built-in default."}), z.null().meta({"description":"Custom analyze instruction override. Null uses built-in default."})]).meta({"description":"Custom analyze instruction override. Null uses built-in default."}).default(null) }), "output": z.object({ "classification": z.enum(["portrait_0p","portrait_1p","portrait_2p","portrait_3p","portrait_group","selfie_1p","selfie_2p","selfie_group","group_photo_2p","group_photo_3p","group_photo_4p","group_photo_5p_plus","group_photo_group","food_0p","document_0p","landscape_0p","animal_0p","object_0p","screenshot_0p","receipt_0p","other_0p"]), "subjects": z.array(z.string()), "description": z.string() }) })
-export type Api = z.infer<typeof api>

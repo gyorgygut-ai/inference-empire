@@ -1,0 +1,44 @@
+{
+  "input": {
+    "title": "SmallVisionInput",
+    "required": [
+      "prompt",
+      "image"
+    ],
+    "properties": {
+      "prompt": {
+        "type": "string"
+      },
+      "image": {
+        "type": "string"
+      },
+      "max_new_tokens": {
+        "type": "integer",
+        "default": 512
+      },
+      "guidance_scale": {
+        "type": "number",
+        "default": 1.0
+      }
+    }
+  },
+  "output": {
+    "title": "SmallVisionOutput",
+    "required": [
+      "artifact"
+    ],
+    "properties": {
+      "artifact": {
+        "type": "object",
+        "required": [
+          "presigned_url"
+        ],
+        "properties": {
+          "presigned_url": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

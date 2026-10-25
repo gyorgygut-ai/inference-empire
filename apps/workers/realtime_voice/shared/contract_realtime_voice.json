@@ -1,0 +1,46 @@
+{
+  "input": {
+    "title": "RealtimeVoiceInput",
+    "required": [
+      "audio",
+      "voice"
+    ],
+    "properties": {
+      "audio": {
+        "type": "string",
+        "description": "base64 PCM16 audio"
+      },
+      "voice": {
+        "type": "string"
+      },
+      "transcribe": {
+        "type": "boolean",
+        "default": true
+      },
+      "generate": {
+        "type": "boolean",
+        "default": true
+      }
+    }
+  },
+  "output": {
+    "title": "RealtimeVoiceOutput",
+    "required": [
+      "transcript",
+      "audio"
+    ],
+    "properties": {
+      "transcript": {
+        "type": "string"
+      },
+      "audio": {
+        "type": "string",
+        "description": "base64 PCM16 audio"
+      },
+      "sample_rate": {
+        "type": "integer",
+        "default": 24000
+      }
+    }
+  }
+}

@@ -1,0 +1,20 @@
+[project]
+name = "workers-vision"
+version = "0.1.0"
+requires-python = ">=3.11,<3.12"
+dependencies = [
+    "torch==2.9.1",
+    "transformers==5.16.1",
+    "torchvision==0.24.1",
+    "pillow==12.3.0",
+    "accelerate==1.14.0",
+    "boto3==1.43.83",
+    "fastapi==0.141.1",
+    "hf_transfer==0.1.9",
+]
+
+[tool.uv.sources]
+shared-gpu = { path = "../../../packages/workers/shared_gpu" }
+artifacts = { path = "../../../packages/workers/artifacts" }
+media = { path = "../../../packages/workers/media" }
+modal-bridge = { path = "../../../packages/workers/modal_bridge" }

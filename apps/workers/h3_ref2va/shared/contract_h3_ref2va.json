@@ -1,0 +1,51 @@
+{
+  "input": {
+    "title": "ValidatedRef2VAInput",
+    "required": [
+      "prompt"
+    ],
+    "properties": {
+      "prompt": {
+        "type": "string"
+      },
+      "image": {
+        "type": "string",
+        "nullable": true
+      },
+      "num_inference_steps": {
+        "type": "integer",
+        "default": 4
+      },
+      "seed": {
+        "type": [
+          "integer",
+          "null"
+        ],
+        "default": null
+      },
+      "guidance_scale": {
+        "type": "number",
+        "default": 1.0
+      }
+    }
+  },
+  "output": {
+    "title": "ValidatedRef2VAOutput",
+    "required": [
+      "artifact"
+    ],
+    "properties": {
+      "artifact": {
+        "type": "object",
+        "required": [
+          "presigned_url"
+        ],
+        "properties": {
+          "presigned_url": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}
