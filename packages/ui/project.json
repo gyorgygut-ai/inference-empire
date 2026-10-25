@@ -5,6 +5,10 @@
   "projectType": "library",
   "tags": ["type:ui"],
   "targets": {
+    "lint": {
+      "executor": "nx:noop",
+      "dependsOn": ["eslint:lint"]
+    },
     "build": {
       "executor": "@nx/js:tsc",
       "outputs": ["{options.outputPath}"],
