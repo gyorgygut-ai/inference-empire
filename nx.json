@@ -138,6 +138,16 @@
       ]
     },
     {
+      "plugin": "@nx/vitest",
+      "options": {
+        "testMode": "run",
+        "testTargetName": "vitest:test"
+      },
+      "include": [
+        "packages/ui/**/*"
+      ]
+    },
+    {
       "plugin": "@nx/eslint/plugin",
       "options": {
         "targetName": "lint"

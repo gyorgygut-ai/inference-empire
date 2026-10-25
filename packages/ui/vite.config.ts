@@ -14,6 +14,7 @@ export default defineConfig({
     environment: 'jsdom',
     include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mjs,cts,jsx,tsx}'],
     reporters: ['default'],
-    watch: false
+    watch: false,
+    passWithNoTests: true
   }
 })
