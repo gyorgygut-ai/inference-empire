@@ -164,14 +164,15 @@
       "executor": "orchestrator:run-command",
       "cache": false,
       "dependsOn": [
-        "predev"
+        "predev",
+        "workers-flux2:deploy-beam"
       ],
       "options": {
         "cwd": "{workspaceRoot}",
         "command": "npx tsx tools/serve-netlify-functions.ts",
         "needs": [
           {
-            "contract": "worker-service/flux2-dev"
+            "contract": "worker-service/flux2-deploy"
           },
           {
             "contract": "task-queue-service/flux2-dev",
@@ -190,7 +191,8 @@
       "executor": "orchestrator:run-command",
       "cache": false,
       "dependsOn": [
-        "build"
+        "build",
+        "workers-flux2:deploy-beam"
       ],
       "options": {
         "cwd": "apps/functions",
