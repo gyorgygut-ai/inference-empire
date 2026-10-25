@@ -8,6 +8,7 @@
 - **Approach**: `options.needs[]`, `options.fulfills[]`
 - **Outcome**: 
 - **Acceptance**:
+  - **Safety**: Nx 23 has no `--dry-run` for `run`/`run-many`/`affected`; the flag is forwarded as an unknown option and every task, dependencies included, executes
   - `execute`: composes unaltered `nx:run-command`
   - `needs[]`: resolves each contract `envFilePath` against `context.root`, merges into the command env; `contractKey` is the key that must be present
   -> `envFile`: read and injected, not forwarded

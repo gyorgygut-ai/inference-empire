@@ -1,0 +1,4 @@
+{
+  "workerFile": "apps/workers/flux2/dist/flash/worker_flash_cls_flux2_klein9b.py",
+  "childOutput": "https://abc123xyz.api.runpod.ai/process"
+}

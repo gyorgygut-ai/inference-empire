@@ -66,20 +66,20 @@
 
 ## Key Targets
 
-**Acceptance**: `npx nx run router:dev-flux2`
+**Acceptance**: `npx nx run face-value:dev`
 
-- `flux2-dev` `WorkerServiceContract` fulfilled
+- `WorkerServiceContractFlux2Deploy` fulfilled
   -> ping `WORKER_RESOLVED_BEAM_URL` suceeds
-  -> `flux2-dev` `TaskQueueServiceContract` fulfilled
+  -> `TaskQueueServiceContractFlux2Dev` fulfilled
     -> `ROUTER_RESOLVED_URL` eq `http://127.0.0.1:5050`
     -> ping `ROUTER_RESOLVED_URL` suceeds
       -> ping `face-value` `http://127.0.0.1:3000` succeeds
 
-**Acceptance**: `npx nx run router:deploy-flux2`
+**Acceptance**: `npx nx run face-value:deploy`
 
-  - `flux2-deploy` `WorkerServiceContract` fulfilled
+  - `WorkerServiceContractFlux2Deploy` fulfilled
     -> ping `WORKER_RESOLVED_BEAM_URL` suceeds
-    -> `flux2-deploy` `TaskQueueServiceContract` fulfilled
+    -> `TaskQueueServiceContractFlux2Deploy` fulfilled
       -> ping `ROUTER_RESOLVED_URL` suceeds
         -> ping `face-value` succeeds
 

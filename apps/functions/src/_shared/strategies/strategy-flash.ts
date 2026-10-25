@@ -22,4 +22,14 @@ export const strategyFlash = {
       output: result.output,
     };
   },
+
+  encodeTaskId(originalTaskId: string) {
+    return Buffer.from(`flash:${originalTaskId}`, 'utf8').toString('base64url');
+  },
+
+  decodeTaskId(encodedId: string) {
+    const decoded = Buffer.from(encodedId, 'base64url').toString('utf8');
+    const [provider, originalTaskId] = decoded.split(':');
+    return { provider, originalTaskId };
+  },
 };

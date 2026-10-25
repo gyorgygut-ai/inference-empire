@@ -33,7 +33,7 @@ if (!existsSync(resolvedAppDir)) { console.error(`[deploy-vercel] missing app di
 // (e.g. apps/face-value) then scopes the build. Default stays app-dir only.
 const deployCwd = scope === 'from-root' ? process.cwd() : resolvedAppDir;
 
-const RUNTIME_KEYS = ['ROUTER_AUTH_TOKEN', 'ROUTER_URL', 'ROUTER_MODEL', 'MODAL_WORKER_URL', 'BEAM_WORKER_URL', 'FLASH_WORKER_URL'];
+const RUNTIME_KEYS = ['ROUTER_RESOLVED_URL', 'ROUTER_GENERATED_AUTH_TOKEN', 'ROUTER_AUTH_TOKEN', 'ROUTER_URL', 'ROUTER_MODEL', 'MODAL_WORKER_URL', 'BEAM_WORKER_URL', 'FLASH_WORKER_URL'];
 const runtime: NodeJS.ProcessEnv = model ? { ...process.env, ROUTER_MODEL: model } : process.env;
 const envRun = RUNTIME_KEYS.filter((k) => runtime[k]).map((k) => `${k}=${runtime[k]}`);
 

@@ -1,10 +1,5 @@
 {
   "generators": {
-    "gpu-family": {
-      "factory": "./src/generators/gpu-family/gpu-family",
-      "schema": "./src/generators/gpu-family/schema.json",
-      "description": "Scaffold a new GPU worker family (workers/ + apps/ + schema stub)"
-    },
     "ts-app": {
       "factory": "./src/generators/ts-app/ts-app",
       "schema": "./src/generators/ts-app/schema.json",
@@ -14,11 +9,6 @@
       "factory": "./src/generators/ts-lib/ts-lib",
       "schema": "./src/generators/ts-lib/schema.json",
       "description": "Scaffold a new TypeScript lib under packages/"
-    },
-    "migrate-dir": {
-      "factory": "./src/generators/migrate-dir/migrate-dir",
-      "schema": "./src/generators/migrate-dir/schema.json",
-      "description": "Migrate an existing dir into Nx layout (git mv + package.json + project.json)"
     }
   }
 }

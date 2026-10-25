@@ -3,10 +3,10 @@ publish = "public"
 command = "echo 'no build needed'"
 
 [dev]
-port = 8888
+port = 5050
 
 [functions]
-directory = "functions/"
+directory = "src/"
 
 [[redirects]]
 from = "/flux2/*"

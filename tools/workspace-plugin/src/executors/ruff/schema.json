@@ -2,13 +2,13 @@
   "$schema": "https://json-schema.org/schema",
   "version": 2,
   "title": "Ruff executor",
-  "description": "Run ruff lint for a GPU worker family",
+  "description": "Run ruff lint for a Python worker project",
   "type": "object",
   "properties": {
-    "family": {
+    "projectRoot": {
       "type": "string",
-      "description": "Worker family dir under workers/ (e.g. tiny_sd)"
+      "description": "Project root relative to the workspace root (e.g. apps/workers/flux2)"
     }
   },
-  "required": ["family"]
+  "required": ["projectRoot"]
 }

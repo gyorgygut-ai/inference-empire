@@ -1,0 +1,3 @@
+{
+  "workerFile": "apps/workers/flux2/dist/beam/worker_beam_tq_flux2_klein9b.py"
+}

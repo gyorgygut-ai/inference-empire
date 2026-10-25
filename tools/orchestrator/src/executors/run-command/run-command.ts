@@ -1,9 +1,10 @@
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
-import { pathToFileURL } from 'node:url';
 import { parse } from 'dotenv';
 import type { PromiseExecutor } from '@nx/devkit';
-import { runCommandCapture } from '@inference/workspace-plugin';
+import { runCommands } from 'nx/src/executors/run-commands/run-commands.impl';
+import { terminalOutputPathForHash } from 'nx/src/tasks-runner/terminal-output-path';
 import { updateEnvFile } from '../../../../update-env-file.ts';
 import type { ContractModule, RunCommandExecutorSchema } from './schema';
 
@@ -11,6 +12,7 @@ const CONTRACTS_DIR = 'packages/contracts';
 
 async function loadContracts(root: string): Promise<Map<string, ContractModule>> {
   const contracts = new Map<string, ContractModule>();
+  const requireContract = createRequire(resolve(root, 'package.json'));
   const servicesDir = resolve(root, CONTRACTS_DIR);
   for (const service of readdirSync(servicesDir, { withFileTypes: true })) {
     if (!service.isDirectory()) {
@@ -18,10 +20,7 @@ async function loadContracts(root: string): Promise<Map<string, ContractModule>>
     }
     const serviceDir = resolve(servicesDir, service.name);
     for (const file of readdirSync(serviceDir).filter((entry) => entry.endsWith('.contract.ts'))) {
-      const module = (await import(pathToFileURL(resolve(serviceDir, file)).href)) as Record<
-        string,
-        unknown
-      >;
+      const module = requireContract(resolve(serviceDir, file)) as Record<string, unknown>;
       for (const value of Object.values(module)) {
         if (
           typeof value === 'object' &&
@@ -40,6 +39,23 @@ async function loadContracts(root: string): Promise<Map<string, ContractModule>>
 
 function envPath(root: string, contract: ContractModule): string {
   return resolve(root, contract.envFilePath);
+}
+
+function terminalOutputPath(): string | undefined {
+  if (process.env.NX_TERMINAL_OUTPUT_PATH) {
+    return process.env.NX_TERMINAL_OUTPUT_PATH;
+  }
+  return process.env.NX_TASK_HASH
+    ? terminalOutputPathForHash(process.env.NX_TASK_HASH)
+    : undefined;
+}
+
+function fulfilledValue(recorded: string): string | undefined {
+  return recorded
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .at(-1);
 }
 
 const runExecutor: PromiseExecutor<RunCommandExecutorSchema> = async (options, context) => {
@@ -88,20 +104,6 @@ const runExecutor: PromiseExecutor<RunCommandExecutorSchema> = async (options, c
     }
   }
 
-  let captured: string | undefined;
-  const success = await runCommandCapture(
-    [command, args].filter(Boolean).join(' '),
-    cwd ? resolve(context.root, cwd) : context.root,
-    (line) => {
-      captured ??= line || undefined;
-    },
-    inherited,
-  );
-
-  if (!success) {
-    return { success: false };
-  }
-
   for (const fulfillment of fulfills) {
     const contract = lookup(fulfillment.contract);
     if (!contract.keys.includes(fulfillment.contractKey)) {
@@ -109,16 +111,52 @@ const runExecutor: PromiseExecutor<RunCommandExecutorSchema> = async (options, c
         `Contract "${fulfillment.contract}" does not own "${fulfillment.contractKey}". Keys: ${contract.keys.join(', ')}`,
       );
     }
-    if (!captured) {
+  }
+
+  const runningTask = await runCommands(
+    {
+      command: [command, args].filter(Boolean).join(' '),
+      cwd: cwd ? resolve(context.root, cwd) : context.root,
+      env: Object.fromEntries(
+        Object.entries(inherited).filter(
+          (entry): entry is [string, string] => entry[1] !== undefined,
+        ),
+      ),
+      streamOutput: true,
+      __unparsed__: [],
+    },
+    context,
+  );
+  const { code, terminalOutput } = await runningTask.getResults();
+
+  if (code !== 0) {
+    return { success: false };
+  }
+
+  if (fulfills.length === 0 && !(envFile && envKey)) {
+    return { success: true };
+  }
+
+  const recorded = terminalOutputPath();
+  const value = fulfilledValue(
+    recorded && existsSync(recorded) ? readFileSync(recorded, 'utf8') : terminalOutput,
+  );
+
+  for (const fulfillment of fulfills) {
+    if (!value) {
       return { success: false, error: `No output to fulfill "${fulfillment.contractKey}"` };
     }
-    await updateEnvFile(envPath(context.root, contract), fulfillment.contractKey, captured);
+    await updateEnvFile(
+      envPath(context.root, lookup(fulfillment.contract)),
+      fulfillment.contractKey,
+      value,
+    );
   }
   if (fulfills.length === 0 && envFile && envKey) {
-    if (!captured) {
+    if (!value) {
       return { success: false, error: `No output to fulfill "${envKey}"` };
     }
-    await updateEnvFile(resolve(context.root, envFile), envKey, captured);
+    await updateEnvFile(resolve(context.root, envFile), envKey, value);
   }
 
   return { success: true };

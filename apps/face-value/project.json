@@ -5,30 +5,35 @@
   "sourceRoot": "apps/face-value",
   "tags": ["type:app", "scope:face-value"],
   "targets": {
+    "predev": {
+      "executor": "nx:noop",
+      "dependsOn": ["^prebuild"]
+    },
+    "prebuild": {
+      "executor": "nx:noop",
+      "dependsOn": ["^prebuild"]
+    },
+    "build": {
+      "dependsOn": ["prebuild"]
+    },
     "dev": {
-      "executor": "nx:run-commands",
+      "executor": "orchestrator:run-command",
       "cache": false,
       "continuous": true,
-      "dependsOn": [
-        "router:dev-flux2",
-        "router:dev-flux2-generate-router-url",
-        "schemas:generate-flux2-*"
-      ],
+      "dependsOn": ["predev", "functions:dev-flux2"],
       "options": {
         "command": "npm run dev",
         "cwd": "apps/face-value",
-        "envFile": "dist/flux2/dev.env"
+        "needs": [{ "contract": "task-queue-service/flux2-dev" }]
       }
     },
     "deploy": {
       "executor": "orchestrator:run-command",
       "cache": false,
-      "dependsOn": [
-        { "projects": ["router"], "target": "deploy-flux2", "options": "forward" },
-        "schemas:generate-flux2-*"
-      ],
+      "dependsOn": ["build", "functions:deploy-flux2"],
       "options": {
         "command": "tools/deploy-vercel.ts face-value from-root --token $FACE_VALUE_VERCEL_TOKEN --org $FACE_VALUE_VERCEL_ORG_ID --project-id $FACE_VALUE_VERCEL_PROJECT_ID",
+        "needs": [{ "contract": "task-queue-service/flux2-deploy" }],
         "envKey": "FACE_VALUE_URL",
         "envFile": "dist/flux2/deploy.env"
       }

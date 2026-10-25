@@ -1,10 +1,10 @@
-import { z } from "zod";
+import "server-only";
+import type { z } from "zod";
+import { taskQueueServiceFlux2DevSchema } from "@inference/contracts";
 
-export const envSchema = z.object({
-  MODAL_WORKER_URL: z.url().optional(),
-  BEAM_WORKER_URL: z.url().optional(),
-  ROUTER_URL: z.url(),
-  ROUTER_AUTH_TOKEN: z.string().min(32),
+export const envSchema = taskQueueServiceFlux2DevSchema.pick({
+  ROUTER_RESOLVED_URL: true,
+  ROUTER_GENERATED_AUTH_TOKEN: true,
 });
 
 export type Env = z.infer<typeof envSchema>;

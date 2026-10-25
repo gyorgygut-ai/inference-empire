@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ROUTER_GENERATED_AUTH_TOKEN, ROUTER_RESOLVED_URL } from './keys';
+import { ROUTER_GENERATED_AUTH_TOKEN, ROUTER_RESOLVED_URL } from './keys.ts';
 
 export const TaskQueueServiceContractKrea2Dev = {
   keys: [ROUTER_RESOLVED_URL, ROUTER_GENERATED_AUTH_TOKEN] as const,

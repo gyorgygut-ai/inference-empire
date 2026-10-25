@@ -11,6 +11,7 @@ export default defineConfig(() => ({
     globals: true,
     environment: 'node',
     include: ['**/*.{test,spec}.ts'],
+    passWithNoTests: true,
     reporters: ['default'],
     coverage: {
       reportsDirectory: '../../coverage/tools/orchestrator',

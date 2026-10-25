@@ -3,27 +3,22 @@
     "pytest": {
       "implementation": "./src/executors/pytest/pytest",
       "schema": "./src/executors/pytest/schema.json",
-      "description": "Run pytest unit or e2e tests for a GPU worker family"
+      "description": "Run a Python worker project's unit or e2e tests"
     },
     "ruff": {
       "implementation": "./src/executors/ruff/ruff",
       "schema": "./src/executors/ruff/schema.json",
-      "description": "Run ruff lint for a GPU worker family"
-    },
-    "validate-deps": {
-      "implementation": "./src/executors/validate-deps/validate-deps",
-      "schema": "./src/executors/validate-deps/schema.json",
-      "description": "Validate a worker family's IMAGE_PIP_DEPS with uv pip compile"
+      "description": "Run ruff lint for a Python worker project"
     },
     "ty": {
       "implementation": "./src/executors/ty/ty",
       "schema": "./src/executors/ty/schema.json",
-      "description": "Run ty typecheck for a GPU worker family"
+      "description": "Run ty typecheck for a Python worker project"
     },
     "vulture": {
       "implementation": "./src/executors/vulture/vulture",
       "schema": "./src/executors/vulture/schema.json",
-      "description": "Run vulture dead-code check for a GPU worker family"
+      "description": "Run vulture dead-code check for a Python worker project"
     },
     "audit-uv": {
       "implementation": "./src/executors/audit-uv/audit-uv",

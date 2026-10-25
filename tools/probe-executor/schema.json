@@ -1,0 +1,1 @@
+{"$schema": "https://json-schema.org/schema", "cli": "nx", "type": "object", "properties": {"url": {"type": "string", "description": "URL to probe"}, "timeout": {"type": "number", "description": "Timeout in ms", "default": 30000}}, "required": ["url"]}

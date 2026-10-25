@@ -24,8 +24,8 @@ type GenerateImageResult = { presignedUrl: string } | { error: string };
 export async function generateImageAction(
   input: GenerateImageInput,
 ): Promise<GenerateImageResult> {
-  const baseUrl = config.ROUTER_URL;
-  const token = config.ROUTER_AUTH_TOKEN;
+  const baseUrl = config.ROUTER_RESOLVED_URL;
+  const token = config.ROUTER_GENERATED_AUTH_TOKEN;
   if (!baseUrl || !token) {
     return { error: "Server misconfigured" };
   }

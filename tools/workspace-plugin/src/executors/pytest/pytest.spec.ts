@@ -3,7 +3,7 @@ import type { ExecutorContext } from '@nx/devkit';
 import executor, { buildCommand } from './pytest';
 
 const context: ExecutorContext = {
-  root: '',
+  root: '/ws',
   cwd: process.cwd(),
   isVerbose: false,
   projectGraph: { nodes: {}, dependencies: {} },
@@ -13,13 +13,15 @@ const context: ExecutorContext = {
 
 describe('Pytest Executor', () => {
   it('builds the unit command', () => {
-    expect(buildCommand('tiny_sd')).toBe(
-      'uv run --locked --group test pytest apps/tiny_sd/tests/ -k "not e2e" -q'
-    );
+    expect(buildCommand()).toBe('uv run --locked --group test pytest tests/ -k "not e2e" -q');
   });
 
-  it('fails without a family', async () => {
-    const output = await executor({ family: '' }, context);
+  it('builds the e2e command', () => {
+    expect(buildCommand('e2e')).toBe('uv run --locked --group test pytest tests/ -k "e2e" -q');
+  });
+
+  it('fails without a project root', async () => {
+    const output = await executor({ projectRoot: '' }, context);
     expect(output.success).toBe(false);
   });
 });

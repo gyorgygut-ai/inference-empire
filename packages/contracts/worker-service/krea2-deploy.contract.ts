@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { WORKER_RESOLVED_MODAL_URL } from './keys';
+import { WORKER_RESOLVED_MODAL_URL } from './keys.ts';
 
 export const WorkerServiceContractKrea2Deploy = {
   keys: [WORKER_RESOLVED_MODAL_URL] as const,

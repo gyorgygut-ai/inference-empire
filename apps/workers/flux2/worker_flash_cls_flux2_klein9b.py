@@ -3,12 +3,12 @@ from __future__ import annotations
 from functools import partial
 
 from runpod_flash import Endpoint, GpuGroup
-
 from shared.worker_flux2 import (
     Flux2Klein9bInput,
     do_inference,
     load_dependencies,
 )
+
 from packages.workers.shared_gpu.guard import run_guarded
 from packages.workers.shared_gpu.platform import flash_env
 

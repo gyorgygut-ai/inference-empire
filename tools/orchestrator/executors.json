@@ -3,7 +3,7 @@
     "run-command": {
       "implementation": "./src/executors/run-command/run-command",
       "schema": "./src/executors/run-command/schema.json",
-      "description": "Run a command with an env file and write its first stdout line into that env file"
+      "description": "Run a command with contract env injection and fulfill contract keys from its terminal output"
     }
   }
 }

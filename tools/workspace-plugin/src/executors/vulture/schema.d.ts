@@ -1,3 +1,3 @@
 export interface VultureExecutorSchema {
-  family: string;
+  projectRoot: string;
 }
