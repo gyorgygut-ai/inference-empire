@@ -10,10 +10,10 @@ directory = "functions/"
 
 [[redirects]]
 from = "/flux2/*"
-to = "/.netlify/functions/router"
+to = "/.netlify/functions/router_flux2"
 status = 200
 
 [[redirects]]
 from = "/krea2/*"
-to = "/.netlify/functions/router"
+to = "/.netlify/functions/router_krea2"
 status = 200

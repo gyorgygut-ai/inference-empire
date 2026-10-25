@@ -2,36 +2,65 @@
   "$schema": "https://json-schema.org/schema",
   "version": 2,
   "title": "Orchestrator run-command executor",
-  "description": "",
+  "description": "Runs a command with contract env injection and contract fulfillment.",
   "type": "object",
   "properties": {
-    "command": "string",
-    "args"?: "string",
-    "env"?: "Record<string, string>",
-    "envFile"?: "string",
-    "envKey"?: "string",
-    "cwd"?: "string",
-    "needs"?: {
-      "type": "object",
-      "properties": {
-        "contract": "string",
-        "contractKey": "string"
-      },
-      "required": [
-        "contract",
-        "contractKey"
-      ]
+    "command": {
+      "type": "string"
     },
-    "fulfills"?: {
+    "args": {
+      "type": "string"
+    },
+    "env": {
       "type": "object",
-      "properties": {
-        "contract": "string",
-        "contractKey": "string"
-      },
-      "required": [
-        "contract",
-        "contractKey"
-      ]
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "envFile": {
+      "type": "string",
+      "description": "Single env file read and injected; never forwarded to the command."
+    },
+    "envKey": {
+      "type": "string"
+    },
+    "cwd": {
+      "type": "string"
+    },
+    "needs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "contract": {
+            "type": "string"
+          },
+          "contractKey": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "contract"
+        ]
+      }
+    },
+    "fulfills": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "contract": {
+            "type": "string"
+          },
+          "contractKey": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "contract",
+          "contractKey"
+        ]
+      }
     }
   },
   "required": [

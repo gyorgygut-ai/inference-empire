@@ -9,10 +9,10 @@
 - **Outcome**: 
 - **Acceptance**:
   - `execute`: composes unaltered `nx:run-command`
-  - `needs[]`: resolves each contract `envFilePath` against `context.root`, merges into the command env
+  - `needs[]`: resolves each contract `envFilePath` against `context.root`, merges into the command env; `contractKey` is the key that must be present
   -> `envFile`: read and injected, not forwarded
   - `output`: captures any output via `terminalOutput`
-  -> `fulfills[]`: upserts `output value` into `envFilePath` under `contractKey`
+  -> `fulfills[]`: upserts `output value` into `envFilePath` under `contractKey`; a key the contract does not own is rejected
 
 ---
 

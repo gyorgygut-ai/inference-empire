@@ -8,10 +8,10 @@
 
 **Worker Service**:
 
-- **Keys**: `WORKER_RESOLVED_{BEAM|MODAL|FLASH}_URL`; only those the scope deploys
+- **Keys**: `WORKER_RESOLVED_{BEAM|MODAL|FLASH}_URL`; the family's platform surface. A key may be unfulfilled until a target fulfills it; `needs[].contractKey` is what requires one
 - **envFilePath**: `dist/{family}/{dev|deploy}.env`
 
 **Task Queue Service**:
 
-- **Keys**: `ROUTER_RESOLVED_URL`; `ROUTER_GENERATED_AUTH_TOKEN`
+- **Keys**: `ROUTER_RESOLVED_URL`; `ROUTER_GENERATED_AUTH_TOKEN`; both fulfilled by the router chain
 - **envFilePath**: `dist/{family}/{dev|deploy}.env`

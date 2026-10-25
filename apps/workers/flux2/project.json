@@ -34,32 +34,60 @@
           "out": "apps/workers/flux2/dist/flash"
         }
       }
-    },
-    "deploy-modal": {
-      "executor": "nx:run-commands",
-      "dependsOn": ["build:modal"],
+    },    "deploy-modal": {
+      "executor": "orchestrator:run-command",
+      "dependsOn": [
+        "build:modal"
+      ],
       "cache": false,
       "options": {
         "cwd": "{workspaceRoot}",
-        "command": "MODAL_ENV_FILE=.env PYTHONPATH=. uv run --project . modal deploy apps/workers/flux2/dist/modal/worker_modal_cls_flux2_klein9b.py && echo \"WORKER_URL_MODAL=$(modal app get workers-flux2 --query url)\" >> dist/deploy/flux2/workers.env"
+        "command": "npx tsx tools/deploy-modal.ts",
+        "args": "apps/workers/flux2/dist/modal/worker_modal_cls_flux2_klein9b.py",
+        "env": {
+          "MODAL_ENV_FILE": ".env",
+          "PYTHONPATH": "."
+        },
+        "fulfills": [
+          {
+            "contract": "worker-service/flux2-deploy",
+            "contractKey": "WORKER_RESOLVED_MODAL_URL"
+          }
+        ]
       }
-    },
-    "deploy-beam": {
-      "executor": "nx:run-commands",
-      "dependsOn": ["build:beam"],
+    },    "deploy-beam": {
+      "executor": "orchestrator:run-command",
+      "dependsOn": [
+        "build:beam"
+      ],
       "cache": false,
       "options": {
-        "cwd": "{projectRoot}/dist/beam",
-        "command": "uv run --project ../../../../.. beam deploy worker_beam_tq_flux2_klein9b.py:dispatch && echo \"WORKER_URL_BEAM=$(beam app get workers-flux2 --query url)\" >> ../../../../dist/deploy/flux2/workers.env"
+        "cwd": "{workspaceRoot}",
+        "command": "npx tsx tools/deploy-beam.ts",
+        "args": "apps/workers/flux2/dist/beam/worker_beam_tq_flux2_klein9b.py",
+        "fulfills": [
+          {
+            "contract": "worker-service/flux2-deploy",
+            "contractKey": "WORKER_RESOLVED_BEAM_URL"
+          }
+        ]
       }
-    },
-    "deploy-flash": {
-      "executor": "nx:run-commands",
-      "dependsOn": ["build:flash"],
+    },    "deploy-flash": {
+      "executor": "orchestrator:run-command",
+      "dependsOn": [
+        "build:flash"
+      ],
       "cache": false,
       "options": {
-        "cwd": "{projectRoot}/dist/flash",
-        "command": "uv run --project ../../../../.. flash deploy worker_flash_cls_flux2_klein9b.py && echo \"WORKER_URL_FLASH=$(flash app get workers-flux2 --query url)\" >> ../../../../dist/deploy/flux2/workers.env"
+        "cwd": "{workspaceRoot}",
+        "command": "npx tsx tools/deploy-flash.ts",
+        "args": "apps/workers/flux2/dist/flash/worker_flash_cls_flux2_klein9b.py",
+        "fulfills": [
+          {
+            "contract": "worker-service/flux2-deploy",
+            "contractKey": "WORKER_RESOLVED_FLASH_URL"
+          }
+        ]
       }
     }
   }

@@ -1,3 +1,18 @@
+export interface ContractModule {
+  keys: readonly string[];
+  envFilePath: string;
+}
+
+export interface ContractNeed {
+  contract: string;
+  contractKey?: string;
+}
+
+export interface ContractFulfillment {
+  contract: string;
+  contractKey: string;
+}
+
 export interface RunCommandExecutorSchema {
   command: string;
   args?: string;
@@ -5,12 +20,6 @@ export interface RunCommandExecutorSchema {
   envFile?: string;
   envKey?: string;
   cwd?: string;
-  needs?: {
-    contract: string;
-    contractKey: string;
-  };
-  fulfills?: {
-    contract: string;
-    contractKey: string;
-  };
+  needs?: ContractNeed[];
+  fulfills?: ContractFulfillment[];
 }

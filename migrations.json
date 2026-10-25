@@ -1,0 +1,15 @@
+{
+  "migrations": [
+    {
+      "version": "23.3.0-beta.8",
+      "requires": {
+        "vitest": ">=5.0.0"
+      },
+      "description": "Migrate workspaces past breaking changes for Vitest 5.",
+      "implementation": "./dist/src/migrations/update-23-3-0/migrate-to-vitest-5",
+      "prompt": "tools/ai-migrations/@nx/vitest/23.3.1/ai-instructions-for-vitest-5.md",
+      "package": "@nx/vitest",
+      "name": "migrate-to-vitest-5"
+    }
+  ]
+}
