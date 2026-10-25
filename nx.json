@@ -137,5 +137,8 @@
         "linter": "eslint"
       }
     }
+  },
+  "affected": {
+    "legacy": true
   }
 }
