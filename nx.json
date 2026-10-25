@@ -125,6 +125,28 @@
       "options": {
         "targetName": "eslint:lint"
       }
+    },
+    {
+      "plugin": "@nx/vitest",
+      "options": {
+        "testMode": "watch",
+        "testTargetName": "test-unit"
+      },
+      "include": [
+        "tools/orchestrator/**/*",
+        "tools/workspace-plugin/**/*"
+      ]
+    },
+    {
+      "plugin": "@nx/eslint/plugin",
+      "options": {
+        "targetName": "lint"
+      },
+      "include": [
+        "packages/task-queue-client/**/*",
+        "packages/ui/**/*",
+        "tools/workspace-plugin/**/*"
+      ]
     }
   ],
   "nxCloudAccessToken": "",

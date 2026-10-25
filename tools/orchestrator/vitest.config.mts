@@ -1,10 +1,9 @@
 import { defineConfig } from 'vitest/config';
-import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 
 export default defineConfig(() => ({
   root: import.meta.dirname,
   cacheDir: '../../node_modules/.vite/tools/orchestrator',
-  plugins: [nxViteTsPaths()],
+  resolve: { tsconfigPaths: true },
   test: {
     name: 'orchestrator',
     watch: false,

@@ -4,17 +4,6 @@
   "sourceRoot": "tools/workspace-plugin/src",
   "projectType": "library",
   "tags": [],
-  "targets": {
-    "lint": {
-      "executor": "@nx/eslint:lint"
-    },
-    "test-unit": {
-      "executor": "@nx/vitest:test",
-      "options": {
-        "config": "{projectRoot}/vitest.config.mts"
-      },
-      "inputs": ["default"],
-      "cache": true
-    }
-  }
+  "// targets": "to see all targets run: nx show project workspace-plugin --web",
+  "targets": {}
 }
