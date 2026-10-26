@@ -34,7 +34,7 @@
 
 - **Problem**: `consumer:dev` needs `continuous` `producer:dev`'s server url
 - **Consumer**: `consumer` has `dependsOn: "producer:dev", waitFor: "ready"`
-- **Producer**: `producer` has `readyWhen": { "signal": true }`
+- **Producer**: `producer` has `"readyWhen": { "signal": true }` and emits its actual listening URL through public `emitReadySignal` after the server listens
 - **Outcome**: nx hands `process.env.NX_READY_URL` to `consumer` after `ready signal`
 
 **Deploy URL Discovery**:
@@ -52,8 +52,6 @@
 ---
 
 ## Key Targets
-
-TODO: ignore these rules for now; they are outdated
 
 **Acceptance**: `npx nx run face-value:dev`
 
@@ -93,6 +91,6 @@ TODO: ignore these rules for now; they are outdated
 
 - Tests **MUST BE** proof of task chain verification
 - **Idempotent**: CLEAN `dist` folders before all
-- NO test runs before NX chain finishes
+- Acceptance assertions run after finite prerequisites complete and continuous dependencies signal readiness
 - NO hand-rolled polling for waiting; relying on NX
 - MAX. 6 lines per test case: setup \n act \n assert

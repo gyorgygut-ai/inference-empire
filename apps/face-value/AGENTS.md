@@ -14,8 +14,18 @@ NextJS app for chat + inference requests.
     ROUTER_AUTH_TOKEN=$ROUTER_GENERATED_AUTH_TOKEN,
     next dev
   ]
-  - dependsOn `["predev", "functions:dev:flux2"]`
-  - waitFor: "ready"
+  - dependsOn:
+    ```json
+    [
+      "predev",
+      {
+        "projects": ["functions"],
+        "target": "dev",
+        "waitFor": "ready"
+      }
+    ]
+    ```
+  - Router dependency uses `functions:dev`'s default configuration, `flux2`
   - inputs: "{workspaceRoot}/packages/contracts/task-queue-service/flux2-dev.contract.ts"
 - `predev`, `prebuild`:
   - dependsOn `^prebuild`
