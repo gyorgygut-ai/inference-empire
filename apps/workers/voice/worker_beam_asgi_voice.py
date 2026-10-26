@@ -13,6 +13,7 @@ image = Image(python_version="python3.11").add_python_packages(IMAGE_PIP_DEPS)
 
 
 @asgi(
+    name="voice-proof-worker",
     cpu=1,
     memory="2Gi",
     timeout=600,

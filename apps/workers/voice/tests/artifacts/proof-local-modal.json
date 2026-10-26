@@ -1,7 +1,7 @@
 {
   "target": "local-modal",
   "url": "http://127.0.0.1:8765",
-  "started_at": 1793012721.9795961,
+  "started_at": 1793018789.3571699,
   "healthz": {
     "status_code": 200,
     "body": {
@@ -57,47 +57,47 @@
     ],
     "events": [
       {
-        "event_id": "evt_831234fee0a74f73",
+        "event_id": "evt_bd3aeb0748b24d44",
         "type": "session.created",
         "session": {
-          "id": "proof-5a91cfe63608",
+          "id": "proof-85394507a6ee",
           "mode": "proof"
         }
       },
       {
-        "event_id": "evt_343a40035aaa441c",
+        "event_id": "evt_a92196d0522e46e3",
         "type": "input_audio_buffer.speech_started"
       },
       {
-        "event_id": "evt_720d43cda8314b99",
+        "event_id": "evt_d64b70221c224bad",
         "type": "input_audio_buffer.speech_stopped"
       },
       {
-        "event_id": "evt_8c128f4e6b634fbc",
+        "event_id": "evt_f4c809a485764207",
         "type": "conversation.item.input_audio_transcription.completed",
         "transcript": "proof-turn-1"
       },
       {
-        "event_id": "evt_86f78eb4dd744b50",
+        "event_id": "evt_b73aad3a4f5c46e1",
         "type": "response.created"
       },
       {
-        "event_id": "evt_4d34f0b2f0f74d15",
+        "event_id": "evt_22944e57461440f7",
         "type": "response.output_audio_transcript.delta",
         "delta": "proof-reply-1"
       },
       {
-        "event_id": "evt_7557cc6a2fe6422e",
+        "event_id": "evt_d199731231f64391",
         "type": "response.output_audio_transcript.done",
         "transcript": "proof-reply-1"
       },
       {
-        "event_id": "evt_746bc452f3fc4478",
+        "event_id": "evt_2a1dcb6b6b5b4e9c",
         "type": "response.done",
         "status": "completed"
       },
       {
-        "event_id": "evt_efc17bef663e49ee",
+        "event_id": "evt_a1b9124a9ba04d16",
         "type": "error",
         "error": {
           "type": "invalid_request_error",
@@ -106,34 +106,34 @@
         }
       },
       {
-        "event_id": "evt_2fd5dff097764121",
+        "event_id": "evt_554829e42b03488e",
         "type": "input_audio_buffer.speech_started"
       },
       {
-        "event_id": "evt_e6fe99fd46af427b",
+        "event_id": "evt_56b05653f6794cf5",
         "type": "input_audio_buffer.speech_stopped"
       },
       {
-        "event_id": "evt_08a7166df3aa40d0",
+        "event_id": "evt_4956136e910542b7",
         "type": "conversation.item.input_audio_transcription.completed",
         "transcript": "proof-turn-2"
       },
       {
-        "event_id": "evt_41e6f7d5088c4c14",
+        "event_id": "evt_4c3005f6dbdc4d1a",
         "type": "response.created"
       },
       {
-        "event_id": "evt_68d300cc44c44346",
+        "event_id": "evt_ee62e4414e274383",
         "type": "response.output_audio_transcript.delta",
         "delta": "proof-reply-2"
       },
       {
-        "event_id": "evt_97fb256e3b4e40dd",
+        "event_id": "evt_4a29a5fe4f794a1e",
         "type": "response.output_audio_transcript.done",
         "transcript": "proof-reply-2"
       },
       {
-        "event_id": "evt_6c6b5c2f652348d8",
+        "event_id": "evt_aee84f28a107452a",
         "type": "response.done",
         "status": "completed"
       }
@@ -179,42 +179,42 @@
     ],
     "events": [
       {
-        "event_id": "evt_c0e9b0c8829b4455",
+        "event_id": "evt_0ba15bed051f4f40",
         "type": "session.created",
         "session": {
-          "id": "proof-86626cb3b03a",
+          "id": "proof-59c516eee5e4",
           "mode": "proof"
         }
       },
       {
-        "event_id": "evt_e7b29bc88be141dd",
+        "event_id": "evt_3907e26fbd6944b8",
         "type": "input_audio_buffer.speech_started"
       },
       {
-        "event_id": "evt_258509af25ac49c7",
+        "event_id": "evt_11a5e2859d5b4e11",
         "type": "input_audio_buffer.speech_stopped"
       },
       {
-        "event_id": "evt_bc8a91182a8c4a2b",
+        "event_id": "evt_03ec2184fa6a4ab9",
         "type": "conversation.item.input_audio_transcription.completed",
         "transcript": "proof-turn-1"
       },
       {
-        "event_id": "evt_ee73ceed66d54f09",
+        "event_id": "evt_5ff525ba8b284ce9",
         "type": "response.created"
       },
       {
-        "event_id": "evt_605134c7115d4e08",
+        "event_id": "evt_2bef063485d843a5",
         "type": "response.output_audio_transcript.delta",
         "delta": "proof-reply-1"
       },
       {
-        "event_id": "evt_6326b24c0e5443be",
+        "event_id": "evt_4d21ad45e6d24058",
         "type": "response.output_audio_transcript.done",
         "transcript": "proof-reply-1"
       },
       {
-        "event_id": "evt_fbee9e578af24755",
+        "event_id": "evt_5e95c6f5399c4b66",
         "type": "response.done",
         "status": "completed"
       }
@@ -231,5 +231,5 @@
       "rms": 0.061
     }
   },
-  "duration_seconds": 194.1
+  "duration_seconds": 193.2
 }

@@ -315,7 +315,16 @@ async def run_session(
 
             if idle_seconds > 0 and turn < turns:
                 note(f"idling {idle_seconds:.0f} s")
-                await asyncio.sleep(idle_seconds)
+                remaining = idle_seconds
+                while remaining > 0:
+                    step = min(30.0, remaining)
+                    await asyncio.sleep(step)
+                    remaining -= step
+                    if remaining > 0:
+                        note(
+                            f"  idle {idle_seconds - remaining:.0f}/{idle_seconds:.0f}s "
+                            f"state {session.pc.connectionState}"
+                        )
                 observations["idle_seconds"] = idle_seconds
                 observations["state_after_idle"] = session.pc.connectionState
 
@@ -363,13 +372,19 @@ def _urls(entry: dict[str, Any]) -> list[str]:
     return list(urls or [])
 
 
+def auth_headers(token: str) -> dict[str, str]:
+    """Beam gates every endpoint behind the profile token; Modal ignores it."""
+    return {"Authorization": f"Bearer {token}"} if token else {}
+
+
 async def run_probe(
-    url: str, target: str, idle_seconds: float, turns: int
+    url: str, target: str, idle_seconds: float, turns: int, bearer_token: str = ""
 ) -> dict[str, Any]:
     started = time.monotonic()
     artifact: dict[str, Any] = {"target": target, "url": url, "started_at": time.time()}
+    auth = auth_headers(bearer_token)
 
-    async with httpx.AsyncClient(timeout=CONNECT_TIMEOUT_S) as client:
+    async with httpx.AsyncClient(timeout=CONNECT_TIMEOUT_S, headers=auth) as client:
         health = await client.get(f"{url}/healthz")
         artifact["healthz"] = {"status_code": health.status_code, "body": health.json()}
 
@@ -428,11 +443,14 @@ def main() -> None:
     parser.add_argument("--url", default="http://127.0.0.1:8765")
     parser.add_argument("--out", required=True)
     parser.add_argument("--target", default="local")
-    parser.add_argument("--idle-seconds", type=float, default=180.0)
+    parser.add_argument("--idle-seconds", type=float, default=0.0)
     parser.add_argument("--turns", type=int, default=2)
+    parser.add_argument("--bearer-token", default="", help="Bearer token for gated URLs (Beam)")
     args = parser.parse_args()
 
-    artifact = asyncio.run(run_probe(args.url, args.target, args.idle_seconds, args.turns))
+    artifact = asyncio.run(
+        run_probe(args.url, args.target, args.idle_seconds, args.turns, args.bearer_token)
+    )
 
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)

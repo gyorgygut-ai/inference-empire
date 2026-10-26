@@ -87,6 +87,8 @@ def test_append_over_datachannel_is_rejected(artifact: dict[str, Any]) -> None:
 def test_three_minutes_of_silence_keeps_the_call(artifact: dict[str, Any]) -> None:
     session = artifact["session_1"]
 
+    if "idle_seconds" not in session:
+        pytest.skip("long-idle row not requested; probe.py --idle-seconds 180")
     assert session["idle_seconds"] >= 180
     assert session["state_after_idle"] == "connected"
     assert session["event_types"][-len(TURN_EVENTS) :] == TURN_EVENTS

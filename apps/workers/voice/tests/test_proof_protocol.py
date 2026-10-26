@@ -8,6 +8,7 @@ import pytest
 from dotenv import dotenv_values
 from fastapi.testclient import TestClient
 from shared.worker_voice import build_app
+from tests.probe import auth_headers
 
 ENV_FILE = Path(__file__).resolve().parents[4] / ".env"
 
@@ -65,6 +66,11 @@ def test_rejects_malformed_sdp(client: TestClient) -> None:
     )
 
     assert response.status_code == 400
+
+
+def test_probe_sends_bearer_token_only_when_given() -> None:
+    assert auth_headers("abc") == {"Authorization": "Bearer abc"}
+    assert auth_headers("") == {}
 
 
 def _urls(entry: dict[str, Any]) -> list[str]:
