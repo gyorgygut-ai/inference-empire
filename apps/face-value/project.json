@@ -40,7 +40,7 @@
       "cache": false,
       "dependsOn": ["build", "functions:deploy-flux2"],
       "options": {
-        "command": "tools/deploy-vercel.ts face-value from-root --token $FACE_VALUE_VERCEL_TOKEN --org $FACE_VALUE_VERCEL_ORG_ID --project-id $FACE_VALUE_VERCEL_PROJECT_ID",
+        "command": "tools/deploy-vercel.ts face-value from-root --token $FACE_VALUE_VERCEL_TOKEN --org $FACE_VALUE_VERCEL_ORG_ID --project-id $FACE_VALUE_VERCEL_PROJECT_ID && VERCEL_TOKEN=$FACE_VALUE_VERCEL_TOKEN tools/orchestrator/src/get-vercel-url.ts $FACE_VALUE_VERCEL_PROJECT_ID --org $FACE_VALUE_VERCEL_ORG_ID",
         "needs": [{ "contract": "task-queue-service/flux2-deploy" }],
         "envKey": "FACE_VALUE_URL",
         "envFile": "dist/functions/flux2-deploy.env"

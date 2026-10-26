@@ -8,34 +8,41 @@ Stateless task queue api router, routing across urls from `WorkerServiceContract
 
 **Tasks**:
 
-- `dev-flux2`:
+- `dev`:
   - dependsOn `["predev", "workers-flux2:deploy-beam"]`
-  - cmd: `tools/serve-netlify-functions.ts`
-  - waits: `router:dev-flux2` must listen + READY
-  - needs[]: `WorkerServiceContractFlux2Deploy`
-  - needs[]: `TaskQueueServiceContractFlux2Dev`
-  - fulfills.contract: `TaskQueueServiceContractFlux2Dev`
-  - fulfills.contractKey: `ROUTER_RESOLVED_URL`
+  - command: [
+      GENERATED_AUTH_TOKEN=$ROUTER_GENERATED_AUTH_TOKEN,
+      netlify dev --port {options.port}
+    ]
+  - inputs:
+    - "{workspaceRoot}/packages/contracts/worker-service/flux2-deploy.contract.ts"
+    - "{workspaceRoot}/packages/contracts/task-queue-service/flux2-dev.contract.ts"
+  - readyWhen": { "signal": true }
+  - configurations: {
+      "flux2": { port: 4000 },
+      "krea2": { port: 4025 }
+    }
 - `predev`
   - dependsOn `prebuild`
 - `build`:
   - dependsOn `prebuild`
-- `generate-auth-token`
-  - cmd: `tools/generate-auth-token.ts`
-  - fulfills.contract: `TaskQueueServiceContract{Family}{Dev|Deploy}`
-  - fulfills.contractKey: `ROUTER_GENERATED_AUTH_TOKEN`
 - `prebuild`:
   - dependsOn `["^prebuild", "generate-*"]`
-- `deploy-flux2`:
-  - dependsOn `["build", "workers-flux2:deploy-beam"]`
-  - cmd: `netlify deploy`
-  - needs[]: `WorkerServiceContractFlux2Deploy`
-  - needs[]: `TaskQueueServiceContractFlux2Deploy`
-  - fulfills.contract: `TaskQueueServiceContractFlux2Deploy`
-  - fulfills.contractKey: `ROUTER_RESOLVED_URL`
-
-- `dev-krea2`: same as `dev-flux2`; but with `krea2`
-- `deploy-krea2`: same as `deploy-flux2`; but with `krea2`
+- `deploy`:
+  - dependsOn `["prebuild", "workers-flux2:deploy-beam"]`
+  - command: [
+      WORKER_URL_BEAM=$WORKER_RESOLVED_BEAM_URL,
+      GENERATED_AUTH_TOKEN=$ROUTER_GENERATED_AUTH_TOKEN,
+      netlify deploy --siteId={options.siteId}
+    ]
+  - inputs:
+    - "{workspaceRoot}/packages/contracts/worker-service/flux2-deploy.contract.ts"
+    - "{workspaceRoot}/packages/contracts/task-queue-service/flux2-deploy.contract.ts"
+  - inputs: `["{workspaceRoot}/packages/contracts/task-queue-service/flux2-deploy.contract.ts"]`
+  - configurations: {
+      "flux2": { siteId },
+      "krea2": { siteId }
+    }
 
 ---
 

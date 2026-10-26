@@ -10,9 +10,6 @@ function fail(msg: string): never {
 }
 
 const appName = process.argv[2];
-if (!appName) {
-  fail('usage: get-beam-url.ts <app-name>');
-}
 
 function token(): string {
   const envToken = process.env.BEAM_TOKEN;
@@ -31,11 +28,11 @@ function token(): string {
 
 let deployments: Array<{ id: string; name: string; active: boolean; version: number }>;
 try {
-  const out = execFileSync('beam', ['deployment', 'list', '--format', 'json'], {
+  const out = execFileSync('beam', ['deployment', 'list', '--format', 'json', '--limit', '100'], {
     encoding: 'utf8',
     stdio: ['ignore', 'pipe', 'inherit'],
   });
-  deployments = JSON.parse(out);
+  deployments = JSON.parse(out.replace(/\u001b\[[0-9;]*m/g, ''));
 } catch {
   fail('beam deployment list failed');
 }

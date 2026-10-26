@@ -1,17 +1,24 @@
 # Contracts
 
-**One contract per `{family}-{env}` scope**:
+**Critical**:
 
-- **Files**: `{workspaceRoot}/packages/contracts/{service}/{family}-{env}.contract.ts`
-- **Shape**: `{ keys: readonly string[]; envFilePath: string }`
-- **envFilePath**: constant, relative to the workspace root; the executor resolves it against `context.root` and is its only reader/writer
+- Each contract is created manually, as needed
+- There is NO one contract per model family requirement
 
-**Worker Service**:
+**Structure**:
 
-- **Keys**: `WORKER_RESOLVED_{BEAM|MODAL|FLASH}_URL`; the family's platform surface. A key may be unfulfilled until a target fulfills it; `needs[].contractKey` is what requires one
-- **envFilePath**: `dist/{family}/{dev|deploy}.env`
+- **One file**  with `schema` + `contract` + `resolvers`
+- **Schema**: `zod` schema describing typed fields
+- **Command**: `path` to value resolve command
 
-**Task Queue Service**:
+**Example**:
 
-- **Keys**: `ROUTER_RESOLVED_URL`; `ROUTER_GENERATED_AUTH_TOKEN`; both fulfilled by the router chain
-- **envFilePath**: `dist/{family}/{dev|deploy}.env`
+```
+export const taskQueueServiceFlux2DeploySchema...
+export const TaskQueueServiceFlux2DeployContract...
+
+export const TaskQueueServiceFlux2DeployResolvers = {
+  ROUTER_RESOLVED_URL: 'tools/orchestrator/src/get-netlify-url.ts --siteId="{options.siteId}"',
+  ROUTER_GENERATED_AUTH_TOKEN: 'tools/generate-auth-token.ts',
+}
+```

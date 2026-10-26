@@ -22,7 +22,7 @@ def generate(storage, pipe, runtime_dir, torch_module, **kwargs) -> dict:
 
 
 @Endpoint(
-    name="krea2-ref2img-worker",
+    name="workers-krea2",
     gpu=[GpuGroup.AMPERE_48, GpuGroup.ADA_48_PRO],
     workers=(0, 1),
     idle_timeout=5,

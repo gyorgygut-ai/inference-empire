@@ -4,7 +4,6 @@ import { resolve } from 'node:path';
 import { parse } from 'dotenv';
 import type { PromiseExecutor } from '@nx/devkit';
 import { runCommands } from 'nx/src/executors/run-commands/run-commands.impl';
-import { terminalOutputPathForHash } from 'nx/src/tasks-runner/terminal-output-path';
 import { updateEnvFile } from '../../../../update-env-file.ts';
 import type { ContractModule, RunCommandExecutorSchema } from './schema';
 
@@ -39,15 +38,6 @@ async function loadContracts(root: string): Promise<Map<string, ContractModule>>
 
 function envPath(root: string, contract: ContractModule): string {
   return resolve(root, contract.envFilePath);
-}
-
-function terminalOutputPath(): string | undefined {
-  if (process.env.NX_TERMINAL_OUTPUT_PATH) {
-    return process.env.NX_TERMINAL_OUTPUT_PATH;
-  }
-  return process.env.NX_TASK_HASH
-    ? terminalOutputPathForHash(process.env.NX_TASK_HASH)
-    : undefined;
 }
 
 function fulfilledValue(recorded: string): string | undefined {
@@ -137,10 +127,7 @@ const runExecutor: PromiseExecutor<RunCommandExecutorSchema> = async (options, c
     return { success: true };
   }
 
-  const recorded = terminalOutputPath();
-  const value = fulfilledValue(
-    recorded && existsSync(recorded) ? readFileSync(recorded, 'utf8') : terminalOutput,
-  );
+  const value = fulfilledValue(terminalOutput);
 
   for (const fulfillment of fulfills) {
     if (!value) {

@@ -1,60 +1,24 @@
 # Orchestrator
 
-## URL Resolvers
-
-**Problem**: A deployed URL must be resolvable anytime, without re-deploying, dashboard, or SDK scripts
-**Approach**: `src/get-{provider}-url.ts` — one executable per provider; prints the deployed URL as the last line of stdout; diagnostics on stderr; non-zero exit on failure
-**Outcome**: project.json targets only invoke the tool and echo its output into an env var
-
-- **get-beam-url <app-name>**: ``
-- **get-modal-url <app-name> <function-name>**: ``
-- **get-flash-url <endpoint-name>**: ``
-- **get-netlify-url <site-id>**: ``
-- **get-vercel-url <project-id>**: ``
-
----
-
-## Executors
-
 **orchestrator:run-command**:
 
-- **Problem**: A task needs to declare it depends a contract or fulfills it
-- **Approach**: `options.needs[]`, `options.fulfills[]`
-- **Outcome**: 
+- **Problem**: `task-abc` needs runtime values from a contract 
+- **Contract**: `gateway-dev` -> `{ SECRET_KEY -> command, RAND_ID -> command }`)
+- **Trigger**: `task-abc` declares `packages/contracts/gateway-dev.contract.ts` as `input`
+- **Reaction**: values resolved invoking each `command`; `inputs` extended with `env`
+- **Outcome**: `task-abc` can access and is `affected` by `process.env.SECRET_KEY,RAND_ID`;
+
 - **Acceptance**:
-  - **Safety**: Nx 23 has no `--dry-run` for `run`/`run-many`/`affected`; the flag is forwarded as an unknown option and every task, dependencies included, executes
-  - `execute`: composes unaltered `nx:run-command`
-  - `needs[]`: resolves each contract `envFilePath` against `context.root`, merges into the command env; `contractKey` is the key that must be present
-  -> `envFile`: read and injected, not forwarded
-  - `output`: captures any output via `terminalOutput`
-  -> `fulfills[]`: upserts `output value` into `envFilePath` under `contractKey`; a key the contract does not own is rejected
+  - `executor` detects contract `inputs`
+  - `executor` resolved contract `values`
+  - `executor` throws if there is no `value`
+  - `consumer` receives values in `process.env`
+  - `contract` value changes affect; nx selects tasks
 
----
+**Scripts**:
 
-## Examples
-
-**Contracts**: [packages/contracts](packages/contracts/AGENTS.md)
-
-**1. Contract**:
-
-- **File**: `packages/contracts/worker-service/flux2-dev.contract.ts`
-- `envFilePath`: `dist/flux2/dev.env`
-
-**2. Producer**:
-`"producer-app:deploy": {
-  "command": "tools/deploy-some-service.ts",
-  "options": {
-    fulfills: [{ "contract": "WorkerServiceContractFlux2Deploy", "contractKey": "WORKER_RESOLVED_BEAM_URL" }]
-  } 
-}`
-- **Flow**: `deploy-some-service.ts` -> `WORKER_RESOLVED_BEAM_URL` -> the contract's `envFilePath`
-
-**3. Consumer**:
-
-- **Task**: `"consumer-app:deploy": {
-"command": "npm run my-dev-server",
-"options": {
-    needs: [{ "contract": "WorkerServiceContractFlux2Dev" }, { "contract": "TaskQueueServiceContractFlux2Dev" }]
-  } 
-}`
-- **Flow**: `run-command` -> `needs[]` -> `my-dev-server`
+- **get-beam-url <app-name>**: `tools/orchestrator/src/get-beam-url.ts workers-flux2`
+- **get-modal-url <app-name> [function-name=generate_web]**: `tools/orchestrator/src/get-modal-url.ts workers-flux2`
+- **get-flash-url <endpoint-name> [--dir <flash-project-dir>]**: `tools/orchestrator/src/get-flash-url.ts workers-flux2 --dir apps/workers/flux2/dist/flash`
+- **get-netlify-url <site-id>**: `tools/orchestrator/src/get-netlify-url.ts cd41f060-bbdf-49fa-82a6-20d7ba136853`
+- **get-vercel-url <project-id> [--org <team-id>]**: `tools/orchestrator/src/get-vercel-url.ts prj_JKvkpSDegXCmwbFYBcz6enzo1bK5 --org team_J6vdHfx7Bjz7VVskbtdbL8kq`

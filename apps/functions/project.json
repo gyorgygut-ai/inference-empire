@@ -186,7 +186,7 @@
       ],
       "options": {
         "cwd": "apps/functions",
-        "command": "npx netlify deploy --prod --json --site=cd41f060-bbdf-49fa-82a6-20d7ba136853 | node -p \"JSON.parse(require('fs').readFileSync(0,'utf8')).url\"",
+        "command": "npx netlify deploy --prod --site=cd41f060-bbdf-49fa-82a6-20d7ba136853 && ../../tools/orchestrator/src/get-netlify-url.ts cd41f060-bbdf-49fa-82a6-20d7ba136853",
         "needs": [
           {
             "contract": "worker-service/flux2-deploy"
@@ -266,7 +266,7 @@
       ],
       "options": {
         "cwd": "apps/functions",
-        "command": "npx netlify deploy --prod --json --site=cd41f060-bbdf-49fa-82a6-20d7ba136853 | node -p \"JSON.parse(require('fs').readFileSync(0,'utf8')).url\"",
+        "command": "npx netlify deploy --prod --site=cd41f060-bbdf-49fa-82a6-20d7ba136853 && ../../tools/orchestrator/src/get-netlify-url.ts cd41f060-bbdf-49fa-82a6-20d7ba136853",
         "needs": [
           {
             "contract": "worker-service/krea2-deploy"

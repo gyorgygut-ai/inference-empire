@@ -20,7 +20,7 @@ def generate(storage, pipe, torch_module, **kwargs) -> dict:
 
 
 @Endpoint(
-    name="flux2-klein9b-worker",
+    name="workers-flux2",
     gpu=[
         GpuGroup.AMPERE_16,
     ],

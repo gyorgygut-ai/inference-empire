@@ -22,7 +22,7 @@ def generate(storage, comfy_base_url: str, **kwargs) -> dict:
 
 
 @Endpoint(
-    name="minimax-h3-comfy-worker",
+    name="workers-h3_comfy",
     gpu=[GpuGroup.AMPERE_48, GpuGroup.ADA_48_PRO],
     workers=(0, 1),
     idle_timeout=5,

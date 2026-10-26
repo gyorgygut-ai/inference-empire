@@ -43,7 +43,7 @@
       "options": {
         "cwd": "{workspaceRoot}",
         "command": "npx tsx tools/deploy-modal.ts",
-        "args": "apps/workers/vision/dist/modal/worker_modal_cls_vision.py",
+        "args": "apps/workers/vision/dist/modal/worker_modal_cls_vision.py && tools/orchestrator/src/get-modal-url.ts {projectName}",
         "env": {
           "MODAL_ENV_FILE": ".env",
           "PYTHONPATH": "."
@@ -63,7 +63,7 @@
       "options": {
         "cwd": "{workspaceRoot}",
         "command": "npx tsx tools/deploy-beam.ts",
-        "args": "apps/workers/vision/dist/beam/worker_beam_tq_vision.py",
+        "args": "apps/workers/vision/dist/beam/worker_beam_tq_vision.py && tools/orchestrator/src/get-beam-url.ts {projectName}",
         "fulfills": [
           {
             "contract": "worker-service/vision-deploy",
@@ -79,7 +79,7 @@
       "options": {
         "cwd": "{workspaceRoot}",
         "command": "npx tsx tools/deploy-flash.ts",
-        "args": "apps/workers/vision/dist/flash/worker_flash_cls_vision.py",
+        "args": "apps/workers/vision/dist/flash/worker_flash_cls_vision.py && tools/orchestrator/src/get-flash-url.ts {projectName} --dir apps/workers/vision/dist/flash",
         "fulfills": [
           {
             "contract": "worker-service/vision-deploy",

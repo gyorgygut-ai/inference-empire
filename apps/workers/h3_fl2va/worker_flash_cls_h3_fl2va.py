@@ -23,7 +23,7 @@ def generate(storage, pipe, write_video_audio, **kwargs) -> dict:
 
 
 @Endpoint(
-    name="minimax-h3-fl2va-worker",
+    name="workers-h3_fl2va",
     gpu=[GpuGroup.AMPERE_48, GpuGroup.ADA_48_PRO],
     workers=(0, 1),
     idle_timeout=5,

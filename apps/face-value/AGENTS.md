@@ -9,17 +9,27 @@ NextJS app for chat + inference requests.
 **Tasks**:
 
 - `dev`:
-  - cmd: infer `dev` -> `next dev`
-  - dependsOn `["predev", "functions:dev-flux2"]`
-  - needs[]: `TaskQueueServiceContractFlux2Dev`
+  - command: [
+    ROUTER_URL=$NX_READY_URL,
+    ROUTER_AUTH_TOKEN=$ROUTER_GENERATED_AUTH_TOKEN,
+    next dev
+  ]
+  - dependsOn `["predev", "functions:dev:flux2"]`
+  - waitFor: "ready"
+  - inputs: "{workspaceRoot}/packages/contracts/task-queue-service/flux2-dev.contract.ts"
 - `predev`, `prebuild`:
   - dependsOn `^prebuild`
 - `build`:
   - dependsOn `prebuild`
 - `deploy`:
-  - cmd: `vercel deploy`
-  - dependsOn `["build", "functions:deploy-flux2"]`
-  - needs[]: `TaskQueueServiceContractFlux2Deploy`
+  - command: [
+    ROUTER_URL=$ROUTER_RESOLVED_URL,
+    ROUTER_AUTH_TOKEN=$ROUTER_GENERATED_AUTH_TOKEN,
+    vercel deploy --token={options.token} --orgId=... --projectId=...
+  ]
+  - options: { token: "env.FACE_VALUE_VERCEL_TOKEN", orgId, projectId }
+  - dependsOn `["build", "functions:deploy:flux2"]`
+  - inputs: "{workspaceRoot}/packages/contracts/task-queue-service/flux2-deploy.contract.ts"
 
 ---
 

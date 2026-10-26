@@ -55,13 +55,23 @@ Beam audio-worker packaging reference (fallback if TTS is ever split to its own 
 ## Out of scope (cut, not planned)
 
 - ❌ Gradio UI / `mount_gradio_app`, `additional_inputs=[chatbot]`, `AdditionalOutputs(chatbot)` yields (the built-in `stream.ui` is a throwaway **test client** only, never shipped)
-- ❌ index.html, JS client, SSE `/outputs`, `/input_hook` — none of it
+- ❌ index.html, JS client, Gradio-UI SSE (`/outputs`), `/input_hook` — none of it (the keepalive SSE in Fleet & cost is a separate, planned endpoint)
+
+## Fleet & cost (frugal)
+
+- **1 container per track, no scale-out.** Modal `max_containers=1`; Beam 1-container cap (exact `@asgi` parameter confirmed in Tier 1).
+- **N concurrent sessions per container** — CPU-bound (STT/TTS in-process). `Stream(concurrency_limit=N)` set explicitly (fastrtc defaults to **1**). Overflow → documented `concurrency_limit_reached` rejection, never scale-out. N validated under load in Tier 1.
+- **Short idle windows**: Modal `scaledown_window=60`, Beam `keep_warm_seconds=60`.
+- **Keepalive endpoint (BE contract)**: `GET /keepalive/{webrtc_id}` — SSE held open for the session's lifetime; server closes it on peer disconnect. Client opens on call start, closes on end (one-line client obligation — noted, not planned here).
+  - Why: in WebRTC mode the offer POST returns instantly and media is P2P → the platform sees **zero activity during a live call**; without an in-flight request, a short window reclaims the container mid-session. With the in-flight SSE: live calls are immune to scale-down at any window; after the last call → at zero ≤60s.
+- `time_limit` (max session duration) and the idle window are now independent — the `scaledown_window ≥ time_limit` workaround is deleted.
+- **Cost profile**: container billed only while a call is live + up to 60s after the last disconnect. Zero in between.
 
 ## Verified platform references (official)
 
 **Modal**
 
-- fastrtc on Modal: [fastrtc_flip_webcam](https://modal.com/docs/examples/fastrtc_flip_webcam) — `@modal.asgi_app()`, `max_containers=1` (sticky WebRTC), `@modal.concurrent(max_inputs=N)`, `scaledown_window > time_limit`; `modal serve` = hot-reload dev loop, `modal deploy` = permanent. WebRTC-on-Modal ASGI officially proven.
+- fastrtc on Modal: [fastrtc_flip_webcam](https://modal.com/docs/examples/fastrtc_flip_webcam) — `@modal.asgi_app()`, `max_containers=1`, `@modal.concurrent(max_inputs=N)`, `scaledown_window > time_limit` (their window-outlives-sessions pattern; we deviate: short windows + keepalive endpoint — see Fleet & cost); `modal serve` = hot-reload dev loop, `modal deploy` = permanent. WebRTC-on-Modal ASGI officially proven.
 - Production WebRTC: [webrtc_yolo](https://modal.com/docs/examples/webrtc_yolo) — STUN-only works on many networks; TURN escalation via free [Open Relay](https://www.metered.ca/tools/openrelay/) + `turn-credentials` Modal Secret; set `region` near users.
 - Qwen on Modal: [llm_inference](https://modal.com/docs/examples/llm_inference) — vLLM + Qwen3 (Qwen3-4B-Thinking-2507-FP8), OpenAI-compatible, `@app.server`, H100.
 
@@ -81,13 +91,15 @@ Beam audio-worker packaging reference (fallback if TTS is ever split to its own 
 
 - [ ] fastrtc `Stream(ReplyOnPause(handler), modality="audio", mode="send-receive")` + `stream.mount(app)`; `rtc_configuration` STUN-only
 - [ ] Handler (dummy): on pause → log STT transcript (`get_stt_model()` = Moonshine, CPU) → **yield a fixed Kokoro sentence** (e.g. "RTC loop verified."). No LLM, no GPU anywhere.
-- [ ] Modal wrap: `@modal.asgi_app()` + `max_containers=1` + `@modal.concurrent(max_inputs=N)` + `scaledown_window > time_limit`. Image: `uv_pip_install("fastapi[standard]", "fastrtc[vad, stt, tts]", "openai")`
-- [ ] Beam wrap: `@asgi(..., concurrent_requests=N)`, `Image(python_packages=["fastapi[standard]", "fastrtc[vad, stt, tts]", "openai"])`
+- [ ] Modal wrap: `@modal.asgi_app()` + `max_containers=1` + `@modal.concurrent(max_inputs=N)` + `scaledown_window=60`. Image: `uv_pip_install("fastapi[standard]", "fastrtc[vad, stt, tts]", "openai")`
+- [ ] Beam wrap: `@asgi(..., concurrent_requests=N, keep_warm_seconds=60)` + 1-container cap, `Image(python_packages=["fastapi[standard]", "fastrtc[vad, stt, tts]", "openai"])`
+- [ ] Keepalive endpoint: `GET /keepalive/{webrtc_id}` — SSE tied to the session lifecycle, server closes on peer disconnect
+- [ ] N validation: load N concurrent dummy sessions; per-turn latency acceptable on the container's CPU allocation
 - [ ] Test client = the library's built-in `stream.ui` (test harness, not a shipped frontend)
 
 **Local run**: `modal serve web_worker_modal.py` / `beam serve web_worker_beam.py:handler`.
 
-**Gate (100% before Tier 2)**: on both tracks — WebRTC connects; speak → transcript logged; fixed Kokoro sentence comes back; 2 consecutive turns in one session; clean disconnect. First check on the Beam track = **ICE connectivity**: STUN; if host candidates fail, wire TURN (Open Relay free tier) into the RTC config — deterministic outcome either way.
+**Gate (100% before Tier 2)**: on both tracks — WebRTC connects; speak → transcript logged; fixed Kokoro sentence comes back; 2 consecutive turns in one session; clean disconnect; live session survives past the 60s idle threshold (no mid-session reclaim via keepalive); container at zero ≤60s after last disconnect. First check on the Beam track = **ICE connectivity**: STUN; if host candidates fail, wire TURN (Open Relay free tier) into the RTC config — deterministic outcome either way.
 
 ## Tier 2 — Same dummy, deployed, proven
 
@@ -95,7 +107,7 @@ Beam audio-worker packaging reference (fallback if TTS is ever split to its own 
 
 - [ ] Deploy both web workers, same dummy handler
 - [ ] Same gate as Tier 1 against the deployed URLs
-- [ ] Cold start: connect works after scale-to-zero; wake latency acceptable
+- [ ] Scale-to-zero + cold start: after last disconnect, platform status shows zero ≤60s; next connect works through cold start; wake latency acceptable
 - [ ] Concurrency: `concurrency_limit` / `concurrent_requests` enforced — N+1th peer gets the documented `concurrency_limit_reached` rejection; a second peer doesn't break the first
 - [ ] Real-network connectivity (STUN or TURN per Tier 1 outcome)
 
@@ -113,4 +125,4 @@ Beam audio-worker packaging reference (fallback if TTS is ever split to its own 
 
 ## Net
 
-Tier 1 kills the platform risk (Beam ICE/UDP is the only genuinely unknown), Tier 2 kills the deployment risk, Tier 3 is pure business logic on a proven substrate. Base = LLM Voice Chat's BE core; pipeline 100% provider-free: Moonshine STT + hosted Qwen + Kokoro TTS.
+Tier 1 kills the platform risk (Beam ICE/UDP is the only genuinely unknown), Tier 2 kills the deployment risk, Tier 3 is pure business logic on a proven substrate. Base = LLM Voice Chat's BE core; pipeline 100% provider-free: Moonshine STT + hosted Qwen + Kokoro TTS. Fleet is frugal: 1 container per track, no scale-out, 60s idle windows kept safe by the session keepalive endpoint.

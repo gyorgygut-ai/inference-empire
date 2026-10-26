@@ -23,7 +23,7 @@ def generate(model, processor, analyze_prompt, **kwargs) -> dict:
     )
 
 @Endpoint(
-    name="small-vision-worker",
+    name="workers-vision",
     gpu=[GpuGroup.AMPERE_16],
     workers=(0, 1),
     idle_timeout=5,

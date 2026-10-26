@@ -52,7 +52,7 @@ def generate(storage, pipe, write_video_audio, **kwargs) -> dict:
 
 
 @task_queue(
-    name="minimax-h3-ref2va-worker",
+    name="workers-h3_ref2va",
     cpu=1,
     memory="32Gi",
     gpu="RTX4090",

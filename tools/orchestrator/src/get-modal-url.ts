@@ -7,15 +7,15 @@ function fail(msg: string): never {
 }
 
 const appName = process.argv[2];
-const fnName = process.argv[3];
-if (!appName || !fnName) {
-  fail('usage: get-modal-url.ts <app-name> <function-name>');
-}
+const fnName = process.argv[3] ?? 'generate_web';
 
 const python = process.env.MODAL_PYTHON ?? 'python3';
 const script = [
-  'import os, modal',
-  'print(modal.Function.from_name(os.environ["MODAL_URL_APP"], os.environ["MODAL_URL_FN"]).get_web_url() or "None")',
+  'import os, sys, modal',
+  'try:',
+  '    print(modal.Function.from_name(os.environ["MODAL_URL_APP"], os.environ["MODAL_URL_FN"]).get_web_url() or "None")',
+  'except Exception as e:',
+  '    print(f"modal lookup failed: {e}", file=sys.stderr); sys.exit(1)',
 ].join('\n');
 
 let out: string;

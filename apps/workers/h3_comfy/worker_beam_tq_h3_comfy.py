@@ -89,7 +89,7 @@ def generate(storage, comfy_base_url, **kwargs) -> dict:
 
 
 @task_queue(
-    name="minimax-h3-comfy-worker",
+    name="workers-h3_comfy",
     cpu=1,
     memory="32Gi",
     gpu="RTX4090",

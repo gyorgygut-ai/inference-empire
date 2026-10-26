@@ -1,0 +1,38 @@
+{
+  "healthz": {
+    "status_code": 200,
+    "body": {
+      "status": "ok",
+      "mode": "proof",
+      "models": []
+    }
+  },
+  "rtc_configuration": {
+    "status_code": 200,
+    "ice_servers": 3,
+    "has_stun": true,
+    "has_turn": true
+  },
+  "session": {
+    "webrtc_id": "probe-b1cdbeb2ef25",
+    "offer_status_code": 200,
+    "answer_candidate_types": [
+      "host",
+      "srflx"
+    ],
+    "connection_state": "connected",
+    "connected": true,
+    "data_channel_open": true,
+    "data_channel_messages": [
+      "{\"type\": \"log\", \"data\": \"Server received: handshake\"}"
+    ],
+    "outbound_frames": 3273,
+    "inbound_frames": 3824,
+    "session_s": 75.0
+  },
+  "keepalive": {
+    "live_status_code": 200,
+    "ticks": 39,
+    "closed_status_code": 404
+  }
+}

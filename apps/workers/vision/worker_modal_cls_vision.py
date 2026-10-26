@@ -15,7 +15,7 @@ from shared.worker_vision import (
 from packages.shared_gpu.guard import run_guarded
 from packages.shared_gpu.platform import MODAL_HF_MOUNT, modal_env, modal_volume
 
-app = modal.App("small-vision-worker")
+app = modal.App("workers-vision")
 
 dotenv_secret = modal.Secret.from_dotenv(str(Path(__file__).parent.parent.parent / ".env"))
 hf_cache_vol = modal_volume()

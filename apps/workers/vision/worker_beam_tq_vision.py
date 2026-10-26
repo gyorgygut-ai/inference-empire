@@ -33,7 +33,7 @@ def generate(model, processor, analyze_prompt, **kwargs) -> dict:
     )
 
 @task_queue(
-    name="small-vision-worker",
+    name="workers-vision",
     cpu=4,
     memory="32Gi",
     gpu="RTX4090",

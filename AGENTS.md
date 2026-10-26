@@ -30,65 +30,69 @@
 
 ## Orchestration
 
-**Dependencies**:
+**Dev URL Discovery**:
 
-- **Tool**: `dependsOn`, `targetDefaults`, `(implicit)Dependencies` 
-- **Problem**: Apps need to run / deploy in a clearly defined order 
-- **Approach**: `build`;`dev`;`deploy` defined per project; otherwise not needed
-- **Outcome**: Chained tasks triggering their dependencies; NO repetitive boilerplate
-- **Generic Examples**: 
-  - `deploy` -> dependsOn `build`
-  - `build` -> dependsOn `prebuild` -> dependsOn `^build`
-  - `dev` -> dependsOn `predev` -> dependsOn `^build`
+- **Problem**: `consumer:dev` needs `continuous` `producer:dev`'s server url
+- **Consumer**: `consumer` has `dependsOn: "producer:dev", waitFor: "ready"`
+- **Producer**: `producer` has `readyWhen": { "signal": true }`
+- **Outcome**: nx hands `process.env.NX_READY_URL` to `consumer` after `ready signal`
 
-**Service Contracts**:
+**Deploy URL Discovery**:
 
-- **Package**: [packages/contracts](packages/contracts/AGENTS.md)
-- **Problem**: Apps need to locate each other and talk
-- **Approach**: one `{family}-{env}.contract.ts` per service scope, constant `envFilePath`
-- **Outcome**: One app declares need; another fulfills it
+- **Problem**: `app-x:deploy` needs `app2:deploy`'s deployed url
+- **Approach**: [Orchestrator executes](tools/orchestrator/AGENTS.md)
+- **Outcome**: `app-x:deploy` + `inputs` gets `process.env.APP_X_DEPLOYED_URL`
 
-**Contract Delegation**:
+**Deploy URL & Contracts**:
 
-- **Package**: [orchestrator/run-command](tools/orchestrator/AGENTS.md)
-- **Problem**: Contract needs and fulfillments need declared
-- **Approach**: Executor reads `needs[]`, upserts `fulfills[]`, non-cacheable 
-- **Outcome**: Pain-free, type-safe contracts across apps
-
-**Data Schemas**:
-
-- **Package**: [packages/schemas](packages/schemas/AGENTS.md)
-- **Problem**: Apps need to know how to communicate
-- **Approach**: JSON schemas -> zod / TS generated on-demand
-- **Outcome**: Schema changes propagate; end-to-end type safety
+- **Problem**: `app-y:task` depends on a runtime data contract
+- **Approach**: [Orchestrator injects](tools/orchestrator/AGENTS.md)
+- **Outcome**: Contract extended into `input`; `:task` data in `process.env`
 
 ---
 
 ## Key Targets
 
+TODO: ignore these rules for now; they are outdated
+
 **Acceptance**: `npx nx run face-value:dev`
 
-- `WorkerServiceContractFlux2Deploy` fulfilled
-  -> ping `WORKER_RESOLVED_BEAM_URL` suceeds
-  -> `TaskQueueServiceContractFlux2Dev` fulfilled
-    -> `ROUTER_RESOLVED_URL` eq `http://127.0.0.1:5050`
-    -> ping `ROUTER_RESOLVED_URL` suceeds
-      -> ping `face-value` `http://127.0.0.1:3000` succeeds
+- `WorkerServiceFlux2DeployContract` resolves required values
+- `TaskQueueServiceFlux2DevContract` resolves required values
+- `flux2 worker`: ping `WORKER_RESOLVED_BEAM_URL` suceeds
+- `flux2 router`: ping `http://127.0.0.1:4000` suceeds
+- `face-value`: ping `http://127.0.0.1:3000` suceeds
+
+**Acceptance**: `npx nx run functions:dev:krea2`
+
+- `WorkerServiceKrea2DeployContract` resolves required values
+- `TaskQueueServiceKrea2DevContract` resolves required values
+- `krea2 worker`: ping `WORKER_RESOLVED_BEAM_URL` suceeds
+- `krea2 router`: ping `http://127.0.0.1:4025` suceeds
 
 **Acceptance**: `npx nx run face-value:deploy`
 
-  - `WorkerServiceContractFlux2Deploy` fulfilled
-    -> ping `WORKER_RESOLVED_BEAM_URL` suceeds
-    -> `TaskQueueServiceContractFlux2Deploy` fulfilled
-      -> ping `ROUTER_RESOLVED_URL` suceeds
-        -> ping `face-value` succeeds
+- `WorkerServiceFlux2DeployContract` resolves required values
+- `TaskQueueServiceFlux2DeployContract` resolves required values
+- `flux2 worker`: ping `WORKER_RESOLVED_BEAM_URL` suceeds
+- `flux2 router`: ping `ROUTER_RESOLVED_URL` suceeds
+- `face-value`: deploy suceeds
 
-**VERIFICATION**:
+**Verifcation: Acceptance Tests**:
 
-- **Tool**: `tools/acceptance.{dev|deploy}.test.ts`
-- **Approach**:
-  - CLEAN `dist` folders before all
-  - NO test runs before NX chain finishes
-  - NO hand-rolled polling for waiting; relying on NX
-  - MAX. 6 lines per test case: setup \n act \n assert
-- **Outcome**: Deterministic change verification
+- **tools/acceptance.dev**: `npx nx run face-value:dev`
+- **tools/acceptance.dev.krea2**: `npx nx run functions:dev:krea2`
+- **tools/acceptance.deploy**: `npx nx run face-value:deploy`
+
+**Verification: E2E Tests**:
+
+- **tools/e2e.dev**: __ignore for now. postponed__
+- **tools/e2e.deploy**: __ignore for now. postponed__
+
+**Verification Rules**:
+
+- Tests **MUST BE** proof of task chain verification
+- **Idempotent**: CLEAN `dist` folders before all
+- NO test runs before NX chain finishes
+- NO hand-rolled polling for waiting; relying on NX
+- MAX. 6 lines per test case: setup \n act \n assert

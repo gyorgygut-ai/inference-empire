@@ -20,7 +20,7 @@ def generate(storage, pipe, torch_module, **kwargs) -> dict:
     )
 
 @Endpoint(
-    name="tiny-sd-worker",
+    name="workers-tiny_sd",
     gpu=[GpuGroup.AMPERE_16],
     workers=(0, 1),
     idle_timeout=5,

@@ -32,6 +32,7 @@
 - Logic: thin wrapper over provider, logic shared (`apps/{model}|shared/worker_{model}.pu`)
 - Types: `Pydantic` generated
 - Queue: always use task queue and return task id, except realtime workers
+- Deployment identity: beam `name=`, `modal.App("…")`, flash `@Endpoint(name=…)` == Nx project name (`{projectName}`); modal web shim always `generate_web`
 
 **Worker Config**:
 

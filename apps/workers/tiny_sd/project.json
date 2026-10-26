@@ -43,7 +43,7 @@
       "options": {
         "cwd": "{workspaceRoot}",
         "command": "npx tsx tools/deploy-modal.ts",
-        "args": "apps/workers/tiny_sd/dist/modal/worker_modal_cls_tiny_sd.py",
+        "args": "apps/workers/tiny_sd/dist/modal/worker_modal_cls_tiny_sd.py && tools/orchestrator/src/get-modal-url.ts {projectName}",
         "env": {
           "MODAL_ENV_FILE": ".env",
           "PYTHONPATH": "."
@@ -63,7 +63,7 @@
       "options": {
         "cwd": "{workspaceRoot}",
         "command": "npx tsx tools/deploy-beam.ts",
-        "args": "apps/workers/tiny_sd/dist/beam/worker_beam_tq_tiny_sd.py",
+        "args": "apps/workers/tiny_sd/dist/beam/worker_beam_tq_tiny_sd.py && tools/orchestrator/src/get-beam-url.ts {projectName}",
         "fulfills": [
           {
             "contract": "worker-service/tiny_sd-deploy",
@@ -79,7 +79,7 @@
       "options": {
         "cwd": "{workspaceRoot}",
         "command": "npx tsx tools/deploy-flash.ts",
-        "args": "apps/workers/tiny_sd/dist/flash/worker_flash_cls_tiny_sd.py",
+        "args": "apps/workers/tiny_sd/dist/flash/worker_flash_cls_tiny_sd.py && tools/orchestrator/src/get-flash-url.ts {projectName} --dir apps/workers/tiny_sd/dist/flash",
         "fulfills": [
           {
             "contract": "worker-service/tiny_sd-deploy",

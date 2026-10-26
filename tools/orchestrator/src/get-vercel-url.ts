@@ -6,13 +6,13 @@ function fail(msg: string): never {
   process.exit(1);
 }
 
-const projectId = process.argv[2];
-if (!projectId) {
-  fail('usage: get-vercel-url.ts <project-id>');
-}
+const args = process.argv.slice(2);
+const orgIndex = args.indexOf('--org');
+const org = orgIndex === -1 ? undefined : args[orgIndex + 1];
+const projectId = args.find((a) => a !== '--org' && a !== org);
 
 const query = `projectId=${encodeURIComponent(projectId)}`;
-const apiPath = `/v7/deployments?${query}${process.env.VERCEL_ORG_ID ? `&teamId=${encodeURIComponent(process.env.VERCEL_ORG_ID)}` : ''}`;
+const apiPath = `/v7/deployments?${query}${org ? `&teamId=${encodeURIComponent(org)}` : ''}`;
 
 let out: string;
 try {

@@ -17,7 +17,7 @@ from packages.shared_gpu.guard import run_guarded
 from packages.shared_gpu.platform import MODAL_HF_MOUNT, modal_env, modal_volume
 from packages.artifacts.r2_artifacts import R2Artifacts
 
-app = modal.App("minimax-h3-comfy-worker")
+app = modal.App("workers-h3_comfy")
 
 # COMFY_MODELS is used by _ensure_comfy_models and tests
 COMFY_MODELS: list[str] = []

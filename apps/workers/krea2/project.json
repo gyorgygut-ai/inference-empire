@@ -42,7 +42,7 @@
       "cache": false,
       "options": {
         "cwd": "{workspaceRoot}",
-        "command": "MODAL_ENV_FILE=.env PYTHONPATH=. uv run --project . modal deploy apps/workers/krea2/dist/modal/worker_modal_cls_krea2_ref2img.py && echo \"WORKER_URL_MODAL=$(MODAL_ENV_FILE=.env tools/orchestrator/src/get-modal-url.ts workers-krea2-ref2img generate_web)\" >> dist/deploy/krea2/workers.env"
+        "command": "MODAL_ENV_FILE=.env PYTHONPATH=. uv run --project . modal deploy apps/workers/krea2/dist/modal/worker_modal_cls_krea2_ref2img.py && URL=$(MODAL_ENV_FILE=.env tools/orchestrator/src/get-modal-url.ts {projectName}) && [ -n \"$URL\" ] && echo \"WORKER_URL_MODAL=$URL\" >> dist/deploy/krea2/workers.env"
       }
     },
     "deploy-beam": {
@@ -51,7 +51,7 @@
       "cache": false,
       "options": {
         "cwd": "{projectRoot}/dist/beam",
-        "command": "uv run --project ../../../../.. beam deploy worker_beam_tq_krea2_ref2img.py:dispatch && echo \"WORKER_URL_BEAM=$(../../../../tools/orchestrator/src/get-beam-url.ts workers-krea2-ref2img)\" >> ../../../../dist/deploy/krea2/workers.env"
+        "command": "uv run --project ../../../../.. beam deploy worker_beam_tq_krea2_ref2img.py:dispatch && URL=$(../../../../tools/orchestrator/src/get-beam-url.ts {projectName}) && [ -n \"$URL\" ] && echo \"WORKER_URL_BEAM=$URL\" >> ../../../../dist/deploy/krea2/workers.env"
       }
     },
     "deploy-flash": {
@@ -60,7 +60,7 @@
       "cache": false,
       "options": {
         "cwd": "{projectRoot}/dist/flash",
-        "command": "uv run --project ../../../../.. flash deploy worker_flash_cls_krea2_ref2img.py && echo \"WORKER_URL_FLASH=$(../../../../tools/orchestrator/src/get-flash-url.ts krea2-ref2img-worker)\" >> ../../../../dist/deploy/krea2/workers.env"
+        "command": "uv run --project ../../../../.. flash deploy worker_flash_cls_krea2_ref2img.py && URL=$(../../../../tools/orchestrator/src/get-flash-url.ts {projectName}) && [ -n \"$URL\" ] && echo \"WORKER_URL_FLASH=$URL\" >> ../../../../dist/deploy/krea2/workers.env"
       }
     }
   }

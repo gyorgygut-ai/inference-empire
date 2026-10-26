@@ -7,9 +7,6 @@ function fail(msg: string): never {
 }
 
 const siteId = process.argv[2];
-if (!siteId) {
-  fail('usage: get-netlify-url.ts <site-id>');
-}
 
 let out: string;
 try {

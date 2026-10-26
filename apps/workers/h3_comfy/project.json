@@ -43,7 +43,7 @@
       "options": {
         "cwd": "{workspaceRoot}",
         "command": "npx tsx tools/deploy-modal.ts",
-        "args": "apps/workers/h3_comfy/dist/modal/worker_modal_cls_h3_comfy.py",
+        "args": "apps/workers/h3_comfy/dist/modal/worker_modal_cls_h3_comfy.py && tools/orchestrator/src/get-modal-url.ts {projectName}",
         "env": {
           "MODAL_ENV_FILE": ".env",
           "PYTHONPATH": "."
@@ -63,7 +63,7 @@
       "options": {
         "cwd": "{workspaceRoot}",
         "command": "npx tsx tools/deploy-beam.ts",
-        "args": "apps/workers/h3_comfy/dist/beam/worker_beam_tq_h3_comfy.py",
+        "args": "apps/workers/h3_comfy/dist/beam/worker_beam_tq_h3_comfy.py && tools/orchestrator/src/get-beam-url.ts {projectName}",
         "fulfills": [
           {
             "contract": "worker-service/h3_comfy-deploy",
@@ -79,7 +79,7 @@
       "options": {
         "cwd": "{workspaceRoot}",
         "command": "npx tsx tools/deploy-flash.ts",
-        "args": "apps/workers/h3_comfy/dist/flash/worker_flash_cls_h3_comfy.py",
+        "args": "apps/workers/h3_comfy/dist/flash/worker_flash_cls_h3_comfy.py && tools/orchestrator/src/get-flash-url.ts {projectName} --dir apps/workers/h3_comfy/dist/flash",
         "fulfills": [
           {
             "contract": "worker-service/h3_comfy-deploy",

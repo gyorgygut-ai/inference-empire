@@ -42,7 +42,7 @@ def generate(models, **kwargs) -> dict:
 
 
 @task_queue(
-    name="realtime-voice-worker",
+    name="workers-realtime_voice",
     cpu=4,
     memory="32Gi",
     gpu="RTX4090",

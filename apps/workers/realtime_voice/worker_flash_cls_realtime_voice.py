@@ -46,7 +46,7 @@ def generate_webrtc(models: dict, sample_rate: int, audio) -> tuple[int, object]
 
 
 @Endpoint(
-    name="realtime-voice-worker",
+    name="workers-realtime_voice",
     gpu=[GpuGroup.AMPERE_16],
     workers=(0, 1),
     idle_timeout=5,

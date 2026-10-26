@@ -29,7 +29,7 @@ def generate(storage, pipe, torch_module, **kwargs) -> dict:
 
 
 @task_queue(
-    name="tiny-sd-worker",
+    name="workers-tiny_sd",
     cpu=4,
     memory="32Gi",
     gpu="RTX4090",

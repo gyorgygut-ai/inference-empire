@@ -8,24 +8,10 @@ function fail(msg: string): never {
 }
 
 const args = process.argv.slice(2);
-let dir = process.cwd();
-const rest: string[] = [];
-for (let i = 0; i < args.length; i++) {
-  const arg = args[i] ?? '';
-  if (arg === '--dir') {
-    const value = args[++i];
-    if (!value) {
-      fail('--dir requires a path');
-    }
-    dir = resolve(value);
-  } else {
-    rest.push(arg);
-  }
-}
-const name = rest[0];
-if (!name) {
-  fail('usage: get-flash-url.ts <endpoint-name> [--dir <flash-project-dir>]');
-}
+const dirIndex = args.indexOf('--dir');
+const rawDir = dirIndex === -1 ? undefined : args[dirIndex + 1];
+const dir = rawDir ? resolve(rawDir) : process.cwd();
+const name = args.find((a) => a !== '--dir' && a !== rawDir);
 
 let out: string;
 try {

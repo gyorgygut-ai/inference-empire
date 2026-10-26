@@ -14,7 +14,7 @@ from shared.worker_h3_fl2va import (
 from packages.shared_gpu.guard import run_guarded
 from packages.shared_gpu.platform import MODAL_HF_MOUNT, modal_env, modal_volume
 
-app = modal.App("minimax-h3-fl2va-worker")
+app = modal.App("workers-h3_fl2va")
 
 dotenv_secret = modal.Secret.from_dotenv(str(Path(__file__).parent.parent.parent / ".env"))
 hf_cache_vol = modal_volume()
