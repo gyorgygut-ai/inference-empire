@@ -1,49 +1,80 @@
 {
-  "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "name": "face-value",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "application",
-  "sourceRoot": "apps/face-value",
-  "tags": ["type:app", "scope:face-value"],
+  "sourceRoot": "apps/face-value/src",
   "targets": {
     "predev": {
       "executor": "nx:noop",
-      "dependsOn": ["^prebuild"]
+      "dependsOn": [
+        "^prebuild",
+        { "projects": ["schemas"], "target": "build" }
+      ]
     },
     "prebuild": {
       "executor": "nx:noop",
-      "dependsOn": ["^prebuild"]
+      "dependsOn": [
+        "^prebuild",
+        { "projects": ["schemas"], "target": "build" }
+      ]
     },
     "build": {
-      "dependsOn": ["prebuild"]
+      "executor": "nx:run-commands",
+      "dependsOn": [
+        "prebuild"
+      ],
+      "cache": true,
+      "inputs": [
+        "production",
+        "^production"
+      ],
+      "options": {
+        "command": "npm run build",
+        "cwd": "{projectRoot}"
+      }
     },
     "dev": {
-      "executor": "nx:run-commands",
-      "cache": false,
+      "executor": "orchestrator:run-command",
       "continuous": true,
-      "readyWhen": { "port": 3000 },
+      "cache": false,
+      "readyWhen": {
+        "signal": true
+      },
       "dependsOn": [
         "predev",
         {
-          "projects": ["functions"],
+          "projects": [
+            "functions"
+          ],
           "target": "dev-flux2",
           "waitFor": "ready"
         }
       ],
+      "inputs": [
+        "{workspaceRoot}/packages/contracts/task-queue-service/flux2-dev.contract.ts"
+      ],
       "options": {
-        "command": "npm run build:manifest && ROUTER_RESOLVED_URL=\"${NX_READY_URL:?router did not signal}\" next dev -p 3000",
-        "cwd": "apps/face-value",
-        "envFile": "dist/functions/flux2-dev.env"
+        "command": "ROUTER_URL=$NX_READY_URL ROUTER_AUTH_TOKEN=$ROUTER_GENERATED_AUTH_TOKEN npx tsx tools/serve-next.ts",
+        "args": "--port 3000"
       }
     },
     "deploy": {
       "executor": "orchestrator:run-command",
       "cache": false,
-      "dependsOn": ["build", "functions:deploy-flux2"],
+      "dependsOn": [
+        "build",
+        "functions:deploy-flux2"
+      ],
+      "inputs": [
+        "{workspaceRoot}/packages/contracts/task-queue-service/flux2-deploy.contract.ts"
+      ],
       "options": {
-        "command": "tools/deploy-vercel.ts face-value from-root --token $FACE_VALUE_VERCEL_TOKEN --org $FACE_VALUE_VERCEL_ORG_ID --project-id $FACE_VALUE_VERCEL_PROJECT_ID && VERCEL_TOKEN=$FACE_VALUE_VERCEL_TOKEN tools/orchestrator/src/get-vercel-url.ts $FACE_VALUE_VERCEL_PROJECT_ID --org $FACE_VALUE_VERCEL_ORG_ID",
-        "needs": [{ "contract": "task-queue-service/flux2-deploy" }],
-        "envKey": "FACE_VALUE_URL",
-        "envFile": "dist/functions/flux2-deploy.env"
+        "command": "ROUTER_URL=$ROUTER_RESOLVED_URL ROUTER_AUTH_TOKEN=$ROUTER_GENERATED_AUTH_TOKEN npx vercel deploy",
+        "args": "--token={options.token} --orgId={options.orgId} --projectId={options.projectId}",
+        "token": "env.FACE_VALUE_VERCEL_TOKEN",
+        "orgId": "...",
+        "projectId": "...",
+        "siteId": "cd41f060-bbdf-49fa-82a6-20d7ba136853"
       }
     }
   }

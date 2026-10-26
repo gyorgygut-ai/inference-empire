@@ -20,12 +20,12 @@ NextJS app for chat + inference requests.
       "predev",
       {
         "projects": ["functions"],
-        "target": "dev",
+        "target": "dev-flux2",
         "waitFor": "ready"
       }
     ]
     ```
-  - Router dependency uses `functions:dev`'s default configuration, `flux2`
+  - Router dependency uses `functions:dev-flux2` (approved target-name drift; this target serves the Flux2 family)
   - inputs: "{workspaceRoot}/packages/contracts/task-queue-service/flux2-dev.contract.ts"
 - `predev`, `prebuild`:
   - dependsOn `^prebuild`

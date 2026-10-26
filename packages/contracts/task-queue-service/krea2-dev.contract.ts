@@ -1,12 +1,15 @@
-import { z } from 'zod';
-import { ROUTER_GENERATED_AUTH_TOKEN, ROUTER_RESOLVED_URL } from './keys.ts';
+import { z } from 'zod'
+import { ROUTER_GENERATED_AUTH_TOKEN } from './keys.ts'
 
-export const TaskQueueServiceContractKrea2Dev = {
-  keys: [ROUTER_RESOLVED_URL, ROUTER_GENERATED_AUTH_TOKEN] as const,
+export const TaskQueueServiceKrea2DevContract = {
+  keys: [ROUTER_GENERATED_AUTH_TOKEN] as const,
   envFilePath: 'dist/krea2/dev.env',
-};
+}
+
+export const TaskQueueServiceKrea2DevResolvers = {
+  ROUTER_GENERATED_AUTH_TOKEN: 'tools/orchestrator/src/resolve-auth-token.ts dist/krea2/dev.env ROUTER_GENERATED_AUTH_TOKEN',
+}
 
 export const taskQueueServiceKrea2DevSchema = z.object({
-  ROUTER_RESOLVED_URL: z.string().url(),
   ROUTER_GENERATED_AUTH_TOKEN: z.string().min(32),
-});
+})

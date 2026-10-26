@@ -36,12 +36,24 @@
 - **Consumer**: `consumer` has `dependsOn: "producer:dev", waitFor: "ready"`
 - **Producer**: `producer` has `"readyWhen": { "signal": true }` and emits its actual listening URL through public `emitReadySignal` after the server listens
 - **Outcome**: nx hands `process.env.NX_READY_URL` to `consumer` after `ready signal`
+- **Acceptance**:
+  - Vendor local dev servers wrapped in `serve-*` scripts
+  - serve script starts vendor on `args.port`
+  - serve script emits ready signal when server is up
+  - serve script does not do anything else; no env juggling
 
 **Deploy URL Discovery**:
 
 - **Problem**: `app-x:deploy` needs `app2:deploy`'s deployed url
-- **Approach**: [Orchestrator executes](tools/orchestrator/AGENTS.md)
+- **Approach**: `app-x` dependsOn `app2:deploy` + requests it's url
+- **Tool**: [Orchestrator executes](tools/orchestrator/AGENTS.md)
 - **Outcome**: `app-x:deploy` + `inputs` gets `process.env.APP_X_DEPLOYED_URL`
+ - **Acceptance**:
+  - No custom  `deploy-*` scripts; use vendor cli directly
+  - `app-x:deploy` must declare contract as task `input`
+  - `contract` defines how to `resolve` values from it's `schema`
+  - `executor` detects input and hands off contract values
+  - `app2` receives values in `env`; NO manual env juggling
 
 **Deploy URL & Contracts**:
 
@@ -53,7 +65,7 @@
 
 ## Key Targets
 
-**Acceptance**: `npx nx run face-value:dev`
+**Acceptance**: `face-value:dev`
 
 - `WorkerServiceFlux2DeployContract` resolves required values
 - `TaskQueueServiceFlux2DevContract` resolves required values
@@ -61,14 +73,14 @@
 - `flux2 router`: ping `http://127.0.0.1:4000` suceeds
 - `face-value`: ping `http://127.0.0.1:3000` suceeds
 
-**Acceptance**: `npx nx run functions:dev:krea2`
+**Acceptance**: `functions:dev-krea2`
 
 - `WorkerServiceKrea2DeployContract` resolves required values
 - `TaskQueueServiceKrea2DevContract` resolves required values
 - `krea2 worker`: ping `WORKER_RESOLVED_BEAM_URL` suceeds
 - `krea2 router`: ping `http://127.0.0.1:4025` suceeds
 
-**Acceptance**: `npx nx run face-value:deploy`
+**Acceptance**: `face-value:deploy`
 
 - `WorkerServiceFlux2DeployContract` resolves required values
 - `TaskQueueServiceFlux2DeployContract` resolves required values
@@ -76,21 +88,37 @@
 - `flux2 router`: ping `ROUTER_RESOLVED_URL` suceeds
 - `face-value`: deploy suceeds
 
-**Verifcation: Acceptance Tests**:
+---
 
-- **tools/acceptance.dev**: `npx nx run face-value:dev`
-- **tools/acceptance.dev.krea2**: `npx nx run functions:dev:krea2`
-- **tools/acceptance.deploy**: `npx nx run face-value:deploy`
+## Verification
 
-**Verification: E2E Tests**:
+**Non-negotiable**:
 
-- **tools/e2e.dev**: __ignore for now. postponed__
-- **tools/e2e.deploy**: __ignore for now. postponed__
+- **Proof**: the verification chain must prove all changes
+- **Progress**: tier-by-tier; until all passed or failure
+- **Failures**: run `lint-fix`; report; investigate; fix; restart verification
+- **Defaults**: `verify*` tasks must be in `nx.json`
+- **Readiness**: assert after `finite` deps finish or `continuous` signal ready
+- **Tidiness**: 6 lines per test criteria, at the most: `setup` \n `act` \n `assert`
 
-**Verification Rules**:
+**💪🏾 Full Chain**: `verify`
 
-- Tests **MUST BE** proof of task chain verification
-- **Idempotent**: CLEAN `dist` folders before all
-- Acceptance assertions run after finite prerequisites complete and continuous dependencies signal readiness
-- NO hand-rolled polling for waiting; relying on NX
-- MAX. 6 lines per test case: setup \n act \n assert
+-> `npx nx run-many -t verify --nxBail`
+-> runs `verify-tier-1` gates `verify-tier-2` gates `verify-tier-3`
+
+**🧐 Tier 1: audit**: `verify-tier-1-audit` 
+
+-> **dependsOn**: `["lint", "build", "test-unit"]`
+
+**🏡 Tier 2: dev**: `verify-tier-2-dev`
+
+-> **dependsOn**: `["verify-tier-1*", "acceptance:dev*", "e2e:dev*"]`
+-> **test:acceptance:dev**: `./tools/test/acceptance.dev.test.ts`
+-> **test:acceptance:dev-krea2**: `./tools/test/acceptance.dev-krea2.test.ts`
+-> **test:e2e:dev**: `nx:no-op`
+
+**🏰 Tier 3: deploy**: `verify-tier-3-deploy`
+
+-> **dependsOn**: `["verify-tier-2*", "acceptance:deploy*", "e2e:deploy*"]`
+-> **test:acceptance:deploy**: `./tools/test/acceptance.deploy.test.ts`
+-> **test:e2e:deploy**: `nx:no-op`

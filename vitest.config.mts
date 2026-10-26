@@ -7,7 +7,7 @@ export default defineConfig({
       '!vite.config.{mjs,js,ts,mts}',
       '!apps/chat-ui/**',
       '!tests/acceptance/**',
-      '!tools/acceptance/**',
+      '!tools/test/**',
     ],
   },
 })

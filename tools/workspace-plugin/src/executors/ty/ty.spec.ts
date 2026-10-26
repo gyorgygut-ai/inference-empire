@@ -13,7 +13,9 @@ const context: ExecutorContext = {
 
 describe('Ty Executor', () => {
   it('builds the typecheck command', () => {
-    expect(buildCommand()).toBe('uv run --locked --group test ty check .');
+    expect(buildCommand('apps/workers/flux2')).toBe(
+      'uv run --locked --group test ty check apps/workers/flux2'
+    );
   });
 
   it('fails without a project root', async () => {

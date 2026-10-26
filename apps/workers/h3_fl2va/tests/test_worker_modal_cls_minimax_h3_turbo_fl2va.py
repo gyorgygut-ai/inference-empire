@@ -11,7 +11,7 @@ from shared.worker_h3_fl2va import (
     do_inference,
 )
 
-import apps.h3_fl2va.worker_modal_cls_minimax_h3_fl2va as worker_mod  # ty: ignore[unresolved-import]
+import apps.workers.h3_fl2va.worker_modal_cls_h3_fl2va as worker_mod  # ty: ignore[unresolved-import]
 
 
 def _pipe():

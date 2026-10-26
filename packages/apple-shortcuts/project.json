@@ -2,14 +2,11 @@
   "name": "apple-shortcuts",
   "projectType": "application",
   "sourceRoot": "packages/apple-shortcuts/src",
-  "tags": ["type:tool", "scope:shortcuts"],
+  "tags": [
+    "type:tool",
+    "scope:shortcuts"
+  ],
   "targets": {
-    "lint": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "npx eslint packages/apple-shortcuts"
-      }
-    },
     "sign": {
       "executor": "nx:run-commands",
       "options": {

@@ -385,8 +385,8 @@ async def run_probe(
     auth = auth_headers(bearer_token)
 
     async with httpx.AsyncClient(timeout=CONNECT_TIMEOUT_S, headers=auth) as client:
-        health = await client.get(f"{url}/healthz")
-        artifact["healthz"] = {"status_code": health.status_code, "body": health.json()}
+        health = await client.get(f"{url}/health")
+        artifact["health"] = {"status_code": health.status_code, "body": health.json()}
 
         credentials = await client.get(f"{url}/turn-credentials")
         payload = credentials.json()
@@ -458,7 +458,7 @@ def main() -> None:
     summary = {
         "target": artifact["target"],
         "url": artifact["url"],
-        "healthz": artifact["healthz"],
+        "health": artifact["health"],
         "turn_credentials": artifact["turn_credentials"],
         "wrong_content_type": artifact["wrong_content_type"],
         "malformed_sdp": artifact["malformed_sdp"],

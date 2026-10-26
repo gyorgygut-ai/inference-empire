@@ -12,10 +12,12 @@ trickle ICE candidates to the same route).
     --session-s holds the session open (keepalive stream included) that long,
     e.g. 75 s to prove survival past the platform's 60 s idle window.
 """
+
 from __future__ import annotations
 
 import argparse
 import asyncio
+import datetime
 import fractions
 import json
 import time
@@ -35,6 +37,7 @@ SAMPLE_RATE = 48000
 FRAME_SAMPLES = 960  # 20 ms
 TONE_HZ = 440.0
 TONE_AMPLITUDE = 0.3
+SECOND_TURN_HZ = 660.0
 SESSION_S = 5.0
 CONNECT_TIMEOUT_S = 30.0
 
@@ -49,15 +52,16 @@ class SineAudioTrack(MediaStreamTrack):
         self.frames = 0
         self._timestamp = 0
         self._phase = 0
+        self.turn = 0
+        self.frames_by_turn = [0, 0]
 
     async def recv(self) -> av.AudioFrame:
         if self.readyState != "live":
             raise MediaStreamError
 
         n = FRAME_SAMPLES
-        samples = np.sin(
-            2 * np.pi * TONE_HZ * np.arange(self._phase, self._phase + n) / SAMPLE_RATE
-        )
+        hz = TONE_HZ if self.turn == 0 else SECOND_TURN_HZ
+        samples = np.sin(2 * np.pi * hz * np.arange(self._phase, self._phase + n) / SAMPLE_RATE)
         self._phase = (self._phase + n) % SAMPLE_RATE
 
         frame = av.AudioFrame.from_ndarray(
@@ -70,6 +74,7 @@ class SineAudioTrack(MediaStreamTrack):
         frame.pts = self._timestamp
         self._timestamp += n
         self.frames += 1
+        self.frames_by_turn[self.turn] += 1
 
         await asyncio.sleep(n / SAMPLE_RATE)
         return frame
@@ -85,16 +90,33 @@ def candidate_types(sdp: str) -> list[str]:
     return sorted(types)
 
 
-async def probe(
-    url: str, session_s: float = SESSION_S, bearer_token: str = ""
-) -> dict[str, Any]:
-    result: dict[str, Any] = {}
+def ice_evidence(pc: Any) -> dict[str, Any]:
+    out: dict[str, Any] = {"local": None, "remote": None, "remote_addr": None}
+    try:
+        sender = pc.getSenders()[0]
+        connection = sender.transport.transport.iceGatherer._connection
+        pair = connection._nominated.get(1)
+        if pair is not None:
+            out["remote"] = pair.remote_candidate.type
+            local = pair.protocol.local_candidate
+            out["local"] = local.type if local is not None else None
+            out["remote_addr"] = str(getattr(pair, "remote_addr", None))
+    except Exception:
+        pass
+    return out
+
+
+async def probe(url: str, session_s: float = SESSION_S, bearer_token: str = "") -> dict[str, Any]:
+    result: dict[str, Any] = {
+        "observed_at": datetime.datetime.now(datetime.UTC).isoformat(),
+        "url": url,
+    }
 
     # Beam gates every endpoint behind the profile token; Modal ignores it.
     auth = {"Authorization": f"Bearer {bearer_token}"} if bearer_token else {}
 
     async with httpx.AsyncClient(
-        base_url=url, timeout=httpx.Timeout(15.0, connect=10.0), headers=auth
+        base_url=url, timeout=httpx.Timeout(180.0, connect=10.0), headers=auth
     ) as client:
         healthz = await client.get("/healthz")
         result["healthz"] = {"status_code": healthz.status_code, "body": healthz.json()}
@@ -129,19 +151,50 @@ async def probe(
         sine = SineAudioTrack()
         pc.addTrack(sine)
 
-        stats: dict[str, Any] = {"inbound_frames": 0, "channel_open": False, "messages": []}
+        stats: dict[str, Any] = {
+            "inbound_frames": 0,
+            "channel_open": False,
+            "messages": [],
+            "received_tone_frames": [0, 0],
+        }
+        tasks: set[asyncio.Task[None]] = set()
+
+        def start_task(coro: Any) -> None:
+            task = asyncio.create_task(coro)
+            tasks.add(task)
+            task.add_done_callback(tasks.discard)
 
         @pc.on("track")
         def on_track(track: Any) -> None:
             async def consume() -> None:
                 while True:
                     try:
-                        await track.recv()
+                        frame = await track.recv()
                         stats["inbound_frames"] += 1
+                        raw = frame.to_ndarray()[0]
+                        if not frame.format.is_planar:
+                            raw = raw[:: len(frame.layout.channels)]
+                        samples = raw.astype(np.float64)
+                        if samples.size:
+                            spectrum = np.abs(np.fft.rfft(samples))
+                            peak = np.fft.rfftfreq(samples.size, 1 / frame.sample_rate)[
+                                int(np.argmax(spectrum))
+                            ]
+                            rms = float(np.sqrt(np.mean(samples**2)))
+                            if "audio_observation" not in stats:
+                                stats["audio_observation"] = {
+                                    "format": frame.format.name,
+                                    "channels": len(frame.layout.channels),
+                                    "rms": rms,
+                                    "peak_hz": peak,
+                                }
+                            minimum_rms = 0.01 if np.issubdtype(raw.dtype, np.floating) else 100
+                            if abs(peak - TONE_HZ) < 60 and rms > minimum_rms:
+                                stats["received_tone_frames"][sine.turn] += 1
                     except MediaStreamError:
                         break
 
-            asyncio.ensure_future(consume())
+            start_task(consume())
 
         channel = pc.createDataChannel(DATA_CHANNEL_LABEL)
 
@@ -167,7 +220,7 @@ async def probe(
         @pc.on("icecandidate")
         def on_icecandidate(candidate: Any) -> None:
             if candidate is not None:
-                asyncio.ensure_future(send_candidate(candidate))
+                start_task(send_candidate(candidate))
 
         await pc.setLocalDescription(await pc.createOffer())
 
@@ -192,22 +245,33 @@ async def probe(
         connected = pc.connectionState in ("connected", "completed")
         connected_state = pc.connectionState
 
-        keepalive: dict[str, Any] = {"live_status_code": None, "ticks": 0, "closed_status_code": None}
+        keepalive: dict[str, Any] = {
+            "live_status_code": None,
+            "ticks": 0,
+            "closed_status_code": None,
+        }
         if connected:
             # Held open for the whole session: the in-flight keepalive request
             # is what makes the platform count the session as activity, so the
             # container cannot scale down mid-session.
-            started = time.time()
+            started = time.monotonic()
             async with client.stream("GET", f"/keepalive/{webrtc_id}") as keep:
                 keepalive["live_status_code"] = keep.status_code
                 async for line in keep.aiter_lines():
                     if line.startswith("event:"):
                         keepalive["ticks"] += 1
-                        if time.time() - started >= session_s:
+                        elapsed = time.monotonic() - started
+                        if elapsed >= session_s / 2:
+                            sine.turn = 1
+                        if elapsed >= session_s:
                             break
             await asyncio.sleep(0.5)
 
+        ice_pair = ice_evidence(pc) if connected else None
+
         await pc.close()
+        if tasks:
+            await asyncio.gather(*tasks)
         await asyncio.sleep(2.0)
         closed = await client.get(f"/keepalive/{webrtc_id}")
         keepalive["closed_status_code"] = closed.status_code
@@ -222,7 +286,11 @@ async def probe(
             "data_channel_messages": stats["messages"][:20],
             "outbound_frames": sine.frames,
             "inbound_frames": stats["inbound_frames"],
+            "outbound_frames_by_turn": sine.frames_by_turn,
+            "received_tone_frames_by_turn": stats["received_tone_frames"],
+            "audio_observation": stats.get("audio_observation"),
             "session_s": session_s if connected else 0,
+            "ice_pair": ice_pair,
         }
         result["keepalive"] = keepalive
 

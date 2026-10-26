@@ -13,7 +13,11 @@ const context: ExecutorContext = {
 
 describe('Ruff Executor', () => {
   it('builds the lint command', () => {
-    expect(buildCommand()).toBe('uvx ruff check . --line-length 100');
+    expect(buildCommand('apps/workers/flux2')).toBe('uvx ruff check apps/workers/flux2 --line-length 100');
+  });
+
+  it('builds the autofix command', () => {
+    expect(buildCommand('apps/workers/flux2', true)).toBe('uvx ruff check apps/workers/flux2 --line-length 100 --fix');
   });
 
   it('fails without a project root', async () => {

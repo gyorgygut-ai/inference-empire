@@ -1,0 +1,48 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "test",
+  "projectType": "library",
+  "root": "tools/test",
+  "tags": ["type:tool", "scope:test"],
+  "targets": {
+    "acceptance:dev": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "dependsOn": [
+        { "projects": ["face-value"], "target": "dev", "waitFor": "ready" }
+      ],
+      "options": {
+        "cwd": "{projectRoot}",
+        "command": "vitest run --config vitest.config.mts acceptance.dev.test.ts"
+      }
+    },
+    "acceptance:dev-krea2": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "dependsOn": [
+        { "projects": ["functions"], "target": "dev-krea2", "waitFor": "ready" }
+      ],
+      "options": {
+        "cwd": "{projectRoot}",
+        "command": "vitest run --config vitest.config.mts acceptance.dev-krea2.test.ts"
+      }
+    },
+    "acceptance:deploy": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "dependsOn": ["face-value:deploy"],
+      "options": {
+        "cwd": "{projectRoot}",
+        "command": "vitest run --config vitest.config.mts acceptance.deploy.test.ts"
+      }
+    },
+    "e2e:dev": {
+      "executor": "nx:noop",
+      "cache": false
+    },
+    "e2e:deploy": {
+      "executor": "nx:noop",
+      "cache": false
+    },
+  }
+}

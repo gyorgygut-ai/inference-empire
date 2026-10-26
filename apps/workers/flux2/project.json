@@ -22,18 +22,9 @@
         "command": "python3 tools/uv-build {args.entry} {args.out}"
       },
       "configurations": {
-        "modal": {
-          "entry": "apps/workers/flux2/worker_modal_cls_flux2_klein9b.py",
-          "out": "apps/workers/flux2/dist/modal"
-        },
-        "beam": {
-          "entry": "apps/workers/flux2/worker_beam_tq_flux2_klein9b.py",
-          "out": "apps/workers/flux2/dist/beam"
-        },
-        "flash": {
-          "entry": "apps/workers/flux2/worker_flash_cls_flux2_klein9b.py",
-          "out": "apps/workers/flux2/dist/flash"
-        }
+        "modal": { "entry": "apps/workers/flux2/worker_modal_cls_flux2_klein9b.py", "out": "apps/workers/flux2/dist/modal" },
+        "beam": { "entry": "apps/workers/flux2/worker_beam_tq_flux2_klein9b.py", "out": "apps/workers/flux2/dist/beam" },
+        "flash": { "entry": "apps/workers/flux2/worker_flash_cls_flux2_klein9b.py", "out": "apps/workers/flux2/dist/flash" }
       }
     },
     "build-beam": {
@@ -47,10 +38,7 @@
         "{workspaceRoot}/tools/uv-build"
       ],
       "outputs": ["{projectRoot}/dist"],
-      "options": {
-        "cwd": "{workspaceRoot}",
-        "command": "python3 tools/uv-build apps/workers/flux2/worker_beam_tq_flux2_klein9b.py apps/workers/flux2/dist/beam"
-      }
+      "options": { "cwd": "{workspaceRoot}", "command": "python3 tools/uv-build apps/workers/flux2/worker_beam_tq_flux2_klein9b.py apps/workers/flux2/dist/beam" }
     },
     "build-flash": {
       "executor": "nx:run-commands",
@@ -63,66 +51,25 @@
         "{workspaceRoot}/tools/uv-build"
       ],
       "outputs": ["{projectRoot}/dist"],
-      "options": {
-        "cwd": "{workspaceRoot}",
-        "command": "python3 tools/uv-build apps/workers/flux2/worker_flash_cls_flux2_klein9b.py apps/workers/flux2/dist/flash"
-      }
+      "options": { "cwd": "{workspaceRoot}", "command": "python3 tools/uv-build apps/workers/flux2/worker_flash_cls_flux2_klein9b.py apps/workers/flux2/dist/flash" }
     },
     "deploy-modal": {
       "executor": "orchestrator:run-command",
-      "dependsOn": [
-        "build"
-      ],
+      "dependsOn": ["build"],
       "cache": false,
-      "options": {
-        "cwd": "{workspaceRoot}",
-        "command": "npx tsx tools/deploy-modal.ts",
-        "args": "apps/workers/flux2/dist/modal/worker_modal_cls_flux2_klein9b.py && tools/orchestrator/src/get-modal-url.ts {projectName}",
-        "env": {
-          "MODAL_ENV_FILE": ".env",
-          "PYTHONPATH": "."
-        },
-        "fulfills": [
-          {
-            "contract": "worker-service/flux2-deploy",
-            "contractKey": "WORKER_RESOLVED_MODAL_URL"
-          }
-        ]
-      }
-    },    "deploy-beam": {
+      "options": { "cwd": "{workspaceRoot}", "command": "npx tsx tools/deploy-modal.ts", "args": "apps/workers/flux2/dist/modal/worker_modal_cls_flux2_klein9b.py" }
+    },
+    "deploy-beam": {
       "executor": "orchestrator:run-command",
-      "dependsOn": [
-        "build-beam"
-      ],
+      "dependsOn": ["build-beam"],
       "cache": false,
-      "options": {
-        "cwd": "{workspaceRoot}",
-        "command": "npx tsx tools/deploy-beam.ts",
-        "args": "apps/workers/flux2/dist/beam/worker_beam_tq_flux2_klein9b.py && tools/orchestrator/src/get-beam-url.ts {projectName}",
-        "fulfills": [
-          {
-            "contract": "worker-service/flux2-deploy",
-            "contractKey": "WORKER_RESOLVED_BEAM_URL"
-          }
-        ]
-      }
-    },    "deploy-flash": {
+      "options": { "cwd": "{workspaceRoot}", "command": "npx tsx tools/deploy-beam.ts", "args": "apps/workers/flux2/dist/beam/worker_beam_tq_flux2_klein9b.py" }
+    },
+    "deploy-flash": {
       "executor": "orchestrator:run-command",
-      "dependsOn": [
-        "build-flash"
-      ],
+      "dependsOn": ["build-flash"],
       "cache": false,
-      "options": {
-        "cwd": "{workspaceRoot}",
-        "command": "npx tsx tools/deploy-flash.ts",
-        "args": "apps/workers/flux2/dist/flash/worker_flash_cls_flux2_klein9b.py && tools/orchestrator/src/get-flash-url.ts {projectName} --dir apps/workers/flux2/dist/flash",
-        "fulfills": [
-          {
-            "contract": "worker-service/flux2-deploy",
-            "contractKey": "WORKER_RESOLVED_FLASH_URL"
-          }
-        ]
-      }
+      "options": { "cwd": "{workspaceRoot}", "command": "npx tsx tools/deploy-flash.ts", "args": "apps/workers/flux2/dist/flash/worker_flash_cls_flux2_klein9b.py" }
     }
   }
 }

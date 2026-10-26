@@ -7,20 +7,10 @@
 
 ## NX: `workers-{family}:deploy-{platform}`
 
-**MUST DO before `:deploy-modal`**:
-
-  - **Build** must build `{projectRoot}/dist/modal` and deploy from there
-  - **Fulfills** `WORKER_RESOLVED_MODAL_URL` in the family's `deploy` worker contract, through the executor
-
-**MUST DO before `:deploy-beam`**:
-
-  - **Build** must build `{projectRoot}/dist/modal` and deploy from there
-  - **Fulfills** `WORKER_RESOLVED_BEAM_URL` in the family's `deploy` worker contract, through the executor
-
-**MUST DO before `:deploy-flash`**:
-
-  - **Build** must build `{projectRoot}/dist/modal` and deploy from there
-  - **Fulfills** `WORKER_RESOLVED_FLASH_URL` in the family's `deploy` worker contract, through the executor
+- `:deploy-modal`: build `{projectRoot}/dist/modal` and deploy from there.
+- `:deploy-beam`: build `{projectRoot}/dist/beam` and deploy from there.
+- `:deploy-flash`: build `{projectRoot}/dist/flash` and deploy from there.
+- For deployment URL contracts, follow the [orchestrator plugin spec](../../tools/orchestrator/AGENTS.md) and its [run-command executor](../../tools/orchestrator/src/executors/run-command/run-command.ts).
 
 ---
 

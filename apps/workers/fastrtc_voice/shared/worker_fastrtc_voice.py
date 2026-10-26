@@ -4,6 +4,7 @@ Level 1/2 proof surface: no GPU, no models, no downloads. Inbound audio
 frames are logged, outbound audio is a fixed sine tone. Level 3 replaces
 the dummy handler with VAD + STT + LLM + TTS.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -13,14 +14,15 @@ import time
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-import gradio as gr
 import httpx
 import numpy as np
+from aiortc import RTCConfiguration, RTCIceServer
 from dotenv import load_dotenv
-from fastrtc import Stream
-from fastrtc.tracks import AsyncStreamHandler
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, StreamingResponse
+from fastrtc import Stream
+from fastrtc import stream as rtc_stream
+from fastrtc.tracks import AsyncStreamHandler
 
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator
@@ -32,6 +34,7 @@ TONE_AMPLITUDE = 0.15
 KEEPALIVE_TICK_S = 2.0
 LOG_EVERY_FRAMES = 50
 CONCURRENCY_LIMIT = 2
+ICE_CREDENTIALS_REFRESH_S = 12 * 60 * 60.0
 
 
 def _find_env_file() -> Path:
@@ -136,11 +139,42 @@ class DummyProofHandler(AsyncStreamHandler):
         return DummyProofHandler()
 
 
+class ProofStream(Stream):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self._ice_minted_at = float("-inf")
+        self._ice_refresh_lock = asyncio.Lock()
+
+    async def _refresh_server_ice(self) -> None:
+        if time.monotonic() - self._ice_minted_at < ICE_CREDENTIALS_REFRESH_S:
+            return
+        async with self._ice_refresh_lock:
+            if time.monotonic() - self._ice_minted_at < ICE_CREDENTIALS_REFRESH_S:
+                return
+            servers = await rtc_ice_servers()
+            self.server_rtc_configuration = RTCConfiguration(
+                iceServers=[
+                    RTCIceServer(
+                        urls=server["urls"],
+                        username=server.get("username"),
+                        credential=server.get("credential"),
+                    )
+                    for server in servers
+                ]
+            )
+            self._ice_minted_at = time.monotonic()
+            logger.info("rtc: server-side ICE servers set (%d)", len(servers))
+
+    async def offer(self, body: rtc_stream.Body):
+        await self._refresh_server_ice()
+        return await super().offer(body)
+
+
 def build_app() -> FastAPI:
     if not logging.getLogger().handlers:
         logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s %(message)s")
 
-    stream = Stream(
+    stream = ProofStream(
         DummyProofHandler(),
         mode="send-receive",
         modality="audio",
@@ -176,5 +210,4 @@ def build_app() -> FastAPI:
         return StreamingResponse(event_stream(), media_type="text/event-stream")
 
     stream.mount(app)
-    app = gr.mount_gradio_app(app, stream.ui, path="/")
     return app

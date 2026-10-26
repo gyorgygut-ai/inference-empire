@@ -31,6 +31,12 @@
     "lint": {
       "cache": true
     },
+    "lint-fix": {
+      "cache": false,
+      "options": {
+        "args": ["--fix"]
+      }
+    },
     "build": {
       "dependsOn": [
         "^build"
@@ -47,32 +53,36 @@
     "verify": {
       "executor": "nx:noop",
       "dependsOn": [
-        "audit",
-        "lint",
-        "build",
-        "test"
+        "verify-tier-1*",
+        "verify-tier-2*",
+        "verify-tier-3*"
       ],
       "cache": false
     },
-    "verify-dev": {
+    "verify-tier-1-audit": {
       "executor": "nx:noop",
       "dependsOn": [
-        "audit",
         "lint",
         "build",
-        "test",
-        "dev"
+        "test-unit"
       ],
       "cache": false
     },
-    "verify-deploy": {
+    "verify-tier-2-dev": {
       "executor": "nx:noop",
       "dependsOn": [
-        "audit",
-        "lint",
-        "build",
-        "test",
-        "deploy"
+        "verify-tier-1*",
+        "acceptance:dev*",
+        "e2e:dev*"
+      ],
+      "cache": false
+    },
+    "verify-tier-3-deploy": {
+      "executor": "nx:noop",
+      "dependsOn": [
+        "verify-tier-2*",
+        "acceptance:deploy*",
+        "e2e:deploy*"
       ],
       "cache": false
     },
@@ -110,21 +120,23 @@
     "@nx/react",
     "@nx/node",
     "@nx/js",
-    "@nx/eslint",
     {
       "plugin": "@nx/oxlint",
       "options": {
-        "targetName": "oxlint"
+        "targetName": "lint"
+      }
+    },
+    {
+      "plugin": "@nx/oxlint",
+      "options": {
+        "targetName": "lint-fix"
       }
     },
     {
       "plugin": "./tools/workspace-plugin/src/inference/python.ts"
     },
     {
-      "plugin": "@nx/eslint/plugin",
-      "options": {
-        "targetName": "eslint:lint"
-      }
+      "plugin": "./tools/workspace-plugin/src/inference/verification.ts"
     },
     {
       "plugin": "@nx/vitest",
@@ -146,17 +158,6 @@
       "include": [
         "packages/ui/**/*"
       ]
-    },
-    {
-      "plugin": "@nx/eslint/plugin",
-      "options": {
-        "targetName": "lint"
-      },
-      "include": [
-        "packages/task-queue-client/**/*",
-        "packages/ui/**/*",
-        "tools/workspace-plugin/**/*"
-      ]
     }
   ],
   "nxCloudAccessToken": "",
@@ -166,7 +167,7 @@
     "@nx/next": {
       "application": {
         "style": "css",
-        "linter": "eslint"
+        "linter": "none"
       }
     }
   },

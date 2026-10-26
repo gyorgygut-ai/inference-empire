@@ -26,6 +26,12 @@ image = (
     .env(modal_env())
 )
 
+def generate(storage, pipe, torch_module, **kwargs) -> dict:
+    return run_guarded(
+        TinySDInput, kwargs, partial(do_inference, pipe, torch_module, storage)
+    )
+
+
 @app.cls(
     image=image,
     gpu="L4",

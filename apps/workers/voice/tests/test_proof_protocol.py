@@ -18,8 +18,8 @@ def client() -> TestClient:
     return TestClient(build_app())
 
 
-def test_healthz_reports_proof_mode(client: TestClient) -> None:
-    response = client.get("/healthz")
+def test_health_reports_proof_mode(client: TestClient) -> None:
+    response = client.get("/health")
 
     assert response.status_code == 200
     assert response.json() == {"status": "ok", "mode": "proof", "models": []}

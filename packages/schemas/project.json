@@ -3,80 +3,23 @@
   "name": "schemas",
   "projectType": "library",
   "sourceRoot": "packages/schemas",
-  "tags": [
-    "type:schemas"
-  ],
+  "tags": ["type:schemas"],
   "targets": {
     "build": {
       "executor": "nx:run-commands",
-      "options": {
-        "command": "node -e \"console.log('schemas:build needs a model configuration, e.g. nx run schemas:build:flux2')\""
-      },
+      "cache": true,
+      "inputs": ["{projectRoot}/*/schema.json", "{workspaceRoot}/packages/generate-zod-from-json.ts"],
+      "outputs": ["{projectRoot}/*/schema.ts"],
+      "options": { "command": "tsx packages/generate-zod-from-json.ts --all" },
       "configurations": {
-        "flux2": {
-          "inputs": [
-            "{workspaceRoot}/packages/schemas/flux2/schema.json",
-            "{workspaceRoot}/packages/generate-zod-from-json.ts"
-          ],
-          "outputs": ["{workspaceRoot}/packages/schemas/flux2/schema.ts"],
-          "command": "tsx packages/generate-zod-from-json.ts packages/schemas/flux2/schema.json packages/schemas/flux2/schema.ts"
-        },
-        "krea2": {
-          "inputs": [
-            "{workspaceRoot}/packages/schemas/krea2/schema.json",
-            "{workspaceRoot}/packages/generate-zod-from-json.ts"
-          ],
-          "outputs": ["{workspaceRoot}/packages/schemas/krea2/schema.ts"],
-          "command": "tsx packages/generate-zod-from-json.ts packages/schemas/krea2/schema.json packages/schemas/krea2/schema.ts"
-        },
-        "h3_comfy": {
-          "inputs": [
-            "{workspaceRoot}/packages/schemas/h3_comfy/schema.json",
-            "{workspaceRoot}/packages/generate-zod-from-json.ts"
-          ],
-          "outputs": ["{workspaceRoot}/packages/schemas/h3_comfy/schema.ts"],
-          "command": "tsx packages/generate-zod-from-json.ts packages/schemas/h3_comfy/schema.json packages/schemas/h3_comfy/schema.ts"
-        },
-        "h3_fl2va": {
-          "inputs": [
-            "{workspaceRoot}/packages/schemas/h3_fl2va/schema.json",
-            "{workspaceRoot}/packages/generate-zod-from-json.ts"
-          ],
-          "outputs": ["{workspaceRoot}/packages/schemas/h3_fl2va/schema.ts"],
-          "command": "tsx packages/generate-zod-from-json.ts packages/schemas/h3_fl2va/schema.json packages/schemas/h3_fl2va/schema.ts"
-        },
-        "h3_ref2va": {
-          "inputs": [
-            "{workspaceRoot}/packages/schemas/h3_ref2va/schema.json",
-            "{workspaceRoot}/packages/generate-zod-from-json.ts"
-          ],
-          "outputs": ["{workspaceRoot}/packages/schemas/h3_ref2va/schema.ts"],
-          "command": "tsx packages/generate-zod-from-json.ts packages/schemas/h3_ref2va/schema.json packages/schemas/h3_ref2va/schema.ts"
-        },
-        "realtime_voice": {
-          "inputs": [
-            "{workspaceRoot}/packages/schemas/realtime_voice/schema.json",
-            "{workspaceRoot}/packages/generate-zod-from-json.ts"
-          ],
-          "outputs": ["{workspaceRoot}/packages/schemas/realtime_voice/schema.ts"],
-          "command": "tsx packages/generate-zod-from-json.ts packages/schemas/realtime_voice/schema.json packages/schemas/realtime_voice/schema.ts"
-        },
-        "tiny_sd": {
-          "inputs": [
-            "{workspaceRoot}/packages/schemas/tiny_sd/schema.json",
-            "{workspaceRoot}/packages/generate-zod-from-json.ts"
-          ],
-          "outputs": ["{workspaceRoot}/packages/schemas/tiny_sd/schema.ts"],
-          "command": "tsx packages/generate-zod-from-json.ts packages/schemas/tiny_sd/schema.json packages/schemas/tiny_sd/schema.ts"
-        },
-        "vision": {
-          "inputs": [
-            "{workspaceRoot}/packages/schemas/vision/schema.json",
-            "{workspaceRoot}/packages/generate-zod-from-json.ts"
-          ],
-          "outputs": ["{workspaceRoot}/packages/schemas/vision/schema.ts"],
-          "command": "tsx packages/generate-zod-from-json.ts packages/schemas/vision/schema.json packages/schemas/vision/schema.ts"
-        }
+        "flux2": { "command": "tsx packages/generate-zod-from-json.ts packages/schemas/flux2/schema.json packages/schemas/flux2/schema.ts" },
+        "krea2": { "command": "tsx packages/generate-zod-from-json.ts packages/schemas/krea2/schema.json packages/schemas/krea2/schema.ts" },
+        "h3_comfy": { "command": "tsx packages/generate-zod-from-json.ts packages/schemas/h3_comfy/schema.json packages/schemas/h3_comfy/schema.ts" },
+        "h3_fl2va": { "command": "tsx packages/generate-zod-from-json.ts packages/schemas/h3_fl2va/schema.json packages/schemas/h3_fl2va/schema.ts" },
+        "h3_ref2va": { "command": "tsx packages/generate-zod-from-json.ts packages/schemas/h3_ref2va/schema.json packages/schemas/h3_ref2va/schema.ts" },
+        "realtime_voice": { "command": "tsx packages/generate-zod-from-json.ts packages/schemas/realtime_voice/schema.json packages/schemas/realtime_voice/schema.ts" },
+        "tiny_sd": { "command": "tsx packages/generate-zod-from-json.ts packages/schemas/tiny_sd/schema.json packages/schemas/tiny_sd/schema.ts" },
+        "vision": { "command": "tsx packages/generate-zod-from-json.ts packages/schemas/vision/schema.json packages/schemas/vision/schema.ts" }
       }
     }
   }

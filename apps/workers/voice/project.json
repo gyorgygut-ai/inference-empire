@@ -1,3 +1,7 @@
 {
-  "name": "workers-voice"
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "workers-voice",
+  "targets": {
+    "verify-static": {}
+  }
 }

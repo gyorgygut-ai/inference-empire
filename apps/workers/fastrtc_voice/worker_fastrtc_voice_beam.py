@@ -3,6 +3,7 @@
 Beam has no local CLI runner, so Level 1 runs this file directly via its
 ``__main__`` guard; Level 2 deploys the ``@asgi`` handler.
 """
+
 from __future__ import annotations
 
 import uvicorn
@@ -18,15 +19,17 @@ image = Image(python_version="python3.11").add_python_packages(IMAGE_PIP_DEPS)
 
 
 @asgi(
+    name="workers-fastrtc_voice",
     cpu=4,
     memory="8Gi",
-    timeout=900,
+    # Beam caps asgi request timeouts at 600 s; the keepalive shield is per-request.
+    timeout=600,
     keep_warm_seconds=60,
     concurrent_requests=CONCURRENCY_LIMIT * 2,
     image=image,
     secrets=["HF_TOKEN"],
 )
-def web(context: object) -> object:
+def web() -> object:
     return build_app()
 
 

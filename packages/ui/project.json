@@ -5,17 +5,13 @@
   "projectType": "library",
   "tags": ["type:ui"],
   "targets": {
-    "lint": {
-      "executor": "nx:noop",
-      "dependsOn": ["eslint:lint"]
-    },
     "test": {
       "executor": "nx:noop",
       "dependsOn": ["vitest:test"]
     },
-    "verify": {
+    "test-unit": {
       "executor": "nx:noop",
-      "dependsOn": ["audit", "lint", "build", "test"]
+      "dependsOn": ["vitest:test"]
     },
     "build": {
       "executor": "@nx/js:tsc",

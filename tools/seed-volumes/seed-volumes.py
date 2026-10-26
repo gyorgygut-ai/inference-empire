@@ -19,7 +19,7 @@ from typing import NoReturn
 WORKDIR = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(WORKDIR))
 
-from dotenv import load_dotenv
+from dotenv import load_dotenv  # noqa: E402
 
 load_dotenv(WORKDIR / ".env")
 

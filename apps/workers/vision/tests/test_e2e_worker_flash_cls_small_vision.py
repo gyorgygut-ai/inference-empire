@@ -5,7 +5,7 @@ import pytest
 from PIL import Image
 from shared.worker_vision import SmallVisionOutput
 
-import apps.vision.worker_flash_cls_small_vision as worker_function  # ty: ignore[unresolved-import]
+import apps.workers.vision.worker_flash_cls_vision as worker_function
 
 pytestmark = pytest.mark.skip(reason="flash dev not available")
 

@@ -106,6 +106,8 @@ invalid-return-type = "ignore"
 
 [tool.vulture]
 min_confidence = 90
+# Interface parameters that fakes/loaders must accept even when unused.
+ignore_names = ["messages", "generated", "cache_dir", "key"]
 exclude = [
     ".venv",
     "node_modules",

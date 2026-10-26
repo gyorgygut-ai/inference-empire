@@ -2,8 +2,8 @@ import type { ExecutorContext, PromiseExecutor } from '@nx/devkit';
 import { runCommand } from '../run-command';
 import type { RuffExecutorSchema } from './schema';
 
-export function buildCommand(projectRoot: string): string {
-  return `uvx ruff check ${projectRoot} --line-length 100`;
+export function buildCommand(projectRoot: string, fix = false): string {
+  return `uvx ruff check ${projectRoot} --line-length 100${fix ? ' --fix' : ''}`;
 }
 
 const runExecutor: PromiseExecutor<RuffExecutorSchema> = async (
@@ -13,7 +13,9 @@ const runExecutor: PromiseExecutor<RuffExecutorSchema> = async (
   if (!options.projectRoot) {
     return { success: false };
   }
-  return { success: runCommand(buildCommand(options.projectRoot), context.root) };
+  return {
+    success: runCommand(buildCommand(options.projectRoot, options.fix), context.root),
+  };
 };
 
 export default runExecutor;

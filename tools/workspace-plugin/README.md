@@ -21,7 +21,7 @@ There is no build step.
 | `ruff` | `uvx ruff check <projectRoot>` |
 | `ty` | `uv run --locked --group test ty check <projectRoot>` |
 | `vulture` | `uv run --locked --group test vulture <projectRoot>` |
-| `pytest` | `uv run --locked --group test pytest <projectRoot>/tests/ -k "<unit\|e2e>"` |
+| `pytest` | `PYTHONPATH=<projectRoot> uv run --locked --group test pytest <projectRoot>/tests/ -k "<unit\|e2e>"` |
 
 All take `projectRoot` (workspace-relative), not a bare family name.
 

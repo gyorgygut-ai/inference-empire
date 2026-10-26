@@ -43,7 +43,7 @@ class Krea2Ref2ImgInput(BaseModel):
     def _check_reference_image(cls, v: str | None, info: ValidationInfo) -> str | None:
         if v is None:
             return None
-        return validate_image_b64(v, info.field_name)
+        return validate_image_b64(v, info.field_name or "image")
     height: int = Field(default=768)
     width: int = Field(default=768)
     num_inference_steps: int = Field(default=8)
@@ -82,7 +82,7 @@ def load_pipeline(cache_dir=None):
     def _dist_unavailable() -> bool:
         return False
 
-    dist.is_available = _dist_unavailable
+    dist.is_available = _dist_unavailable  # ty: ignore[invalid-assignment]
 
     print("[INIT] loading model krea/Krea-2-Turbo", flush=True)
     t0 = time.time()
@@ -270,7 +270,7 @@ class _TorchModuleService:
         def _dist_unavailable() -> bool:
             return False
 
-        dist.is_available = _dist_unavailable
+        dist.is_available = _dist_unavailable  # ty: ignore[invalid-assignment]
 
     def __getattr__(self, name: str):
         import torch

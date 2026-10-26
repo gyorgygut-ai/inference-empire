@@ -95,8 +95,8 @@ def build_app() -> FastAPI:
 
     app = FastAPI(title="voice-worker", lifespan=lifespan, docs_url=None, redoc_url=None)
 
-    @app.get("/healthz")
-    async def healthz() -> dict[str, Any]:
+    @app.get("/health")
+    async def health() -> dict[str, Any]:
         return {"status": "ok", "mode": "proof", "models": []}
 
     @app.get("/turn-credentials")

@@ -7,7 +7,7 @@ from PIL import Image
 from pydantic import ValidationError
 from shared.worker_tiny_sd import TinySDInput, TinySDOutput, do_inference
 
-import apps.tiny_sd.worker_flash_cls_tiny_sd as worker_mod  # ty: ignore[unresolved-import]
+import apps.workers.tiny_sd.worker_flash_cls_tiny_sd as worker_mod  # ty: ignore[unresolved-import]
 
 
 def _png_bytes(img):

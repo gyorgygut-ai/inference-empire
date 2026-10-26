@@ -18,9 +18,9 @@ def _load(name, filename):
 
 
 shared = _load("rt_shared", "shared/worker_realtime_voice.py")
-beam_mod = _load("rt_beam", "worker_beam_asgi_realtime_voice_qwen.py")
-modal_mod = _load("rt_modal", "worker_modal_cls_realtime_voice_qwen.py")
-flash_mod = _load("rt_flash", "worker_flash_cls_realtime_voice_qwen.py")
+beam_mod = _load("rt_beam", "worker_beam_tq_realtime_voice.py")
+modal_mod = _load("rt_modal", "worker_modal_cls_realtime_voice.py")
+flash_mod = _load("rt_flash", "worker_flash_cls_realtime_voice.py")
 
 RealtimeVoiceInput = shared.RealtimeVoiceInput
 RealtimeVoiceOutput = shared.RealtimeVoiceOutput
@@ -122,12 +122,12 @@ def test_load_dependencies_mocked(monkeypatch):
     def fake_load():
         return models
 
-    monkeypatch.setattr(beam_mod, "load_dependencies", fake_load)
-    assert beam_mod.load_dependencies() is models
+    monkeypatch.setattr(beam_mod, "load_deps", fake_load)
+    assert beam_mod.load_deps() is models
     monkeypatch.setattr(modal_mod, "load_dependencies", fake_load)
     assert modal_mod.load_dependencies() is models
-    monkeypatch.setattr(flash_mod, "load_dependencies", fake_load)
-    assert flash_mod.load_dependencies() is models
+    monkeypatch.setattr(flash_mod, "load_deps", fake_load)
+    assert flash_mod.load_deps() is models
 
 
 class _StubWav:

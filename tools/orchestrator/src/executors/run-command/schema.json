@@ -2,68 +2,13 @@
   "$schema": "https://json-schema.org/schema",
   "version": 2,
   "title": "Orchestrator run-command executor",
-  "description": "Runs a command with contract env injection and contract fulfillment.",
+  "description": "Runs a command with contract env injection resolved from declared contract inputs.",
   "type": "object",
   "properties": {
-    "command": {
-      "type": "string"
-    },
-    "args": {
-      "type": "string"
-    },
-    "env": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "string"
-      }
-    },
-    "envFile": {
-      "type": "string",
-      "description": "Single env file read and injected; never forwarded to the command."
-    },
-    "envKey": {
-      "type": "string"
-    },
-    "cwd": {
-      "type": "string"
-    },
-    "needs": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "contract": {
-            "type": "string"
-          },
-          "contractKey": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "contract"
-        ]
-      }
-    },
-    "fulfills": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "contract": {
-            "type": "string"
-          },
-          "contractKey": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "contract",
-          "contractKey"
-        ]
-      }
-    }
+    "command": { "type": "string" },
+    "args": { "type": "string" },
+    "env": { "type": "object", "additionalProperties": { "type": "string" } },
+    "cwd": { "type": "string" }
   },
-  "required": [
-    "command"
-  ]
+  "required": ["command"]
 }

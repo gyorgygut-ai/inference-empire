@@ -8,6 +8,15 @@
     "projectRoot": {
       "type": "string",
       "description": "Project root relative to the workspace root (e.g. apps/workers/flux2)"
+    },
+    "fix": {
+      "type": "boolean",
+      "description": "Apply Ruff's safe automatic fixes"
+    },
+    "args": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Nx-forwarded arguments; fixes are controlled by the fix option"
     }
   },
   "required": ["projectRoot"]

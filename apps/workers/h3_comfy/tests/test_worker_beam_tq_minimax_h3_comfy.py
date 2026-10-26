@@ -8,7 +8,7 @@ from shared.worker_h3_comfy import (
     do_inference,
 )
 
-import apps.h3_comfy.worker_beam_tq_minimax_h3_comfy as worker_mod  # ty: ignore[unresolved-import]
+import apps.workers.h3_comfy.worker_beam_tq_h3_comfy as worker_mod  # ty: ignore[unresolved-import]
 
 
 class _Resp:
@@ -120,7 +120,7 @@ def test_workflow_scheduler_simple_and_steps():
 def test_ensure_comfy_models_calls_snapshot_download_when_missing(monkeypatch):
     from pathlib import Path
 
-    import apps.h3_comfy.worker_beam_tq_minimax_h3_comfy as worker_mod  # ty: ignore[unresolved-import]
+    import apps.workers.h3_comfy.worker_beam_tq_h3_comfy as worker_mod  # ty: ignore[unresolved-import]
     monkeypatch.setattr(worker_mod.os, "makedirs", lambda *_a, **_k: None)
     called = {}
     def fake_snapshot(repo_id, local_dir, local_dir_use_symlinks=False, allow_patterns=None):

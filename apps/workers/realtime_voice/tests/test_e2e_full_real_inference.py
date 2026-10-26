@@ -8,6 +8,7 @@ import base64
 import os
 
 import numpy as np
+import shared.worker_realtime_voice as shared
 from shared.worker_realtime_voice import float_to_pcm16
 
 

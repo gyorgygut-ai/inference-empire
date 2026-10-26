@@ -1,26 +1,26 @@
-import type { Handler } from "@netlify/functions";
-import { createRouter } from "./_shared/router";
-import { api as flux2Api } from "@packages/schemas/flux2/schema";
+import type { Handler } from "@netlify/functions"
+import { createRouter } from "./_shared/router"
+import { api as flux2Api } from "@packages/schemas/flux2/schema"
+import { readConfig } from "./_shared/config"
 
-const router = createRouter(flux2Api, "/flux2");
+const router = createRouter(flux2Api, "/flux2", { readConfig: () => readConfig() })
 
 export const handler: Handler = async (event) => {
-  const host = event.headers.host;
-  const rawUrl = event.rawUrl || `http://${host}${event.path}`;
+  const host = event.headers.host
+  const rawUrl = event.rawUrl || `http://${host}${event.path}`
   const req = new Request(rawUrl, {
     method: event.httpMethod,
-    headers: new Headers(event.headers as any),
+    headers: Object.fromEntries(Object.entries(event.headers).filter((entry): entry is [string, string] => entry[1] !== undefined)),
     body: event.body
       ? event.isBase64Encoded
         ? Buffer.from(event.body, "base64")
         : event.body
       : undefined,
-  });
-  const res = await router.fetch(req);
+  })
+  const res = await router.fetch(req)
   return {
     statusCode: res.status,
     headers: Object.fromEntries(res.headers.entries()),
     body: await res.text(),
-  };
-};
-
+  }
+}

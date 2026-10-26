@@ -14,10 +14,11 @@
     "has_turn": true
   },
   "session": {
-    "webrtc_id": "probe-5346eb2da8a8",
+    "webrtc_id": "probe-fd149886fd69",
     "offer_status_code": 200,
     "answer_candidate_types": [
       "host",
+      "relay",
       "srflx"
     ],
     "connection_state": "connected",
@@ -26,12 +27,18 @@
     "data_channel_messages": [
       "{\"type\": \"log\", \"data\": \"Server received: handshake\"}"
     ],
-    "outbound_frames": 237,
-    "inbound_frames": 248,
-    "session_s": 5.0
+    "outbound_frames": 775,
+    "inbound_frames": 824,
+    "session_s": 15.0,
+    "ice_pair": {
+      "local": "host",
+      "remote": "host",
+      "remote_addr": "('192.168.1.72', 60084)"
+    }
   },
   "keepalive": {
     "live_status_code": 200,
+    "ticks": 9,
     "closed_status_code": 404
   }
 }

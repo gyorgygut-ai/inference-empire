@@ -35,7 +35,7 @@ class Flux2Klein9bInput(BaseModel):
     def _check_input_image(cls, v: str | None, info: ValidationInfo) -> str | None:
         if v is None:
             return None
-        return validate_image_b64(v, info.field_name)
+        return validate_image_b64(v, info.field_name or "image")
 
     @field_validator("reference_images")
     @classmethod
@@ -72,7 +72,7 @@ def load_pipeline():
     def _dist_unavailable() -> bool:
         return False
 
-    dist.is_available = _dist_unavailable
+    dist.is_available = _dist_unavailable  # ty: ignore[invalid-assignment]
 
     import os
 
@@ -84,7 +84,8 @@ def load_pipeline():
 
     token = os.environ.get("HF_TOKEN")
 
-    from sdnq import SDNQConfig  # noqa: F401  importing sdnq registers its quantizer with transformers
+    # importing sdnq registers its quantizer with transformers
+    from sdnq import SDNQConfig  # noqa: F401  # ty: ignore[unresolved-import]
 
     try:
         pipe = diffusers.Flux2KleinPipeline.from_pretrained(
@@ -191,7 +192,7 @@ class _TorchModuleService:
         def _dist_unavailable() -> bool:
             return False
 
-        dist.is_available = _dist_unavailable
+        dist.is_available = _dist_unavailable  # ty: ignore[invalid-assignment]
 
     def __getattr__(self, name: str):
         import torch

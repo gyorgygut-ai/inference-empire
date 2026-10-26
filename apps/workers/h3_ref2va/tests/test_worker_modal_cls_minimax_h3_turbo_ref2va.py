@@ -11,7 +11,7 @@ from shared.worker_h3_ref2va import (
     do_inference,
 )
 
-import apps.h3_ref2va.worker_modal_cls_minimax_h3_ref2va as worker_mod  # ty: ignore[unresolved-import]
+import apps.workers.h3_ref2va.worker_modal_cls_h3_ref2va as worker_mod  # ty: ignore[unresolved-import]
 
 # Real (tiny) payloads: validators reject junk strings, so count tests use these.
 _IMG = (

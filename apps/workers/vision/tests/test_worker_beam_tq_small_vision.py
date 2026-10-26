@@ -13,7 +13,7 @@ from shared.worker_vision import (
     resolve_analyze_prompt,
 )
 
-import apps.vision.worker_beam_tq_small_vision as worker_mod  # ty: ignore[unresolved-import]
+import apps.workers.vision.worker_beam_tq_vision as worker_mod
 
 
 def _image_b64():

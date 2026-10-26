@@ -1,46 +1,53 @@
 #!/usr/bin/env -S npx tsx
 import { spawn } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { env as processEnv } from 'node:process';
 import { createRequire } from 'node:module';
+import { stripVTControlCharacters } from 'node:util';
 
 const require = createRequire(import.meta.url);
-const { emitReadySignal } = require('/Users/gyorgygutai/Projects/personal/inference-empire/node_modules/nx/dist/src/tasks-runner/readiness/ready-signal');
 
 const functionsRoot = join(process.cwd(), 'apps', 'functions');
-const workerEnvFile = join(process.cwd(), 'dist', 'workers-flux2', 'deploy.env');
-
-if (existsSync(workerEnvFile)) {
-  process.loadEnvFile(workerEnvFile);
-}
-
 const netlifyToml = readFileSync(join(functionsRoot, 'netlify.toml'), 'utf8');
 const devTable = /\[dev\]([\s\S]*?)(?=\n\[|$)/.exec(netlifyToml)?.[1] ?? '';
-const port = Number(/port\s*=\s*(\d+)/.exec(devTable)?.[1]);
+const portArg = process.argv.indexOf('--port');
+const port = Number(portArg >= 0 ? process.argv[portArg + 1] : /port\s*=\s*(\d+)/.exec(devTable)?.[1]);
 
-if (!port) {
-  console.error('[serve-netlify-functions] no [dev] port in apps/functions/netlify.toml');
+if (!Number.isInteger(port) || port < 1 || port > 65535) {
+  console.error('[serve-netlify-functions] invalid port');
   process.exit(1);
 }
 
 const child = spawn('npx', ['netlify', 'dev', '--port', String(port)], {
   cwd: functionsRoot,
   stdio: ['ignore', 'pipe', 'pipe'],
+  env: { ...processEnv, NO_COLOR: '1' },
 });
 
 let ready = false;
-child.stdout?.on('data', (chunk: Buffer) => {
-  process.stdout.write(chunk.toString());
-  if (!ready && chunk.toString().includes('Functions server is listening on')) {
-    ready = true;
-    emitReadySignal(`http://localhost:${port}`);
+let outputBuffer = '';
+const readyUrlPattern = /Local dev server ready:\s*(https?:\/\/\S+)/;
+const onOutput = (chunk: Buffer, stream: NodeJS.WriteStream) => {
+  const text = chunk.toString();
+  stream.write(text);
+  outputBuffer = `${outputBuffer}${stripVTControlCharacters(text)}`.slice(-8192);
+  if (!ready) {
+    const completeLines = outputBuffer.slice(0, outputBuffer.lastIndexOf('\n') + 1);
+    const readyUrl = readyUrlPattern.exec(completeLines)?.[1];
+    if (readyUrl) {
+      ready = true;
+      const { emitReadySignal } = require('@nx/devkit');
+      emitReadySignal(readyUrl);
+    }
   }
-});
+};
+child.stdout?.on('data', (chunk: Buffer) => onOutput(chunk, process.stdout));
+child.stderr?.on('data', (chunk: Buffer) => onOutput(chunk, process.stderr));
+child.on('error', (error) => { console.error(error); process.exit(1); });
 
-for (const signal of ['SIGINT', 'SIGTERM'] as const) {
-  process.on(signal, () => child.kill(signal));
+for (const sig of ['SIGINT', 'SIGTERM']) {
+  process.on(sig, () => child.kill(sig));
 }
 
 child.on('exit', (code) => process.exit(code ?? 1));
-
-await new Promise<void>((resolve) => child.on('exit', () => resolve()));

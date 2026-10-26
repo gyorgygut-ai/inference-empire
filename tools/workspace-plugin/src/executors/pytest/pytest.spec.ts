@@ -13,11 +13,15 @@ const context: ExecutorContext = {
 
 describe('Pytest Executor', () => {
   it('builds the unit command', () => {
-    expect(buildCommand()).toBe('uv run --locked --group test pytest tests/ -k "not e2e" -q');
+    expect(buildCommand('apps/workers/flux2')).toBe(
+      'PYTHONPATH=apps/workers/flux2 uv run --locked --group test pytest apps/workers/flux2/tests/ -k "not e2e" -q'
+    );
   });
 
   it('builds the e2e command', () => {
-    expect(buildCommand('e2e')).toBe('uv run --locked --group test pytest tests/ -k "e2e" -q');
+    expect(buildCommand('apps/workers/flux2', 'e2e')).toBe(
+      'PYTHONPATH=apps/workers/flux2 uv run --locked --group test pytest apps/workers/flux2/tests/ -k "e2e" -q'
+    );
   });
 
   it('fails without a project root', async () => {

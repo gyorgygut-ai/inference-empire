@@ -22,46 +22,34 @@
         "command": "python3 tools/uv-build {args.entry} {args.out}"
       },
       "configurations": {
-        "modal": {
-          "entry": "apps/workers/krea2/worker_modal_cls_krea2_ref2img.py",
-          "out": "apps/workers/krea2/dist/modal"
-        },
-        "beam": {
-          "entry": "apps/workers/krea2/worker_beam_tq_krea2_ref2img.py",
-          "out": "apps/workers/krea2/dist/beam"
-        },
-        "flash": {
-          "entry": "apps/workers/krea2/worker_flash_cls_krea2_ref2img.py",
-          "out": "apps/workers/krea2/dist/flash"
-        }
+        "modal": { "entry": "apps/workers/krea2/worker_modal_cls_krea2_ref2img.py", "out": "apps/workers/krea2/dist/modal" },
+        "beam": { "entry": "apps/workers/krea2/worker_beam_tq_krea2_ref2img.py", "out": "apps/workers/krea2/dist/beam" }
       }
+    },
+    "build-beam": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "inputs": [
+        "{projectRoot}/**/*.py",
+        "{projectRoot}/pyproject.toml",
+        "{projectRoot}/uv.lock",
+        "{workspaceRoot}/packages/workers/**/*",
+        "{workspaceRoot}/tools/uv-build"
+      ],
+      "outputs": ["{projectRoot}/dist"],
+      "options": { "cwd": "{workspaceRoot}", "command": "python3 tools/uv-build apps/workers/krea2/worker_beam_tq_krea2_ref2img.py apps/workers/krea2/dist/beam" }
     },
     "deploy-modal": {
-      "executor": "nx:run-commands",
-      "dependsOn": ["build:modal"],
+      "executor": "orchestrator:run-command",
+      "dependsOn": ["build"],
       "cache": false,
-      "options": {
-        "cwd": "{workspaceRoot}",
-        "command": "MODAL_ENV_FILE=.env PYTHONPATH=. uv run --project . modal deploy apps/workers/krea2/dist/modal/worker_modal_cls_krea2_ref2img.py && URL=$(MODAL_ENV_FILE=.env tools/orchestrator/src/get-modal-url.ts {projectName}) && [ -n \"$URL\" ] && echo \"WORKER_URL_MODAL=$URL\" >> dist/deploy/krea2/workers.env"
-      }
+      "options": { "cwd": "{workspaceRoot}", "command": "npx tsx tools/deploy-modal.ts", "args": "apps/workers/krea2/dist/modal/worker_modal_cls_krea2_ref2img.py" }
     },
     "deploy-beam": {
-      "executor": "nx:run-commands",
-      "dependsOn": ["build:beam"],
+      "executor": "orchestrator:run-command",
+      "dependsOn": ["build-beam"],
       "cache": false,
-      "options": {
-        "cwd": "{projectRoot}/dist/beam",
-        "command": "uv run --project ../../../../.. beam deploy worker_beam_tq_krea2_ref2img.py:dispatch && URL=$(../../../../tools/orchestrator/src/get-beam-url.ts {projectName}) && [ -n \"$URL\" ] && echo \"WORKER_URL_BEAM=$URL\" >> ../../../../dist/deploy/krea2/workers.env"
-      }
-    },
-    "deploy-flash": {
-      "executor": "nx:run-commands",
-      "dependsOn": ["build:flash"],
-      "cache": false,
-      "options": {
-        "cwd": "{projectRoot}/dist/flash",
-        "command": "uv run --project ../../../../.. flash deploy worker_flash_cls_krea2_ref2img.py && URL=$(../../../../tools/orchestrator/src/get-flash-url.ts {projectName}) && [ -n \"$URL\" ] && echo \"WORKER_URL_FLASH=$URL\" >> ../../../../dist/deploy/krea2/workers.env"
-      }
+      "options": { "cwd": "{workspaceRoot}", "command": "npx tsx tools/deploy-beam.ts", "args": "apps/workers/krea2/dist/beam/worker_beam_tq_krea2_ref2img.py" }
     }
   }
 }

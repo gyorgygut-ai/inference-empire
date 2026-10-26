@@ -10,9 +10,9 @@ import {
 export interface PythonWorkerPluginOptions {
   readonly auditTarget?: string;
   readonly lintTarget?: string;
+  readonly lintFixTarget?: string;
   readonly buildTarget?: string;
   readonly testTarget?: string;
-  readonly verifyTarget?: string;
 }
 
 function isFamilyRoot(projectRoot: string): boolean {
@@ -41,9 +41,9 @@ function createProject(
 
   const auditTarget = options?.auditTarget ?? 'audit';
   const lintTarget = options?.lintTarget ?? 'lint';
+  const lintFixTarget = options?.lintFixTarget ?? 'lint-fix';
   const buildTarget = options?.buildTarget ?? 'build';
   const testTarget = options?.testTarget ?? 'test';
-  const verifyTarget = options?.verifyTarget ?? 'verify';
 
   const testDeps: string[] = [];
   if (hasUnit) {
@@ -65,6 +65,11 @@ function createProject(
       options: { projectRoot },
       cache: true,
     },
+    [lintFixTarget]: {
+      executor: '@inference/workspace-plugin:ruff',
+      options: { projectRoot, fix: true },
+      cache: false,
+    },
     ty: {
       executor: '@inference/workspace-plugin:ty',
       options: { projectRoot },
@@ -79,10 +84,11 @@ function createProject(
     [lintTarget]: { dependsOn: [auditTarget, 'ruff', 'ty', 'vulture'] },
     [buildTarget]: {},
     [testTarget]: { dependsOn: testDeps },
-    [verifyTarget]: {
-      dependsOn: [auditTarget, lintTarget, buildTarget, testTarget],
-      cache: false,
-    },
+    // verify* dependency lists live in nx.json targetDefaults.
+    'verify': {},
+    'verify-tier-1-audit': {},
+    'verify-tier-2-dev': {},
+    'verify-tier-3-deploy': {},
   };
 
   if (hasUnit) {

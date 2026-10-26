@@ -3,6 +3,7 @@
 Level 1 runs this file locally via ``modal run ...::serve``.
 Level 2 deploys the same class as an ASGI app.
 """
+
 from __future__ import annotations
 
 import modal
@@ -15,7 +16,7 @@ from shared.worker_fastrtc_voice import (
     load_local_env,
 )
 
-app = modal.App("fastrtc-voice-worker")
+app = modal.App("workers-fastrtc_voice")
 
 image = (
     modal.Image.debian_slim(python_version="3.11")
@@ -24,7 +25,7 @@ image = (
 )
 
 
-@app.cls(
+@app.function(
     image=image,
     gpu=None,
     cpu=4,
@@ -34,10 +35,9 @@ image = (
     max_containers=1,
 )
 @modal.concurrent(max_inputs=CONCURRENCY_LIMIT * 2)
-class FastrtcVoiceWorker:
-    @modal.asgi_app()
-    def web(self) -> object:
-        return build_app()
+@modal.asgi_app()
+def generate_web() -> object:
+    return build_app()
 
 
 @app.local_entrypoint()

@@ -7,7 +7,7 @@ from shared.worker_h3_comfy import (
     do_inference,
 )
 
-import apps.h3_comfy.worker_modal_cls_minimax_h3_comfy as worker_mod  # ty: ignore[unresolved-import]
+import apps.workers.h3_comfy.worker_modal_cls_h3_comfy as worker_mod  # ty: ignore[unresolved-import]
 
 
 class _Resp:
@@ -121,11 +121,11 @@ def test_first_last_frame_workflow_and_images():
     assert len(build_images(req)) == 2
 
 
-def test_ensure_comfy_models_calls_snapshot_download_when_missing(monkeypatch, tmp_path):
+def test_ensure_comfy_models_calls_snapshot_download_when_missing(monkeypatch):
     # Mock filesystem operations to avoid real /comfyui writes
     from pathlib import Path
 
-    import apps.h3_comfy.worker_modal_cls_minimax_h3_comfy as worker_mod  # ty: ignore[unresolved-import]
+    import apps.workers.h3_comfy.worker_modal_cls_h3_comfy as worker_mod  # ty: ignore[unresolved-import]
     monkeypatch.setattr(worker_mod.os, "makedirs", lambda *_a, **_k: None)
     # Simulate /comfyui not writable by raising OSError on makedirs for models
     # Actually we let OSError path swallow; just test snapshot_download call
