@@ -1,0 +1,15 @@
+{
+  "name": "dotenvx",
+  "version": "0.0.1",
+  "private": true,
+  "type": "commonjs",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "dependencies": {
+    "@dotenvx/dotenvx": "^2.38.2",
+    "@nx/devkit": "^24.0.1",
+    "nx": "^24.0.1",
+    "tslib": "^2.3.0"
+  },
+  "executors": "./executors.json"
+}

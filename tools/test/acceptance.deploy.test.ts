@@ -1,43 +1,29 @@
-import { readFileSync } from 'node:fs'
-import { resolve } from 'node:path'
-import { parse } from 'dotenv'
 import { expect, test } from 'vitest'
-import {
-  TaskQueueServiceFlux2DeployContract,
-  taskQueueServiceFlux2DeploySchema,
-} from '@inference/contracts/task-queue-service/flux2-deploy.contract.ts'
-import {
-  WorkerServiceFlux2DeployContract,
-  workerServiceFlux2DeploySchema,
-} from '@inference/contracts/worker-service/flux2-deploy.contract.ts'
+import { envSchema } from '../../env.schema.deploy'
+import { deployedUrl, expectImage, generateImage, inferenceTimeout, pingFrontend, pingRouter, pingWorker, queueWithToken } from './acceptance-probes'
 
-const readContractEnv = (path: string) =>
-  parse(readFileSync(resolve(process.cwd(), '../..', path), 'utf8'))
+const env = envSchema.parse(process.env)
 
-const workerEnv = workerServiceFlux2DeploySchema.parse(
-  readContractEnv(WorkerServiceFlux2DeployContract.envFilePath),
-)
-const queueEnv = taskQueueServiceFlux2DeploySchema.parse(
-  readContractEnv(TaskQueueServiceFlux2DeployContract.envFilePath),
-)
+test('deployed workers-flux2 accepts an authenticated ping', () => pingWorker('workers-flux2', env.BEAM_TOKEN))
 
-test('Flux2 deploy worker contract resolves', () => {
-  expect(workerEnv.WORKER_RESOLVED_BEAM_URL).toBeTruthy()
+test('deployed workers-tiny_sd accepts an authenticated ping', () => pingWorker('workers-tiny_sd', env.BEAM_TOKEN))
+
+test('deployed flux2 /q produces a downloadable image with its own token', { timeout: inferenceTimeout + 60000 }, async () => {
+  const url = await generateImage('flux2', deployedUrl('cf-worker', 'router_flux2'), env.ROUTER_FLUX2_GENERATED_AUTH_TOKEN)
+  await expectImage(url)
 })
 
-test('Flux2 deploy task-queue contract resolves', () => {
-  expect(queueEnv.ROUTER_RESOLVED_URL).toBeTruthy()
+test('deployed flux2 /q rejects the tinysd token', async () => {
+  const response = await queueWithToken(deployedUrl('cf-worker', 'router_flux2'), env.ROUTER_TINYSD_GENERATED_AUTH_TOKEN)
+  expect(response.status).toBe(401)
+  expect(await response.json()).toEqual({ error: 'Unauthorized' })
 })
 
-test('Flux2 worker responds', async () => {
-  const response = await fetch(workerEnv.WORKER_RESOLVED_BEAM_URL, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.BEAM_TOKEN ?? ''}` }, body: JSON.stringify({ prompt: 'ping' }) })
-  expect(response.status).not.toBe(404)
-  expect(response.status).toBeLessThan(500)
+test('deployed tinysd /q produces a downloadable image with its own token', { timeout: inferenceTimeout + 60000 }, async () => {
+  const url = await generateImage('tinysd', deployedUrl('cf-worker', 'router_tinysd'), env.ROUTER_TINYSD_GENERATED_AUTH_TOKEN)
+  await expectImage(url)
 })
 
-test('Flux2 router responds', async () => {
-  const response = await fetch(`${queueEnv.ROUTER_RESOLVED_URL}/flux2/sup`, {
-    headers: { Authorization: `Bearer ${queueEnv.ROUTER_GENERATED_AUTH_TOKEN}` },
-  })
-  expect(response.status).toBe(400)
-})
+test('deployed face-value can reach its flux2 router', () => pingRouter(deployedUrl('cf-worker', 'router_flux2'), env.ROUTER_FLUX2_GENERATED_AUTH_TOKEN))
+
+test('deployed face-value serves the app', () => pingFrontend(deployedUrl('vercel', env.FACE_VALUE_VERCEL_PROJECT_ID, '--org', env.FACE_VALUE_VERCEL_ORG_ID)))

@@ -1,1 +1,0 @@
-{"name": "probe-executor", "version": "0.0.0", "type": "module", "nx": {"executors": {"probe": {"implementation": "./executor.ts", "schema": "./schema.json"}}}}

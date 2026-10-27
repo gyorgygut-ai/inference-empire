@@ -1,16 +1,16 @@
 # Dedicated Endpoints
 
-Dedicated Endpoints run any model in the
-[Modal Library](https://modal.com/library), or custom weights, on isolated,
-autoscaling containers. Use them when you need control over autoscaling and
-regions, or dedicated capacity.
+Dedicated Endpoints run
+[supported models](/docs/guide/supported-models#dedicated-endpoint-models),
+or compatible custom weights, on isolated, autoscaling containers. Use them
+when you need control over autoscaling and regions, or dedicated capacity.
 
 ## Create a Dedicated Endpoint
 
-Create an Endpoint from the CLI:
+The CLI creates Dedicated Endpoints by default:
 
 ```bash
-modal endpoint create --model Qwen/Qwen3.5-4B
+modal endpoint create --name support-chat --model Qwen/Qwen3.5-4B
 ```
 
 Modal resolves the model, selects a compatible serving recipe, and starts
@@ -18,7 +18,9 @@ provisioning. The command prints the Endpoint ID and a dashboard link where you
 can watch it come online. Dedicated Endpoints can also be created from the
 [**Endpoints**](https://modal.com/endpoints) tab in the dashboard.
 
-If you omit `--name`, Modal derives a name from the model.
+When you create an Endpoint, Modal uses its name as the
+[model name](/docs/guide/endpoints#model-names) that clients send as `model` in
+requests.
 
 ## View the generated source
 
@@ -29,9 +31,9 @@ code into your own Modal App when you need full control of the serving stack.
 
 ## Serve custom weights
 
-Custom weights use the serving recipe for a compatible Modal Library model. Pass
-that model with `--model`, then provide weights from Hugging Face or a Modal
-Volume.
+Custom weights use the serving recipe for a compatible
+[Dedicated Endpoint model](/docs/guide/supported-models#dedicated-endpoint-models). Pass that model with `--model`,
+then provide weights from Hugging Face or a Modal Volume.
 
 From Hugging Face:
 
@@ -73,6 +75,16 @@ modal endpoint create \
 Use `--colocate-compute` instead to run compute in the routing region. Pinning
 compute to a region incurs a
 [region selection multiplier](/docs/guide/region-selection#pricing).
+
+## Request routing
+
+Dedicated Endpoints inherit the
+[affinity routing](/docs/guide/servers#request-routing) of Servers:
+requests that share a `Modal-Routing-Affinity-Key` header are routed to the same container
+on a best-effort basis, which keeps a conversation's prompt prefix in that
+container's cache. See
+[Affinity routing](/docs/guide/endpoints#affinity-routing) for how to choose the
+header value.
 
 ## Metrics
 

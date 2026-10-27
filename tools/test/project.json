@@ -4,36 +4,64 @@
   "projectType": "library",
   "root": "tools/test",
   "tags": ["type:tool", "scope:test"],
+  "implicitDependencies": ["*"],
   "targets": {
+    "verify-tier-1-audit": {
+      "executor": "nx:noop",
+      "cache": false,
+      "dependsOn": [
+        "^lint",
+        "^build",
+        "^test-unit",
+        "lint",
+        "test-unit"
+      ]
+    },
+    "test-unit": {
+      "executor": "dotenvx:run-commands",
+      "cache": false,
+      "options": {
+        "cwd": "tools/test",
+        "command": "vitest run",
+        "args": "--config vitest.config.mts --exclude 'acceptance.*.test.ts'"
+      }
+    },
     "acceptance:dev": {
-      "executor": "nx:run-commands",
+      "executor": "dotenvx:run-commands",
       "cache": false,
       "dependsOn": [
         { "projects": ["face-value"], "target": "dev", "waitFor": "ready" }
       ],
       "options": {
-        "cwd": "{projectRoot}",
-        "command": "vitest run --config vitest.config.mts acceptance.dev.test.ts"
+        "cwd": "tools/test",
+        "command": "vitest run",
+        "args": "--config vitest.config.mts acceptance.dev.test.ts"
       }
     },
-    "acceptance:dev-krea2": {
-      "executor": "nx:run-commands",
+    "acceptance:dev-tinysd": {
+      "executor": "dotenvx:run-commands",
       "cache": false,
       "dependsOn": [
-        { "projects": ["functions"], "target": "dev-krea2", "waitFor": "ready" }
+        { "projects": ["functions"], "target": "dev-tinysd", "waitFor": "ready" }
       ],
       "options": {
-        "cwd": "{projectRoot}",
-        "command": "vitest run --config vitest.config.mts acceptance.dev-krea2.test.ts"
+        "cwd": "tools/test",
+        "command": "vitest run",
+        "args": "--config vitest.config.mts acceptance.dev-tinysd.test.ts"
       }
     },
     "acceptance:deploy": {
-      "executor": "nx:run-commands",
+      "executor": "dotenvx:run-commands",
       "cache": false,
-      "dependsOn": ["face-value:deploy"],
+      "dependsOn": [
+        "face-value:deploy",
+        "functions:deploy"
+      ],
       "options": {
-        "cwd": "{projectRoot}",
-        "command": "vitest run --config vitest.config.mts acceptance.deploy.test.ts"
+        "cwd": "tools/test",
+        "env": { "VERCEL_TOKEN": "${FACE_VALUE_VERCEL_TOKEN}" },
+        "command": "vitest run",
+        "args": "--config vitest.config.mts acceptance.deploy.test.ts"
       }
     },
     "e2e:dev": {
@@ -43,6 +71,6 @@
     "e2e:deploy": {
       "executor": "nx:noop",
       "cache": false
-    },
+    }
   }
 }

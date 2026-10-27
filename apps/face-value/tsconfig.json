@@ -18,7 +18,6 @@
     "paths": {
       "@/*": ["./*"],
       "@inference/ui/*": ["../../packages/ui/src/*"],
-      "@inference/contracts": ["../../packages/contracts/src/index.ts"],
       "@packages/schemas/*": ["../../packages/schemas/*"]
     }
   },

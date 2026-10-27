@@ -12,15 +12,12 @@
   - [Deploy Nemotron 3](./nemotron_inference.md)
   - [Serve Inkling-Small with SGLang](./inkling_small.md)
   - [Serve DeepSeek-V4-Flash](./deepseek_v4_flash.md)
-  - [Efficient LLM Finetuning with Unsloth](./unsloth_finetune.md)
   - [Run a multimodal RAG chatbot to answer questions about PDFs](./chat_with_pdf_vision.md)
-  - [Fine-tune an LLM to replace your CEO](./llm-finetuning.md)
   - [Deploy a stateless MCP with FastMCP](./mcp_server_stateless.md)
 - Images, video, & 3D
   - [Edit images with Flux Kontext](./image_to_image.md)
   - [Fine-tune Wan2.1 video models on your face](./music-video-gen.md)
   - [Run Flux fast with torch.compile](./flux.md)
-  - [Fine-tune Flux with LoRA](./diffusers_lora_finetune.md)
   - [Animate images with LTX-Video](./image_to_video.md)
   - [Generate video clips with LTX-Video](./ltx.md)
   - [Run Stable Diffusion with a CLI, API, and web UI](./text_to_image.md)
@@ -41,7 +38,6 @@
   - [Fold proteins with Boltz-2](./boltz_predict.md)
 - Modal Sandboxes
   - [Run Cursor Cloud Agents on Modal](./cursor.md)
-  - [Run a background coding agent with OpenCode](./opencode_server.md)
   - [Build a scalable AI coding platform](./modal-vibe.md)
   - [Create GIFs from Slack using the Claude Agent SDK](./claude-slack-gif-creator.md)
   - [Run a LangGraph agent's code in a secure GPU sandbox](./agent.md)
@@ -50,9 +46,11 @@
   - [Build a stateful, sandboxed code interpreter](./simple_code_interpreter.md)
   - [Run Node.js, Ruby, and more in a Sandbox](./safe_code_execution.md)
   - [Speed up Sandbox starts with warm pools](./sandbox_pool.md)
+  - [Inject secrets into outbound requests](./sandbox_secret_injection.md)
 - Reinforcement Learning
-  - [Train a model to solve math problems using GRPO and verl](./grpo_verl.md)
-  - [Train a model to solve coding problems using GRPO and TRL](./grpo_trl.md)
+  - [Paint flowers with code](./paint_flowers.md)
+  - [Train coding agents](./swe_gym.md)
+  - [Make LLMs better at math](./miles_grpo.md)
 - Embeddings
   - [Serve Liquid AI embeddings with Modal Servers](./liquidai_embeddings_server.md)
   - [Embed millions of documents with TEI](./amazon_embeddings.md)

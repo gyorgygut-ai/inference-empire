@@ -110,7 +110,7 @@ the shell commands to install Playwright and its dependencies:
 import modal
 
 app = modal.App("example-webscraper")
-playwright_image = modal.Image.debian_slim(python_version="3.10").run_commands(
+playwright_image = modal.Image.debian_slim(python_version="3.12").run_commands(
     "apt-get update",
     "apt-get install -y software-properties-common",
     "apt-add-repository non-free",
@@ -239,7 +239,7 @@ Slack using our credentials, which looks something like:
 ```python
 import os
 
-slack_sdk_image = modal.Image.debian_slim(python_version="3.10").uv_pip_install(
+slack_sdk_image = modal.Image.debian_slim(python_version="3.12").uv_pip_install(
     "slack-sdk"
 )
 

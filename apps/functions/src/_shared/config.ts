@@ -8,10 +8,12 @@ const runtimeConfig = z.object({
 
 export type RuntimeConfig = z.infer<typeof runtimeConfig>
 
-export function readConfig(env: NodeJS.ProcessEnv = process.env): RuntimeConfig {
+export type RouterEnv = Record<string, unknown>
+
+export function readConfig(env: RouterEnv): RuntimeConfig {
   return runtimeConfig.parse({
-    routerToken: env.ROUTER_GENERATED_AUTH_TOKEN,
-    beamUrl: env.WORKER_RESOLVED_BEAM_URL,
+    routerToken: env.AUTH_TOKEN,
+    beamUrl: env.WORKER_BEAM_URL,
     beamToken: env.BEAM_TOKEN,
   })
 }

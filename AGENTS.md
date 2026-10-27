@@ -4,15 +4,9 @@
 
 ---
 
-## Key Projects
-
-- [Router](./apps/functions/AGENTS.md)
-- [Workers](./apps/workers/AGENTS.md)
-- [Face Value](./apps/face-value/AGENTS.md)
-
----
-
 ## Non-negotiables
+
+**Config**: Use `dotenvx run -f config.{dev|deploy} --` where config is needed
 
 **Correct**:
 
@@ -20,7 +14,7 @@
 - **Approach**: Code matched to authoritive specs; NOT specs to code
 - **Outcome**: Code fulfilling acceptance criteria as specs dictate
 
-**No guesses**:
+**Proven**:
 
 - **Goal**: Idiomatic, documented patterns instead of hand-rolling and guesses
 - **Approach**: Use the `nx-*`, `python-uv` skills and the `nx mcp` to verify
@@ -30,63 +24,94 @@
 
 ## Orchestration
 
-**Dev URL Discovery**:
+**Key Apps**:
 
-- **Problem**: `consumer:dev` needs `continuous` `producer:dev`'s server url
-- **Consumer**: `consumer` has `dependsOn: "producer:dev", waitFor: "ready"`
-- **Producer**: `producer` has `"readyWhen": { "signal": true }` and emits its actual listening URL through public `emitReadySignal` after the server listens
-- **Outcome**: nx hands `process.env.NX_READY_URL` to `consumer` after `ready signal`
+  - **GPU Workers**: [Workers](./apps/workers/AGENTS.md)
+  - **Multi-tenant Router**: [Router](./apps/functions/AGENTS.md)
+  - **Face Value Frontend**: [Face Value](./apps/face-value/AGENTS.md)
+
+**Dev URLs**:
+
+- **Problem**: I want to delegate `dev` urls
+- **Approach**: 
+  - `producer` declares `readyWhen`, `"url": "*:{env.PRODUCER_PORT}"`
+  - `consumer` declares it depends on `producer` + `"waitFor": "ready"`
+- **Outcome**:
+  - `consumer` starts with interpolated `PRODUCER_URL`
+
+**Deploy URLs**:
+
+- **Problem**: I want to delegate `deploy` urls
+- **Approach**: 
+  - `producer:deploy` runs direct `vendor deploy`
+  - `consumer:deploy` depends on `producer:deploy`
+  - `consumer:deploy` gets `PRODUCER_URL={get-**-url.ts}`
+- **Outcome**:
+  - `consumer` can send requests to `producer` url
+
+**Dynamic Config**:
+
+- **Problem**: I want dynamic values generated on each run
+- **Approach**: 
+  - `config.{dev|deploy}` generates `{GENERATED_TOKEN}`
+  - `dotenv-expand` `1000.0.0` enables command substitution
+- **Outcome**:
+  - `producer` accesses `AUTH_TOKEN={GENERATED_TOKEN}`
+  - `consumer` accesses `AUTH_TOKEN={GENERATED_TOKEN}`
+  - `consumer` can authenticate itself to `producer`
+
+**Env Delegation**:
+
+- **Problem**: I want to delegate `dev` + `deploy` config
+- **Approach**: 
+  - `config.{dev|deploy}` holds mandatory runtime config
+  - `options.{env|args}` instead of one-by-one env plumbing
+  - `dotenvx/run-commands` supports `options.env` interpolation
+  - `.env*`, ids, urls, tokens all treated as secret; gitignored
+  - `dotenvx run -f config.{dev|deploy} --` ensures consistent env
 - **Acceptance**:
-  - Vendor local dev servers wrapped in `serve-*` scripts
-  - serve script starts vendor on `args.port`
-  - serve script emits ready signal when server is up
-  - serve script does not do anything else; no env juggling
-
-**Deploy URL Discovery**:
-
-- **Problem**: `app-x:deploy` needs `app2:deploy`'s deployed url
-- **Approach**: `app-x` dependsOn `app2:deploy` + requests it's url
-- **Tool**: [Orchestrator executes](tools/orchestrator/AGENTS.md)
-- **Outcome**: `app-x:deploy` + `inputs` gets `process.env.APP_X_DEPLOYED_URL`
- - **Acceptance**:
-  - No custom  `deploy-*` scripts; use vendor cli directly
-  - `app-x:deploy` must declare contract as task `input`
-  - `contract` defines how to `resolve` values from it's `schema`
-  - `executor` detects input and hands off contract values
-  - `app2` receives values in `env`; NO manual env juggling
-
-**Deploy URL & Contracts**:
-
-- **Problem**: `app-y:task` depends on a runtime data contract
-- **Approach**: [Orchestrator injects](tools/orchestrator/AGENTS.md)
-- **Outcome**: Contract extended into `input`; `:task` data in `process.env`
+  - `workflows/deploy.yml`, `gh secrets` kept in sync
+  - Untracked `.env*` at `{workspaceRoot}` + `{projectRoot}`
+  - Tracked `env*.{example|schema.ts}` for each `.env*` file
+  - Tracked `config.dev` + `config.deploy` at `{workspaceRoot}`
 
 ---
 
-## Key Targets
+## Acceptance Criteria
 
-**Acceptance**: `face-value:dev`
+**Task**: `functions:dev`
 
-- `WorkerServiceFlux2DeployContract` resolves required values
-- `TaskQueueServiceFlux2DevContract` resolves required values
-- `flux2 worker`: ping `WORKER_RESOLVED_BEAM_URL` suceeds
-- `flux2 router`: ping `http://127.0.0.1:4000` suceeds
-- `face-value`: ping `http://127.0.0.1:3000` suceeds
+- PING `{get-beam-url.ts(workers-flux2)}` suceeds
+- PING `{get-beam-url.ts(workers-tinysd)}` suceeds
+- POST `:${ROUTER_FLUX2_PORT}/q` + `ROUTER_FLUX2_GENERATED_AUTH_TOKEN`
+  -> produces a `flux2` `presigned_url`
+- POST `:${ROUTER_TINYSD_PORT}/q` + `ROUTER_FLUX2_GENERATED_AUTH_TOKEN`
+  -> rejects the token
+- POST `:${ROUTER_tinysd_PORT}/q` + `ROUTER_TINYSD_GENERATED_AUTH_TOKEN`
+  -> produces a `tinysd` `presigned_url`
 
-**Acceptance**: `functions:dev-krea2`
+**Task**: `functions:deploy`
 
-- `WorkerServiceKrea2DeployContract` resolves required values
-- `TaskQueueServiceKrea2DevContract` resolves required values
-- `krea2 worker`: ping `WORKER_RESOLVED_BEAM_URL` suceeds
-- `krea2 router`: ping `http://127.0.0.1:4025` suceeds
+- PING `{get-beam-url.ts(workers-flux2)}` suceeds
+- PING `{get-beam-url.ts(workers-tinysd)}` suceeds
+- POST `get-cf-worker-url.ts(router_flux2)/q` + `ROUTER_FLUX2_GENERATED_AUTH_TOKEN`
+  -> produces a `flux2` `presigned_url`
+- POST `get-cf-worker-url.ts(router_flux2)/q` + `ROUTER_TINYSD_GENERATED_AUTH_TOKEN`
+  -> rejects the token
+- POST `get-cf-worker-url.ts(router_tinysd)/q` + `ROUTER_TINYSD_GENERATED_AUTH_TOKEN`
+  -> produces a `tinysd` `presigned_url`
 
-**Acceptance**: `face-value:deploy`
+**Task**: `face-value:dev`
 
-- `WorkerServiceFlux2DeployContract` resolves required values
-- `TaskQueueServiceFlux2DeployContract` resolves required values
-- `flux2 worker`: ping `WORKER_RESOLVED_BEAM_URL` suceeds
-- `flux2 router`: ping `ROUTER_RESOLVED_URL` suceeds
-- `face-value`: deploy suceeds
+- ping `get-beam-url.ts(workers-flux2)` suceeds
+- ping `http://127.0.0.1:${ROUTER_FLUX2_PORT}` suceeds
+- ping `http://127.0.0.1:${FACE_VALUE_PORT}` suceeds
+
+**Task**: `face-value:deploy`
+
+- ping `get-beam-url.ts(workers-flux2)` suceeds
+- ping `get-cf-worker-url.ts(router_flux2)` suceeds
+- ping `get-vercel-url.ts(FACE_VALUE_VERCEL_PROJECT_ID)` suceeds
 
 ---
 
@@ -94,12 +119,11 @@
 
 **Non-negotiable**:
 
-- **Proof**: the verification chain must prove all changes
-- **Progress**: tier-by-tier; until all passed or failure
-- **Failures**: run `lint-fix`; report; investigate; fix; restart verification
-- **Defaults**: `verify*` tasks must be in `nx.json`
-- **Readiness**: assert after `finite` deps finish or `continuous` signal ready
-- **Tidiness**: 6 lines per test criteria, at the most: `setup` \n `act` \n `assert`
+- **Proof**: the verification chain must prove the implementation
+- **Progress**: tier-by-tier; until each tier passes or a failure
+- **Failures**: run `lint-fix`; report; investigate; fix; restart
+- **Readiness**: assert after `finite` deps or `continuous` ready
+- **Tidiness**: max. 6 lines per test case: `setup`->`act`->`assert`
 
 **💪🏾 Full Chain**: `verify`
 
@@ -114,7 +138,7 @@
 
 -> **dependsOn**: `["verify-tier-1*", "acceptance:dev*", "e2e:dev*"]`
 -> **test:acceptance:dev**: `./tools/test/acceptance.dev.test.ts`
--> **test:acceptance:dev-krea2**: `./tools/test/acceptance.dev-krea2.test.ts`
+-> **test:acceptance:dev-tinysd**: `./tools/test/acceptance.dev-tinysd.test.ts`
 -> **test:e2e:dev**: `nx:no-op`
 
 **🏰 Tier 3: deploy**: `verify-tier-3-deploy`

@@ -8,23 +8,26 @@
   ],
   "targets": {
     "sign": {
-      "executor": "nx:run-commands",
+      "executor": "dotenvx:run-commands",
       "options": {
-        "command": "shortcuts sign -i artifacts/test-time-notification_unsigned.shortcut -o artifacts/test-time-notification.shortcut",
+        "command": "shortcuts sign",
+        "args": "-i artifacts/test-time-notification_unsigned.shortcut -o artifacts/test-time-notification.shortcut",
         "cwd": "packages/apple-shortcuts"
       }
     },
     "sign:dirigera-list-devices": {
-      "executor": "nx:run-commands",
+      "executor": "dotenvx:run-commands",
       "options": {
-        "command": "shortcuts sign -i artifacts/dirigera-list-devices_unsigned.shortcut -o artifacts/dirigera-list-devices.shortcut",
+        "command": "shortcuts sign",
+        "args": "-i artifacts/dirigera-list-devices_unsigned.shortcut -o artifacts/dirigera-list-devices.shortcut",
         "cwd": "packages/apple-shortcuts"
       }
     },
     "sign:dirigera-toggle-plug": {
-      "executor": "nx:run-commands",
+      "executor": "dotenvx:run-commands",
       "options": {
-        "command": "shortcuts sign -i artifacts/dirigera-toggle-plug_unsigned.shortcut -o artifacts/dirigera-toggle-plug.shortcut",
+        "command": "shortcuts sign",
+        "args": "-i artifacts/dirigera-toggle-plug_unsigned.shortcut -o artifacts/dirigera-toggle-plug.shortcut",
         "cwd": "packages/apple-shortcuts"
       }
     }

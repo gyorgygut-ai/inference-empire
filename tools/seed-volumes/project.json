@@ -6,16 +6,17 @@
   "tags": ["type:tool", "scope:seed-volumes"],
   "targets": {
     "seed": {
-      "executor": "nx:run-commands",
+      "executor": "dotenvx:run-commands",
       "options": {
-        "command": "uv run --locked python tools/seed-volumes/seed-volumes.py",
+        "command": "uv run --locked python",
+        "args": "tools/seed-volumes/seed-volumes.py",
         "cwd": "."
       },
       "cache": false
     },
     "lint": {
-      "executor": "nx:run-commands",
-      "options": { "command": "uvx ruff check tools/seed-volumes/seed-volumes.py --line-length 100", "cwd": "." },
+      "executor": "dotenvx:run-commands",
+      "options": { "command": "uvx ruff check", "args": "tools/seed-volumes/seed-volumes.py --line-length 100", "cwd": "." },
       "cache": true
     }
   }

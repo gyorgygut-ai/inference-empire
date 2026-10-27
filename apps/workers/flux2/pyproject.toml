@@ -3,10 +3,6 @@ name = "workers-flux2"
 version = "0.1.0"
 requires-python = ">=3.11,<3.12"
 dependencies = [
-    "shared-gpu",
-    "artifacts",
-    "media",
-    "modal-bridge",
     "torch==2.9.1",
     "transformers==5.16.1",
     "accelerate==1.14.0",
@@ -19,9 +15,3 @@ dependencies = [
     "fastapi[standard]==0.141.1",
     "hf_transfer==0.1.9",
 ]
-
-[tool.uv.sources]
-shared-gpu = { path = "../../../packages/workers/shared_gpu" }
-artifacts = { path = "../../../packages/workers/artifacts" }
-media = { path = "../../../packages/workers/media" }
-modal-bridge = { path = "../../../packages/workers/modal_bridge" }

@@ -1,7 +1,0 @@
-{
-  "command": "uv",
-  "args": ["run", "--locked", "flash", "deploy"],
-  "options": {
-    "cwd": "apps/workers/flux2/dist/flash"
-  }
-}

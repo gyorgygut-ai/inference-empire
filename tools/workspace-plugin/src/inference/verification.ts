@@ -33,9 +33,11 @@ function createProject(
     if (typeof lintCommand === 'string' && lintCommand.includes('ruff check')) {
       const lintOptions = projectJson.targets?.lint?.options;
       targets['lint-fix'] = {
-        executor: 'nx:run-commands',
+        executor: 'dotenvx:run-commands',
         options: {
+          ...lintOptions,
           command: lintCommand.replace(/\s+--fix\b/g, ''),
+          args: `${Array.isArray(lintOptions?.args) ? lintOptions.args.join(' ') : lintOptions?.args ?? ''} --fix`,
           cwd: lintOptions?.cwd ?? '.',
         },
         cache: false,

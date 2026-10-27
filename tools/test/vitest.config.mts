@@ -8,5 +8,7 @@ export default defineConfig({
     include: ['*.test.ts'],
     watch: false,
     passWithNoTests: false,
+    testTimeout: 120000,
+    bail: 1,
   },
 })

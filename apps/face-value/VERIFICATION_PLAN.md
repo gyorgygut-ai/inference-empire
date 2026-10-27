@@ -17,7 +17,7 @@ Acceptance criteria: `{workspaceRoot}/AGENTS.md` → _Acceptance Criteria_.
       **Deployment Protection (Vercel Authentication) disabled** and env supplied per deployment:
       - `router-flux2` = `prj_i6BFErhC2Znjha5kHYgSwFzZhm6c`
       - `router-krea2` = `prj_JKvkpSDegXCmwbFYBcz6enzo1bK5`
-      - `face-value` = `prj_6o8vr6rcVoWtvISTiLc8rfgHSqdQ`
+      - `face-value` = `${FACE_VALUE_VERCEL_PROJECT_ID}` (gitignored environment)
 - [ ] Ports 3000 and 5050 free: `lsof -iTCP:3000 -iTCP:5050 -sTCP:LISTEN` → no output
 
 ---

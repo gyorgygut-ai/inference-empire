@@ -20,7 +20,13 @@ The Modal OpenTelemetry Integration will forward the following metrics to your p
 * `modal.memory.usage`
 * `modal.gpu.memory.usage`
 * `modal.gpu.compute.utilization`
+* `modal.gpu.power.usage`
+* `modal.gpu.power.utilization`
+* `modal.gpu.temperature`
+* `modal.gpu.clock`
+* `modal.gpu.count`
 * `modal.container.running`
+* `modal.container.terminations`
 * `modal.input_events.elapsed_time_us`
 * `modal.input_events.input_queue_time_us`
 * `modal.input_events.coldstart_time_us`
@@ -38,6 +44,12 @@ Deprecated metrics:
 
 These metrics are tagged with `container_id`, `environment_name`, `app_name`,
 `app_id`, `function_name`, `function_id`, `workspace_name`, and `workspace_id`.
+Metrics from GPU containers are additionally tagged with `gpu_billing_type`, the GPU
+type the container is billed as (e.g. `H100`), which may differ from the physical GPU
+model when a workload is scheduled onto a newer GPU.
+`modal.container.terminations` is instead tagged with `container_id`,
+`environment_name`, `app_name`, `app_id`, `workspace_name`, `workspace_id`,
+`object_id`, `object_type`, and `reason`.
 
 ## Custom metrics
 

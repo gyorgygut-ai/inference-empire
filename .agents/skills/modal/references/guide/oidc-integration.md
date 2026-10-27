@@ -52,16 +52,17 @@ environment variable. Below is an example of what claims might be included in a 
 
 ### Sandboxes
 
-Unlike Functions, [Sandboxes](/docs/guide/sandboxes) don't receive an identity
-token by default. To opt in, pass `include_oidc_identity_token=True` when
-creating the Sandbox:
+Unlike Functions, [Sandboxes](/docs/guide/sandboxes) and their [Sidecars](/docs/guide/sandbox-sidecars)
+don't receive an identity token by default. To opt in, pass `include_oidc_identity_token=True` when
+creating the Sandbox or Sidecar:
 
 ```python notest
 sb = modal.Sandbox.create(app=app, include_oidc_identity_token=True)
 ```
 
-The token is then available inside the Sandbox via the same
-`MODAL_IDENTITY_TOKEN` environment variable.
+The token is then available inside the Sandbox or Sidecar via the same `MODAL_IDENTITY_TOKEN` environment
+variable. The Sidecar's identity token is issued for its container, so its `container_id`
+claim differs from the corresponding Sandbox's.
 
 ### App name format
 

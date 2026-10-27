@@ -25,6 +25,34 @@
     ]
   },
   "targetDefaults": {
+    "verify": {
+      "executor": "nx:noop",
+      "cache": false,
+      "dependsOn": [{ "projects": ["test"], "target": "verify-tier-3-deploy" }]
+    },
+    "verify-tier-1-audit": {
+      "executor": "nx:noop",
+      "cache": false,
+      "dependsOn": ["lint", "build", "test-unit"]
+    },
+    "verify-tier-2-dev": {
+      "executor": "dotenvx:run-commands",
+      "cache": false,
+      "dependsOn": ["verify-tier-1-audit"],
+      "options": {
+        "cwd": "{workspaceRoot}",
+        "command": "npx dotenvx run -f config.dev -- npx nx run-many -p test -t acceptance:dev acceptance:dev-tinysd e2e:dev --nxBail --outputStyle=stream"
+      }
+    },
+    "verify-tier-3-deploy": {
+      "executor": "dotenvx:run-commands",
+      "cache": false,
+      "dependsOn": ["verify-tier-2-dev"],
+      "options": {
+        "cwd": "{workspaceRoot}",
+        "command": "npx dotenvx run -f config.deploy -- npx nx run-many -p test -t acceptance:deploy e2e:deploy --nxBail --outputStyle=stream"
+      }
+    },
     "audit": {
       "cache": true
     },
@@ -48,42 +76,6 @@
       "cache": true
     },
     "test": {
-      "cache": false
-    },
-    "verify": {
-      "executor": "nx:noop",
-      "dependsOn": [
-        "verify-tier-1*",
-        "verify-tier-2*",
-        "verify-tier-3*"
-      ],
-      "cache": false
-    },
-    "verify-tier-1-audit": {
-      "executor": "nx:noop",
-      "dependsOn": [
-        "lint",
-        "build",
-        "test-unit"
-      ],
-      "cache": false
-    },
-    "verify-tier-2-dev": {
-      "executor": "nx:noop",
-      "dependsOn": [
-        "verify-tier-1*",
-        "acceptance:dev*",
-        "e2e:dev*"
-      ],
-      "cache": false
-    },
-    "verify-tier-3-deploy": {
-      "executor": "nx:noop",
-      "dependsOn": [
-        "verify-tier-2*",
-        "acceptance:deploy*",
-        "e2e:deploy*"
-      ],
       "cache": false
     },
     "@nx/js:tsc": {
@@ -141,12 +133,12 @@
     {
       "plugin": "@nx/vitest",
       "options": {
-        "testMode": "watch",
+        "testMode": "run",
         "testTargetName": "test-unit"
       },
       "include": [
-        "tools/orchestrator/**/*",
-        "tools/workspace-plugin/**/*"
+        "tools/workspace-plugin/**/*",
+        "apps/functions/**/*"
       ]
     },
     {

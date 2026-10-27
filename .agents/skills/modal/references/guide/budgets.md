@@ -62,6 +62,6 @@ clear a custom value and return to the cycle's usage limit minus credits.
   >. Visit <a href="/settings/plans">workspace settings</a> to upgrade.
 </Callout>
 
-Environment budgets cap **compute usage** for a single Environment within the same billing cycle. Note that this means it does not include all Workspace-level charges (for example, storage and reservations), so Environment budget usage is not a full invoice total by itself.
+Environment budgets cap **compute usage** for a single Environment within the same billing cycle. Note that this means it does not include all Workspace-level charges (for example, storage, reservations, and network egress), so Environment budget usage is not a full invoice total by itself.
 
 You can set, edit, or remove Environment budgets on the [Workspace Management → Environments](/settings/workspace-management/environments) page.

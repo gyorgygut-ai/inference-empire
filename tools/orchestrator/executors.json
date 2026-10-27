@@ -1,9 +1,0 @@
-{
-  "executors": {
-    "run-command": {
-      "implementation": "./src/executors/run-command/run-command",
-      "schema": "./src/executors/run-command/schema.json",
-      "description": "Run a command with contract env injection and fulfill contract keys from its terminal output"
-    }
-  }
-}

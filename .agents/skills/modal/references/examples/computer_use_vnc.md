@@ -7,11 +7,20 @@ decide what to click or type next, take that action, and look again.
 This example builds one with [Browser Use](https://docs.browser-use.com/).
 An open-weights model served from a Modal
 [Endpoint](https://modal.com/docs/guide/endpoints) powers the agent. The agent
-drives Chromium inside a Modal
-[VM Sandbox](https://modal.com/docs/guide/vm-sandboxes),
+drives Chromium inside a Modal Sandbox running in a
+[VM](https://modal.com/docs/guide/sandboxes#runtimes),
 while a small web UI embeds a noVNC desktop so you can watch it work in real-time.
 
 ## Run the example
+
+The model Endpoint requires a [Proxy Token](https://modal.com/docs/guide/webhook-proxy-auth).
+Create one and store it in a Modal [Secret](https://modal.com/docs/guide/secrets):
+
+```bash
+modal workspace proxy-tokens create
+modal secret create example-proxy-token \
+  MODAL_PROXY_TOKEN_ID=wk-... MODAL_PROXY_TOKEN_SECRET=ws-...
+```
 
 To programmatically test the example:
 
@@ -50,7 +59,8 @@ We could point Browser Use at a hosted provider like OpenAI or Anthropic using
 your API key. For our purposes, however, we serve an open-weights model
 ourselves via a Modal [Endpoint](https://modal.com/docs/guide/endpoints).
 It takes one command to create an OpenAI-compatible server for the agent to
-call. No external API key is needed, and the whole demo runs on Modal.
+call. The agent authenticates with your Proxy Token instead of an external API
+key, and the whole demo runs on Modal.
 
 ```python
 ENDPOINT_MODEL = "Qwen/Qwen3.6-27B-FP8"
@@ -58,6 +68,10 @@ ENDPOINT_NAME = "example-computer-use-vnc"
 ENDPOINT_ROUTING_REGION = "us-west"
 ENDPOINT_WARMUP_TIME = 5 * MINUTES
 endpoint_server = modal.Server.from_name(f"ep-{ENDPOINT_NAME}", "Server")
+proxy_token_secret = modal.Secret.from_name(
+    "example-proxy-token",
+    required_keys=["MODAL_PROXY_TOKEN_ID", "MODAL_PROXY_TOKEN_SECRET"],
+)
 
 VNC_PORT = 6080
 SESSION_START_TIMEOUT = 2 * MINUTES
@@ -121,20 +135,27 @@ AGENT_SCRIPT = textwrap.dedent(
 
     from browser_use import Agent, Browser, ChatOpenAI, Tools
 
-    model = os.environ["ENDPOINT_MODEL"]
     base_url = os.environ["ENDPOINT_BASE_URL"]
+    proxy_token = (
+        f"{os.environ['MODAL_PROXY_TOKEN_ID']}.{os.environ['MODAL_PROXY_TOKEN_SECRET']}"
+    )
     start_page = "data:text/html," + urllib.parse.quote(
         "<body style='margin:0;background:#222;color:#ddd;font:28px system-ui;"
         "display:grid;place-items:center;height:100vh'>Starting desktop...</body>"
     )
 
 
-    def wait_for_endpoint() -> None:
+    def wait_for_endpoint() -> str:
         deadline = time.monotonic() + int(os.environ["ENDPOINT_WARMUP_TIME"])
+        request = urllib.request.Request(
+            f"{base_url}/v1/models", headers={"Authorization": f"Bearer {proxy_token}"}
+        )
         while True:
             try:
-                urllib.request.urlopen(f"{base_url}/health", timeout=5).close()
-                return
+                with urllib.request.urlopen(request, timeout=5) as response:
+                    model_name = json.load(response)["data"][0]["id"]
+                if isinstance(model_name, str) and model_name:
+                    return model_name
             except Exception:
                 pass
             if time.monotonic() >= deadline:
@@ -152,10 +173,10 @@ AGENT_SCRIPT = textwrap.dedent(
         await browser.start()
         await browser.navigate_to(start_page)
         Path(os.environ["DESKTOP_READY_PATH"]).write_text("1", encoding="utf-8")
-        await asyncio.to_thread(wait_for_endpoint)
+        model = await asyncio.to_thread(wait_for_endpoint)
         llm = ChatOpenAI(
             model=model,
-            api_key="unused",
+            api_key=proxy_token,
             base_url=f"{base_url}/v1",
             reasoning_effort="none",
             reasoning_models=[model],
@@ -180,7 +201,7 @@ AGENT_SCRIPT = textwrap.dedent(
 
 ```
 
-## Creating the shared Endpoint
+## Creating the dedicated Endpoint
 
 The Endpoint can take time to become ready because its containers scale to zero.
 Startup waits in two places:
@@ -207,7 +228,6 @@ def create_endpoint_if_missing() -> None:
             ENDPOINT_MODEL,
             "--routing-region",
             ENDPOINT_ROUTING_REGION,
-            "--unauthenticated",
         ],
         check=True,
     )
@@ -262,16 +282,16 @@ async def start_session(task: str):
             SANDBOX_COMMAND,
             app=app,
             image=sandbox_image,
-            experimental_options={"vm_runtime": True},
+            runtime="vm",
             env={
                 "AGENT_SCRIPT": AGENT_SCRIPT,
                 "AGENT_TASK": task,
                 "DESKTOP_READY_PATH": DESKTOP_READY_PATH,
                 "ENDPOINT_BASE_URL": endpoint_url,
-                "ENDPOINT_MODEL": ENDPOINT_MODEL,
                 "ENDPOINT_WARMUP_TIME": str(ENDPOINT_WARMUP_TIME),
                 "RESULT_PREFIX": RESULT_PREFIX,
             },
+            secrets=[proxy_token_secret],
             encrypted_ports=[VNC_PORT],
             timeout=SANDBOX_TIMEOUT,
             readiness_probe=modal.Probe.with_exec("test", "-f", DESKTOP_READY_PATH),
@@ -292,9 +312,6 @@ async def start_session(task: str):
         if sandbox is not None:
             await sandbox.terminate.aio()
         raise
-    finally:
-        if sandbox is not None:
-            await sandbox.detach.aio()
 
 
 ```
@@ -330,14 +347,11 @@ async def session_status(sandbox_id: str):
     except modal.exception.NotFoundError as exc:
         raise fastapi.HTTPException(404, "Session not found.") from exc
 
-    try:
-        returncode = await sandbox.poll.aio()
-        if returncode is None:
-            return {"state": "running"}
-        stdout = await sandbox.stdout.read.aio()
-        stderr = await sandbox.stderr.read.aio()
-    finally:
-        await sandbox.detach.aio()
+    returncode = await sandbox.poll.aio()
+    if returncode is None:
+        return {"state": "running"}
+    stdout = await sandbox.stdout.read.aio()
+    stderr = await sandbox.stderr.read.aio()
 
     if returncode == 0:
         result = None
@@ -412,10 +426,7 @@ def test_session(
         raise RuntimeError(f"Unexpected session state: {status}")
 
     sandbox = modal.Sandbox.from_id(sandbox_id)
-    try:
-        sandbox.terminate()
-    finally:
-        sandbox.detach()
+    sandbox.terminate()
     print("session start ok")
 
 
@@ -425,10 +436,9 @@ def test_session(
 
 Each Sandbox uses the agent process as its entrypoint, so it stops when the
 task finishes or its timeout expires. Startup failures terminate it
-immediately, and every code path detaches its local Sandbox handle.
-`test_session` also terminates the Sandbox after the API check.
+immediately, and `test_session` terminates the Sandbox after the API check.
 
-Stop `modal serve` with `Ctrl-C`. The shared Endpoint scales to zero when idle,
+Stop `modal serve` with `Ctrl-C`. The dedicated Endpoint scales to zero when idle,
 but remains available for later prompts. Shut it down when you are done:
 
 ```bash

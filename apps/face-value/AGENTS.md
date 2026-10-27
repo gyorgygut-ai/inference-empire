@@ -4,42 +4,28 @@ NextJS app for chat + inference requests.
 
 ---
 
-## NX: `face-value`
+## Dev ENV
 
-**Tasks**:
+**env**:
+  - `PORT`: `${FACE_VALUE_PORT}`
+  - `ROUTER_URL`: `http://localhost:${ROUTER_FLUX2_PORT}`
+  - `ROUTER_AUTH_TOKEN`: `${ROUTER_FLUX2_GENERATED_AUTH_TOKEN}`
 
-- `dev`:
-  - command: [
-    ROUTER_URL=$NX_READY_URL,
-    ROUTER_AUTH_TOKEN=$ROUTER_GENERATED_AUTH_TOKEN,
-    next dev
-  ]
-  - dependsOn:
-    ```json
-    [
-      "predev",
-      {
-        "projects": ["functions"],
-        "target": "dev-flux2",
-        "waitFor": "ready"
-      }
-    ]
-    ```
-  - Router dependency uses `functions:dev-flux2` (approved target-name drift; this target serves the Flux2 family)
-  - inputs: "{workspaceRoot}/packages/contracts/task-queue-service/flux2-dev.contract.ts"
-- `predev`, `prebuild`:
-  - dependsOn `^prebuild`
-- `build`:
-  - dependsOn `prebuild`
-- `deploy`:
-  - command: [
-    ROUTER_URL=$ROUTER_RESOLVED_URL,
-    ROUTER_AUTH_TOKEN=$ROUTER_GENERATED_AUTH_TOKEN,
-    vercel deploy --token={options.token} --orgId=... --projectId=...
-  ]
-  - options: { token: "env.FACE_VALUE_VERCEL_TOKEN", orgId, projectId }
-  - dependsOn `["build", "functions:deploy:flux2"]`
-  - inputs: "{workspaceRoot}/packages/contracts/task-queue-service/flux2-deploy.contract.ts"
+**NX**:
+  - **Cmd**: `next dev` directly
+  - **Depends**: `predev`, `functions/dev-flux2` + `"waitFor": "ready"`
+  - **Types**: `predev` -> `prebuild` -> `^prebuild`
+
+## Deploy ENV
+
+**dotenv**:
+  - `ROUTER_AUTH_TOKEN`: `${ROUTER_FLUX2_GENERATED_AUTH_TOKEN}`
+
+**NX**:
+  - **Cmd**: `next deploy`, with `FACE_VALUE_VERCEL_{TOKEN|ORG_ID|PROJECT_ID}`
+  - **Depends**: `build`, `functions/deploy-flux2`
+  - **Types**: `build` -> `prebuild` -> `^prebuild`
+  - **ROUTER_URL**: get directly `get-cf-worker-url.ts(router_flux2)`
 
 ---
 
@@ -86,8 +72,8 @@ Progressive chat thread, with NO LLM: tool result triggres next tool call.
 
 **Inference Requests**:
 
-- Url: `TaskQueueServiceContract.ROUTER_RESOLVED_URL`
-- Auth: `TaskQueueServiceContract.ROUTER_GENERATED_AUTH_TOKEN`
+- Url: `ROUTER_URL`
+- Auth: `ROUTER_AUTH_TOKEN`
 - Client: use `@packages/worker-router-client` to send requests
 - Action: `./app/actions/generate-image`, returning `error` OR `presignedUrl`
 - Types: TS api types auto-generated (TO BE DISCUSSED)

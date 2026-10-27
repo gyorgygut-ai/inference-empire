@@ -4,8 +4,8 @@
   "sourceRoot": "packages/dirigera",
   "tags": ["type:tool", "scope:dirigera"],
   "targets": {
-    "auth": { "executor": "nx:run-commands", "options": { "command": "./dirigera-auth.sh", "cwd": "packages/dirigera" } },
-    "api": { "executor": "nx:run-commands", "options": { "command": "./dirigera", "cwd": "packages/dirigera" } },
-    "find": { "executor": "nx:run-commands", "options": { "command": "./dirigera-find", "cwd": "packages/dirigera" } }
+    "auth": { "executor": "dotenvx:run-commands", "options": { "command": "./dirigera-auth.sh", "cwd": "packages/dirigera" } },
+    "api": { "executor": "dotenvx:run-commands", "options": { "command": "./dirigera", "cwd": "packages/dirigera" } },
+    "find": { "executor": "dotenvx:run-commands", "options": { "command": "./dirigera-find", "cwd": "packages/dirigera" } }
   }
 }

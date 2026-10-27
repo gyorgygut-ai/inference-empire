@@ -1,0 +1,8 @@
+name = "router_tinysd"
+main = "src/router_tinysd.ts"
+compatibility_date = "2026-10-07"
+workers_dev = true
+tsconfig = "tsconfig.json"
+
+[observability]
+enabled = true

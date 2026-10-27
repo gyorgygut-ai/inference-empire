@@ -1,0 +1,8 @@
+name = "router_flux2"
+main = "src/router_flux2.ts"
+compatibility_date = "2026-10-07"
+workers_dev = true
+tsconfig = "tsconfig.json"
+
+[observability]
+enabled = true

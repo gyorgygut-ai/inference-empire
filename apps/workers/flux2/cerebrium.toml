@@ -1,0 +1,40 @@
+[cerebrium.deployment]
+name = "workers-flux2"
+python_version = "3.11"
+disable_auth = true
+include = ["./*", "main.py", "worker_flux2_cerebrium.py", "cerebrium.toml", "shared/**/*"]
+exclude = [".*", "__pycache__/*", "*.pyc", ".venv/*", "dist/*", "fakes/*", "tests/*"]
+use_uv = true
+deployment_initialization_timeout = 800
+
+[cerebrium.hardware]
+cpu = 8
+memory = 32.0
+compute = ["HOPPER_H100", "HOPPER_H200", "AMPERE_A100_80GB"]
+gpu_count = 1
+provider = "aws"
+region = "us-east-1"
+
+[cerebrium.scaling]
+min_replicas = 0
+max_replicas = 1
+replica_concurrency = 1
+scaling_metric = "concurrency_utilization"
+scaling_target = 100
+cooldown = 60
+compute_tier = "interruptible"
+
+[cerebrium.dependencies.pip]
+torch = "==2.14.0"
+transformers = "4.57.3"
+diffusers = "0.39.0"
+sdnq = "latest"
+boto3 = "==1.43.89"
+pillow = "==12.3.0"
+numpy = "==2.4.6"
+
+[cerebrium.dependencies.apt]
+ffmpeg = "latest"
+
+[cerebrium.experimental]
+checkpointing = true

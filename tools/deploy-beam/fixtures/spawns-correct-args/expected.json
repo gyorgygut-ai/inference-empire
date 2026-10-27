@@ -1,7 +1,0 @@
-{
-  "command": "uv",
-  "args": ["run", "--locked", "beam", "deploy", "apps/workers/flux2/dist/beam/worker_beam_tq_flux2_klein9b.py:dispatch"],
-  "options": {
-    "cwd": "/Users/gyorgygutai/Projects/personal/inference-empire"
-  }
-}

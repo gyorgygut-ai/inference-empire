@@ -6,20 +6,22 @@
   "targets": {
     "predev": {
       "executor": "nx:noop",
-      "dependsOn": [
-        "^prebuild",
-        { "projects": ["schemas"], "target": "build" }
-      ]
+      "dependsOn": ["prebuild"]
     },
     "prebuild": {
       "executor": "nx:noop",
       "dependsOn": [
         "^prebuild",
-        { "projects": ["schemas"], "target": "build" }
+        {
+          "projects": [
+            "schemas"
+          ],
+          "target": "build"
+        }
       ]
     },
     "build": {
-      "executor": "nx:run-commands",
+      "executor": "dotenvx:run-commands",
       "dependsOn": [
         "prebuild"
       ],
@@ -29,16 +31,17 @@
         "^production"
       ],
       "options": {
-        "command": "npm run build",
+        "command": "npm run",
+        "args": "build",
         "cwd": "{projectRoot}"
       }
     },
     "dev": {
-      "executor": "orchestrator:run-command",
+      "executor": "dotenvx:run-commands",
       "continuous": true,
       "cache": false,
       "readyWhen": {
-        "signal": true
+        "url": "http://localhost:{env.FACE_VALUE_PORT}"
       },
       "dependsOn": [
         "predev",
@@ -50,31 +53,34 @@
           "waitFor": "ready"
         }
       ],
-      "inputs": [
-        "{workspaceRoot}/packages/contracts/task-queue-service/flux2-dev.contract.ts"
-      ],
       "options": {
-        "command": "ROUTER_URL=$NX_READY_URL ROUTER_AUTH_TOKEN=$ROUTER_GENERATED_AUTH_TOKEN npx tsx tools/serve-next.ts",
-        "args": "--port 3000"
+        "cwd": "apps/face-value",
+        "env": {
+          "ROUTER_URL": "http://localhost:${ROUTER_FLUX2_PORT}",
+          "ROUTER_AUTH_TOKEN": "${ROUTER_FLUX2_GENERATED_AUTH_TOKEN}"
+        },
+        "command": "npx next dev",
+        "args": "--port=\"$FACE_VALUE_PORT\""
       }
     },
     "deploy": {
-      "executor": "orchestrator:run-command",
+      "executor": "dotenvx:run-commands",
       "cache": false,
       "dependsOn": [
         "build",
         "functions:deploy-flux2"
       ],
-      "inputs": [
-        "{workspaceRoot}/packages/contracts/task-queue-service/flux2-deploy.contract.ts"
-      ],
       "options": {
-        "command": "ROUTER_URL=$ROUTER_RESOLVED_URL ROUTER_AUTH_TOKEN=$ROUTER_GENERATED_AUTH_TOKEN npx vercel deploy",
-        "args": "--token={options.token} --orgId={options.orgId} --projectId={options.projectId}",
-        "token": "env.FACE_VALUE_VERCEL_TOKEN",
-        "orgId": "...",
-        "projectId": "...",
-        "siteId": "cd41f060-bbdf-49fa-82a6-20d7ba136853"
+        "cwd": ".",
+        "env": {
+          "ROUTER_URL": "$(npx tsx $NX_WORKSPACE_ROOT/tools/get-cf-worker-url.ts router_flux2)",
+          "ROUTER_AUTH_TOKEN": "${ROUTER_FLUX2_GENERATED_AUTH_TOKEN}",
+          "VERCEL_TOKEN": "${FACE_VALUE_VERCEL_TOKEN}",
+          "VERCEL_ORG_ID": "${FACE_VALUE_VERCEL_ORG_ID}",
+          "VERCEL_PROJECT_ID": "${FACE_VALUE_VERCEL_PROJECT_ID}"
+        },
+        "command": "npx vercel deploy",
+        "args": "--yes -e ROUTER_URL=\"$ROUTER_URL\" -e ROUTER_AUTH_TOKEN=\"$ROUTER_AUTH_TOKEN\" -b ROUTER_URL=\"$ROUTER_URL\" -b ROUTER_AUTH_TOKEN=\"$ROUTER_AUTH_TOKEN\""
       }
     }
   }

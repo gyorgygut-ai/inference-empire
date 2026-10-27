@@ -1,58 +1,32 @@
-"""Shared business logic for tiny-sd. No platform imports."""
 from __future__ import annotations
 
 import time
 import uuid
 from typing import TYPE_CHECKING
 
-from pydantic import BaseModel, ConfigDict, Field
+from .contract_tiny_sd import Artifact, TinySDInput, TinySDOutput
 
 if TYPE_CHECKING:
     from diffusers import StableDiffusionPipeline
 
-    from packages.artifacts.artifacts import Artifacts
+    from .artifacts import Artifacts
 
 MODEL_ID = "segmind/tiny-sd"
 _MAX_WIDTH = 1024
 _MAX_HEIGHT = 1024
 
-# Single source of truth for ALL provider image pip deps (modal/beam/flash).
-# Worker files must reference this list, never inline their own pins.
-# Pre-deploy gate: uv run python -c "from shared.worker_tiny_sd import IMAGE_PIP_DEPS; print('\n'.join(IMAGE_PIP_DEPS))" | uv pip compile --python-version 3.11 -
-IMAGE_PIP_DEPS: list[str] = [
-    "torch==2.9.1",
-    "transformers==5.16.1",
-    "accelerate==1.14.0",
-    "diffusers==0.40.0",
-    "safetensors==0.8.0",
-    "huggingface-hub==1.29.0",
-    "pillow==12.3.0",
-    "boto3==1.43.83",
-    "fastapi[standard]==0.141.1",
-    "hf_transfer==0.1.9",
+DEPENDENCIES = [
+"torch==2.9.1",
+"transformers==5.16.1",
+"accelerate==1.14.0",
+"diffusers==0.40.0",
+"safetensors==0.8.0",
+"huggingface-hub==1.29.0",
+"pillow==12.3.0",
+"boto3==1.43.83",
+"fastapi[standard]==0.141.1",
+"hf_transfer==0.1.9",
 ]
-
-
-class TinySDInput(BaseModel):
-    model_config = ConfigDict(title="TinySDInput")
-    prompt: str
-    negative_prompt: str = Field(default="")
-    height: int = Field(default=512)
-    width: int = Field(default=512)
-    num_inference_steps: int = Field(default=20)
-    guidance_scale: float = Field(default=7.5)
-    seed: int | None = Field(default=None)
-
-
-class Artifact(BaseModel):
-    model_config = ConfigDict(title="Artifact")
-    presigned_url: str
-
-
-class TinySDOutput(BaseModel):
-    model_config = ConfigDict(title="TinySDOutput")
-    artifact: Artifact
-
 
 def load_pipeline():
     """Production path: always boots the real model."""
@@ -139,7 +113,7 @@ def pipe_factory() -> StableDiffusionPipeline:
 
 def load_dependencies():
     """Load all dependencies for tiny-sd worker."""
-    from packages.artifacts.r2_artifacts import R2Artifacts
+    from .artifacts import R2Artifacts
 
     storage = R2Artifacts()
     return storage, pipe_factory(), _TorchModuleService()

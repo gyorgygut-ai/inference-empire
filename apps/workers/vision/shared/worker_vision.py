@@ -1,33 +1,25 @@
-"""Shared business logic for small-vision. No platform imports."""
 from __future__ import annotations
 
 import os
 import re
 import time
 from pathlib import Path
-from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, field_validator
-
-from packages.media.validation import validate_image_b64
+from .contract_vision import SmallVisionInput, SmallVisionOutput
 
 REPO_ID = "Qwen/Qwen2-VL-2B-Instruct"
 MAX_NEW_TOKENS = 512
 
-# Single source of truth for ALL provider image pip deps (modal/beam/flash).
-# Worker files must reference this list, never inline their own pins.
-# Pre-deploy gate: uv run python -c "from shared.worker_vision import IMAGE_PIP_DEPS; print('\n'.join(IMAGE_PIP_DEPS))" | uv pip compile --python-version 3.11 -
-IMAGE_PIP_DEPS: list[str] = [
-    "torch==2.9.1",
-    "transformers==5.16.1",
-    "torchvision==0.24.1",
-    "pillow==12.3.0",
-    "accelerate==1.14.0",
-    "boto3==1.43.83",
-    "fastapi==0.141.1",
-    "hf_transfer==0.1.9",
+DEPENDENCIES = [
+"torch==2.9.1",
+"transformers==5.16.1",
+"torchvision==0.24.1",
+"pillow==12.3.0",
+"accelerate==1.14.0",
+"boto3==1.43.83",
+"fastapi==0.141.1",
+"hf_transfer==0.1.9",
 ]
-
 
 def _load_dotenv() -> None:
     path = Path(__file__).parent.parent / ".env"
@@ -42,47 +34,6 @@ def _load_dotenv() -> None:
         if key and key not in os.environ:
             os.environ[key] = value
 
-
-class SmallVisionInput(BaseModel):
-    model_config = ConfigDict(title="SmallVisionInput")
-    image_base64: str
-    prompt: str | None = Field(
-        default=None,
-        description="Custom analyze instruction override. Null uses built-in default.",
-    )
-
-    @field_validator("image_base64")
-    @classmethod
-    def _check_image(cls, v: str, info: ValidationInfo) -> str:
-        return validate_image_b64(v, info.field_name)  # ty: ignore[invalid-argument-type]
-
-class SmallVisionOutput(BaseModel):
-    model_config = ConfigDict(title="SmallVisionOutput")
-    classification: Literal[
-        "portrait_0p",
-        "portrait_1p",
-        "portrait_2p",
-        "portrait_3p",
-        "portrait_group",
-        "selfie_1p",
-        "selfie_2p",
-        "selfie_group",
-        "group_photo_2p",
-        "group_photo_3p",
-        "group_photo_4p",
-        "group_photo_5p_plus",
-        "group_photo_group",
-        "food_0p",
-        "document_0p",
-        "landscape_0p",
-        "animal_0p",
-        "object_0p",
-        "screenshot_0p",
-        "receipt_0p",
-        "other_0p",
-    ]
-    subjects: list[str]
-    description: str
 
 def build_analyze_prompt() -> str:
     classification = SmallVisionOutput.model_fields["classification"].annotation

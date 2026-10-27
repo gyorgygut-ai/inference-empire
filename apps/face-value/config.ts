@@ -1,4 +1,5 @@
-import { envSchema } from "./env.schema";
+import "server-only";
+import { envSchema } from "./env.schema.deploy";
 
 const env = envSchema.parse(process.env);
 

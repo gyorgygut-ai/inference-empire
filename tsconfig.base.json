@@ -23,9 +23,6 @@
       ],
       "@packages/schemas/*": [
         "./packages/schemas/*"
-      ],
-      "@inference/contracts": [
-        "./packages/contracts/src/index.ts"
       ]
     }
   }

@@ -1,11 +1,27 @@
 import sys
 import types
 from typing import Any
+from urllib.parse import quote
 
 import httpx
 import pytest
 
-from packages.artifacts.r2_artifacts_fake import FakeR2Artifacts
+
+class FakeR2Artifacts:
+    def __init__(self):
+        self.objects: dict[str, bytes] = {}
+
+    def put(self, key: str, body: bytes) -> None:
+        self.objects[key] = body
+
+    def presigned_url(self, key: str, expires: int = 3600) -> str:
+        return f"https://fake-r2.local/{quote(key)}"
+
+    def has(self, key: str) -> bool:
+        return key in self.objects
+
+    def fetch(self, key: str) -> bytes:
+        return self.objects[key]
 
 
 @pytest.fixture

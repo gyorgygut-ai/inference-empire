@@ -1,6 +1,6 @@
 import { Router } from 'itty-router'
 import { z } from 'zod'
-import type { RuntimeConfig } from './config'
+import type { RouterEnv, RuntimeConfig } from './config'
 import { pickStrategy } from './services/pick-strategy'
 import { createStrategy } from './services/create-strategy'
 import { StrategyUnavailableError, taskStatusSchema } from './strategies/strategy'
@@ -11,7 +11,7 @@ function json(body: unknown, status = 200) {
 }
 
 interface Dependencies {
-  readConfig: () => RuntimeConfig;
+  readConfig: (env: RouterEnv) => RuntimeConfig;
   fetchImpl?: typeof fetch;
 }
 
@@ -19,9 +19,9 @@ export function createRouter<Api extends z.ZodObject<{ input: z.ZodType; output:
   api: Api, base: string, dependencies: Dependencies,
 ) {
   const router = Router({ base })
-  function authenticate(request: Request) {
+  function authenticate(request: Request, env: RouterEnv) {
     let config: RuntimeConfig
-    try { config = dependencies.readConfig() }
+    try { config = dependencies.readConfig(env) }
     catch { return json({ error: 'Router not configured' }, 503) }
     if (request.headers.get('Authorization') !== `Bearer ${config.routerToken}`) {
       return json({ error: 'Unauthorized' }, 401)
@@ -33,8 +33,10 @@ export function createRouter<Api extends z.ZodObject<{ input: z.ZodType; output:
       error instanceof StrategyUnavailableError ? 503 : 502)
   }
 
-  router.post('/q', async (request: Request) => {
-    const config = authenticate(request)
+  router.get('/', () => json({ status: 'ok' }))
+
+  router.post('/q', async (request: Request, env: RouterEnv) => {
+    const config = authenticate(request, env)
     if (config instanceof Response) {return config}
     let body: unknown
     try { body = await request.json() }
@@ -49,8 +51,8 @@ export function createRouter<Api extends z.ZodObject<{ input: z.ZodType; output:
     } catch (error) { return upstreamError(error) }
   })
 
-  router.get('/sup', async (request: Request) => {
-    const config = authenticate(request)
+  router.get('/sup', async (request: Request, env: RouterEnv) => {
+    const config = authenticate(request, env)
     if (config instanceof Response) {return config}
     const id = new URL(request.url).searchParams.get('id')
     if (!id) {return json({ error: 'Missing task id' }, 400)}

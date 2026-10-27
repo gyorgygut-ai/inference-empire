@@ -1,53 +1,35 @@
 name: deploy
+
 on:
+  workflow_dispatch:
   push:
     branches: [main]
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
     env:
-      HF_TOKEN: ${{ secrets.HF_TOKEN }}
-
+      BEAM_TOKEN: ${{ secrets.BEAM_TOKEN }}
+      RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}
       MODAL_TOKEN_ID: ${{ secrets.MODAL_TOKEN_ID }}
       MODAL_TOKEN_SECRET: ${{ secrets.MODAL_TOKEN_SECRET }}
-      MODAL_WORKSPACE: ${{ secrets.MODAL_WORKSPACE }}
-      MODAL_PROFILE: ${{ secrets.MODAL_PROFILE }}
-
-      CEREBRIUM_SERVICE_TOKEN: ${{ secrets.CEREBRIUM_SERVICE_TOKEN }}
-      CEREBRIUM_INFERENCE_TOKEN: ${{ secrets.CEREBRIUM_INFERENCE_TOKEN }}
-
-      BEAM_API_KEY: ${{ secrets.BEAM_API_KEY }}
-      BEAM_WORKSPACE: ${{ secrets.BEAM_WORKSPACE }}
-
+      HF_TOKEN: ${{ secrets.HF_TOKEN }}
       R2_ACCESS_KEY: ${{ secrets.R2_ACCESS_KEY }}
       R2_SECRET_KEY: ${{ secrets.R2_SECRET_KEY }}
-      R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
-      R2_BUCKET: ${{ secrets.R2_BUCKET }}
-
-      FLUX2_ROUTER_VERCEL_TOKEN: ${{ secrets.FLUX2_ROUTER_VERCEL_TOKEN }}
-      FLUX2_ROUTER_VERCEL_ORG_ID: ${{ secrets.FLUX2_ROUTER_VERCEL_ORG_ID }}
-      FLUX2_ROUTER_VERCEL_PROJECT_ID: ${{ secrets.FLUX2_ROUTER_VERCEL_PROJECT_ID }}
-
-      KREA2_ROUTER_VERCEL_TOKEN: ${{ secrets.KREA2_ROUTER_VERCEL_TOKEN }}
-      KREA2_ROUTER_VERCEL_ORG_ID: ${{ secrets.KREA2_ROUTER_VERCEL_ORG_ID }}
-      KREA2_ROUTER_VERCEL_PROJECT_ID: ${{ secrets.KREA2_ROUTER_VERCEL_PROJECT_ID }}
-
       FACE_VALUE_VERCEL_TOKEN: ${{ secrets.FACE_VALUE_VERCEL_TOKEN }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       FACE_VALUE_VERCEL_ORG_ID: ${{ secrets.FACE_VALUE_VERCEL_ORG_ID }}
       FACE_VALUE_VERCEL_PROJECT_ID: ${{ secrets.FACE_VALUE_VERCEL_PROJECT_ID }}
+      R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 20
           cache: npm
-      - uses: astral-sh/setup-uv@v5
-        with:
-          python-version: "3.11"
-          cache-dependency-glob: "uv.lock"
-          ignore-nothing-to-cache: true
       - run: npm ci
       - run: npx nx affected -t test-unit,lint,typecheck,validate-deps --base=origin/main~1 --head=HEAD
-      - run: npx nx affected -t deploy --base=origin/main~1 --head=HEAD --configuration=deploy
+      - run: npx dotenvx run -f config.deploy -- npx nx affected -t deploy --base=origin/main~1 --head=HEAD
