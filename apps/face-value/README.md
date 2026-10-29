@@ -31,7 +31,7 @@ See [SPECS.md](./SPECS.md) for full decisions and reasoning.
 
 ### Environment Variables
 
-See [env.schema.ts](./env.schema.ts) for required variables.
+See [env.schema.deploy.ts](./env.schema.deploy.ts) for required variables.
 
 ### Dev
 

@@ -1,4 +1,0 @@
-"""Shared business logic for <%= modelTag %>. No platform imports."""
-from __future__ import annotations
-
-IMAGE_PIP_DEPS: list[str] = []

@@ -3,7 +3,7 @@ import type { ExecutorContext } from '@nx/devkit';
 import executor, { buildCommand } from './ty';
 
 const context: ExecutorContext = {
-  root: '',
+  root: '/ws',
   cwd: process.cwd(),
   isVerbose: false,
   projectGraph: { nodes: {}, dependencies: {} },
@@ -13,11 +13,13 @@ const context: ExecutorContext = {
 
 describe('Ty Executor', () => {
   it('builds the typecheck command', () => {
-    expect(buildCommand('tiny_sd')).toBe('uv run --locked --group test ty check apps/tiny_sd');
+    expect(buildCommand('apps/workers/flux2')).toBe(
+      'uv run --locked --group test ty check apps/workers/flux2'
+    );
   });
 
-  it('fails without a family', async () => {
-    const output = await executor({ family: '' }, context);
+  it('fails without a project root', async () => {
+    const output = await executor({ projectRoot: '' }, context);
     expect(output.success).toBe(false);
   });
 });

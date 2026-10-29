@@ -1,3 +1,4 @@
 export interface PytestExecutorSchema {
-  family: string;
+  projectRoot: string;
+  mode?: 'unit' | 'e2e';
 }

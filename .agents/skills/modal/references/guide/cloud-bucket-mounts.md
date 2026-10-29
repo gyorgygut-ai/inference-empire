@@ -22,6 +22,12 @@ ability to read, write, and list objects in the specific buckets you will mount.
 You do *not* need admin permissions, and you should *not* use "Client IP Address
 Filtering".
 
+R2 [temporary access credentials](https://developers.cloudflare.com/r2/api/tokens/#temporary-credentials)
+are supported by adding `AWS_SESSION_TOKEN` to the Modal Secret alongside
+`AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`. Temporary credentials will
+expire and will not get renewed automatically, so the mount stops working once
+they expire.
+
 ## Mounting Google Cloud Storage buckets
 
 `CloudBucketMount` enables Google Cloud Storage (GCS) buckets to be mounted as file system
@@ -219,6 +225,7 @@ The most common issues that users encounter are:
 * Files cannot be opened in append mode.
 * Files cannot be written to at arbitrary offsets i.e. `seek` and write are not supported together.
 * To write to a file, you must open it in `truncate` mode.
+* Bucket traffic does not exit through a [Proxy](/docs/guide/proxy-ips).
 
 These operations typically result in a `PermissionError: [Errno 1] Operation not permitted` error.
 

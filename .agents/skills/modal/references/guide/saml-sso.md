@@ -32,7 +32,9 @@ Configure your IdP with the following settings:
 | Entity ID | `https://www.modal.com`                           |
 | ACS URL   | `https://modal.com/api/okta/saml/sso/<workspace>` |
 
-Replace `<workspace>` with your Modal Workspace name.
+Replace `<workspace>` with your Modal Workspace name. If you later
+[rename your Workspace](/docs/guide/workspaces#renaming-a-workspace), update
+the ACS URL and the login URL below to the new name.
 
 ### Required SAML attributes
 

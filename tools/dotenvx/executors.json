@@ -1,0 +1,9 @@
+{
+  "executors": {
+    "run-commands": {
+      "implementation": "./src/run-commands",
+      "schema": "../../node_modules/nx/dist/src/executors/run-commands/schema.json",
+      "description": "run-commands executor"
+    }
+  }
+}

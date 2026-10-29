@@ -1,48 +1,64 @@
 # GPU Workers
 
-**Families**: `flux2`, `krea2`, `tiny_sd`, `vision`, `h3_comfy`, `h3_fl2va`, `h3_ref2va`, `realtime_voice` (`apps/{model}`)
-**Schema**: `packages/schemas/{model}/schema.json`
+---
+
+## NX
+
+`workers-{family}:deploy-{platform}`:
+
+  - **cmd**: `{modal|beam|flash|cerebrium} deploy` directly
+  - **NO** `build`, `dist` whatsoever; remove all `build` tasks
+
+**Platforms**:
+
+- FOR NOW, only `modal` and `beam` is deployed
+- Other platforms still maintained; no deploys
 
 ---
 
-## NX: `workers-{family}:deploy-{platform}`
+## Rules
 
-**MUST DO before `:deploy-modal`**:
+**Critical**:
 
-  - **Build** must build `{projectRoot}/dist/modal` and deploy from there
-  - **Fulfills** `WorkerServiceContract.WORKER_RESOLVED_MODAL_URL`
+- **Avoid** import from outside `{projectRoot}` 
+- **Clean** any dead code, shortcuts; always lint
+- **Queue** tasks + return task id where possible
+- **Deploy** from `{projectRoot}`; no extra files
+- **Naming** consistently follows nx `{projectName}`
+- **Env** pushed idempotently during deploy; not manually
 
-**MUST DO before `:deploy-beam`**:
+**Artifacts**:
 
-  - **Build** must build `{projectRoot}/dist/modal` and deploy from there
-  - **Fulfills** `WorkerServiceContract.WORKER_RESOLVED_BEAM_URL`
-
-**MUST DO before `:deploy-flash`**:
-
-  - **Build** must build `{projectRoot}/dist/modal` and deploy from there
-  - **Fulfills** `WorkerServiceContract.WORKER_RESOLVED_FLASH_URL`
-
----
-
-## Coding
-
-**Structure**:
-
-- Naming: `worker_{model}_{platform}.py`
-- Logic: thin wrapper over provider, logic shared (`apps/{model}|shared/worker_{model}.pu`)
-- Types: `Pydantic` generated
-- Queue: always use task queue and return task id, except realtime workers
+- **Media** uploaded to `R2`; respond with `presigned_url`
+- **Except** `text`, `json`, `realtime` data; direct response
 
 **Worker Config**:
 
-- Max. 1 worker, scale to 0, short idle timeouts, (`workers=(0, 1)`)
-- Use `flashboot=True`, `model cache` for quick starts
-- Use `Volume` (`./hf-cache`) if provider doesn't do built-in cache
-- Models lazy downloaded and cached on first request, `tools/seed-volumes` allowed
+- **Flash**: use `flashboot=True`; avoid cold starts
+- **Modal**: use `model cache`; avoid cold starts
+- **Beam**: `./hf-cache` volume; avoid cold starts
+- **Uniform**: `fn` / `endpoint` always named `generate`
+- **Cheap**: Max. 1 worker; scale to 0; short idle timeouts
+- **Models**: Always lazy download + cache on first request
 
-**Testing Strategy**
+**Structure**:
 
-- Rule: value over volume. each test must prove a specced requirement.
-- Unit: assert output + artifact for a given input (bad, good), stub side effects
-- Working stubs: avoid mocking. rely instead on real stubs + DI to test side effects
-- E2E: sole sunny test case per worker asserting output and artifacts, do not stub
+- `{projectRoot}/worker_{model}_{platform}.py`: each must be a thin platform wrapper only
+- `{projectRoot}/shared/worker_{model}.py`: business logic in shared file, used by wrappers
+- `{projectRoot}/shared/contract_{model}.py`: `Pydantic` types; `Input`, `Output`
+- `{projectRoot}/shared/**/*.py`: artifact uploads, fakes, validation, self-contained
+
+**Testing**:
+
+- **Proof**: each test must prove a specced requirement; no filler
+- **Minimal**: assert output + artifact for input (bad, good)
+- **Pure**: avoid mocking. rely on real stubs + DI to test side effects
+- **E2E**: one sunny test case per worker asserts output + artifacts; no stubs
+
+---
+
+## Verification
+
+- **lint** after changes; otherwise not finished
+- **deploy** only finsihed, verified, clean code
+- **logs** can identify deploy + runtime errors

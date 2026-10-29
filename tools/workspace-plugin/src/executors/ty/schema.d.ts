@@ -1,3 +1,3 @@
 export interface TyExecutorSchema {
-  family: string;
+  projectRoot: string;
 }

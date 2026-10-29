@@ -1,3 +1,0 @@
-# Minimal beam config for tests
-project: tiny-sd-test
-python_version: python3.11

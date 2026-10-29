@@ -102,6 +102,7 @@ sb = modal.Sandbox.create(
     "python",
     "-c",
     "import pandas, sklearn; print('ready')",
+    # prefer named Images in Sandboxes to ensure they are never built during Sandbox launch
     image=modal.Image.from_name("analytics-runtime"),
     app=app,
 )
@@ -114,6 +115,7 @@ print(sb.stdout.read())
 
 ```javascript
 // sandbox_launcher.ts
+// prefer named Images in Sandboxes to ensure they are never built during Sandbox launch
 const image = await modal.images.fromName("analytics-runtime");
 const sb = await modal.sandboxes.create(app, image);
 
@@ -123,7 +125,6 @@ const p = await sb.exec([
   "import pandas, sklearn; print('ready')",
 ]);
 console.log(await p.stdout.readText());
-sb.detach();
 ```
 
 {/snippet}
@@ -132,9 +133,9 @@ sb.detach();
 
 ```go
 // sandbox_launcher.go
+// prefer named Images in Sandboxes to ensure they are never built during Sandbox launch
 image, err := mc.Images.FromName(ctx, "analytics-runtime", nil)
 sb, err := mc.Sandboxes.Create(ctx, app, image, nil)
-defer sb.Detach()
 
 p, err := sb.Exec(ctx, []string{
 	"python",

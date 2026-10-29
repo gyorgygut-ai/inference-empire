@@ -42,8 +42,8 @@ See the [transforming](#transforming) section below for more details.
 
 Downloading and transforming large datasets can be fiddly. While iterating on a reliable ingestion program
 you may want an interactive environment so you can inspect downloaded files, validate credentials,
-and benchmark transforms before automating the full ingestion job. [Modal Notebooks](/docs/guide/notebooks)
-work well for this. Attach the same Volume that your ingestion Functions use, keep transient scratch
+and benchmark transforms before automating the full ingestion job. You can run a
+[Jupyter server in a Sandbox](/docs/examples/jupyter_sandbox) for this. Attach the same Volume that your ingestion Functions use, keep transient scratch
 data in `/tmp`, and persist intermediate artifacts under `/mnt/...`.
 
 ## Downloading
@@ -93,7 +93,7 @@ Transformations should also typically be performed against `/tmp/`. This is beca
 2. transforms can create temporary data which is wasteful to store permanently.
 
 Once the transform is complete, write the final dataset layout to the attached Volume and commit it so
-subsequent Functions and Notebooks can reload and use the same data.
+subsequent Functions and Sandboxes can reload and use the same data.
 
 ## Examples
 

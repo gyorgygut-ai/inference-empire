@@ -9,8 +9,8 @@ export function buildCommand(): string {
 const runExecutor: PromiseExecutor<AuditUvExecutorSchema> = async (
   _options,
   context: ExecutorContext
-) => {
-  return { success: runCommand(buildCommand(), context.root) };
-};
+) => (
+  { success: runCommand(buildCommand(), context.root) }
+);
 
 export default runExecutor;

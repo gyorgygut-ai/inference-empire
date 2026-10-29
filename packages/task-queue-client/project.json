@@ -18,9 +18,6 @@
           "packages/task-queue-client/*.md"
         ]
       }
-    },
-    "lint": {
-      "executor": "@nx/eslint:lint"
     }
   }
 }

@@ -1,55 +1,51 @@
 # Router App
 
-Stateless task queue api router, routing across urls from `WorkerServiceContract`.
+Stateless task queue api router, routing across worker urls.
 
 ---
 
-## NX: `router`
+## dev-flux2 ENV
 
-**Tasks**:
+**env**:
+  - `PORT`: `${ROUTER_FLUX2_PORT}`
+  - `AUTH_TOKEN`: `${ROUTER_FLUX2_GENERATED_AUTH_TOKEN}`
 
-- `dev-flux2`:
-  - dependsOn `predev`
-  - cmd: `tools/serve-netlify-functions.ts`
-  - waits: `router:dev-flux2` must listen + READY
-  - needs[]: `flux2` `WorkerServiceContract`
-  - needs[]: `flux2` `TaskQueueServiceContract`
-  - fulfills.contract: `TaskQueueServiceContract`
-  - fulfills.contractKey: `ROUTER_RESOLVED_URL`
-- `predev`
-  - dependsOn `prebuild`
-- `build`:
-  - dependsOn `prebuild`
-- `generate-auth-token`
-  - cmd: `tools/geneate-auth-token.ts`
-  - fulfills.contract: `TaskQueueServiceContract`
-  - fulfills.contractKey: `ROUTER_GENERATED_AUTH_TOKEN`
-- `prebuild`:
-  - dependsOn `["^prebuild", "generate-*"]`
-- `deploy-flux2`:
-  - dependsOn `build`
-  - cmd: `netlify deploy`
-  - needs[]: `flux2` `WorkerServiceContract`
-  - needs[]: `flux2` `TaskQueueServiceContract`
-  - fulfills.contract: `TaskQueueServiceContract`
-  - fulfills.contractKey: `ROUTER_RESOLVED_URL`
+**NX**:
+  - **Cmd**: `wrangler dev` directly
+  - **Readiness**: `{ continuous, readyWhen": { "url": "http://localhost:{env.ROUTER_FLUX2_PORT}" }}`
+  - **Depends**: `predev`, `workers-flux2/deploy-beam`
+  - **Types**: `predev` -> `prebuild` -> `^prebuild`
+  - **WORKER_BEAM_URL**: get directly `{get-beam-url.ts(workers-flux2)}`
 
-- `dev-krea2`: same as `dev-flux2`; but with `krea2`
-- `deploy-krea2`: same as `deploy-flux2`; but with `krea2`
+## deploy-flux2 ENV
+
+**dotenv**:
+  - `AUTH_TOKEN`: `${ROUTER_FLUX2_GENERATED_AUTH_TOKEN}`
+
+**NX**:
+  - **Cmd**: `wrangler deploy`
+  - **Depends**: `workers-flux2/deploy-beam`
+  - **Types**: `build` -> `prebuild` -> `^prebuild`
+  - **WORKER_BEAM_URL**: get directly `{get-beam-url.ts(workers-flux2)}`
+
+# Other tasks
+
+- **dev-tinysd**: Same as `dev-flux2`, but with `tinysd`
+- **deploy-tinysd**: Same as `deploy-flux2`, but with `tinysd`
+- **dev**: dependsOn `["dev-flux2", "dev-tinysd"]`
+- **deploy**: dependsOn `["deploy-flux2", "deploy-krea"]`
 
 ---
 
 ## Structure: `./src/`
 
-**Netlify Function**
+**Cloudflare Worker**
 
 - `router_flux2.ts`:
-  - serves: `/flux2/*`
   - loads: `flux2` api schema
   - hands request to `_shared/router.ts`
-- `router_krea2.ts`:
-  - serves: `/krea2/*`
-  - loads: `krea2` api schema
+- `router_tinysd.ts`:
+  - loads: `tinysd` api schema
   - hands request to `_shared/router.ts`
 
 **_shared**:
@@ -69,11 +65,10 @@ Stateless task queue api router, routing across urls from `WorkerServiceContract
 
 **Endpoints**:
 
-- POST `/q`: queue task; Auth against `WorkerServiceContract.ROUTER_GENERATED_AUTH_TOKEN`
-- GET `/sup`: fetch task; Auth against `WorkerServiceContract.ROUTER_GENERATED_AUTH_TOKEN`
+- POST `/q`: queue task; Auth against `AUTH_TOKEN`
+- GET `/sup`: fetch task; Auth against `AUTH_TOKEN`
 
 **Business Logic**:
 
 - Status: `PENDING | PROCESSING | COMPLETED | FAILED | CANCELLED`
 - Task ID: `base64("provider:originalTaskId")`
-- Pick: `modal` (hardcoded, temporary)

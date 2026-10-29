@@ -27,10 +27,11 @@ We start with Modal's baseline `debian_slim` image and install the required pack
 * "peft": Required for properly loading the model
 
 ```python
-image = modal.Image.debian_slim(python_version="3.10").uv_pip_install(
-    "chatterbox-tts==0.1.6",
+image = modal.Image.debian_slim(python_version="3.12").uv_pip_install(
+    "chatterbox-tts==0.1.7",
     "fastapi[standard]==0.124.4",
     "peft==0.18.0",
+    "setuptools<82",
 )
 
 ```

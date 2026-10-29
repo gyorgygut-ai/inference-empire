@@ -1,3 +1,5 @@
 export interface RuffExecutorSchema {
-  family: string;
+  projectRoot: string;
+  fix?: boolean;
+  args?: string[];
 }

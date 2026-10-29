@@ -7,13 +7,13 @@ This guide explains the components of that stack and how to install them on Moda
 For more on which GPUs are available on Modal and how to choose a GPU for your use case,
 see [this guide](/docs/guide/gpu). For a deep dive on both the
 [GPU hardware](/gpu-glossary/device-hardware) and [software](/gpu-glossary/device-software)
-and for even more detail on [the CUDA stack](/gpu-glossary/host-software/),
+and for even more detail on [the CUDA stack](/gpu-glossary/host-software),
 see our [GPU Glossary](/gpu-glossary/readme).
 
 Here's the tl;dr:
 
-* The [NVIDIA Accelerated Graphics Driver for Linux-x86\_64](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/#driver-installation), version 580.95.05,
-  and [CUDA Driver API](https://docs.nvidia.com/cuda/archive/13.0.0/cuda-driver-api/index.html), version 13.0, are already installed.
+* The [NVIDIA Accelerated Graphics Driver for Linux-x86\_64](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/#driver-installation), version 610.57.04,
+  and [CUDA Driver API](https://docs.nvidia.com/cuda/archive/13.3.0/cuda-driver-api/index.html), version 13.3, are already installed.
   You can call `nvidia-smi` or run compiled CUDA programs from any Modal Function with access to a GPU.
 * That means you can install many popular libraries like `torch` that bundle their other CUDA dependencies [with a simple `pip_install`](#install-gpu-accelerated-torch-and-transformers-with-pip_install).
 * For bleeding-edge libraries like `flash-attn`, you may need to install CUDA dependencies manually.
@@ -67,8 +67,6 @@ app = modal.App()
 def check_nvidia_smi():
     import subprocess
     output = subprocess.check_output(["nvidia-smi"], text=True)
-    assert "Driver Version:" in output
-    assert "CUDA Version:" in output
     print(output)
     return output
 ```
@@ -190,5 +188,5 @@ To dive deep on GPU internals, check out our [GPU Glossary](/gpu-glossary/readme
 To see these installation patterns in action, check out these examples:
 
 * [Fast LLM inference on big GPUs](/docs/examples/llm_inference)
-* [Finetune a character LoRA for your pet](/docs/examples/diffusers_lora_finetune)
 * [Optimized Flux inference](/docs/examples/flux)
+* [Fine-tune a model to paint flowers](/docs/examples/paint_flowers)

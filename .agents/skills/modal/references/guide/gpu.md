@@ -2,6 +2,8 @@
 
 Modal makes it easy to run your code on [GPUs](/gpu-glossary/readme).
 
+Using a GPU requires having a valid payment method on file.
+
 ## Quickstart
 
 Here's a simple example of a Function running on an A100 in Modal:
@@ -205,9 +207,9 @@ For more information about GPUs in general, check out our [GPU Glossary](/gpu-gl
 
 Or take a look some examples of Modal Apps using GPUs:
 
-* [Fine-tune a character LoRA for your pet](/docs/examples/diffusers_lora_finetune)
 * [Fast LLM inference on big GPUs](/docs/examples/llm_inference)
 * [Stable Diffusion with a CLI, API, and web UI](/docs/examples/text_to_image)
+* [Fine-tune a model to paint flowers](/docs/examples/paint_flowers)
 * [Rendering Blender videos](/docs/examples/blender_video)
 
 <YoutubeEmbed videoId="MLvC7W_b6SA"/>

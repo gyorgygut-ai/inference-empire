@@ -1,36 +1,86 @@
 {
-  "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "name": "face-value",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "application",
-  "sourceRoot": "apps/face-value",
-  "tags": ["type:app", "scope:face-value"],
+  "sourceRoot": "apps/face-value/src",
   "targets": {
-    "dev": {
-      "executor": "nx:run-commands",
-      "cache": false,
-      "continuous": true,
+    "predev": {
+      "executor": "nx:noop",
+      "dependsOn": ["prebuild"]
+    },
+    "prebuild": {
+      "executor": "nx:noop",
       "dependsOn": [
-        "router:dev-flux2",
-        "router:dev-flux2-generate-router-url",
-        "schemas:generate-flux2-*"
+        "^prebuild",
+        {
+          "projects": [
+            "schemas"
+          ],
+          "target": "build"
+        }
+      ]
+    },
+    "build": {
+      "executor": "dotenvx:run-commands",
+      "dependsOn": [
+        "prebuild"
+      ],
+      "cache": true,
+      "inputs": [
+        "production",
+        "^production"
       ],
       "options": {
-        "command": "npm run dev",
+        "command": "npm run",
+        "args": "build",
+        "cwd": "{projectRoot}"
+      }
+    },
+    "dev": {
+      "executor": "dotenvx:run-commands",
+      "continuous": true,
+      "cache": false,
+      "readyWhen": {
+        "url": "http://localhost:{env.FACE_VALUE_PORT}"
+      },
+      "dependsOn": [
+        "predev",
+        {
+          "projects": [
+            "functions"
+          ],
+          "target": "dev-flux2",
+          "waitFor": "ready"
+        }
+      ],
+      "options": {
         "cwd": "apps/face-value",
-        "envFile": "dist/flux2/dev.env"
+        "env": {
+          "ROUTER_URL": "http://localhost:${ROUTER_FLUX2_PORT}",
+          "ROUTER_AUTH_TOKEN": "${ROUTER_FLUX2_GENERATED_AUTH_TOKEN}"
+        },
+        "command": "npx next dev",
+        "args": "--port=\"$FACE_VALUE_PORT\""
       }
     },
     "deploy": {
-      "executor": "orchestrator:run-command",
+      "executor": "dotenvx:run-commands",
       "cache": false,
       "dependsOn": [
-        { "projects": ["router"], "target": "deploy-flux2", "options": "forward" },
-        "schemas:generate-flux2-*"
+        "build",
+        "functions:deploy-flux2"
       ],
       "options": {
-        "command": "tools/deploy-vercel.ts face-value from-root --token $FACE_VALUE_VERCEL_TOKEN --org $FACE_VALUE_VERCEL_ORG_ID --project-id $FACE_VALUE_VERCEL_PROJECT_ID",
-        "envKey": "FACE_VALUE_URL",
-        "envFile": "dist/flux2/deploy.env"
+        "cwd": ".",
+        "env": {
+          "ROUTER_URL": "$(npx tsx $NX_WORKSPACE_ROOT/tools/get-cf-worker-url.ts router_flux2)",
+          "ROUTER_AUTH_TOKEN": "${ROUTER_FLUX2_GENERATED_AUTH_TOKEN}",
+          "VERCEL_TOKEN": "${FACE_VALUE_VERCEL_TOKEN}",
+          "VERCEL_ORG_ID": "${FACE_VALUE_VERCEL_ORG_ID}",
+          "VERCEL_PROJECT_ID": "${FACE_VALUE_VERCEL_PROJECT_ID}"
+        },
+        "command": "npx vercel deploy",
+        "args": "--yes -e ROUTER_URL=\"$ROUTER_URL\" -e ROUTER_AUTH_TOKEN=\"$ROUTER_AUTH_TOKEN\" -b ROUTER_URL=\"$ROUTER_URL\" -b ROUTER_AUTH_TOKEN=\"$ROUTER_AUTH_TOKEN\""
       }
     }
   }

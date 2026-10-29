@@ -35,7 +35,8 @@ const app = await modal.apps.fromName("libmodal-example", {
 const volume = await modal.volumes.fromName("libmodal-example-volume", {
   createIfMissing: true,
 });
-const image = modal.images.fromRegistry("alpine:3.21");
+// prefer named Images in Sandboxes to ensure they are never built during Sandbox launch
+const image = await modal.images.fromName("libmodal-example");
 const sb = await modal.sandboxes.create(app, image, {
   volumes: { "/mnt/volume": volume },
 });
@@ -77,7 +78,8 @@ func main() {
 
 	// Create a Sandbox with the specified Image, and mount a Volume
 	volume, _ := mc.Volumes.FromName(ctx, "libmodal-example-volume", &modal.VolumeFromNameParams{CreateIfMissing: true})
-	image := mc.Images.FromRegistry("alpine:3.21", nil)
+	// prefer named Images in Sandboxes to ensure they are never built during Sandbox launch
+	image, _ := mc.Images.FromName(ctx, "libmodal-example", nil)
 	sb, _ := mc.Sandboxes.Create(ctx, app, image, &modal.SandboxCreateParams{
 		Volumes: map[string]*modal.Volume{"/mnt/volume": volume},
 	})

@@ -82,10 +82,8 @@ node_modules
 .claude/worktrees
 .claude/settings.local.json
 # Secrets
-**/.env
-**/.env.*
-**/.env.local
-**/.dev.vars
+**/.env*
+**/.dev.vars*
 
 vitest.config.*.timestamp*
 node_modules/
@@ -96,6 +94,7 @@ out
 
 # Cloudflare Workers
 .wrangler/
+tmp/
 
 # TypeScript
 *.tsbuildinfo

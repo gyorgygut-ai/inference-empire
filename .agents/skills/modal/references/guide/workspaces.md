@@ -33,7 +33,7 @@ There are two ways to create an additional Modal Workspace on the
 
 <Callout variant="info">
 
-If your Modal account was provisioned through Okta, you will not have the option to create a new Workspace. Your Workspace is managed by your organization's Okta configuration. If you need a new Workspace, contact your organization's Okta administrator.
+If your Modal account was provisioned through SAML SSO, you will not have the option to create a new Workspace. Your Workspace is managed by your organization's identity provider configuration. If you need a new Workspace, contact your organization's identity provider administrator.
 
 </Callout>
 
@@ -43,8 +43,8 @@ If your Modal account was provisioned through Okta, you will not have the option
 
 2. Create from scratch. You can invite anyone to your Workspace.
 
-If you're interested in having a Workspace associated with your Okta
-organization, then check out our [Okta SSO docs](/docs/guide/okta-sso).
+If you're interested in configuring SSO for a Workspace, see our
+[SAML SSO docs](/docs/guide/saml-sso).
 
 To use SSO through Google or other providers, reach out to us at <support@modal.com>.
 
@@ -127,6 +127,20 @@ members on the `Workspace Management` tab in [settings](/settings/workspace-mana
 Modal supports [Role-Based Access Control (RBAC)](/docs/guide/rbac) for more granular control over permissions at both the Workspace and Environment level.
 
 </Callout>
+
+## Renaming a Workspace
+
+Workspace Owners and Managers can rename a Workspace from the
+[Identity & provisioning](/settings/workspace-management/identity-and-provisioning)
+page. Members stay signed in, and deployed web endpoints keep their existing
+URLs until they are redeployed, after which they use the new name. The old
+name is held for your Workspace for 30 days, during which dashboard links to it
+redirect members to the new name and you can switch back.
+
+If your Workspace uses SAML SSO, update the Workspace field in your Okta app,
+or the ACS URL and login URL in another identity provider, right after
+renaming, or SSO sign-in stops working. Personal Workspaces can't be renamed;
+contact <support@modal.com>.
 
 ## Leaving a Workspace
 

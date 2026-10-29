@@ -3,7 +3,7 @@ import type { ExecutorContext } from '@nx/devkit';
 import executor, { buildCommand } from './ruff';
 
 const context: ExecutorContext = {
-  root: '',
+  root: '/ws',
   cwd: process.cwd(),
   isVerbose: false,
   projectGraph: { nodes: {}, dependencies: {} },
@@ -13,13 +13,15 @@ const context: ExecutorContext = {
 
 describe('Ruff Executor', () => {
   it('builds the lint command', () => {
-    expect(buildCommand('tiny_sd')).toBe(
-      'uvx ruff check apps/tiny_sd --line-length 100'
-    );
+    expect(buildCommand('apps/workers/flux2')).toBe('uvx ruff check apps/workers/flux2 --line-length 100');
   });
 
-  it('fails without a family', async () => {
-    const output = await executor({ family: '' }, context);
+  it('builds the autofix command', () => {
+    expect(buildCommand('apps/workers/flux2', true)).toBe('uvx ruff check apps/workers/flux2 --line-length 100 --fix');
+  });
+
+  it('fails without a project root', async () => {
+    const output = await executor({ projectRoot: '' }, context);
     expect(output.success).toBe(false);
   });
 });

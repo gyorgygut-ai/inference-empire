@@ -22,9 +22,23 @@ Egress beyond the included amount is billed at $0.04 per GiB.
 
 ## How can I see my egress usage?
 
-Visit the [Usage & Billing](/settings/usage) page to see your current usage. The
-page shows daily egress for the whole Workspace, and lets you break it down by
-Environment. Access to egress data through the CLI and SDK is coming soon.
+Visit the [Usage & Billing](/settings/usage?tab=usage) page and find the Network Egress
+card. For the selected billing cycle, it shows:
+
+* Your total egress and how much of the included allowance you've used
+* An estimated charge based on your current plan
+* Egress for the whole Workspace, broken down by day, which you can filter by Environment
+* The Apps with the most egress
+
+Egress costs are also included in the Modal CLI and SDK, for example:
+
+* `modal billing summary`: Workspace spend, including egress and the allowance
+* `modal billing report --for "this month" --show-resources`: egress cost per App
+* `modal environment billing summary`: egress cost for one Environment
+* `modal billing rates`: your plan's egress rate
+
+In the SDK, use [`Workspace.billing`](/docs/sdk/py/latest/Workspace#billing)
+and [`Environment.billing`](/docs/sdk/py/latest/Environment#billing).
 
 ## Is the allowance applied separately to each Environment?
 

@@ -21,13 +21,14 @@ Please refer to our [pricing page](/pricing) for up-to-date prices. We calculate
 
 ## Volumes v2
 
-<Callout variant="beta">
+There are two versions of Volumes. We recommend Volumes v2 for all new Volumes:
+it supports more files, higher throughput, concurrent writes from hundreds of
+containers, and is HIPAA compliant.
 
-Instructions specific to v2 Volumes will be annotated with 🌱 below.
+Volumes v1 is still the default when no version is specified, so pass
+`version=2` (or `--version=2` on the command line) when creating a Volume.
 
-</Callout>
-
-Read more about [Volumes v2](#volumes-v2-overview) below.
+Read more about [Volumes v2](#volumes-v2-overview) below. Instructions specific to v2 Volumes will be annotated with 🌱.
 
 ## Creating a Volume
 
@@ -360,7 +361,6 @@ create new files or directories will error with
 [`ENOSPC` (No space left on device)](https://pubs.opengroup.org/onlinepubs/9799919799/).
 
 If you need to work with a large number of files, consider using Volumes v2!
-It is currently in Beta. See below for more info.
 
 ## Filesystem consistency
 
@@ -444,20 +444,8 @@ dashboard, or use `du` on the mounted Volume within a container.
 Volumes v2 generally behave just like Volumes v1, and most of the existing APIs
 and CLI commands that you are used to will work the same between versions.
 Because the file system implementation is completely different, there will be
-some significant performance characteristics that can differ from version 1
+some significant performance characteristics that can differ from v1
 Volumes. Below is an outline of the key differences you should be aware of.
-
-### Volumes v2 are still in Beta
-
-<Callout variant="beta">
-
-We cannot yet guarantee that no data will be lost, so we don't recommend using Volumes v2 for mission-critical data at this time.
-
-</Callout>
-
-You can still reap the benefits of v2 for
-data that isn't precious, or that is easy to rebuild, such as log files,
-regularly updated training data and model weights, caches, and more.
 
 ### Volumes v2 are HIPAA compliant
 
@@ -539,12 +527,7 @@ if p.returncode != 0:
     raise Exception(f"sync failed with exit code {p.returncode}")
 ```
 
-> ⚠️ This feature is only available for Volumes v2.
-
-### Volumes v2 has a few limits in place
-
-While we work out performance trade-offs and listen to user feedback, we have
-put some artificial limits in place.
+### Volumes v2 limits
 
 * Files must be less than 1 TiB.
 * At most 262,144 files can be stored in a single directory.
@@ -592,6 +575,6 @@ root / → sync /mnt/2files2furious # Ensure changes are persisted before exitin
 
 ## Further examples
 
-* [Character LoRA fine-tuning](/docs/examples/diffusers_lora_finetune) with model storage on a Volume
+* [LLM post-training with Miles and GRPO](/docs/examples/miles_grpo) with datasets and checkpoints on Volumes
 * [Protein folding](/docs/examples/chai1) with model weights and output files stored on Volumes
 * [Dataset visualization with Datasette](/docs/examples/cron_datasette) using a SQLite database on a Volume

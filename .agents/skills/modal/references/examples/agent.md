@@ -23,7 +23,7 @@ You will need two [Modal Secrets](https://modal.com/docs/guide/secrets) to run t
 one to access the OpenAI API and another to access the LangSmith API for logging the agent's behavior.
 
 To create them, head to the [Secrets dashboard](https://modal.com/secrets), select "Create new secret",
-and use the provided templates for OpenAI and LangSmith.
+use the provided template for OpenAI, and create a custom secret with a `LANGCHAIN_API_KEY` for LangSmith.
 
 ```python
 app = modal.App(

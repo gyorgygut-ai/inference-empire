@@ -1,148 +1,130 @@
 {
   "name": "functions",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "apps/functions/src",
   "projectType": "application",
-  "tags": [],
+  "sourceRoot": "apps/functions/src",
   "targets": {
+    "predev": {
+      "executor": "nx:noop",
+      "dependsOn": [
+        "prebuild"
+      ]
+    },
+    "prebuild": {
+      "executor": "nx:noop",
+      "dependsOn": [
+        "^prebuild"
+      ]
+    },
     "build": {
-      "executor": "@nx/esbuild:esbuild",
-      "outputs": [
-        "{options.outputPath}"
-      ],
-      "defaultConfiguration": "production",
-      "options": {
-        "platform": "node",
-        "outputPath": "dist/apps/functions",
-        "format": [
-          "cjs"
-        ],
-        "bundle": false,
-        "main": "apps/functions/src/main.ts",
-        "tsConfig": "apps/functions/tsconfig.app.json",
-        "assets": [
-          "apps/functions/src/assets"
-        ],
-        "generatePackageJson": true,
-        "esbuildOptions": {
-          "sourcemap": true,
-          "outExtension": {
-            ".js": ".js"
-          }
-        }
-      },
-      "configurations": {
-        "development": {},
-        "production": {
-          "esbuildOptions": {
-            "sourcemap": false,
-            "outExtension": {
-              ".js": ".js"
-            }
-          }
-        }
-      }
-    },
-    "prune-lockfile": {
+      "executor": "dotenvx:run-commands",
       "dependsOn": [
-        "build"
+        "prebuild"
       ],
       "cache": true,
-      "executor": "@nx/js:prune-lockfile",
-      "outputs": [
-        "{workspaceRoot}/dist/apps/functions/package.json",
-        "{workspaceRoot}/dist/apps/functions/package-lock.json"
-      ],
       "options": {
-        "buildTarget": "build"
+        "command": "echo 'no build step'"
       }
     },
-    "copy-workspace-modules": {
-      "dependsOn": [
-        "build"
-      ],
-      "cache": true,
-      "outputs": [
-        "{workspaceRoot}/dist/apps/functions/workspace_modules"
-      ],
-      "executor": "@nx/js:copy-workspace-modules",
-      "options": {
-        "buildTarget": "build"
-      }
-    },
-    "prune": {
-      "dependsOn": [
-        "prune-lockfile",
-        "copy-workspace-modules"
-      ],
-      "executor": "nx:noop"
-    },
-    "serve": {
+    "dev-flux2": {
+      "executor": "dotenvx:run-commands",
       "continuous": true,
-      "executor": "@nx/js:node",
-      "defaultConfiguration": "development",
+      "cache": false,
+      "readyWhen": {
+        "url": "http://localhost:{env.ROUTER_FLUX2_PORT}"
+      },
       "dependsOn": [
-        "build"
+        "predev",
+        "workers-flux2:deploy-beam"
       ],
       "options": {
-        "buildTarget": "functions:build",
-        "runBuildTargetDependencies": false
-      },
-      "configurations": {
-        "development": {
-          "buildTarget": "functions:build:development"
+        "cwd": "apps/functions",
+        "env": {
+          "AUTH_TOKEN": "${ROUTER_FLUX2_GENERATED_AUTH_TOKEN}",
+          "WORKER_BEAM_URL": "$(npx tsx $NX_WORKSPACE_ROOT/tools/get-beam-url.ts workers-flux2)",
+          "CLOUDFLARE_INCLUDE_PROCESS_ENV": "true"
         },
-        "production": {
-          "buildTarget": "functions:build:production"
-        }
+        "command": "npx wrangler dev",
+        "args": "-c wrangler.flux2.toml --port=\"$ROUTER_FLUX2_PORT\" --inspector-port 9229 --persist-to $NX_WORKSPACE_ROOT/tmp/wrangler/flux2"
       }
     },
-    "serve-functions": {
-      "command": "npx netlify dev",
-      "options": {
-        "cwd": "apps/functions"
-      }
-    },
-    "deploy-functions": {
-      "dependsOn": [],
-      "command": "npx netlify deploy --site=cd41f060-bbdf-49fa-82a6-20d7ba136853",
-      "options": {
-        "cwd": "apps/functions"
+    "dev-tinysd": {
+      "executor": "dotenvx:run-commands",
+      "continuous": true,
+      "cache": false,
+      "readyWhen": {
+        "url": "http://localhost:{env.ROUTER_TINYSD_PORT}"
       },
-      "configurations": {
-        "production": {
-          "command": "npx netlify deploy --prod --site=cd41f060-bbdf-49fa-82a6-20d7ba136853",
-          "cwd": "apps/functions"
-        }
-      }
-    },
-    "dev-flux2-router-url": {
-      "executor": "nx:run-commands",
-      "options": {
-        "cwd": "{workspaceRoot}",
-        "command": "mkdir -p dist/dev/flux2 && echo \"ROUTER_URL=http://127.0.0.1:8888\" >> dist/dev/flux2/router.env"
-      }
-    },
-    "deploy-flux2-router-url": {
-      "executor": "nx:run-commands",
+      "dependsOn": [
+        "predev",
+        "workers-tiny_sd:deploy-beam"
+      ],
       "options": {
         "cwd": "apps/functions",
-        "command": "mkdir -p dist/deploy/flux2 && URL=$(npx netlify deploy --site=cd41f060-bbdf-49fa-82a6-20d7ba136853 2>&1 | grep -oE 'https://[^[:space:]]+' | head -n1) && echo \"ROUTER_URL=$URL\" >> dist/deploy/flux2/router.env"
+        "env": {
+          "AUTH_TOKEN": "${ROUTER_TINYSD_GENERATED_AUTH_TOKEN}",
+          "WORKER_BEAM_URL": "$(npx tsx $NX_WORKSPACE_ROOT/tools/get-beam-url.ts workers-tiny_sd)",
+          "CLOUDFLARE_INCLUDE_PROCESS_ENV": "true"
+        },
+        "command": "npx wrangler dev",
+        "args": "-c wrangler.tinysd.toml --port=\"$ROUTER_TINYSD_PORT\" --inspector-port 9230 --persist-to $NX_WORKSPACE_ROOT/tmp/wrangler/tinysd"
       }
     },
-    "dev-krea2-router-url": {
-      "executor": "nx:run-commands",
-      "options": {
-        "cwd": "{workspaceRoot}",
-        "command": "mkdir -p dist/dev/krea2 && echo \"ROUTER_URL=http://127.0.0.1:8888\" >> dist/dev/krea2/router.env"
-      }
+    "dev": {
+      "executor": "nx:noop",
+      "dependsOn": [
+        "dev-flux2",
+        "dev-tinysd"
+      ]
     },
-    "deploy-krea2-router-url": {
-      "executor": "nx:run-commands",
+    "deploy-flux2": {
+      "executor": "dotenvx:run-commands",
+      "cache": false,
+      "dependsOn": [
+        "build",
+        "workers-flux2:deploy-beam"
+      ],
       "options": {
         "cwd": "apps/functions",
-        "command": "mkdir -p dist/deploy/krea2 && URL=$(npx netlify deploy --site=cd41f060-bbdf-49fa-82a6-20d7ba136853 2>&1 | grep -oE 'https://[^[:space:]]+' | head -n1) && echo \"ROUTER_URL=$URL\" >> dist/deploy/krea2/router.env"
+        "env": {
+          "AUTH_TOKEN": "${ROUTER_FLUX2_GENERATED_AUTH_TOKEN}",
+          "WORKER_BEAM_URL": "$(npx tsx $NX_WORKSPACE_ROOT/tools/get-beam-url.ts workers-flux2)"
+        },
+        "commands": [
+          "npx wrangler deploy {args}",
+          "npx tsx $NX_WORKSPACE_ROOT/tools/worker-secrets.ts env.schema.deploy.ts | npx wrangler secret bulk {args}"
+        ],
+        "args": "-c wrangler.flux2.toml",
+        "parallel": false
       }
+    },
+    "deploy-tinysd": {
+      "executor": "dotenvx:run-commands",
+      "cache": false,
+      "dependsOn": [
+        "build",
+        "workers-tiny_sd:deploy-beam"
+      ],
+      "options": {
+        "cwd": "apps/functions",
+        "env": {
+          "AUTH_TOKEN": "${ROUTER_TINYSD_GENERATED_AUTH_TOKEN}",
+          "WORKER_BEAM_URL": "$(npx tsx $NX_WORKSPACE_ROOT/tools/get-beam-url.ts workers-tiny_sd)"
+        },
+        "commands": [
+          "npx wrangler deploy {args}",
+          "npx tsx $NX_WORKSPACE_ROOT/tools/worker-secrets.ts env.schema.deploy.ts | npx wrangler secret bulk {args}"
+        ],
+        "args": "-c wrangler.tinysd.toml",
+        "parallel": false
+      }
+    },
+    "deploy": {
+      "executor": "nx:noop",
+      "dependsOn": [
+        "deploy-flux2",
+        "deploy-tinysd"
+      ]
     }
   }
 }

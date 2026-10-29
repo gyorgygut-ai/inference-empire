@@ -1,4 +1,3 @@
-"""Shared business logic for krea2-ref2img. No platform imports."""
 from __future__ import annotations
 
 import importlib
@@ -7,17 +6,31 @@ import uuid
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, field_validator
-
-from packages.workers.media.validation import validate_image_b64
+from .contract_krea2 import Artifact, Krea2Ref2ImgInput, Krea2Ref2ImgOutput
+from .validation import validate_image_b64
 
 if TYPE_CHECKING:
     from diffusers import DiffusionPipeline
 
-    from packages.workers.artifacts.artifacts import Artifacts
+    from .artifacts import Artifacts
 
 MODEL_REPO = "krea/Krea-2-Turbo"
 REID_REPO = "yijunwang2/krea2-reid"
+DEPENDENCIES = [
+"torch==2.9.1",
+"transformers==4.57.6",
+"accelerate==1.14.0",
+"diffusers==0.39.0",
+"safetensors==0.8.0",
+"huggingface-hub==0.36.2",
+"pillow==12.3.0",
+"boto3==1.43.83",
+"fastapi[standard]==0.141.1",
+"hf_transfer==0.1.9",
+"protobuf",
+"opencv-python-headless",
+"peft",
+]
 EXTRA_SPECIAL_TOKENS = [    "<|im_start|>",
     "<|im_end|>",
     "<|object_ref_start|>",
@@ -32,33 +45,6 @@ EXTRA_SPECIAL_TOKENS = [    "<|im_start|>",
     "<|image_pad|>",
     "<|video_pad|>",
 ]
-
-class Krea2Ref2ImgInput(BaseModel):
-    model_config = ConfigDict(title="Krea2Ref2ImgInput")
-    prompt: str
-    reference_image: str | None = Field(default=None)
-
-    @field_validator("reference_image")
-    @classmethod
-    def _check_reference_image(cls, v: str | None, info: ValidationInfo) -> str | None:
-        if v is None:
-            return None
-        return validate_image_b64(v, info.field_name)
-    height: int = Field(default=768)
-    width: int = Field(default=768)
-    num_inference_steps: int = Field(default=8)
-    guidance_scale: float = Field(default=0.0)
-    seed: int | None = Field(default=None)
-    lora_scale: float = Field(default=1.0)
-    face_crop: bool = Field(default=True)
-
-class Artifact(BaseModel):
-    model_config = ConfigDict(title="Artifact")
-    presigned_url: str
-
-class Krea2Ref2ImgOutput(BaseModel):
-    model_config = ConfigDict(title="Krea2Ref2ImgOutput")
-    artifact: Artifact
 
 def _apply_qwen3_vl_rope_patch():
     import transformers.models.qwen3_vl.modeling_qwen3_vl as _q3vl_modeling
@@ -82,7 +68,7 @@ def load_pipeline(cache_dir=None):
     def _dist_unavailable() -> bool:
         return False
 
-    dist.is_available = _dist_unavailable
+    dist.is_available = _dist_unavailable  # ty: ignore[invalid-assignment]
 
     print("[INIT] loading model krea/Krea-2-Turbo", flush=True)
     t0 = time.time()
@@ -255,9 +241,7 @@ def pipe_factory(cache_dir=None) -> DiffusionPipeline:
     return load_pipeline(cache_dir=cache_dir)[0]
 
 def load_dependencies(cache_dir=None):
-    """Load all dependencies for krea2-ref2img worker."""
-    from packages.workers.artifacts.r2_artifacts import R2Artifacts
-
+    from .artifacts import R2Artifacts
     storage = R2Artifacts()
     pipe, runtime_dir, _ = load_pipeline(cache_dir=cache_dir)
     return storage, pipe, runtime_dir, _TorchModuleService()
@@ -270,7 +254,7 @@ class _TorchModuleService:
         def _dist_unavailable() -> bool:
             return False
 
-        dist.is_available = _dist_unavailable
+        dist.is_available = _dist_unavailable  # ty: ignore[invalid-assignment]
 
     def __getattr__(self, name: str):
         import torch

@@ -1,6 +1,0 @@
-"""<%= modelTag %> family smoke: pin table importable."""
-from apps.<%= family %>.shared.worker_<%= family %> import IMAGE_PIP_DEPS
-
-
-def test_pin_table_exists():
-    assert isinstance(IMAGE_PIP_DEPS, list)

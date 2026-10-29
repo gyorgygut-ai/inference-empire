@@ -1,3 +1,0 @@
-# Minimal beam config for tests
-project: krea2-ref2img-test
-python_version: python3.11

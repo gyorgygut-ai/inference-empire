@@ -19,7 +19,7 @@ from typing import NoReturn
 WORKDIR = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(WORKDIR))
 
-from dotenv import load_dotenv
+from dotenv import load_dotenv  # noqa: E402
 
 load_dotenv(WORKDIR / ".env")
 
@@ -106,12 +106,7 @@ class InaccessibleError(Exception):
     pass
 
 
-ALLOW_PATTERNS = {
-    "Comfy-Org/MiniMax-H3": [
-        "diffusion_models/minimax_h3_ref2va_pruned_int8_convrot.safetensors",
-        "text_encoders/qwen3vl_32b_minimax_h3_int8_convrot.safetensors",
-    ],
-}
+ALLOW_PATTERNS: dict[str, list[str]] = {}
 
 
 def fetch(repo: str, tmp: Path, patterns: list[str] | None = None) -> None:
@@ -166,7 +161,7 @@ def main() -> int:
 
     plan: dict[tuple[str, str], set[str]] = {}
     for wf in sorted((WORKDIR / "apps").glob("*/worker_*.py")):
-        if wf.parent.name == "voice" or (only and wf.parent.name not in only and wf.stem not in only):
+        if only and wf.parent.name not in only and wf.stem not in only:
             continue
         provider = next((p for tag, p in PROVIDER_OF if tag in wf.name), None)
         if provider is None or (args.provider != "all" and provider != args.provider):

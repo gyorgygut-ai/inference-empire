@@ -1,11 +1,36 @@
 # workspace-plugin
 
-This library was generated with [Nx](https://nx.dev).
+Local Nx plugin, loaded from source: `nx.json` registers `src/inference/python.ts`, and
+`executors.json` / `generators.json` resolve straight to the TypeScript implementations.
+There is no build step.
 
-## Building
+## Inference
 
-Run `nx build workspace-plugin` to build the library.
+`src/inference/python.ts` matches `apps/**/worker_*.py` and infers, per family root
+(`apps/<family>` or `apps/workers/<family>`):
 
-## Running unit tests
+`audit-uv` · `ruff` · `ty` · `vulture` · `audit` · `lint` · `test-unit` · `test-e2e` · `test` · `verify`
 
-Run `nx test workspace-plugin` to execute the unit tests via [Vitest](https://vitest.dev/).
+`build` is merged with whatever the project declares.
+
+## Executors
+
+| Executor | Runs |
+| --- | --- |
+| `audit-uv` | `uv pip check` |
+| `ruff` | `uvx ruff check <projectRoot>` |
+| `ty` | `uv run --locked --group test ty check <projectRoot>` |
+| `vulture` | `uv run --locked --group test vulture <projectRoot>` |
+| `pytest` | `PYTHONPATH=<projectRoot> uv run --locked --group test pytest <projectRoot>/tests/ -k "<unit\|e2e>"` |
+
+All take `projectRoot` (workspace-relative), not a bare family name.
+
+## Generators
+
+- `gpu-family` — scaffolds `apps/workers/<family>/` (shared logic, tests, project.json) and `packages/schemas/<family>/schema.json`
+- `ts-app` — scaffolds an app under `apps/`
+- `ts-lib` — scaffolds a lib under `packages/`
+
+```bash
+npx nx g @inference/workspace-plugin:gpu-family tiny_sd
+```

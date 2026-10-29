@@ -410,10 +410,6 @@ data_root = Path("/data")
 
 ```
 
-Note that v2 Volumes are still in beta, so data loss may be possible.
-This is acceptable for most batch jobs, which extract data from an external
-source of truth.
-
 The `transform` function below operates on a folder containing data
 with one filing per file
 (in [NetCDF](https://en.wikipedia.org/wiki/NetCDF)/`.nc` format).

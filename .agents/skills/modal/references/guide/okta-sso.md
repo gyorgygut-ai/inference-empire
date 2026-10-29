@@ -43,7 +43,9 @@ enabling.
 
 5. Fill out Workspace field to configure for your specific Modal Workspace. See
    [Step 2](/docs/guide/okta-sso#step-2-link-your-workspace-to-okta-modal-application)
-   if you're unsure what this is.
+   if you're unsure what this is. If you later
+   [rename your Workspace](/docs/guide/workspaces#renaming-a-workspace), update
+   this field to the new name.
    ![Okta add workspace](../../assets/docs/okta-add-workspace-username.png)
 
 #### Step 2: Link your Workspace to Okta Modal application

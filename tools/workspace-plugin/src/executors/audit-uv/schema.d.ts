@@ -1,2 +1,1 @@
-export interface AuditUvExecutorSchema {
-}
+export type AuditUvExecutorSchema = Record<string, never>;

@@ -4,51 +4,8 @@
   "sourceRoot": "tools/workspace-plugin/src",
   "projectType": "library",
   "tags": [],
+  "// targets": "to see all targets run: nx show project workspace-plugin --web",
   "targets": {
-    "build": {
-      "executor": "@nx/js:tsc",
-      "outputs": [
-        "{options.outputPath}"
-      ],
-      "options": {
-        "outputPath": "dist/tools/workspace-plugin",
-        "main": "tools/workspace-plugin/src/index.ts",
-        "tsConfig": "tools/workspace-plugin/tsconfig.lib.json",
-        "assets": [
-          "tools/workspace-plugin/*.md",
-          {
-            "input": "./tools/workspace-plugin/src",
-            "glob": "**/!(*.ts)",
-            "output": "./src"
-          },
-          {
-            "input": "./tools/workspace-plugin/src",
-            "glob": "**/*.d.ts",
-            "output": "./src"
-          },
-          {
-            "input": "./tools/workspace-plugin",
-            "glob": "generators.json",
-            "output": "."
-          },
-          {
-            "input": "./tools/workspace-plugin",
-            "glob": "executors.json",
-            "output": "."
-          }
-        ]
-      }
-    },
-    "lint": {
-      "executor": "@nx/eslint:lint"
-    },
-    "test-unit": {
-      "executor": "@nx/vitest:test",
-      "options": {
-        "config": "{projectRoot}/vitest.config.mts"
-      },
-      "inputs": ["default"],
-      "cache": true
-    }
+    "verify-unit": {}
   }
 }

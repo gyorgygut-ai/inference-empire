@@ -1,0 +1,76 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "test",
+  "projectType": "library",
+  "root": "tools/test",
+  "tags": ["type:tool", "scope:test"],
+  "implicitDependencies": ["*"],
+  "targets": {
+    "verify-tier-1-audit": {
+      "executor": "nx:noop",
+      "cache": false,
+      "dependsOn": [
+        "^lint",
+        "^build",
+        "^test-unit",
+        "lint",
+        "test-unit"
+      ]
+    },
+    "test-unit": {
+      "executor": "dotenvx:run-commands",
+      "cache": false,
+      "options": {
+        "cwd": "tools/test",
+        "command": "vitest run",
+        "args": "--config vitest.config.mts --exclude 'acceptance.*.test.ts'"
+      }
+    },
+    "acceptance:dev": {
+      "executor": "dotenvx:run-commands",
+      "cache": false,
+      "dependsOn": [
+        { "projects": ["face-value"], "target": "dev", "waitFor": "ready" }
+      ],
+      "options": {
+        "cwd": "tools/test",
+        "command": "vitest run",
+        "args": "--config vitest.config.mts acceptance.dev.test.ts"
+      }
+    },
+    "acceptance:dev-tinysd": {
+      "executor": "dotenvx:run-commands",
+      "cache": false,
+      "dependsOn": [
+        { "projects": ["functions"], "target": "dev-tinysd", "waitFor": "ready" }
+      ],
+      "options": {
+        "cwd": "tools/test",
+        "command": "vitest run",
+        "args": "--config vitest.config.mts acceptance.dev-tinysd.test.ts"
+      }
+    },
+    "acceptance:deploy": {
+      "executor": "dotenvx:run-commands",
+      "cache": false,
+      "dependsOn": [
+        "face-value:deploy",
+        "functions:deploy"
+      ],
+      "options": {
+        "cwd": "tools/test",
+        "env": { "VERCEL_TOKEN": "${FACE_VALUE_VERCEL_TOKEN}" },
+        "command": "vitest run",
+        "args": "--config vitest.config.mts acceptance.deploy.test.ts"
+      }
+    },
+    "e2e:dev": {
+      "executor": "nx:noop",
+      "cache": false
+    },
+    "e2e:deploy": {
+      "executor": "nx:noop",
+      "cache": false
+    }
+  }
+}

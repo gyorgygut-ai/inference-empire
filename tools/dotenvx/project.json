@@ -1,0 +1,43 @@
+{
+  "name": "dotenvx",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "tools/dotenvx/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/tools/dotenvx",
+        "main": "tools/dotenvx/src/index.ts",
+        "tsConfig": "tools/dotenvx/tsconfig.lib.json",
+        "assets": [
+          "tools/dotenvx/*.md",
+          {
+            "input": "./tools/dotenvx/src",
+            "glob": "**/!(*.ts)",
+            "output": "./src"
+          },
+          {
+            "input": "./tools/dotenvx/src",
+            "glob": "**/*.d.ts",
+            "output": "./src"
+          },
+          {
+            "input": "./tools/dotenvx",
+            "glob": "generators.json",
+            "output": "."
+          },
+          {
+            "input": "./tools/dotenvx",
+            "glob": "executors.json",
+            "output": "."
+          }
+        ]
+      }
+    }
+  }
+}

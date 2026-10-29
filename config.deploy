@@ -1,0 +1,3 @@
+R2_BUCKET=generated-media
+ROUTER_FLUX2_GENERATED_AUTH_TOKEN=$(npx tsx tools/generate-auth-token.ts)
+ROUTER_TINYSD_GENERATED_AUTH_TOKEN=$(npx tsx tools/generate-auth-token.ts)

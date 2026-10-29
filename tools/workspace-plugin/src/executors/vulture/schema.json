@@ -2,13 +2,13 @@
   "$schema": "https://json-schema.org/schema",
   "version": 2,
   "title": "Vulture executor",
-  "description": "Run vulture dead-code check for a GPU worker family",
+  "description": "Run vulture dead-code check for a Python worker project",
   "type": "object",
   "properties": {
-    "family": {
+    "projectRoot": {
       "type": "string",
-      "description": "Worker family dir under apps/ (e.g. flux2)"
+      "description": "Project root relative to the workspace root (e.g. apps/workers/flux2)"
     }
   },
-  "required": ["family"]
+  "required": ["projectRoot"]
 }

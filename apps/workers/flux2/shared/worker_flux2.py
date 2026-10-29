@@ -1,4 +1,3 @@
-"""Shared business logic for flux2-klein9b. No platform imports."""
 from __future__ import annotations
 
 import importlib
@@ -6,49 +5,31 @@ import time
 import uuid
 from typing import TYPE_CHECKING
 
-from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, field_validator
-
-from packages.workers.media.validation import validate_image_b64
+from .contract_flux2 import Artifact, Flux2Klein9bInput, Flux2Klein9bOutput
+from .validation import validate_image_b64
 
 if TYPE_CHECKING:
     from diffusers import Flux2KleinPipeline
 
-    from packages.workers.artifacts.artifacts import Artifacts
+    from .artifacts import Artifacts
 
 MODEL_ID = "Disty0/FLUX.2-klein-9B-SDNQ-4bit-dynamic-svd-r32"
 _MAX_WIDTH = 2560
 _MAX_HEIGHT = 2560
 
-class Flux2Klein9bInput(BaseModel):
-    model_config = ConfigDict(title="Flux2Klein9bInput")
-    prompt: str
-    height: int = Field(default=512)
-    width: int = Field(default=512)
-    guidance_scale: float = Field(default=1.0)
-    num_inference_steps: int = Field(default=4)
-    seed: int | None = Field(default=None)
-    input_image: str | None = Field(default=None)
-    reference_images: list[str] = Field(default=[])
-
-    @field_validator("input_image")
-    @classmethod
-    def _check_input_image(cls, v: str | None, info: ValidationInfo) -> str | None:
-        if v is None:
-            return None
-        return validate_image_b64(v, info.field_name)
-
-    @field_validator("reference_images")
-    @classmethod
-    def _check_reference_images(cls, v: list[str], info: ValidationInfo) -> list[str]:
-        return [validate_image_b64(item, f"{info.field_name}[{i}]") for i, item in enumerate(v)]
-
-class Artifact(BaseModel):
-    model_config = ConfigDict(title="Artifact")
-    presigned_url: str
-
-class Flux2Klein9bOutput(BaseModel):
-    model_config = ConfigDict(title="Flux2Klein9bOutput")
-    artifact: Artifact
+DEPENDENCIES = [
+"torch==2.9.1",
+"transformers==5.16.1",
+"accelerate==1.14.0",
+"diffusers==0.40.0",
+"sdnq==0.2.6",
+"safetensors==0.8.0",
+"huggingface-hub==1.29.0",
+"pillow==12.3.0",
+"boto3==1.43.83",
+"fastapi[standard]==0.141.1",
+"hf_transfer==0.1.9",
+]
 
 def prepare_image(base64_str: str, field: str = "image"):
     import base64
@@ -72,7 +53,7 @@ def load_pipeline():
     def _dist_unavailable() -> bool:
         return False
 
-    dist.is_available = _dist_unavailable
+    dist.is_available = _dist_unavailable  # ty: ignore[invalid-assignment]
 
     import os
 
@@ -84,7 +65,8 @@ def load_pipeline():
 
     token = os.environ.get("HF_TOKEN")
 
-    from sdnq import SDNQConfig  # noqa: F401  importing sdnq registers its quantizer with transformers
+    # importing sdnq registers its quantizer with transformers
+    from sdnq import SDNQConfig  # noqa: F401  # ty: ignore[unresolved-import]
 
     try:
         pipe = diffusers.Flux2KleinPipeline.from_pretrained(
@@ -178,7 +160,7 @@ def pipe_factory() -> Flux2KleinPipeline:
 
 def load_dependencies():
     """Load all dependencies for flux2-klein9b worker."""
-    from packages.workers.artifacts.r2_artifacts import R2Artifacts
+    from .artifacts import R2Artifacts
 
     storage = R2Artifacts()
     return storage, pipe_factory(), _TorchModuleService()
@@ -191,7 +173,7 @@ class _TorchModuleService:
         def _dist_unavailable() -> bool:
             return False
 
-        dist.is_available = _dist_unavailable
+        dist.is_available = _dist_unavailable  # ty: ignore[invalid-assignment]
 
     def __getattr__(self, name: str):
         import torch
