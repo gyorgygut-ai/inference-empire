@@ -1,0 +1,6 @@
+url: http://localhost:3051
+---
+- launchApp
+- waitForAnimationToEnd
+- assertVisible:
+    css: "main"

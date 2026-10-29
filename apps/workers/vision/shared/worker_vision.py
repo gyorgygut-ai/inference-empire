@@ -4,10 +4,18 @@ import os
 import re
 import time
 from pathlib import Path
+from urllib.parse import urlparse
 
 from .contract_vision import SmallVisionInput, SmallVisionOutput
 
-REPO_ID = "Qwen/Qwen2-VL-2B-Instruct"
+MODEL_CACHES = {
+    "qwen2_vl_2b_instruct": {
+        "url": "https://huggingface.co/Qwen/Qwen2-VL-2B-Instruct",
+        "path": "./model-cache/qwen2_vl_2b_instruct",
+    }
+}
+MODEL_NAME = "qwen2_vl_2b_instruct"
+REPO_ID = urlparse(MODEL_CACHES[MODEL_NAME]["url"]).path.strip("/")
 MAX_NEW_TOKENS = 512
 
 DEPENDENCIES = [
@@ -20,6 +28,30 @@ DEPENDENCIES = [
 "fastapi==0.141.1",
 "hf_transfer==0.1.9",
 ]
+
+def model_volumes():
+    from beam import Volume
+
+    return [
+        Volume(name=f"model-cache-{name}", mount_path=model["path"])
+        for name, model in MODEL_CACHES.items()
+    ]
+
+
+def download_models() -> dict[str, Path]:
+    """Download declared models into their mounted cache paths."""
+    from huggingface_hub import snapshot_download
+
+    return {
+        name: Path(
+            snapshot_download(
+                repo_id=urlparse(model["url"]).path.strip("/"),
+                cache_dir=model["path"],
+            )
+        )
+        for name, model in MODEL_CACHES.items()
+    }
+
 
 def _load_dotenv() -> None:
     path = Path(__file__).parent.parent / ".env"
@@ -48,7 +80,7 @@ def resolve_analyze_prompt(loaded_default: str, override: str | None) -> str:
     """Return caller override when set, else the built-in default prompt."""
     return override if override else loaded_default
 
-def load_models(cache_dir=None):
+def load_models():
     """Production path: always boots the real model."""
     print(f"[INIT] loading model {REPO_ID}", flush=True)
     t0 = time.time()
@@ -67,15 +99,11 @@ def load_models(cache_dir=None):
 
     from transformers import AutoProcessor, Qwen2VLForConditionalGeneration
 
-    from_kwargs = {"torch_dtype": torch.bfloat16, "device_map": "auto"}
-    if cache_dir:
-        from_kwargs["cache_dir"] = cache_dir
-    model = Qwen2VLForConditionalGeneration.from_pretrained(REPO_ID, **from_kwargs).eval()
-
-    proc_kwargs = {}
-    if cache_dir:
-        proc_kwargs["cache_dir"] = cache_dir
-    processor = AutoProcessor.from_pretrained(REPO_ID, **proc_kwargs)
+    model_dir = download_models()[MODEL_NAME]
+    model = Qwen2VLForConditionalGeneration.from_pretrained(
+        str(model_dir), torch_dtype=torch.bfloat16, device_map="auto"
+    ).eval()
+    processor = AutoProcessor.from_pretrained(str(model_dir))
 
     print(f"[INIT] model loaded in {time.time() - t0:.1f}s", flush=True)
     return model, processor, build_analyze_prompt()
@@ -121,7 +149,7 @@ def do_inference(model, processor, analyze_prompt: str, req: SmallVisionInput):
         raise RuntimeError(f"vision model returned non-JSON: {result[:200]!r}")
     return SmallVisionOutput.model_validate_json(m.group())
 
-def load_dependencies(cache_dir=None):
+def load_dependencies():
     """Load all dependencies for small-vision worker."""
-    model, processor, analyze_prompt = load_models(cache_dir=cache_dir)
+    model, processor, analyze_prompt = load_models()
     return model, processor, analyze_prompt

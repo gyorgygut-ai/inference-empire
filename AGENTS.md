@@ -6,7 +6,7 @@
 
 ## Non-negotiables
 
-**Config**: Use `dotenvx run -f config.{dev|deploy} --` where config is needed
+**Config**: Use `dotenvx run -f config.{dev|deploy} --` for `nx` if config is needed
 
 **Correct**:
 
@@ -121,7 +121,7 @@
 
 - **Proof**: the verification chain must prove the implementation
 - **Progress**: tier-by-tier; until each tier passes or a failure
-- **Failures**: run `lint-fix`; report; investigate; fix; restart
+- **Failures**: `lint-fix`; report; read logs; investigate; fix; restart
 - **Readiness**: assert after `finite` deps or `continuous` ready
 - **Tidiness**: max. 6 lines per test case: `setup`->`act`->`assert`
 

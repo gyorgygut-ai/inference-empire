@@ -2,17 +2,22 @@ from __future__ import annotations
 
 from beam import Image, QueueDepthAutoscaler, task_queue
 from shared.contract_vision import SmallVisionInput
-from shared.platform import BEAM_CACHE_PATH, beam_env, beam_volume
+from shared.platform import beam_env
 from shared.worker_vision import (
     DEPENDENCIES,
+    MODEL_CACHES,
     do_inference,
     load_dependencies,
+    model_volumes,
     resolve_analyze_prompt,
 )
 
-CACHE_PATH = BEAM_CACHE_PATH
+CACHE_PATH = MODEL_CACHES["qwen2_vl_2b_instruct"]["path"]
+VOLUMES = model_volumes()
 
-image = Image(python_version="python3.11").add_python_packages(DEPENDENCIES).with_envs(beam_env())
+image = Image(python_version="python3.11").add_python_packages(DEPENDENCIES).with_envs(
+    beam_env(cache_path=CACHE_PATH)
+)
 
 @task_queue(
     name="workers-vision",
@@ -20,8 +25,8 @@ image = Image(python_version="python3.11").add_python_packages(DEPENDENCIES).wit
     memory="32Gi",
     gpu="RTX4090",
     image=image,
-    on_start=lambda: load_dependencies(cache_dir=CACHE_PATH),
-    volumes=[beam_volume(CACHE_PATH)],
+    on_start=load_dependencies,
+    volumes=VOLUMES,
     autoscaler=QueueDepthAutoscaler(max_containers=1, tasks_per_container=1),
     keep_warm_seconds=0,
     checkpoint_enabled=True,

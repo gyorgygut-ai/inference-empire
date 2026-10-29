@@ -1,0 +1,28 @@
+[project]
+name = "workers-voice"
+version = "0.1.0"
+requires-python = ">=3.11,<3.12"
+dependencies = [
+    "aiortc==1.15.0",
+    "av==17.1.0",
+    "fastrtc[vad]==0.0.34",
+    "fastapi==0.141.1",
+    "faster-whisper==1.2.1",
+    "httpx==0.28.1",
+    "numpy==2.4.3",
+    "python-dotenv==1.2.4",
+    "soundfile==0.14.0",
+    "torch==2.6.0",
+    "torchaudio==2.6.0",
+    "transformers==5.2.0",
+    "uvicorn[standard]==0.52.4",
+]
+
+[dependency-groups]
+dev = ["pytest==9.1.1", "ruff==0.15.2", "ty==0.0.1a30"]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+pythonpath = ["."]

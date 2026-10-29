@@ -2,12 +2,21 @@ from __future__ import annotations
 
 from beam import Image, QueueDepthAutoscaler, task_queue
 from shared.contract_tiny_sd import TinySDInput
-from shared.platform import BEAM_CACHE_PATH, beam_env, beam_volume
-from shared.worker_tiny_sd import DEPENDENCIES, do_inference, load_dependencies
+from shared.platform import beam_env
+from shared.worker_tiny_sd import (
+    DEPENDENCIES,
+    MODEL_CACHES,
+    do_inference,
+    load_dependencies,
+    model_volumes,
+)
 
-CACHE_PATH = BEAM_CACHE_PATH
+CACHE_PATH = MODEL_CACHES["segmind_tiny_sd"]["path"]
+VOLUMES = model_volumes()
 
-image = Image(python_version="python3.11").add_python_packages(DEPENDENCIES).with_envs(beam_env())
+image = Image(python_version="python3.11").add_python_packages(DEPENDENCIES).with_envs(
+    beam_env(cache_path=CACHE_PATH)
+)
 
 @task_queue(
     name="workers-tiny_sd",
@@ -16,7 +25,7 @@ image = Image(python_version="python3.11").add_python_packages(DEPENDENCIES).wit
     gpu="RTX4090",
     image=image,
     on_start=load_dependencies,
-    volumes=[beam_volume(CACHE_PATH)],
+    volumes=VOLUMES,
     autoscaler=QueueDepthAutoscaler(max_containers=1, tasks_per_container=1),
     keep_warm_seconds=0,
     checkpoint_enabled=True,

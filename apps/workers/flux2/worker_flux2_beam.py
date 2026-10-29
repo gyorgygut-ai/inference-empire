@@ -2,12 +2,21 @@ from __future__ import annotations
 
 from beam import Image, QueueDepthAutoscaler, task_queue
 from shared.contract_flux2 import Flux2Klein9bInput
-from shared.platform import BEAM_CACHE_PATH, beam_env, beam_volume
-from shared.worker_flux2 import DEPENDENCIES, do_inference, load_dependencies
+from shared.platform import beam_env
+from shared.worker_flux2 import (
+    DEPENDENCIES,
+    MODEL_CACHES,
+    do_inference,
+    load_dependencies,
+    model_volumes,
+)
 
-CACHE_PATH = BEAM_CACHE_PATH
+CACHE_PATH = MODEL_CACHES["flux2_klein9b_sdnq4"]["path"]
+VOLUMES = model_volumes()
 
-image = Image(python_version="python3.11").add_python_packages(DEPENDENCIES).with_envs(beam_env(extra={"SDNQ_USE_TRITON_MM": "0"}))
+image = Image(python_version="python3.11").add_python_packages(DEPENDENCIES).with_envs(
+    beam_env(cache_path=CACHE_PATH, extra={"SDNQ_USE_TRITON_MM": "0"})
+)
 
 @task_queue(
     name="workers-flux2",
@@ -16,7 +25,7 @@ image = Image(python_version="python3.11").add_python_packages(DEPENDENCIES).wit
     gpu="RTX4090",
     image=image,
     on_start=load_dependencies,
-    volumes=[beam_volume(CACHE_PATH)],
+    volumes=VOLUMES,
     autoscaler=QueueDepthAutoscaler(max_containers=1, tasks_per_container=1),
     keep_warm_seconds=0,
     checkpoint_enabled=True,

@@ -1,242 +1,224 @@
-"""Seed model volumes from worker-declared deps. No deploy, no inference.
+"""Seed missing Hugging Face snapshots into their declared Beam volumes."""
 
-Usage: uv run --locked python tools/seed-volumes/seed-volumes.py [--provider modal|beam|all] [--only tiny_sd,flux2] [--dry-run]
-"""
 from __future__ import annotations
 
 import argparse
-import concurrent.futures
-import importlib
+import ast
+import json
+import os
 import re
-import shutil
 import subprocess
-import sys
 import tempfile
-import warnings
+from dataclasses import dataclass
 from pathlib import Path
-from typing import NoReturn
+from typing import Any
+from urllib.parse import urlparse
 
-WORKDIR = Path(__file__).resolve().parent.parent.parent
-sys.path.insert(0, str(WORKDIR))
-
-from dotenv import load_dotenv  # noqa: E402
-
-load_dotenv(WORKDIR / ".env")
-
-VOL_RE = re.compile(r"""Volume\.(?:from_name\(\s*["']([^"']+)|\(name\s*=\s*["']([^"']+))|Volume\(\s*name\s*=\s*["']([^"']+)""")
-REPO_RE = re.compile(r"""repo_id\s*=\s*["']([^"']+)["']""")
-PROVIDER_OF = (("worker_modal_", "modal"), ("worker_beam_", "beam"))
+ROOT = Path(__file__).resolve().parents[2]
+WORKERS_ROOT = ROOT / "apps" / "workers"
 
 
-def sh(*cmd: str, timeout: int = 120) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, cwd=str(WORKDIR))
+@dataclass(frozen=True)
+class Model:
+    name: str
+    repo_id: str
+    cache_path: str
+    volume: str
+    declaration: Path
 
 
-def sh_live(*cmd: str, timeout: int = 3600) -> tuple[int, str]:
-    """Run cmd forwarding output live; returns (returncode, tail). For long uploads."""
-    import time
+def declared_models(root: Path = ROOT) -> list[Model]:
+    """Read literal worker MODEL_CACHES declarations without importing workers."""
+    models: list[Model] = []
+    workers_root = root / "apps" / "workers"
 
-    out: list[str] = []
-    last_beat = time.monotonic()
-    try:
-        with subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                              text=True, cwd=str(WORKDIR)) as p:
-            assert p.stdout is not None
-            for line in p.stdout:
-                now = time.monotonic()
-                if line.lstrip().startswith("[beam://"):
-                    if now - last_beat >= 60:
-                        print("  | ...still uploading...", flush=True)
-                        last_beat = now
-                    continue
-                print("  | " + line.rstrip(), flush=True)
-                out.append(line)
-            rc = p.wait(timeout=timeout)
-    except subprocess.TimeoutExpired:
-        print(f"  | TIMEOUT after {timeout}s -> killing")
-        assert p.stdout is not None
-        p.kill()
-        p.wait()
-        return 124, f"timed out after {timeout}s"
-    return rc, "".join(out[-20:])
+    for declaration in sorted(workers_root.glob("*/shared/worker_*.py")):
+        tree = ast.parse(declaration.read_text(encoding="utf-8"))
+        for node in tree.body:
+            if not isinstance(node, ast.Assign):
+                continue
+            if not any(
+                isinstance(target, ast.Name) and target.id == "MODEL_CACHES"
+                for target in node.targets
+            ):
+                continue
 
+            entries = ast.literal_eval(node.value)
+            if not isinstance(entries, dict):
+                raise ValueError(f"{declaration}: MODEL_CACHES must be a dictionary")
 
-def volume_prefix(provider: str, volume: str) -> str:
-    """HF cache layout is $HF_HOME/hub/models--*, so slugs live under hub/ when it exists."""
-    root = sh("modal", "volume", "ls", volume) if provider == "modal" else sh("beam", "ls", volume)
-    if root.returncode == 0 and "hub" in root.stdout:
-        return "hub/"
-    return ""
+            for name, values in entries.items():
+                if not isinstance(name, str) or not isinstance(values, dict):
+                    raise ValueError(f"{declaration}: invalid MODEL_CACHES entry")
+                url = values.get("url")
+                cache_path = values.get("path")
+                if not isinstance(url, str) or not isinstance(cache_path, str):
+                    raise ValueError(f"{declaration}: {name} needs string url and path")
+                parsed = urlparse(url)
+                if parsed.scheme != "https" or parsed.netloc != "huggingface.co":
+                    raise ValueError(f"{declaration}: unsupported Hugging Face URL {url!r}")
+                repo_id = parsed.path.strip("/")
+                if not repo_id:
+                    raise ValueError(f"{declaration}: empty Hugging Face repo in {url!r}")
 
+                models.append(
+                    Model(
+                        name=name,
+                        repo_id=repo_id,
+                        cache_path=cache_path,
+                        volume=f"model-cache-{name}",
+                        declaration=declaration,
+                    )
+                )
 
-def remote_present(provider: str, volume: str, path: str) -> bool:
-    r = sh("modal", "volume", "ls", volume, path) if provider == "modal" \
-        else sh("beam", "ls", f"{volume}/{path}")
-    combined = (r.stdout or "") + (r.stderr or "")
-    if "No such file" in combined or "0 items" in combined:
-        return False
-    if r.returncode != 0 or not combined.strip():
-        return False
-    if Path(path).name.startswith("models--"):
-        return all(d in combined for d in ("blobs", "refs", "snapshots"))
-    return True
+    return models
 
 
-def die(msg: str, tmp: Path | None = None) -> NoReturn:
-    if tmp is not None:
-        shutil.rmtree(tmp, ignore_errors=True)
-    print(f"FAILED {msg} -> bailing")
-    raise SystemExit(1)
+def run_beam(*args: str) -> str:
+    result = subprocess.run(
+        ["uvx", "--from", "beam-client==0.2.233", "beam", *args],
+        cwd=ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode:
+        detail = (result.stderr or result.stdout).strip()
+        raise RuntimeError(f"beam {' '.join(args)} failed: {detail}")
+    return result.stdout
 
 
-def shared_repos(family: str) -> set[str]:
-    repos: set[str] = set()
-    for f in sorted((WORKDIR / "packages" / family).glob("shared.py")):
+def _json_payload(output: str) -> Any:
+    """Decode the JSON payload, tolerating CLI status text around it."""
+    output = re.sub(r"\x1b\[[0-?]*[ -/]*[@-~]", "", output)
+    decoder = json.JSONDecoder()
+    starts = sorted(
+        index for index, character in enumerate(output) if character in "[{"
+    )
+    for start in starts:
         try:
-            m = importlib.import_module(f"packages.{family}.shared")
-        except Exception as e:
-            print(f"WARN import {f.stem}: {e}")
+            return decoder.raw_decode(output[start:])[0]
+        except json.JSONDecodeError:
             continue
-        repos.update(v for k, v in vars(m).items() if isinstance(v, str)
-                     and (k.endswith(("_REPO", "_ID")) or k == "MODEL_ID") and "/" in v and " " not in v)
-    return repos
+    raise ValueError(f"Beam did not return JSON: {output.strip()}")
 
 
-class InaccessibleError(Exception):
-    pass
+def existing_volumes() -> set[str]:
+    payload = _json_payload(run_beam("volume", "list", "--format", "json"))
+    if not isinstance(payload, list):
+        raise ValueError("Beam volume list JSON must be a list")
+    return {
+        entry["name"]
+        for entry in payload
+        if isinstance(entry, dict) and isinstance(entry.get("name"), str)
+    }
 
 
-ALLOW_PATTERNS: dict[str, list[str]] = {}
+def _entry_name(entry: dict[str, Any]) -> str | None:
+    for key in ("path", "name", "key"):
+        value = entry.get(key)
+        if isinstance(value, str) and value:
+            return value.removeprefix("./").strip("/")
+    return None
 
 
-def fetch(repo: str, tmp: Path, patterns: list[str] | None = None) -> None:
-    from huggingface_hub import snapshot_download
+def _walk_volume(volume: str, path: str, prefix: str = "") -> set[str]:
+    """Recursively list a Beam path and return file paths relative to it."""
+    payload = _json_payload(run_beam("ls", f"{volume}/{path}", "--format", "json"))
+    if not isinstance(payload, list):
+        raise ValueError(f"Beam listing for {volume}/{path} must be a JSON list")
 
-    with warnings.catch_warnings():
-        warnings.simplefilter("error", UserWarning)
-        snapshot_download(repo_id=repo, cache_dir=str(tmp), allow_patterns=patterns)
-
-
-def budget_for(size: int | None) -> int:
-    return max(1800, (size or 0) // 5_000_000)
-
-
-def repo_size(repo: str, patterns: list[str] | None = None) -> int | None:
-    try:
-        import fnmatch
-
-        from huggingface_hub import HfApi
-        from huggingface_hub.utils import HfHubHTTPError
-
-        try:
-            info = HfApi().model_info(repo, files_metadata=True)
-        except HfHubHTTPError as e:
-            if e.response is not None and e.response.status_code in (401, 403, 404):
-                raise InaccessibleError(f"HTTP {e.response.status_code}") from e
-            raise
-        siblings = info.siblings or []
-        if patterns:
-            siblings = [s for s in siblings if any(fnmatch.fnmatch(s.rfilename, p) for p in patterns)]
-        total = sum(s.size or 0 for s in siblings)
-        return total or None
-    except InaccessibleError:
-        raise
-    except Exception as e:
-        print(f"WARN size lookup {repo}: {e}")
-        return None
-
-
-def main() -> int:
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--provider", default="all", choices=["modal", "beam", "all"])
-    ap.add_argument("--only", default="")
-    ap.add_argument("--dry-run", action="store_true")
-    args = ap.parse_args()
-    only = {s for s in args.only.split(",") if s} or None
-
-    for stale in Path(tempfile.gettempdir()).glob("seed-*"):
-        if stale.is_dir():
-            print(f"reaping stale staging dir {stale}")
-            shutil.rmtree(stale, ignore_errors=True)
-
-    plan: dict[tuple[str, str], set[str]] = {}
-    for wf in sorted((WORKDIR / "apps").glob("*/worker_*.py")):
-        if only and wf.parent.name not in only and wf.stem not in only:
+    files: set[str] = set()
+    for entry in payload:
+        if not isinstance(entry, dict):
             continue
-        provider = next((p for tag, p in PROVIDER_OF if tag in wf.name), None)
-        if provider is None or (args.provider != "all" and provider != args.provider):
+        name = _entry_name(entry)
+        if name is None:
             continue
-        text = wf.read_text()
-        vols = {m.group(1) or m.group(2) or m.group(3) for m in VOL_RE.finditer(text)}
-        repos = shared_repos(wf.parent.name) | set(REPO_RE.findall(text))
-        print(f"{wf.relative_to(WORKDIR)} -> volumes={sorted(vols)} repos={sorted(repos)}")
-        for v in vols:
-            plan.setdefault((provider, v), set()).update(repos)
+        is_dir = entry.get("is_dir", entry.get("is_directory", entry.get("IsDir", False)))
+        relative_path = f"{prefix}/{name}".strip("/")
+        child_path = f"{path.rstrip('/')}/{name}"
+        if is_dir:
+            files.update(_walk_volume(volume, child_path, relative_path))
+        else:
+            files.add(relative_path)
+    return files
 
-    prefixes = {(p, v): volume_prefix(p, v) for p, v in sorted(plan)}
-    up = skip = blocked = 0
-    for (provider, volume), repos in sorted(plan.items()):
-        prefix = prefixes[(provider, volume)]
-        pending: list[tuple[str, int | None, str, str]] = []
-        for repo in sorted(repos):
-            slug = "models--" + repo.replace("/", "--")
-            path = prefix + slug
-            if remote_present(provider, volume, path):
-                print(f"{provider}/{volume} {repo}: already-there")
-                continue
-            try:
-                size = repo_size(repo, ALLOW_PATTERNS.get(repo))
-            except InaccessibleError as e:
-                print(f"{provider}/{volume} {repo}: inaccessible ({e}), skipping - check worker ref or HF token")
-                blocked += 1
-                continue
-            pending.append((repo, size, slug, path))
-        pending.sort(key=lambda t: (t[1] is None, t[1] or 0))
-        free = shutil.disk_usage(tempfile.gettempdir()).free
-        for repo, size, slug, path in pending:
-            need = f"{size // 1_000_000_000}G" if size else "unknown-size"
-            if args.dry_run:
-                budget = budget_for(size)
-                if size and size > free:
-                    print(f"{provider}/{volume} {repo}: would-skip no-space (need {need}, free {free // 1_000_000_000}G)")
-                else:
-                    print(f"{provider}/{volume} {repo}: would-upload ({need}, budget {budget // 60}min)")
-                continue
-            if size and size > free:
-                print(f"{provider}/{volume} {repo}: no-space, skipping (need {need}, free {free // 1_000_000_000}G)")
-                skip += 1
-                continue
-            budget = budget_for(size)
-            tmp = Path(tempfile.mkdtemp(prefix="seed-"))
-            print(f"{provider}/{volume} {repo}: downloading ({need}, budget {budget // 60}min) -> {tmp}", flush=True)
-            try:
-                with concurrent.futures.ThreadPoolExecutor(max_workers=1) as ex:
-                    fut = ex.submit(fetch, repo, tmp, ALLOW_PATTERNS.get(repo))
-                    try:
-                        fut.result(timeout=budget)
-                    except concurrent.futures.TimeoutError:
-                        die(f"{provider}/{volume} {repo}: download hung (no return in {budget // 60}min)", tmp)
-                src = tmp / slug
-                dest = f"/{path}" if provider == "modal" else f"beam://{volume}/{path}"
-                print(f"{provider}/{volume} {repo}: uploading -> {dest}", flush=True)
-                if provider == "modal":
-                    res = sh("modal", "volume", "put", volume, str(src), dest, timeout=3600)
-                    rc, tail = res.returncode, (res.stderr or res.stdout or "").strip()[-500:]
-                else:
-                    rc, tail = sh_live("beam", "cp", str(src), dest, timeout=3600)
-                if rc != 0:
-                    die(f"{provider}/{volume} {repo}: upload {tail.strip()[:300]}", tmp)
-                print(f"{provider}/{volume} {repo}: uploaded")
-                up += 1
-            except SystemExit:
-                raise
-            except Exception as e:
-                die(f"{provider}/{volume} {repo}: {e}", tmp)
-            finally:
-                shutil.rmtree(tmp, ignore_errors=True)
-    print(f"ALL DONE uploaded={up} skipped={skip} blocked={blocked}")
-    return 1 if blocked else 0
+
+def snapshot_is_complete(volume: str, snapshot_path: str, expected_files: list[str]) -> bool:
+    """A snapshot is seeded only if every file in the HF revision is present."""
+    if not expected_files:
+        return False
+    listed = _walk_volume(volume, snapshot_path)
+    return all(expected in listed for expected in expected_files)
+
+
+def _cache_repo_dir(cache_root: Path, repo_id: str) -> Path:
+    return cache_root / f"models--{repo_id.replace('/', '--')}"
+
+
+def seed_model(model: Model, volume_names: set[str]) -> None:
+    from huggingface_hub import HfApi, snapshot_download
+
+    token = os.environ.get("HF_TOKEN")
+    api = HfApi(token=token)
+    revision = api.model_info(model.repo_id).sha
+    if not revision:
+        raise RuntimeError(f"Hugging Face did not return a revision for {model.repo_id}")
+    expected_files = api.list_repo_files(model.repo_id, revision=revision)
+    repo_cache_name = f"models--{model.repo_id.replace('/', '--')}"
+    snapshot_path = f"{repo_cache_name}/snapshots/{revision}"
+
+    if model.volume in volume_names and snapshot_is_complete(
+        model.volume, snapshot_path, expected_files
+    ):
+        print(f"{model.name}: Beam volume already contains the complete snapshot.")
+        return
+
+    if model.volume not in volume_names:
+        print(f"{model.name}: creating Beam volume {model.volume}.")
+        run_beam("volume", "create", model.volume)
+        volume_names.add(model.volume)
+
+    print(f"{model.name}: downloading {model.repo_id}@{revision}.", flush=True)
+    with tempfile.TemporaryDirectory(prefix="beam-model-seed-") as temporary:
+        cache_root = Path(temporary) / "cache"
+        snapshot_download(
+            repo_id=model.repo_id,
+            revision=revision,
+            cache_dir=cache_root,
+            token=token,
+        )
+        staged_repo = _cache_repo_dir(cache_root, model.repo_id)
+        if not staged_repo.is_dir():
+            raise RuntimeError(f"Downloaded Hugging Face cache is missing: {staged_repo}")
+
+        run_beam("cp", str(staged_repo), f"beam://{model.volume}/{repo_cache_name}")
+
+        if not snapshot_is_complete(model.volume, snapshot_path, expected_files):
+            raise RuntimeError(
+                f"{model.name}: Beam volume does not contain the complete snapshot after upload"
+            )
+
+    print(f"{model.name}: verified complete snapshot in {model.volume}.")
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--dry-run", action="store_true")
+    args = parser.parse_args()
+
+    models = declared_models()
+    if not models:
+        raise RuntimeError(f"No MODEL_CACHES declarations found under {WORKERS_ROOT}")
+
+    volumes = existing_volumes() if not args.dry_run else set()
+    for model in models:
+        if args.dry_run:
+            print(f"{model.name}: {model.repo_id} -> {model.volume} ({model.cache_path})")
+        else:
+            seed_model(model, volumes)
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    main()

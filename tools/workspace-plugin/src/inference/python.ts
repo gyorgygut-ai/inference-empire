@@ -82,7 +82,7 @@ function createProject(
     },
     [auditTarget]: { dependsOn: ['audit-uv'] },
     [lintTarget]: { dependsOn: [auditTarget, 'ruff', 'ty', 'vulture'] },
-    [buildTarget]: {},
+    ...(projectRoot.startsWith('apps/workers/') ? {} : { [buildTarget]: {} }),
     [testTarget]: { dependsOn: testDeps },
     // verify* dependency lists live in nx.json targetDefaults.
     'verify': {},

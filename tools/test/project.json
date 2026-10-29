@@ -55,7 +55,8 @@
       "cache": false,
       "dependsOn": [
         "face-value:deploy",
-        "functions:deploy"
+        "functions:deploy",
+        "workers-voice:deploy-beam"
       ],
       "options": {
         "cwd": "tools/test",

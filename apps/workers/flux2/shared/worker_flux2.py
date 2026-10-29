@@ -3,7 +3,9 @@ from __future__ import annotations
 import importlib
 import time
 import uuid
+from pathlib import Path
 from typing import TYPE_CHECKING
+from urllib.parse import urlparse
 
 from .contract_flux2 import Artifact, Flux2Klein9bInput, Flux2Klein9bOutput
 from .validation import validate_image_b64
@@ -13,7 +15,14 @@ if TYPE_CHECKING:
 
     from .artifacts import Artifacts
 
-MODEL_ID = "Disty0/FLUX.2-klein-9B-SDNQ-4bit-dynamic-svd-r32"
+MODEL_CACHES = {
+    "flux2_klein9b_sdnq4": {
+        "url": "https://huggingface.co/Disty0/FLUX.2-klein-9B-SDNQ-4bit-dynamic-svd-r32",
+        "path": "./model-cache/flux2_klein9b_sdnq4",
+    }
+}
+MODEL_NAME = "flux2_klein9b_sdnq4"
+MODEL_ID = urlparse(MODEL_CACHES[MODEL_NAME]["url"]).path.strip("/")
 _MAX_WIDTH = 2560
 _MAX_HEIGHT = 2560
 
@@ -46,6 +55,30 @@ def prepare_image(base64_str: str, field: str = "image"):
         img = img.resize((w, h))
     return img
 
+def model_volumes():
+    from beam import Volume
+
+    return [
+        Volume(name=f"model-cache-{name}", mount_path=model["path"])
+        for name, model in MODEL_CACHES.items()
+    ]
+
+
+def download_models() -> dict[str, Path]:
+    """Download declared models into their mounted cache paths."""
+    from huggingface_hub import snapshot_download
+
+    return {
+        name: Path(
+            snapshot_download(
+                repo_id=urlparse(model["url"]).path.strip("/"),
+                cache_dir=model["path"],
+            )
+        )
+        for name, model in MODEL_CACHES.items()
+    }
+
+
 def load_pipeline():
     """Production path: always boots the real model."""
     import torch.distributed as dist
@@ -68,21 +101,13 @@ def load_pipeline():
     # importing sdnq registers its quantizer with transformers
     from sdnq import SDNQConfig  # noqa: F401  # ty: ignore[unresolved-import]
 
-    try:
-        pipe = diffusers.Flux2KleinPipeline.from_pretrained(
-            MODEL_ID,
-            torch_dtype=torch.bfloat16,
-            token=token,
-            local_files_only=True,
-            ignore_mismatched_sizes=True,
-        )
-    except OSError:
-        pipe = diffusers.Flux2KleinPipeline.from_pretrained(
-            MODEL_ID,
-            torch_dtype=torch.bfloat16,
-            token=token,
-            ignore_mismatched_sizes=True,
-        )
+    model_dir = download_models()[MODEL_NAME]
+    pipe = diffusers.Flux2KleinPipeline.from_pretrained(
+        str(model_dir),
+        torch_dtype=torch.bfloat16,
+        token=token,
+        ignore_mismatched_sizes=True,
+    )
     pipe.to("cuda")
 
     try:
@@ -163,7 +188,7 @@ def load_dependencies():
     from .artifacts import R2Artifacts
 
     storage = R2Artifacts()
-    return storage, pipe_factory(), _TorchModuleService()
+    return storage, load_pipeline()[0], _TorchModuleService()
 
 
 class _TorchModuleService:

@@ -4,9 +4,9 @@ version = "0.1.0"
 description = "Unified AI worker monorepo"
 requires-python = ">=3.11,<3.12"
 dependencies = [
-    "beam-client==0.2.207",
+    "beam-client==0.2.233",
     "boto3==1.43.89",
-    "modal==1.5.5",
+    "modal==1.6.3",
     "pydantic==2.13.5",
     "runpod-flash==1.7.0",
 ]
@@ -74,7 +74,10 @@ ignore = [
 # GPU-only deps live in worker images (IMAGE_PIP_DEPS), never in the local
 # venv. Silence unresolvable imports for exactly these modules; everything
 # else (PIL, numpy, boto3, apps.*) stays a hard error.
-allowed-unresolved-imports = ["torch.**", "diffusers.**", "transformers.**", "huggingface_hub.**"]
+allowed-unresolved-imports = [
+    "torch.**", "diffusers.**", "transformers.**", "huggingface_hub.**",
+    "fastrtc.**", "aiortc.**", "faster_whisper.**",
+]
 
 [tool.ty.environment]
 python-version = "3.11"

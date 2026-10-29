@@ -1,0 +1,9 @@
+{
+  "name": "Voice Chat",
+  "short_name": "Voice Chat",
+  "description": "A TanStack-powered chat interface",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#000000"
+}

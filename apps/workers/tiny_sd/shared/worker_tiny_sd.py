@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import time
 import uuid
+from pathlib import Path
 from typing import TYPE_CHECKING
+from urllib.parse import urlparse
 
 from .contract_tiny_sd import Artifact, TinySDInput, TinySDOutput
 
@@ -11,7 +13,14 @@ if TYPE_CHECKING:
 
     from .artifacts import Artifacts
 
-MODEL_ID = "segmind/tiny-sd"
+MODEL_CACHES = {
+    "segmind_tiny_sd": {
+        "url": "https://huggingface.co/segmind/tiny-sd",
+        "path": "./model-cache/segmind_tiny_sd",
+    }
+}
+MODEL_NAME = "segmind_tiny_sd"
+MODEL_ID = urlparse(MODEL_CACHES[MODEL_NAME]["url"]).path.strip("/")
 _MAX_WIDTH = 1024
 _MAX_HEIGHT = 1024
 
@@ -27,6 +36,30 @@ DEPENDENCIES = [
 "fastapi[standard]==0.141.1",
 "hf_transfer==0.1.9",
 ]
+
+def model_volumes():
+    from beam import Volume
+
+    return [
+        Volume(name=f"model-cache-{name}", mount_path=model["path"])
+        for name, model in MODEL_CACHES.items()
+    ]
+
+
+def download_models() -> dict[str, Path]:
+    """Download declared models into their mounted cache paths."""
+    from huggingface_hub import snapshot_download
+
+    return {
+        name: Path(
+            snapshot_download(
+                repo_id=urlparse(model["url"]).path.strip("/"),
+                cache_dir=model["path"],
+            )
+        )
+        for name, model in MODEL_CACHES.items()
+    }
+
 
 def load_pipeline():
     """Production path: always boots the real model."""
@@ -47,19 +80,12 @@ def load_pipeline():
 
     token = os.environ.get("HF_TOKEN")
 
-    try:
-        pipe = diffusers.StableDiffusionPipeline.from_pretrained(
-            MODEL_ID,
-            torch_dtype=torch.float16,
-            token=token,
-            local_files_only=True,
-        )
-    except OSError:
-        pipe = diffusers.StableDiffusionPipeline.from_pretrained(
-            MODEL_ID,
-            torch_dtype=torch.float16,
-            token=token,
-        )
+    model_dir = download_models()[MODEL_NAME]
+    pipe = diffusers.StableDiffusionPipeline.from_pretrained(
+        str(model_dir),
+        torch_dtype=torch.float16,
+        token=token,
+    )
     pipe.to("cuda")
 
     print(f"[INIT] model loaded in {time.time() - t0:.1f}s", flush=True)
@@ -116,7 +142,7 @@ def load_dependencies():
     from .artifacts import R2Artifacts
 
     storage = R2Artifacts()
-    return storage, pipe_factory(), _TorchModuleService()
+    return storage, load_pipeline()[0], _TorchModuleService()
 
 
 class _TorchModuleService:

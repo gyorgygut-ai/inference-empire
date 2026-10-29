@@ -1,0 +1,9 @@
+url: http://localhost:3051
+---
+- launchApp
+- extendedWaitUntil:
+    visible:
+      css: "main"
+    timeout: 10000
+- assertVisible:
+    css: "main"

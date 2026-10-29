@@ -59,7 +59,7 @@ beforeAll(() => {
   write('apps/face-value/project.json', JSON.stringify({ name: 'face-value', targets: {
     dev: projectTarget('face-value', 'dev', 'next dev'), deploy: projectTarget('face-value', 'deploy', 'vercel deploy'),
   } }))
-  const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => !/^(NX_|ROUTER_|FACE_VALUE_PORT$|BEAM_TOKEN$|AUTH_TOKEN$|PROBE_)/.test(key)))
+  const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => !/^(NX_|ROUTER_|FACE_VALUE_PORT$|VOICE_CHAT_PORT$|BEAM_TOKEN$|AUTH_TOKEN$|PROBE_)/.test(key)))
   for (const mode of ['dev', 'dev', 'deploy']) {
     execFileSync(join(workspace, 'node_modules/.bin/dotenvx'), ['run', '--overload', '-f', `config.${mode}`, '--', process.execPath, nx, 'run-many', '-t', `${mode}-flux2`, `${mode}-tinysd`, mode, '--parallel=3', '--outputStyle=stream'], {
       cwd: fixture, timeout: 60000, stdio: 'inherit',
