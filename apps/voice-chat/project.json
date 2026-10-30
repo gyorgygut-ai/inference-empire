@@ -41,7 +41,7 @@
         "env": {
           "WORKER_URL": "$(npx tsx $NX_WORKSPACE_ROOT/tools/get-beam-url.ts workers-voice)",
           "BEAM_TOKEN": "${BEAM_TOKEN}",
-          "OPENAI_API_KEY": "${OPENAI_API_KEY}"
+          "OPENAI_API_KEY": "${SECRET_OPENAI_API_KEY}"
         },
         "command": "npx next dev",
         "args": "--port=\"$VOICE_CHAT_PORT\""
@@ -56,7 +56,7 @@
         "env": {
           "WORKER_URL": "$(npx tsx $NX_WORKSPACE_ROOT/tools/get-beam-url.ts workers-voice)",
           "BEAM_TOKEN": "${BEAM_TOKEN}",
-          "OPENAI_API_KEY": "${OPENAI_API_KEY}",
+          "OPENAI_API_KEY": "${SECRET_OPENAI_API_KEY}",
           "VERCEL_TOKEN": "${VOICE_CHAT_VERCEL_TOKEN}",
           "VERCEL_ORG_ID": "${VOICE_CHAT_VERCEL_ORG_ID}",
           "VERCEL_PROJECT_ID": "${VOICE_CHAT_VERCEL_PROJECT_ID}"

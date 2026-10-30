@@ -69,89 +69,122 @@ async def run(url: str, token: str, voice: str, input_path: Path, output_dir: Pa
     session_id = str(uuid.uuid4())
     headers = {"Authorization": f"Bearer {token}"} if token else {}
     timeout = httpx.Timeout(30.0, read=300.0)
-    async with httpx.AsyncClient(headers=headers, timeout=timeout) as client:
-        assets = (await client.get(f"{url}/v1/voice-assets")).raise_for_status()
-        voice_asset = assets.json()[voice]
-        ice = (await client.get(f"{url}/v1/rtc-configuration")).raise_for_status().json()
-        configuration = RTCConfiguration(
-            iceServers=[RTCIceServer(**entry) for entry in ice.get("iceServers", [])]
-        )
-        peer = RTCPeerConnection(configuration)
-        peer.addTrack(SpeechTrack(load_speech(input_path)))
-        connected = asyncio.Event()
-        voiced = asyncio.Event()
-        response: list[np.ndarray] = []
-        consumers: list[asyncio.Task] = []
-        state = {"connection": "new", "sample_rate": RATE}
+    heartbeat_stop = asyncio.Event()
+    heartbeat = asyncio.create_task(_keep_worker_warm(url, headers, heartbeat_stop))
+    try:
+        async with httpx.AsyncClient(headers=headers, timeout=timeout) as client:
+            assets = (await client.get(f"{url}/v1/voice-assets")).raise_for_status()
+            voice_asset = assets.json()[voice]
+            ice = (await client.get(f"{url}/v1/rtc-configuration")).raise_for_status().json()
+            configuration = RTCConfiguration(
+                iceServers=[RTCIceServer(**entry) for entry in ice.get("iceServers", [])]
+            )
+            peer = RTCPeerConnection(configuration)
+            peer.addTrack(SpeechTrack(load_speech(input_path)))
+            connected = asyncio.Event()
+            voiced = asyncio.Event()
+            response: list[np.ndarray] = []
+            consumers: list[asyncio.Task] = []
+            state = {"connection": "new", "sample_rate": RATE}
 
-        @peer.on("connectionstatechange")
-        async def connection_changed():
-            state["connection"] = peer.connectionState
-            if peer.connectionState == "connected":
-                connected.set()
+            @peer.on("connectionstatechange")
+            async def connection_changed():
+                state["connection"] = peer.connectionState
+                if peer.connectionState == "connected":
+                    connected.set()
 
-        @peer.on("track")
-        def incoming(track):
-            print(f"received remote {track.kind} track", file=sys.stderr, flush=True)
+            @peer.on("track")
+            def incoming(track):
+                print(f"received remote {track.kind} track", file=sys.stderr, flush=True)
 
-            async def consume():
-                while True:
-                    try:
-                        frame = await track.recv()
-                    except MediaStreamError:
-                        return
-                    samples = np.frombuffer(bytes(frame.planes[0]), dtype=np.int16).copy()
-                    response.append(samples)
-                    if np.sqrt(np.mean(samples.astype(np.float32) ** 2)) > 160:
-                        voiced.set()
+                async def consume():
+                    while True:
+                        try:
+                            frame = await track.recv()
+                        except MediaStreamError:
+                            return
+                        samples = np.frombuffer(bytes(frame.planes[0]), dtype=np.int16).copy()
+                        response.append(samples)
+                        if np.sqrt(np.mean(samples.astype(np.float32) ** 2)) > 160:
+                            voiced.set()
 
-            consumers.append(asyncio.create_task(consume()))
+                consumers.append(asyncio.create_task(consume()))
 
-        try:
-            await peer.setLocalDescription(await peer.createOffer())
-            await asyncio.wait_for(_ice_complete(peer), timeout=30)
-            offer = {
-                "sdp": peer.localDescription.sdp,
-                "type": peer.localDescription.type,
-                "webrtc_id": session_id,
-            }
-            answer = (await client.post(f"{url}/webrtc/offer", json=offer)).raise_for_status()
-            await peer.setRemoteDescription(RTCSessionDescription(**answer.json()))
-            await asyncio.wait_for(connected.wait(), timeout=45)
             try:
-                await asyncio.wait_for(voiced.wait(), timeout=RESPONSE_TIMEOUT_SECONDS)
-            except TimeoutError as error:
-                raise TimeoutError(
-                    f"no response audio; connection={state['connection']}, frames={len(response)}, "
-                    f"session_id={session_id}"
-                ) from error
-            await asyncio.sleep(8)
-        finally:
-            await peer.close()
-            for consumer in consumers:
-                consumer.cancel()
+                await peer.setLocalDescription(await peer.createOffer())
+                await asyncio.wait_for(_ice_complete(peer), timeout=30)
+                offer = {
+                    "sdp": peer.localDescription.sdp,
+                    "type": peer.localDescription.type,
+                    "webrtc_id": session_id,
+                }
+                answer = (await client.post(f"{url}/webrtc/offer", json=offer)).raise_for_status()
+                answer_description = answer.json()
+                if not isinstance(answer_description, dict) or not isinstance(
+                    answer_description.get("sdp"), str
+                ) or not isinstance(answer_description.get("type"), str):
+                    raise RuntimeError(f"FastRTC offer did not return an SDP answer: {answer_description!r}")
+                await peer.setRemoteDescription(
+                    RTCSessionDescription(sdp=answer_description["sdp"], type=answer_description["type"])
+                )
+                await asyncio.wait_for(connected.wait(), timeout=45)
+                try:
+                    await asyncio.wait_for(voiced.wait(), timeout=RESPONSE_TIMEOUT_SECONDS)
+                except TimeoutError as error:
+                    raise TimeoutError(
+                        f"no response audio; connection={state['connection']}, frames={len(response)}, "
+                        f"session_id={session_id}"
+                    ) from error
+                await asyncio.sleep(8)
+            finally:
+                await peer.close()
+                for consumer in consumers:
+                    consumer.cancel()
 
-    audio = np.concatenate(response) if response else np.zeros(0, dtype=np.int16)
-    if audio.size == 0 or float(np.sqrt(np.mean(audio.astype(np.float32) ** 2))) <= 160:
-        raise AssertionError("WebRTC returned no non-silent response audio")
-    input_copy, output_path = output_dir / f"{session_id}-input.wav", output_dir / f"{session_id}-output.wav"
-    sf.write(input_copy, load_speech(input_path).astype(np.float32) / 32767, RATE)
-    sf.write(output_path, audio, state["sample_rate"])
-    report = {
-        "session_id": session_id,
-        "state": state,
-        "voice_id": voice,
-        "voice_sha256": voice_asset["sha256"],
-        "voice_asset_path": voice_asset["loaded"],
-        "input_audio": str(input_copy),
-        "input_sha256": hashlib.sha256(input_copy.read_bytes()).hexdigest(),
-        "output_audio": str(output_path),
-        "output_sha256": hashlib.sha256(output_path.read_bytes()).hexdigest(),
-        "output_samples": int(audio.size),
-        "output_rms": round(float(np.sqrt(np.mean(audio.astype(np.float32) ** 2))), 2),
-    }
-    (output_dir / f"{session_id}.json").write_text(json.dumps(report, indent=2))
-    return report
+            audio = np.concatenate(response) if response else np.zeros(0, dtype=np.int16)
+            if audio.size == 0 or float(np.sqrt(np.mean(audio.astype(np.float32) ** 2))) <= 160:
+                raise AssertionError("WebRTC returned no non-silent response audio")
+            input_copy = output_dir / f"{session_id}-input.wav"
+            output_path = output_dir / f"{session_id}-output.wav"
+            sf.write(input_copy, load_speech(input_path).astype(np.float32) / 32767, RATE)
+            sf.write(output_path, audio, state["sample_rate"])
+            report = {
+                "session_id": session_id,
+                "state": state,
+                "voice_id": voice,
+                "voice_sha256": voice_asset["sha256"],
+                "voice_asset_path": voice_asset["loaded"],
+                "input_audio": str(input_copy),
+                "input_sha256": hashlib.sha256(input_copy.read_bytes()).hexdigest(),
+                "output_audio": str(output_path),
+                "output_sha256": hashlib.sha256(output_path.read_bytes()).hexdigest(),
+                "output_samples": int(audio.size),
+                "output_rms": round(float(np.sqrt(np.mean(audio.astype(np.float32) ** 2))), 2),
+            }
+            (output_dir / f"{session_id}.json").write_text(json.dumps(report, indent=2))
+            return report
+    finally:
+        heartbeat_stop.set()
+        await heartbeat
+
+
+async def _keep_worker_warm(url: str, headers: dict[str, str], stop: asyncio.Event) -> None:
+    timeout = httpx.Timeout(60.0, connect=15.0)
+    async with httpx.AsyncClient(headers=headers, timeout=timeout) as client:
+        count = 0
+        while not stop.is_set():
+            try:
+                response = await client.get(f"{url}/health")
+                response.raise_for_status()
+                count += 1
+                if count == 1 or count % 10 == 0:
+                    print(f"worker heartbeat ok count={count}", file=sys.stderr, flush=True)
+            except Exception as error:
+                print(f"worker heartbeat failed error={type(error).__name__}", file=sys.stderr, flush=True)
+            try:
+                await asyncio.wait_for(stop.wait(), timeout=1)
+            except TimeoutError:
+                pass
 
 
 async def _ice_complete(peer: RTCPeerConnection) -> None:

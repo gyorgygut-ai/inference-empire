@@ -4,33 +4,7 @@ NextJS app for realtime voice chat.
 
 ---
 
-## Dev ENV
-
-**env**:
-  - `PORT`: `${VOICE_CHAT_PORT}`
-  - `WORKER_URL`: `${get-beam-url.ts(workers-voice)}`
-
-**NX**:
-  - **Cmd**: `next dev` directly
-  - **Depends**: `predev`, `workers-voice:deploy-beam`
-  - **Types**: `predev` -> `prebuild` -> `^prebuild`
-
-## Deploy ENV
-
-**dotenv**:
-  - `WORKER_URL`: `${get-beam-url.ts(workers-voice)}`
-
-**NX**:
-  - **Cmd**: `npx vercel deploy`, with `VOICE_CHAT_VERCEL_{TOKEN|ORG_ID|PROJECT_ID}`
-  - **Depends**: `build`, `workers-voice:deploy-beam`
-  - **Types**: `build` -> `prebuild` -> `^prebuild`
-  - **WORKER_URL**: get directly `get-beam-url.ts(workers-voice)`
-
----
-
-## UI Flow (Flow-agnostic shell)
-
-**Non-negotiables**:
+## Non-negotiables
 
 - USE `@tanstack/ai/*`; utilize the library fully, no hand-rolling
 - NO hand-rolled chat state; `@tanstack/ai` owns conversation state
@@ -38,7 +12,15 @@ NextJS app for realtime voice chat.
 - NO multiple components per file; NO `deprecated` component usage
 - NO inline component customization in chat config; extract it
 - DO let TS infer types; NO `any`, NO `as`; NO `lib|helpers|util`
-- NO worker URLs or other secrets exposed to the browser
+- NO API credentials or other secrets exposed to the browser
+
+---
+
+## Server ENV
+
+- `OPENAI_API_KEY`: server-side OpenAI credential
+- `WORKER_URL`: voice worker URL; used as the direct WebRTC destination
+- `BEAM_TOKEN`: server-side credential for requesting worker session tokens
 
 ---
 
@@ -49,62 +31,76 @@ NextJS app for realtime voice chat.
 - `./app/page.tsx`: only `CenteredLayout`
 - `./chat/shell/CenteredLayout.tsx`: full-width centered voice-chat content
 - `./chat/components/Draggable.tsx`: generic draggable and activatable wrapper
-- `./chat/shell/HeroImage.tsx`: hero image fills space
 - `./chat/client.tsx`: `chat.AppChat`
-- `./chat/options.ts`: chat ui `options` (append-only fetcher inline, no LLM transport)
+- `./chat/realtime/VoiceChatView.tsx`: provider selection and `useRealtimeChat`
+- `./chat/realtime/fastRtcAdapter.ts`: voice worker adapter
+- `./chat/options.ts`: chat UI `options` (append-only fetcher inline, no LLM transport)
 - `./chat/parts/`: a `part factory` per file
 - `./messages/`: vocabulary entrypoint (re-exports default locale)
 - `./chat/vocabulary/`: `en.ts` (default)
 
 ---
 
-## UI Flow
+## Adapters
 
-Realtime voice conversation, with TanStack AI managing the chat and WebRTC carrying live audio.
+**Problem**: Use one realtime voice UI with OpenAI Realtime or the voice worker.
 
-**Voice Chat**:
+**Approach**:
+- Use `useRealtimeChat` for both providers
+- OpenAI: use `openaiRealtime()` from `@tanstack/ai-openai`
+- Worker: use `fastRtcAdapter`
+- Pass the matching token provider to `useRealtimeChat`
+- Keep provider-specific connection handling inside each adapter
 
-- Url: `WORKER_URL`
-- Client: use `@tanstack/ai/*` to manage the realtime chat
-- Voice: use WebRTC for live audio between the browser and voice worker
-- Action: `./app/actions/generate-image` returns a dummy response for now
-
-**1. Start a Voice Conversation**:
-
-- Trigger: user starts a conversation
-- Browser requests microphone access
-- Establish a realtime voice connection
-
-**2. Speak**:
-
-- User speaks into the microphone
-- Send voice input through the realtime connection
-
-**3. Hear the Response**:
-
-- Show the assistant's response in the chat
-- Play the assistant's voice response
-- Keep the conversation open for the next turn
+**Outcome**:
+- Frontend flow stays the same when switching providers
 
 ---
 
-## Beam Session Lifecycle
+## OpenAI Realtime
 
-**Beam**:
+**Problem**: Connect to OpenAI Realtime without exposing the permanent API key.
 
-- **Autoscaler**: `QueueDepthAutoscaler(max_containers=1, min_containers=0)`
-- **Keep Warm**: `keep_warm_seconds=10`
-- **Authorization**: `authorized=True`
+**Approach**:
+- Browser requests `/api/voice/openai-session`
+- Server uses `OPENAI_API_KEY` to request an ephemeral token
+- Browser sends its offer and ephemeral token directly to OpenAI `/v1/realtime/calls`
 
-**Heartbeat**:
+**Outcome**:
+- Permanent API key stays server-side
+- OpenAI handles the realtime conversation
 
-- While WebRTC is open, send an authenticated worker `/health` request every second
-- Proxy heartbeat through a same-origin Next.js route; never expose `WORKER_URL` or Beam credentials to the browser
-- Heartbeats keep Beam's idle timer refreshed while the WebRTC media session is active
+---
 
-**Lifecycle**:
+## Voice Worker
 
-- Browser-side voice detection keeps the WebRTC session open while the user speaks, the assistant replies, and during pauses
-- After 10 seconds with no user speech or assistant playback, close WebRTC and stop heartbeats
-- Beam may keep the worker warm for up to 10 more seconds after the final heartbeat, then scales it to zero
-- Continue local voice detection; on new speech, open a new WebRTC session and buffer audio while it connects
+**Problem**: Connect the browser directly to the realtime-session worker without exposing Beam credentials.
+
+**Approach**:
+- Browser requests `/api/voice/session`
+- Server requests a token from worker `POST /v1/realtime/client_secrets` using `BEAM_TOKEN`
+- Browser sends its offer and ephemeral token directly to the realtime-session worker at `WORKER_URL/v1/realtime/calls`
+- Worker handles WebRTC and routes completed turns to configured STT -> LLM -> TTS endpoints
+- Inference endpoint URLs and credentials stay server-side
+- Text, image, and tool input are unsupported; interruption and session updates are unsupported
+
+**Outcome**:
+- Browser connects directly to the worker
+- Inference providers can change without changing the client adapter
+
+---
+
+## Frontend Flow
+
+**Problem**: Start and control a realtime voice conversation.
+
+**Approach**:
+- Select `openai` or `workers` adapter
+- Call `connect` to start a session and establish WebRTC
+- Call `disconnect` to close the session
+- Show connection status and conversation mode from adapter events
+- Capture microphone audio and play received audio
+
+**Outcome**:
+- Same UI controls both providers
+- Provider-specific capabilities remain in their adapters
