@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import ipaddress
 import json
 import logging
 import os
@@ -191,6 +192,25 @@ def _normalize_audio(audio: np.ndarray) -> np.ndarray:
     return samples.astype(np.float32)
 
 
+def _filter_non_public_ice_candidates(sdp: str) -> tuple[str, int]:
+    """Remove ICE candidates with non-public IPs before advertising them to TURN."""
+    lines: list[str] = []
+    removed = 0
+    for line in sdp.splitlines():
+        fields = line.split()
+        if line.startswith("a=candidate:") and len(fields) >= 8 and "typ" in fields:
+            try:
+                address = ipaddress.ip_address(fields[4])
+            except ValueError:
+                lines.append(line)
+                continue
+            if not address.is_global:
+                removed += 1
+                continue
+        lines.append(line)
+    return "\r\n".join(lines) + "\r\n", removed
+
+
 def run_turn(
     audio: np.ndarray, sample_rate: int, voice_id: str | None, language: str = "en"
 ) -> tuple[str, str, np.ndarray]:
@@ -234,6 +254,7 @@ def run_turn(
 def build_app():
     from fastapi import FastAPI
     from fastrtc import ReplyOnPause, Stream
+    from fastrtc.stream import Body
 
     app = FastAPI(title="workers-voice")
 
@@ -259,11 +280,27 @@ def build_app():
 
     rtc_configuration = _rtc_configuration()
     app.state.rtc_configuration = rtc_configuration
-    Stream(
+    stream = Stream(
         handler=ReplyOnPause(on_turn), modality="audio", mode="send-receive",
         rtc_configuration=rtc_configuration,
         server_rtc_configuration=rtc_configuration,
-    ).mount(app)
+    )
+    original_offer = stream.offer
+
+    async def offer_with_public_candidates(body):
+        body.sdp, removed_offer = _filter_non_public_ice_candidates(body.sdp or "")
+        if removed_offer:
+            logger.info("filtered non-public ICE candidates from offer count=%d", removed_offer)
+        answer = await original_offer(body)
+        if isinstance(answer, dict) and isinstance(answer.get("sdp"), str):
+            answer["sdp"], removed_answer = _filter_non_public_ice_candidates(answer["sdp"])
+            if removed_answer:
+                logger.info("filtered non-public ICE candidates from answer count=%d", removed_answer)
+        return answer
+
+    offer_with_public_candidates.__annotations__["body"] = Body
+    setattr(stream, "offer", offer_with_public_candidates)
+    stream.mount(app)
 
     @app.get("/v1/voice-assets")
     def voice_assets() -> dict[str, dict[str, str]]:

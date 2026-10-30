@@ -1,14 +1,72 @@
-import { vocabulary } from "@/messages"
-import VoiceOrb from "@/chat/parts/voice-orb"
+"use client"
 
-type VoiceChatViewProps = {
-  connected: boolean
+import { startTransition, useOptimistic, useRef } from "react"
+import { useRealtimeChat } from "@tanstack/ai-react"
+import type { RealtimeStatus } from "@tanstack/ai"
+import { openaiRealtime } from "@tanstack/ai-openai"
+import { useRouter } from "next/navigation"
+import { Toggle } from "@inference/ui/components/Toggle"
+import { vocabulary } from "@/messages"
+import Draggable from "@/chat/components/Draggable"
+import VoiceOrb from "@/chat/parts/voice-orb"
+import { fastRtcAdapter, getFastRtcToken } from "./fastRtcAdapter"
+
+type Provider = "workers" | "openai"
+
+const isActiveStatus = (status: RealtimeStatus) =>
+  status === "connected" || status === "connecting" || status === "reconnecting"
+
+export const VoiceChatView = ({ provider }: { provider: Provider }) => {
+  const router = useRouter()
+  const { status, mode, connect, disconnect } = useRealtimeChat({
+    adapter: provider === "openai" ? openaiRealtime() : fastRtcAdapter,
+    getToken: provider === "openai" ? getOpenAiToken : getFastRtcToken,
+  })
+  const [displayStatus, setDisplayStatus] = useOptimistic(status)
+  const connectionQueue = useRef<Promise<void>>(Promise.resolve())
+
+  const toggleConnection = () => {
+    const nextStatus = isActiveStatus(displayStatus) ? "idle" : "connecting"
+
+    startTransition(async () => {
+      setDisplayStatus(nextStatus)
+      connectionQueue.current = connectionQueue.current
+        .then(() => nextStatus === "idle" ? disconnect() : connect())
+        .catch(() => undefined)
+      await connectionQueue.current
+    })
+  }
+
+  return (
+    <>
+      <Draggable
+        label={vocabulary.voice.dragHandleLabel}
+        pressed={isActiveStatus(displayStatus)}
+        onClick={toggleConnection}
+        initialPosition={{ x: 0, y: 48 }}
+      >
+        <VoiceOrb status={displayStatus} mode={mode} label={vocabulary.voice.orbLabel} />
+      </Draggable>
+      <div className="absolute left-1/2 top-[calc(50%+10rem)] z-20 -translate-x-1/2">
+        <Toggle
+          label="Voice provider"
+          options={[{ value: "workers", label: "Workers" }, { value: "openai", label: "OpenAI" }]}
+          value={provider}
+          onValueChange={(nextProvider) => {
+            const url = new URL(window.location.href)
+            url.searchParams.set("provider", nextProvider)
+            router.push(`${url.pathname}${url.search}`)
+          }}
+        />
+      </div>
+    </>
+  )
 }
 
-export const VoiceChatView = ({ connected }: VoiceChatViewProps) => (
-  <div className="grid min-h-[calc(100svh-3rem)] w-full place-items-center">
-    <VoiceOrb connected={connected} label={vocabulary.voice.orbLabel} />
-  </div>
-)
+const getOpenAiToken = async () => {
+  const response = await fetch("/api/voice/openai-session", { method: "POST", cache: "no-store" })
+  if (!response.ok) throw new Error("Unable to start an OpenAI voice session")
+  return response.json()
+}
 
 export default VoiceChatView

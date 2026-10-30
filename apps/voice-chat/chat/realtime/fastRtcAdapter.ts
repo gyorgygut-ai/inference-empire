@@ -193,6 +193,9 @@ export const fastRtcAdapter: RealtimeAdapter = {
   async connect(token: RealtimeToken) {
     const { peer, audioTransceiver, dataChannel, audio } = await connectFastRtc(token.token)
     const events = createRealtimeEventEmitter()
+    const heartbeat = setInterval(() => {
+      void fetch("/api/voice/heartbeat", { cache: "no-store" }).catch(() => undefined)
+    }, 1_000)
     let localStream: MediaStream | undefined
 
     peer.addEventListener("connectionstatechange", () => {
@@ -246,6 +249,7 @@ export const fastRtcAdapter: RealtimeAdapter = {
         localStream.getAudioTracks().forEach((track) => {
           track.enabled = true
         })
+        events.emit("mode_change", { mode: "listening" })
       },
 
       stopAudioCapture() {
@@ -278,6 +282,7 @@ export const fastRtcAdapter: RealtimeAdapter = {
       getAudioVisualization: () => audioVisualization,
 
       async disconnect() {
+        clearInterval(heartbeat)
         localStream?.getTracks().forEach((track) => track.stop())
         dataChannel.close()
         audio.pause()

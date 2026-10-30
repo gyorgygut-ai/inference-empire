@@ -4,7 +4,8 @@ export const vocabulary = {
     description: "A realtime voice conversation",
   },
   voice: {
-    orbLabel: "Voice chat",
+    orbLabel: "Voice chat orb",
+    dragHandleLabel: "Toggle voice chat. Drag or use arrow keys to move the orb.",
   },
   messages: {},
 }
