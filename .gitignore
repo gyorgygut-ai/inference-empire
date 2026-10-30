@@ -15,6 +15,7 @@ lib/
 lib64/
 parts/
 !apps/face-value/chat/parts/
+!apps/voice-chat/chat/parts/
 !packages/ui/src/chat/parts/
 sdist/
 var/

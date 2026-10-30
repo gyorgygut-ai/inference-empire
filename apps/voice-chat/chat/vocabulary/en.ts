@@ -1,7 +1,10 @@
 export const vocabulary = {
   meta: {
     name: "Voice Chat",
-    description: "A TanStack-powered chat interface",
+    description: "A realtime voice conversation",
+  },
+  voice: {
+    orbLabel: "Voice chat",
   },
   messages: {},
 }

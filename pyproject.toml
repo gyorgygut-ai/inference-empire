@@ -5,7 +5,9 @@ description = "Unified AI worker monorepo"
 requires-python = ">=3.11,<3.12"
 dependencies = [
     "beam-client==0.2.233",
+    "beta9==0.1.291",
     "boto3==1.43.89",
+    "grpcio==1.85.0",
     "modal==1.6.3",
     "pydantic==2.13.5",
     "runpod-flash==1.7.0",

@@ -1,11 +1,11 @@
 import React from "react"
-import { ChatClient } from "@/chat/client"
-import { SplitLayout } from "@/chat/shell/SplitLayout"
+import { VoiceChatView } from "@/chat/realtime/VoiceChatView"
+import { CenteredLayout } from "@/chat/shell/CenteredLayout"
 
 export const dynamic = "force-dynamic"
 
 const Home = async () => {
-  return <SplitLayout chat={<ChatClient />} />
+  return <CenteredLayout chat={<VoiceChatView connected={false} />} />
 }
 
 export default Home

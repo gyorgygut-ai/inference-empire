@@ -46,10 +46,8 @@ NextJS app for realtime voice chat.
 
 **{projectRoot} files**:
 
-- `./app/page.tsx`: only `SplitLayout`
-- `./chat/shell/SplitLayout.tsx`:
-  - default: full width `chat/Client`
-  - from md: 2/3 `aside > HeroImage` + 1/3 `chat/Client`
+- `./app/page.tsx`: only `CenteredLayout`
+- `./chat/shell/CenteredLayout.tsx`: full-width centered voice-chat content
 - `./chat/shell/HeroImage.tsx`: hero image fills space
 - `./chat/client.tsx`: `chat.AppChat`
 - `./chat/options.ts`: chat ui `options` (append-only fetcher inline, no LLM transport)

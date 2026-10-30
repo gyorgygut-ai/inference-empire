@@ -35,7 +35,7 @@
       "readyWhen": {
         "url": "http://localhost:{env.VOICE_CHAT_PORT}"
       },
-      "dependsOn": ["predev", "workers-voice:deploy-beam"],
+      "dependsOn": ["predev"],
       "options": {
         "cwd": "apps/voice-chat",
         "env": {

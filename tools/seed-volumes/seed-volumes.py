@@ -7,6 +7,7 @@ import ast
 import json
 import os
 import re
+import shutil
 import subprocess
 import tempfile
 from dataclasses import dataclass
@@ -122,8 +123,14 @@ def _entry_name(entry: dict[str, Any]) -> str | None:
     return None
 
 
-def _walk_volume(volume: str, path: str, prefix: str = "") -> set[str]:
+def _walk_volume(
+    volume: str,
+    path: str,
+    root: str | None = None,
+    prefix: str = "",
+) -> set[str]:
     """Recursively list a Beam path and return file paths relative to it."""
+    root = path if root is None else root
     payload = _json_payload(run_beam("ls", f"{volume}/{path}", "--format", "json"))
     if not isinstance(payload, list):
         raise ValueError(f"Beam listing for {volume}/{path} must be a JSON list")
@@ -136,10 +143,14 @@ def _walk_volume(volume: str, path: str, prefix: str = "") -> set[str]:
         if name is None:
             continue
         is_dir = entry.get("is_dir", entry.get("is_directory", entry.get("IsDir", False)))
-        relative_path = f"{prefix}/{name}".strip("/")
-        child_path = f"{path.rstrip('/')}/{name}"
+        root_prefix = f"{root.rstrip('/')}/"
+        if name.startswith(root_prefix):
+            relative_path = name.removeprefix(root_prefix)
+        else:
+            relative_path = f"{prefix}/{name}".strip("/")
+        child_path = f"{root.rstrip('/')}/{relative_path}"
         if is_dir:
-            files.update(_walk_volume(volume, child_path, relative_path))
+            files.update(_walk_volume(volume, child_path, root, relative_path))
         else:
             files.add(relative_path)
     return files
@@ -193,7 +204,17 @@ def seed_model(model: Model, volume_names: set[str]) -> None:
         if not staged_repo.is_dir():
             raise RuntimeError(f"Downloaded Hugging Face cache is missing: {staged_repo}")
 
-        run_beam("cp", str(staged_repo), f"beam://{model.volume}/{repo_cache_name}")
+        upload_repo = Path(temporary) / "upload" / repo_cache_name
+        staged_snapshot = staged_repo / "snapshots" / revision
+        upload_snapshot = upload_repo / "snapshots" / revision
+        if not staged_snapshot.is_dir():
+            raise RuntimeError(f"Downloaded Hugging Face snapshot is missing: {staged_snapshot}")
+        shutil.copytree(staged_snapshot, upload_snapshot, symlinks=False)
+        staged_refs = staged_repo / "refs"
+        if staged_refs.is_dir():
+            shutil.copytree(staged_refs, upload_repo / "refs", symlinks=False)
+
+        run_beam("cp", str(upload_repo), f"beam://{model.volume}/{repo_cache_name}")
 
         if not snapshot_is_complete(model.volume, snapshot_path, expected_files):
             raise RuntimeError(
