@@ -1,0 +1,11 @@
+{
+  "title": "Api",
+  "type": "object",
+  "required": ["SECRET_R2_ENDPOINT", "SECRET_R2_BUCKET", "SECRET_R2_ACCESS_KEY", "SECRET_R2_SECRET_KEY"],
+  "properties": {
+    "SECRET_R2_ENDPOINT": { "type": "string", "format": "uri", "minLength": 1 },
+    "SECRET_R2_BUCKET": { "type": "string", "minLength": 1 },
+    "SECRET_R2_ACCESS_KEY": { "type": "string", "minLength": 1 },
+    "SECRET_R2_SECRET_KEY": { "type": "string", "minLength": 1 }
+  }
+}

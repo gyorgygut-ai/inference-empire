@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from shared.contract_flux2 import Artifact, Flux2Klein9bInput, Flux2Klein9bOutput
+from dist.contract_flux2 import Artifact, Input as Flux2Klein9bInput, Output as Flux2Klein9bOutput
 from shared.worker_flux2 import do_inference, load_dependencies
 
 __all__ = ["Artifact", "Flux2Klein9bInput", "Flux2Klein9bOutput", "run"]

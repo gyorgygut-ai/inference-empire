@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from beam import Image, QueueDepthAutoscaler, task_queue
-from shared.contract_vision import SmallVisionInput
+from dist.contract_vision import Input as SmallVisionInput
 from shared.platform import beam_env
 from shared.worker_vision import (
     DEPENDENCIES,

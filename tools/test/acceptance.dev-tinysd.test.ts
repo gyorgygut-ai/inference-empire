@@ -1,11 +1,12 @@
 import { expect, test } from 'vitest'
-import { envSchema } from '../../env.schema.dev'
+import { configSchema } from '../../packages/schemas/config.dev.schema'
+import { devSecretsSchema } from '../../packages/schemas/secrets.schema'
 import { expectImage, generateImage, inferenceTimeout, pingWorker, queueWithToken } from './acceptance-probes'
 
-const env = envSchema.parse(process.env)
+const env = { ...configSchema.parse(process.env), ...devSecretsSchema.parse(process.env) }
 const routerUrl = `http://127.0.0.1:${env.ROUTER_TINYSD_PORT}`
 
-test('workers-tiny_sd accepts an authenticated ping', () => pingWorker('workers-tiny_sd', env.BEAM_TOKEN))
+test('workers-tiny_sd accepts an authenticated ping', () => pingWorker('workers-tiny_sd', env.SECRET_BEAM_TOKEN))
 
 test('tinysd /q rejects the flux2 token', async () => {
   const response = await queueWithToken(routerUrl, env.ROUTER_FLUX2_GENERATED_AUTH_TOKEN)

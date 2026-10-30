@@ -5,17 +5,29 @@
   "sourceRoot": "packages/schemas",
   "tags": ["type:schemas"],
   "targets": {
-    "build": {
-      "executor": "dotenvx:run-commands",
+    "build-ts": {
+      "executor": "nx:run-commands",
       "cache": true,
-      "inputs": ["{projectRoot}/*/schema.json", "{workspaceRoot}/packages/generate-zod-from-json.ts"],
-      "outputs": ["{projectRoot}/*/schema.ts"],
-      "options": { "command": "tsx packages/generate-zod-from-json.ts", "args": "--all" },
-      "configurations": {
-        "flux2": { "args": "packages/schemas/flux2/schema.json packages/schemas/flux2/schema.ts" },
-        "krea2": { "args": "packages/schemas/krea2/schema.json packages/schemas/krea2/schema.ts" },
-        "tiny_sd": { "args": "packages/schemas/tiny_sd/schema.json packages/schemas/tiny_sd/schema.ts" },
-        "vision": { "args": "packages/schemas/vision/schema.json packages/schemas/vision/schema.ts" }
+      "inputs": ["{projectRoot}/{env,workers}/*.schema.json", "{projectRoot}/tools/generate-zod-from-json.ts"],
+      "outputs": ["{options.out}"],
+      "options": {
+        "command": "npx tsx {projectRoot}/tools/generate-zod-from-json.ts",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "build-pydantic": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "inputs": [
+        "{projectRoot}/{env,workers}/*.schema.json",
+        "{projectRoot}/tools/generate_pydantic.py",
+        "{workspaceRoot}/pyproject.toml",
+        "{workspaceRoot}/uv.lock"
+      ],
+      "outputs": ["{options.out}"],
+      "options": {
+        "command": "uv run --locked --group dev python {projectRoot}/tools/generate_pydantic.py",
+        "cwd": "{workspaceRoot}"
       }
     }
   }

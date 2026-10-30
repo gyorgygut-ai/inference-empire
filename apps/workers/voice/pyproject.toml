@@ -8,6 +8,7 @@ dependencies = [
     "fastrtc[vad]==0.0.34",
     "fastapi==0.141.1",
     "faster-whisper==1.2.1",
+    "huggingface-hub==1.33.0",
     "httpx==0.28.1",
     "numpy==2.4.3",
     "python-dotenv==1.2.4",
@@ -16,6 +17,7 @@ dependencies = [
     "torchaudio==2.6.0",
     "transformers==5.2.0",
     "uvicorn[standard]==0.52.4",
+    "accelerate==1.15.0",
 ]
 
 [dependency-groups]

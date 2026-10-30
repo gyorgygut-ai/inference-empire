@@ -1,0 +1,191 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ChatCompletionsApi",
+  "type": "object",
+  "required": [
+    "input",
+    "output"
+  ],
+  "properties": {
+    "input": {
+      "$ref": "#/$defs/Input"
+    },
+    "output": {
+      "$ref": "#/$defs/Output"
+    }
+  },
+  "$defs": {
+    "Message": {
+      "additionalProperties": false,
+      "properties": {
+        "role": {
+          "pattern": "^(system|user|assistant)$",
+          "title": "Role",
+          "type": "string"
+        },
+        "content": {
+          "title": "Content",
+          "type": "string"
+        }
+      },
+      "required": [
+        "role",
+        "content"
+      ],
+      "title": "Message",
+      "type": "object"
+    },
+    "Input": {
+      "additionalProperties": false,
+      "properties": {
+        "model": {
+          "minLength": 1,
+          "title": "Model",
+          "type": "string"
+        },
+        "messages": {
+          "items": {
+            "$ref": "#/$defs/Message"
+          },
+          "minItems": 1,
+          "title": "Messages",
+          "type": "array"
+        },
+        "temperature": {
+          "default": 0.7,
+          "maximum": 2.0,
+          "minimum": 0.0,
+          "title": "Temperature",
+          "type": "number"
+        },
+        "max_tokens": {
+          "default": 128,
+          "exclusiveMinimum": 0,
+          "maximum": 4096,
+          "title": "Max Tokens",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "model",
+        "messages"
+      ],
+      "title": "Input",
+      "type": "object"
+    },
+    "Choice": {
+      "additionalProperties": false,
+      "properties": {
+        "index": {
+          "title": "Index",
+          "type": "integer"
+        },
+        "message": {
+          "$ref": "#/$defs/ResponseMessage"
+        },
+        "finish_reason": {
+          "title": "Finish Reason",
+          "type": "string"
+        }
+      },
+      "required": [
+        "index",
+        "message",
+        "finish_reason"
+      ],
+      "title": "Choice",
+      "type": "object"
+    },
+    "ResponseMessage": {
+      "additionalProperties": false,
+      "properties": {
+        "role": {
+          "title": "Role",
+          "type": "string"
+        },
+        "content": {
+          "title": "Content",
+          "type": "string"
+        }
+      },
+      "required": [
+        "role",
+        "content"
+      ],
+      "title": "ResponseMessage",
+      "type": "object"
+    },
+    "Usage": {
+      "additionalProperties": false,
+      "properties": {
+        "prompt_tokens": {
+          "minimum": 0,
+          "title": "Prompt Tokens",
+          "type": "integer"
+        },
+        "completion_tokens": {
+          "minimum": 0,
+          "title": "Completion Tokens",
+          "type": "integer"
+        },
+        "total_tokens": {
+          "minimum": 0,
+          "title": "Total Tokens",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "prompt_tokens",
+        "completion_tokens",
+        "total_tokens"
+      ],
+      "title": "Usage",
+      "type": "object"
+    },
+    "Output": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "minLength": 1,
+          "title": "Id",
+          "type": "string"
+        },
+        "object": {
+          "title": "Object",
+          "type": "string"
+        },
+        "created": {
+          "minimum": 0,
+          "title": "Created",
+          "type": "integer"
+        },
+        "model": {
+          "minLength": 1,
+          "title": "Model",
+          "type": "string"
+        },
+        "choices": {
+          "items": {
+            "$ref": "#/$defs/Choice"
+          },
+          "minItems": 1,
+          "title": "Choices",
+          "type": "array"
+        },
+        "usage": {
+          "$ref": "#/$defs/Usage"
+        }
+      },
+      "required": [
+        "id",
+        "object",
+        "created",
+        "model",
+        "choices",
+        "usage"
+      ],
+      "title": "Output",
+      "type": "object"
+    }
+  }
+}

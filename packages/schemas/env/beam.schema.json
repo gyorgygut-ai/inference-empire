@@ -1,0 +1,8 @@
+{
+  "title": "Api",
+  "type": "object",
+  "required": ["SECRET_BEAM_TOKEN"],
+  "properties": {
+    "SECRET_BEAM_TOKEN": { "type": "string", "minLength": 1 }
+  }
+}

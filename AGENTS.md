@@ -72,7 +72,9 @@
 - **Acceptance**:
   - `workflows/deploy.yml`, `gh secrets` kept in sync
   - Untracked `.env*` at `{workspaceRoot}` + `{projectRoot}`
-  - Tracked `env*.{example|schema.ts}` for each `.env*` file
+  - Tracked JSON Schema source contracts live in
+    `packages/schemas/env/` and `packages/schemas/workers/`
+  - Generated TypeScript contracts are outputs; do not edit them by hand
   - Tracked `config.dev` + `config.deploy` at `{workspaceRoot}`
 
 ---
@@ -87,7 +89,7 @@
   -> produces a `flux2` `presigned_url`
 - POST `:${ROUTER_TINYSD_PORT}/q` + `ROUTER_FLUX2_GENERATED_AUTH_TOKEN`
   -> rejects the token
-- POST `:${ROUTER_tinysd_PORT}/q` + `ROUTER_TINYSD_GENERATED_AUTH_TOKEN`
+- POST `:${ROUTER_TINYSD_PORT}/q` + `ROUTER_TINYSD_GENERATED_AUTH_TOKEN`
   -> produces a `tinysd` `presigned_url`
 
 **Task**: `functions:deploy`
@@ -111,7 +113,7 @@
 
 - ping `get-beam-url.ts(workers-flux2)` suceeds
 - ping `get-cf-worker-url.ts(router_flux2)` suceeds
-- ping `get-vercel-url.ts(FACE_VALUE_VERCEL_PROJECT_ID)` suceeds
+- ping `get-vercel-url.ts(SECRET_FACE_VALUE_VERCEL_PROJECT_ID)` suceeds
 
 ---
 

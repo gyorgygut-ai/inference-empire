@@ -1,5 +1,1 @@
-# Flash dev scans + imports every .py in this folder in its own minimal env.
-# Non-flash provider workers carry top-level beam/modal imports, so they must
-# stay out of the scan (flash reads these patterns from this .gitignore).
-worker_beam_*.py
-worker_modal_*.py
+/dist/

@@ -6,7 +6,7 @@ import time
 from pathlib import Path
 from urllib.parse import urlparse
 
-from .contract_vision import SmallVisionInput, SmallVisionOutput
+from dist.contract_vision import Input as SmallVisionInput, Output as SmallVisionOutput
 
 MODEL_CACHES = {
     "qwen2_vl_2b_instruct": {

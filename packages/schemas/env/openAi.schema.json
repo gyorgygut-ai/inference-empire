@@ -1,0 +1,8 @@
+{
+  "title": "Api",
+  "type": "object",
+  "required": ["SECRET_OPENAI_API_KEY"],
+  "properties": {
+    "SECRET_OPENAI_API_KEY": { "type": "string", "minLength": 1 }
+  }
+}

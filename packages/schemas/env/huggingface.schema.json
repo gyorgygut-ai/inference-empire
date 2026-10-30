@@ -1,0 +1,8 @@
+{
+  "title": "Api",
+  "type": "object",
+  "required": ["SECRET_HUGGINGFACE_TOKEN"],
+  "properties": {
+    "SECRET_HUGGINGFACE_TOKEN": { "type": "string", "minLength": 1 }
+  }
+}

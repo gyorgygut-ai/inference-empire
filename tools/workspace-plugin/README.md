@@ -27,7 +27,7 @@ All take `projectRoot` (workspace-relative), not a bare family name.
 
 ## Generators
 
-- `gpu-family` — scaffolds `apps/workers/<family>/` (shared logic, tests, project.json) and `packages/schemas/<family>/schema.json`
+- `gpu-family` — scaffolds `apps/workers/<family>/` (shared logic, tests, project.json) and `packages/schemas/workers/<family>.schema.json`
 - `ts-app` — scaffolds an app under `apps/`
 - `ts-lib` — scaffolds a lib under `packages/`
 

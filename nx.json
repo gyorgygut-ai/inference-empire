@@ -11,7 +11,8 @@
       "{workspaceRoot}/package.json"
     ],
     "schemas": [
-      "{workspaceRoot}/packages/schemas/*/schema.json"
+      "{workspaceRoot}/packages/schemas/{env,workers}/*.schema.json",
+      "{workspaceRoot}/packages/schemas/{env,workers}/*.schema.ts"
     ],
     "production": [
       "default",

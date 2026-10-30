@@ -5,7 +5,7 @@ import json
 import numpy as np
 import pytest
 from shared import worker_voice
-from shared.contract_voice import Input, Output
+from dist.contract_voice import Input, Output
 
 
 def test_contract_requires_audio_and_emits_declared_rate():

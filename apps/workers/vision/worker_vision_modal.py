@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 
 import modal
-from shared.contract_vision import SmallVisionInput
+from dist.contract_vision import Input as SmallVisionInput
 from shared.platform import MODAL_HF_MOUNT, MODAL_IMAGE_IGNORE, modal_env, modal_volume
 from shared.worker_vision import (
     DEPENDENCIES,

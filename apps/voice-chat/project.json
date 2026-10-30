@@ -40,7 +40,7 @@
         "cwd": "apps/voice-chat",
         "env": {
           "WORKER_URL": "$(npx tsx $NX_WORKSPACE_ROOT/tools/get-beam-url.ts workers-voice)",
-          "BEAM_TOKEN": "${BEAM_TOKEN}",
+          "BEAM_TOKEN": "${SECRET_BEAM_TOKEN}",
           "OPENAI_API_KEY": "${SECRET_OPENAI_API_KEY}"
         },
         "command": "npx next dev",
@@ -55,11 +55,11 @@
         "cwd": "apps/voice-chat",
         "env": {
           "WORKER_URL": "$(npx tsx $NX_WORKSPACE_ROOT/tools/get-beam-url.ts workers-voice)",
-          "BEAM_TOKEN": "${BEAM_TOKEN}",
+          "BEAM_TOKEN": "${SECRET_BEAM_TOKEN}",
           "OPENAI_API_KEY": "${SECRET_OPENAI_API_KEY}",
-          "VERCEL_TOKEN": "${VOICE_CHAT_VERCEL_TOKEN}",
-          "VERCEL_ORG_ID": "${VOICE_CHAT_VERCEL_ORG_ID}",
-          "VERCEL_PROJECT_ID": "${VOICE_CHAT_VERCEL_PROJECT_ID}"
+          "VERCEL_TOKEN": "${SECRET_VOICE_CHAT_VERCEL_TOKEN}",
+          "VERCEL_ORG_ID": "${SECRET_VOICE_CHAT_VERCEL_ORG_ID}",
+          "VERCEL_PROJECT_ID": "${SECRET_VOICE_CHAT_VERCEL_PROJECT_ID}"
         },
         "command": "npx vercel deploy",
         "args": "--yes -e WORKER_URL=\"$WORKER_URL\" -b WORKER_URL=\"$WORKER_URL\" -e BEAM_TOKEN=\"$BEAM_TOKEN\" -e OPENAI_API_KEY=\"$OPENAI_API_KEY\""

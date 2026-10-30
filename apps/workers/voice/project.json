@@ -3,32 +3,86 @@
   "name": "workers-voice",
   "projectType": "application",
   "sourceRoot": "apps/workers/voice",
-  "tags": ["type:app", "scope:gpu-worker", "model:voice"],
+  "tags": [
+    "type:app",
+    "scope:gpu-worker",
+    "model:voice"
+  ],
   "targets": {
     "predeploy-beam": {
-      "executor": "dotenvx:run-commands",
+      "executor": "nx:noop",
       "cache": false,
-      "options": {
-        "cwd": "{projectRoot}",
-        "command": "uv run --locked python tools/seed_reference_voices.py"
-      }
+      "dependsOn": [
+        "predeploy",
+        "seed-reference-voices"
+      ]
     },
     "deploy-beam": {
       "executor": "dotenvx:run-commands",
       "cache": false,
-      "dependsOn": ["predeploy-beam"],
+      "dependsOn": [
+        "predeploy-beam"
+      ],
       "options": {
         "cwd": "{projectRoot}",
-        "env": {"PYTHONPATH": "."},
+        "env": {
+          "PYTHONPATH": "."
+        },
         "command": "uv run --locked --project ../../../ beam deploy",
         "args": "worker_voice_beam.py:generate"
+      }
+    },
+    "deploy-llm-chat-completions-beam": {
+      "executor": "dotenvx:run-commands",
+      "cache": false,
+      "options": {
+        "cwd": "{projectRoot}",
+        "env": {
+          "PYTHONPATH": ".",
+          "HF_TOKEN": "${SECRET_HUGGINGFACE_TOKEN}",
+          "BEAM_TOKEN": "${SECRET_BEAM_TOKEN}"
+        },
+        "command": "uv run --locked --project ../../../ beam deploy",
+        "args": "worker_voice_llm_chat_completions_beam.py:generate"
+      },
+      "dependsOn": [
+        "predeploy"
+      ]
+    },
+    "test-unit-llm-chat-completions": {
+      "executor": "dotenvx:run-commands",
+      "cache": false,
+      "options": {
+        "cwd": "{projectRoot}",
+        "command": "uv run --locked pytest",
+        "args": "tests/test_worker_voice_llm_chat_completions.py"
+      }
+    },
+    "test-e2e-llm-chat-completions": {
+      "executor": "dotenvx:run-commands",
+      "cache": false,
+      "options": {
+        "cwd": "{projectRoot}",
+        "command": "uv run --locked pytest",
+        "args": "tests/test_worker_voice_llm_chat_completions_e2e.py"
+      }
+    },
+    "test-acceptance-llm-chat-completions": {
+      "executor": "dotenvx:run-commands",
+      "cache": false,
+      "options": {
+        "cwd": "{workspaceRoot}",
+        "command": "uv run --locked --project apps/workers/voice python",
+        "args": "apps/workers/voice/tests/acceptance_llm_chat_completions.py"
       }
     },
     "serve-local": {
       "executor": "dotenvx:run-commands",
       "continuous": true,
       "cache": false,
-      "readyWhen": {"url": "http://127.0.0.1:8765/health"},
+      "readyWhen": {
+        "url": "http://127.0.0.1:8765/health"
+      },
       "options": {
         "cwd": "{projectRoot}",
         "command": "uv run --locked python -c pass && uv pip install --python .venv/bin/python --no-deps chatterbox-tts==0.1.7 && uv run --locked uvicorn",
@@ -39,12 +93,68 @@
       "executor": "dotenvx:run-commands",
       "cache": false,
       "dependsOn": [
-        {"projects": ["workers-voice"], "target": "serve-local", "waitFor": "ready"}
+        {
+          "projects": [
+            "workers-voice"
+          ],
+          "target": "serve-local",
+          "waitFor": "ready"
+        }
       ],
       "options": {
         "cwd": "{projectRoot}",
         "command": "uv run --locked python tests/probe_webrtc.py",
         "args": "--url http://127.0.0.1:8765 --output-dir .proof/local"
+      }
+    },
+    "generate-voice": {
+      "executor": "nx:noop",
+      "cache": true,
+      "dependsOn": [
+        {
+          "projects": [
+            "schemas"
+          ],
+          "target": "build-pydantic",
+          "options": "forward"
+        }
+      ],
+      "options": {
+        "source": "packages/schemas/workers/voice.schema.json",
+        "out": "apps/workers/voice/dist/contract_voice.py"
+      }
+    },
+    "generate-voice-llm-chat-completions": {
+      "executor": "nx:noop",
+      "cache": true,
+      "dependsOn": [
+        {
+          "projects": [
+            "schemas"
+          ],
+          "target": "build-pydantic",
+          "options": "forward"
+        }
+      ],
+      "options": {
+        "source": "packages/schemas/workers/voice_llm_chat_completions.schema.json",
+        "out": "apps/workers/voice/dist/contract_voice_llm_chat_completions.py"
+      }
+    },
+    "predeploy": {
+      "executor": "nx:noop",
+      "dependsOn": [
+        "generate-voice",
+        "generate-voice-llm-chat-completions"
+      ],
+      "cache": false
+    },
+    "seed-reference-voices": {
+      "executor": "dotenvx:run-commands",
+      "cache": false,
+      "options": {
+        "cwd": "{projectRoot}",
+        "command": "uv run --locked python tools/seed_reference_voices.py"
       }
     }
   }

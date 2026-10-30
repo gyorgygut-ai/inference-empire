@@ -1,11 +1,12 @@
 import { test } from 'vitest'
-import { envSchema } from '../../env.schema.dev'
+import { configSchema } from '../../packages/schemas/config.dev.schema'
+import { devSecretsSchema } from '../../packages/schemas/secrets.schema'
 import { expectImage, generateImage, inferenceTimeout, pingFrontend, pingRouter, pingWorker } from './acceptance-probes'
 
-const env = envSchema.parse(process.env)
+const env = { ...configSchema.parse(process.env), ...devSecretsSchema.parse(process.env) }
 const routerUrl = `http://127.0.0.1:${env.ROUTER_FLUX2_PORT}`
 
-test('workers-flux2 accepts an authenticated ping', () => pingWorker('workers-flux2', env.BEAM_TOKEN))
+test('workers-flux2 accepts an authenticated ping', () => pingWorker('workers-flux2', env.SECRET_BEAM_TOKEN))
 
 test('flux2 /q produces a downloadable image with its own token', { timeout: inferenceTimeout + 60000 }, async () => {
   const url = await generateImage('flux2', routerUrl, env.ROUTER_FLUX2_GENERATED_AUTH_TOKEN)

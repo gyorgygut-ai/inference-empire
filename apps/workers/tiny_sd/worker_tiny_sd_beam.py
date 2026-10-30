@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from beam import Image, QueueDepthAutoscaler, task_queue
-from shared.contract_tiny_sd import TinySDInput
+from dist.contract_tiny_sd import Input as TinySDInput
 from shared.platform import beam_env
 from shared.worker_tiny_sd import (
     DEPENDENCIES,

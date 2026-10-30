@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "VoiceApi",
+  "type": "object",
+  "required": [
+    "input",
+    "output"
+  ],
+  "properties": {
+    "input": {
+      "$ref": "#/$defs/Input"
+    },
+    "output": {
+      "$ref": "#/$defs/Output"
+    }
+  },
+  "$defs": {
+    "Input": {
+      "additionalProperties": false,
+      "properties": {
+        "audio": {
+          "title": "Audio",
+          "type": "string"
+        },
+        "sample_rate": {
+          "default": 24000,
+          "exclusiveMinimum": 0,
+          "title": "Sample Rate",
+          "type": "integer"
+        },
+        "voice": {
+          "default": "builtin",
+          "title": "Voice",
+          "type": "string"
+        },
+        "language": {
+          "default": "en",
+          "title": "Language",
+          "type": "string"
+        }
+      },
+      "required": [
+        "audio"
+      ],
+      "title": "Input",
+      "type": "object"
+    },
+    "Output": {
+      "additionalProperties": false,
+      "properties": {
+        "transcript": {
+          "title": "Transcript",
+          "type": "string"
+        },
+        "response": {
+          "title": "Response",
+          "type": "string"
+        },
+        "audio": {
+          "title": "Audio",
+          "type": "string"
+        },
+        "sample_rate": {
+          "default": 24000,
+          "title": "Sample Rate",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "transcript",
+        "response",
+        "audio"
+      ],
+      "title": "Output",
+      "type": "object"
+    }
+  }
+}

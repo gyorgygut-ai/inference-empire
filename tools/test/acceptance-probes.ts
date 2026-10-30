@@ -3,8 +3,8 @@ import { resolve } from 'node:path'
 import { expect } from 'vitest'
 import { z } from 'zod'
 import { inferWithPolling } from '../../packages/task-queue-client/src/client'
-import { api as flux2 } from '../../packages/schemas/flux2/schema'
-import { api as tinysd } from '../../packages/schemas/tiny_sd/schema'
+import { api as flux2 } from '../../packages/schemas/workers/flux2.schema'
+import { api as tinysd } from '../../packages/schemas/workers/tiny_sd.schema'
 
 const workspace = resolve(import.meta.dirname, '../..')
 const contracts = { flux2, tinysd }

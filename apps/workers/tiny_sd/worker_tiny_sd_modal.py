@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 
 import modal
-from shared.contract_tiny_sd import TinySDInput
+from dist.contract_tiny_sd import Input as TinySDInput
 from shared.platform import MODAL_HF_MOUNT, MODAL_IMAGE_IGNORE, modal_env, modal_volume
 from shared.worker_tiny_sd import DEPENDENCIES, do_inference, load_dependencies
 

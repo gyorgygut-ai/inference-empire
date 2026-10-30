@@ -22,7 +22,7 @@ NextJS app for chat + inference requests.
   - `ROUTER_AUTH_TOKEN`: `${ROUTER_FLUX2_GENERATED_AUTH_TOKEN}`
 
 **NX**:
-  - **Cmd**: `next deploy`, with `FACE_VALUE_VERCEL_{TOKEN|ORG_ID|PROJECT_ID}`
+  - **Cmd**: `next deploy`, with `SECRET_FACE_VALUE_VERCEL_{TOKEN|ORG_ID|PROJECT_ID}`
   - **Depends**: `build`, `functions/deploy-flux2`
   - **Types**: `build` -> `prebuild` -> `^prebuild`
   - **ROUTER_URL**: get directly `get-cf-worker-url.ts(router_flux2)`

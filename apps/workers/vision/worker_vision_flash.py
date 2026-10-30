@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from runpod_flash import Endpoint, GpuGroup
-from shared.contract_vision import SmallVisionInput
+from dist.contract_vision import Input as SmallVisionInput
 from shared.platform import flash_env
 from shared.worker_vision import (
     DEPENDENCIES,

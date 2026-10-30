@@ -1,0 +1,10 @@
+{
+  "title": "Api",
+  "type": "object",
+  "required": ["VERCEL_TOKEN", "VERCEL_ORG_ID", "VERCEL_PROJECT_ID"],
+  "properties": {
+    "VERCEL_TOKEN": { "type": "string", "minLength": 1 },
+    "VERCEL_ORG_ID": { "type": "string", "minLength": 1 },
+    "VERCEL_PROJECT_ID": { "type": "string", "minLength": 1 }
+  }
+}

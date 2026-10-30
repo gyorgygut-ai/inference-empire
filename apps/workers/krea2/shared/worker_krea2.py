@@ -6,7 +6,7 @@ import uuid
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from .contract_krea2 import Artifact, Krea2Ref2ImgInput, Krea2Ref2ImgOutput
+from dist.contract_krea2 import Artifact, Input as Krea2Ref2ImgInput, Output as Krea2Ref2ImgOutput
 from .validation import validate_image_b64
 
 if TYPE_CHECKING:

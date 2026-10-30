@@ -5,7 +5,7 @@ import { inferWithPolling } from "@inference/task-queue-client";
 import { getInferenceOutcome } from "@/outcomes";
 import { config } from "@/config";
 import type { z } from "zod";
-import { api } from "@packages/schemas/flux2/schema";
+import { api } from "@packages/schemas/workers/flux2.schema";
 
 type InferenceInput = z.input<typeof api>["input"];
 type InferenceOutput = z.infer<typeof api>["output"];

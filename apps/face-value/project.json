@@ -75,9 +75,9 @@
         "env": {
           "ROUTER_URL": "$(npx tsx $NX_WORKSPACE_ROOT/tools/get-cf-worker-url.ts router_flux2)",
           "ROUTER_AUTH_TOKEN": "${ROUTER_FLUX2_GENERATED_AUTH_TOKEN}",
-          "VERCEL_TOKEN": "${FACE_VALUE_VERCEL_TOKEN}",
-          "VERCEL_ORG_ID": "${FACE_VALUE_VERCEL_ORG_ID}",
-          "VERCEL_PROJECT_ID": "${FACE_VALUE_VERCEL_PROJECT_ID}"
+          "VERCEL_TOKEN": "${SECRET_FACE_VALUE_VERCEL_TOKEN}",
+          "VERCEL_ORG_ID": "${SECRET_FACE_VALUE_VERCEL_ORG_ID}",
+          "VERCEL_PROJECT_ID": "${SECRET_FACE_VALUE_VERCEL_PROJECT_ID}"
         },
         "command": "npx vercel deploy",
         "args": "--yes -e ROUTER_URL=\"$ROUTER_URL\" -e ROUTER_AUTH_TOKEN=\"$ROUTER_AUTH_TOKEN\" -b ROUTER_URL=\"$ROUTER_URL\" -b ROUTER_AUTH_TOKEN=\"$ROUTER_AUTH_TOKEN\""

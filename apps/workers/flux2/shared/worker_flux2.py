@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from urllib.parse import urlparse
 
-from .contract_flux2 import Artifact, Flux2Klein9bInput, Flux2Klein9bOutput
+from dist.contract_flux2 import Artifact, Input as Flux2Klein9bInput, Output as Flux2Klein9bOutput
 from .validation import validate_image_b64
 
 if TYPE_CHECKING:

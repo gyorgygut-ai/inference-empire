@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from runpod_flash import Endpoint, GpuGroup
-from shared.contract_tiny_sd import TinySDInput
+from dist.contract_tiny_sd import Input as TinySDInput
 from shared.platform import flash_env
 from shared.worker_tiny_sd import DEPENDENCIES, do_inference, load_dependencies
 

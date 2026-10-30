@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from beam import Image, QueueDepthAutoscaler, task_queue
-from shared.contract_krea2 import Krea2Ref2ImgInput
+from dist.contract_krea2 import Input as Krea2Ref2ImgInput
 from shared.platform import BEAM_CACHE_PATH, beam_env, beam_volume
 from shared.worker_krea2 import DEPENDENCIES, do_inference, load_dependencies
 

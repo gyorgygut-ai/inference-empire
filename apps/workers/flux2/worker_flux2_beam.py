@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from beam import Image, QueueDepthAutoscaler, task_queue
-from shared.contract_flux2 import Flux2Klein9bInput
+from dist.contract_flux2 import Input as Flux2Klein9bInput
 from shared.platform import beam_env
 from shared.worker_flux2 import (
     DEPENDENCIES,

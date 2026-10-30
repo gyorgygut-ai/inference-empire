@@ -8,4 +8,4 @@ Use `npx dotenvx run -f config.dev -- npx nx run voice-chat:dev` from the worksp
 
 ## Deploy
 
-Use `npx dotenvx run -f config.deploy -- npx nx run voice-chat:deploy`. Configure `VOICE_CHAT_VERCEL_TOKEN`, `VOICE_CHAT_VERCEL_ORG_ID`, and `VOICE_CHAT_VERCEL_PROJECT_ID`.
+Use `npx dotenvx run -f config.deploy -- npx nx run voice-chat:deploy`. Configure `SECRET_VOICE_CHAT_VERCEL_TOKEN`, `SECRET_VOICE_CHAT_VERCEL_ORG_ID`, and `SECRET_VOICE_CHAT_VERCEL_PROJECT_ID`.

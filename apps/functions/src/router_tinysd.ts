@@ -1,5 +1,5 @@
 import { createRouter } from "./_shared/router"
-import { api as tinysdApi } from "@packages/schemas/tiny_sd/schema"
+import { api as tinysdApi } from "@packages/schemas/workers/tiny_sd.schema"
 import { readConfig, type RouterEnv } from "./_shared/config"
 
 const router = createRouter(tinysdApi, "", { readConfig })

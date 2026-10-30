@@ -28,6 +28,8 @@ wheels/
 .venv/
 venv/
 ENV/
+!packages/schemas/env/
+!packages/schemas/env/**
 
 # IDE
 .idea/

@@ -13,7 +13,7 @@ const latest = deployments
   .sort((a, b) => b.version - a.version)[0]
 
 const res = await fetch(`https://app.beam.cloud/api/v1/deployment/${latest.id}/url`, {
-  headers: { Authorization: `Bearer ${process.env.BEAM_TOKEN}` },
+  headers: { Authorization: `Bearer ${process.env.SECRET_BEAM_TOKEN}` },
 })
 if (!res.ok) throw new Error(await res.text())
 const { url } = (await res.json()) as { url: string }

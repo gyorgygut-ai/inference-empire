@@ -2,10 +2,11 @@ import { expect, test } from 'vitest'
 import { resolve } from 'node:path'
 import { promisify } from 'node:util'
 import { execFile } from 'node:child_process'
-import { envSchema } from '../../env.schema.deploy'
+import { configSchema } from '../../packages/schemas/config.deploy.schema'
+import { deploySecretsSchema } from '../../packages/schemas/secrets.schema'
 import { deployedUrl, expectImage, generateImage, inferenceTimeout, pingFrontend, pingRouter, pingWorker, queueWithToken } from './acceptance-probes'
 
-const env = envSchema.parse(process.env)
+const env = { ...configSchema.parse(process.env), ...deploySecretsSchema.parse(process.env) }
 const execFileAsync = promisify(execFile)
 const workspaceRoot = resolve(process.cwd(), '../..')
 
@@ -17,7 +18,7 @@ async function deployedVoiceTurn() {
   const { stdout } = await execFileAsync(
     'uv', [
       'run', '--locked', 'python', 'tests/probe_webrtc.py',
-      '--url', workerUrl.trim(), '--token', env.BEAM_TOKEN,
+      '--url', workerUrl.trim(), '--token', env.SECRET_BEAM_TOKEN,
       '--voice', 'GutAI', '--output-dir', '.proof/deploy',
     ],
     {
@@ -30,9 +31,9 @@ async function deployedVoiceTurn() {
   return JSON.parse(stdout) as { output_rms: number; voice_id: string; voice_sha256: string; session_id: string }
 }
 
-test('deployed workers-flux2 accepts an authenticated ping', () => pingWorker('workers-flux2', env.BEAM_TOKEN))
+test('deployed workers-flux2 accepts an authenticated ping', () => pingWorker('workers-flux2', env.SECRET_BEAM_TOKEN))
 
-test('deployed workers-tiny_sd accepts an authenticated ping', () => pingWorker('workers-tiny_sd', env.BEAM_TOKEN))
+test('deployed workers-tiny_sd accepts an authenticated ping', () => pingWorker('workers-tiny_sd', env.SECRET_BEAM_TOKEN))
 
 test('deployed flux2 /q produces a downloadable image with its own token', { timeout: inferenceTimeout + 60000 }, async () => {
   const url = await generateImage('flux2', deployedUrl('cf-worker', 'router_flux2'), env.ROUTER_FLUX2_GENERATED_AUTH_TOKEN)
@@ -52,7 +53,7 @@ test('deployed tinysd /q produces a downloadable image with its own token', { ti
 
 test('deployed face-value can reach its flux2 router', () => pingRouter(deployedUrl('cf-worker', 'router_flux2'), env.ROUTER_FLUX2_GENERATED_AUTH_TOKEN))
 
-test('deployed face-value serves the app', () => pingFrontend(deployedUrl('vercel', env.FACE_VALUE_VERCEL_PROJECT_ID, '--org', env.FACE_VALUE_VERCEL_ORG_ID)))
+test('deployed face-value serves the app', () => pingFrontend(deployedUrl('vercel', env.SECRET_FACE_VALUE_VERCEL_PROJECT_ID, '--org', env.SECRET_FACE_VALUE_VERCEL_ORG_ID)))
 
 test('deployed workers-voice completes a named-voice WebRTC speech turn', { timeout: 670_000 }, async () => {
   const proof = await deployedVoiceTurn()

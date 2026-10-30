@@ -1,1 +1,88 @@
-{"$schema":"../../../node_modules/nx/schemas/project-schema.json","name":"workers-vision","projectType":"application","sourceRoot":"apps/workers/vision","tags":["type:app","scope:gpu-worker","model:vision"],"targets":{"deploy-modal":{"executor":"dotenvx:run-commands","cache":false,"options":{"cwd":"{projectRoot}","command":"uv run --locked --project ../../../ modal deploy","args":"worker_vision_modal.py"}},"deploy-beam":{"executor":"dotenvx:run-commands","cache":false,"options":{"cwd":"{projectRoot}","env":{"PYTHONPATH":"."},"command":"uv run --locked --project ../../../ beam deploy","args":"worker_vision_beam.py:generate"}},"deploy":{"executor":"nx:noop","dependsOn":["deploy-modal","deploy-beam"],"cache":false}}}
+{
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "name": "workers-vision",
+  "projectType": "application",
+  "sourceRoot": "apps/workers/vision",
+  "tags": [
+    "type:app",
+    "scope:gpu-worker",
+    "model:vision"
+  ],
+  "targets": {
+    "deploy-modal": {
+      "executor": "dotenvx:run-commands",
+      "cache": false,
+      "options": {
+        "cwd": "{projectRoot}",
+        "env": {
+          "HF_TOKEN": "${SECRET_HUGGINGFACE_TOKEN}",
+          "R2_ACCESS_KEY": "${SECRET_R2_ACCESS_KEY}",
+          "R2_SECRET_KEY": "${SECRET_R2_SECRET_KEY}",
+          "R2_ENDPOINT": "${SECRET_R2_ENDPOINT}",
+          "R2_BUCKET": "${R2_BUCKET}",
+          "BEAM_TOKEN": "${SECRET_BEAM_TOKEN}",
+          "MODAL_TOKEN_ID": "${SECRET_MODAL_TOKEN_ID}",
+          "MODAL_TOKEN_SECRET": "${SECRET_MODAL_TOKEN_SECRET}"
+        },
+        "command": "uv run --locked --project ../../../ modal deploy",
+        "args": "worker_vision_modal.py"
+      },
+      "dependsOn": [
+        "predeploy"
+      ]
+    },
+    "deploy-beam": {
+      "executor": "dotenvx:run-commands",
+      "cache": false,
+      "options": {
+        "cwd": "{projectRoot}",
+        "env": {
+          "PYTHONPATH": ".",
+          "HF_TOKEN": "${SECRET_HUGGINGFACE_TOKEN}",
+          "R2_ACCESS_KEY": "${SECRET_R2_ACCESS_KEY}",
+          "R2_SECRET_KEY": "${SECRET_R2_SECRET_KEY}",
+          "R2_ENDPOINT": "${SECRET_R2_ENDPOINT}",
+          "R2_BUCKET": "${R2_BUCKET}",
+          "BEAM_TOKEN": "${SECRET_BEAM_TOKEN}"
+        },
+        "command": "uv run --locked --project ../../../ beam deploy",
+        "args": "worker_vision_beam.py:generate"
+      },
+      "dependsOn": [
+        "predeploy"
+      ]
+    },
+    "deploy": {
+      "executor": "nx:noop",
+      "dependsOn": [
+        "deploy-modal",
+        "deploy-beam"
+      ],
+      "cache": false
+    },
+    "generate-contract": {
+      "executor": "nx:noop",
+      "cache": true,
+      "dependsOn": [
+        {
+          "projects": [
+            "schemas"
+          ],
+          "target": "build-pydantic",
+          "options": "forward"
+        }
+      ],
+      "options": {
+        "source": "packages/schemas/workers/vision.schema.json",
+        "out": "apps/workers/vision/dist/contract_vision.py"
+      }
+    },
+    "predeploy": {
+      "executor": "nx:noop",
+      "dependsOn": [
+        "generate-contract"
+      ],
+      "cache": false
+    }
+  }
+}
