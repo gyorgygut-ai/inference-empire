@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import hmac
 import io
 import json
 import logging
+import os
 import secrets
 import time
 import uuid
@@ -124,6 +126,7 @@ def run_turn(audio: np.ndarray, sample_rate: int, client: InferencePipeline) -> 
 def build_app(
     inference_client: InferencePipeline | None = None,
     token_store: SessionTokens | None = None,
+    client_secret_auth_token: str | None = None,
     turn_runner: Callable[[np.ndarray, int, InferencePipeline], tuple[str, str, np.ndarray]] = run_turn,
 ) -> FastAPI:
     from fastrtc import ReplyOnPause, Stream
@@ -131,6 +134,9 @@ def build_app(
 
     client = inference_client or InferenceClient.from_env()
     tokens = token_store or SessionTokens()
+    trusted_server_token = client_secret_auth_token or os.environ.get(
+        "GENERATED_VOICE_WORKER_AUTH_TOKEN"
+    )
     app = FastAPI(title="workers-voice-realtime-session")
     app.state.rtc_configuration = {"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]}
 
@@ -139,7 +145,17 @@ def build_app(
         return {"status": "ok"}
 
     @app.post("/v1/realtime/client_secrets", response_model=ClientSecretOutput)
-    def create_client_secret(request: ClientSecretInput) -> ClientSecretOutput:
+    def create_client_secret(
+        request: ClientSecretInput, http_request: Request
+    ) -> ClientSecretOutput:
+        authorization = http_request.headers.get("authorization", "")
+        scheme, _, supplied_token = authorization.partition(" ")
+        if not trusted_server_token:
+            raise HTTPException(status_code=503, detail="Session authentication is not configured")
+        if scheme.casefold() != "bearer" or not hmac.compare_digest(
+            supplied_token.encode(), trusted_server_token.encode()
+        ):
+            raise HTTPException(status_code=401, detail="Invalid server credential")
         token, expires_at = tokens.create()
         return ClientSecretOutput(
             value=token,

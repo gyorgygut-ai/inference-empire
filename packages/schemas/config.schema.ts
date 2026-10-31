@@ -24,8 +24,9 @@ export const configSchema = parsedConfigSchema.refine(
     config.GENERATED_STT_AUDIO_TRANSCRIPTIONS_API_KEY,
     config.GENERATED_LLM_CHAT_COMPLETIONS_API_KEY,
     config.GENERATED_TTS_AUDIO_SPEECH_API_KEY,
-  ]).size === 3,
-  { message: 'Voice inference services must use distinct API keys' },
+    config.GENERATED_VOICE_WORKER_AUTH_TOKEN,
+  ]).size === 4,
+  { message: 'Voice service credentials must be distinct' },
 )
 
 export const envSchema = configSchema

@@ -10,7 +10,8 @@
     "GENERATED_ROUTER_TINYSD_AUTH_TOKEN",
     "GENERATED_STT_AUDIO_TRANSCRIPTIONS_API_KEY",
     "GENERATED_LLM_CHAT_COMPLETIONS_API_KEY",
-    "GENERATED_TTS_AUDIO_SPEECH_API_KEY"
+    "GENERATED_TTS_AUDIO_SPEECH_API_KEY",
+    "GENERATED_VOICE_WORKER_AUTH_TOKEN"
   ],
   "properties": {
     "DEV_ROUTER_FLUX2_PORT": { "type": "integer", "minimum": 1024, "maximum": 65535 },
@@ -21,6 +22,7 @@
     "GENERATED_ROUTER_TINYSD_AUTH_TOKEN": { "type": "string", "minLength": 32 },
     "GENERATED_STT_AUDIO_TRANSCRIPTIONS_API_KEY": { "type": "string", "minLength": 32 },
     "GENERATED_LLM_CHAT_COMPLETIONS_API_KEY": { "type": "string", "minLength": 32 },
-    "GENERATED_TTS_AUDIO_SPEECH_API_KEY": { "type": "string", "minLength": 32 }
+    "GENERATED_TTS_AUDIO_SPEECH_API_KEY": { "type": "string", "minLength": 32 },
+    "GENERATED_VOICE_WORKER_AUTH_TOKEN": { "type": "string", "minLength": 32 }
   }
 }

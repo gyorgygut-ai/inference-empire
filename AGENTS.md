@@ -6,11 +6,16 @@
 
 ## Non-negotiables
 
-**Env Vars**: 
+**Secrets**: 
 
-- **Secrets**: `nx` injects all required secrets from `.env*`
-- **Runtime config**: `dotenvx run -f config.env --` injects the shared `nx` runtime config for dev and deploy
-- **Schemas**: `@packages/schemas` describes `env` all var names to match and use
+- **Env Vars**: `nx` always injects required secrets from `.env*`
+- **Schemas**: `@packages/schemas` describes `env` var names to use
+
+**Config**:
+
+- **Runtime**: `dotenvx run -f env.runtime --` injects fresh-generated config values
+- **Debug**: `dotenvx run -f env.debug --` injects constant runtime config values
+- **Rule** use `env.debug` to debug with constant values; otherwise use `env.runtime`
 
 **Correct**:
 

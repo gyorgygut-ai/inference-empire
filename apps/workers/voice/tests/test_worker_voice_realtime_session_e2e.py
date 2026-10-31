@@ -135,7 +135,9 @@ def test_webrtc_turn_uses_local_stt_llm_tts_services():
             tts=InferenceEndpoint(inference_url, "local-tts"),
             timeout=10,
         )
-        realtime_app = build_app(inference_client=inference)
+        realtime_app = build_app(
+            inference_client=inference, client_secret_auth_token="local-server-token"
+        )
         with LocalServer(realtime_app) as realtime_url:
             asyncio.run(
                 _run_turn(realtime_url, samples, service_calls, realtime_app.state.pause_detector)
@@ -153,6 +155,7 @@ async def _run_turn(
     async with httpx.AsyncClient(timeout=15) as client:
         token_response = await client.post(
             f"{realtime_url}/v1/realtime/client_secrets",
+            headers={"Authorization": "Bearer local-server-token"},
             json={"session": {"type": "realtime"}},
         )
         token_response.raise_for_status()

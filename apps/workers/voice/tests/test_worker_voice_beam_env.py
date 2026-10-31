@@ -23,14 +23,15 @@ def test_inference_workers_receive_schema_huggingface_token(monkeypatch):
     )
 
 
-def test_realtime_worker_receives_schema_api_keys_and_endpoints(monkeypatch):
+def test_realtime_worker_receives_schema_api_keys_and_endpoint_urls(monkeypatch):
     expected = {
+        "GENERATED_VOICE_WORKER_AUTH_TOKEN": "worker-auth-sentinel",
         "GENERATED_STT_AUDIO_TRANSCRIPTIONS_API_KEY": "stt-key-sentinel",
-        "STT_AUDIO_TRANSCRIPTIONS_API_TOKEN": "https://stt.invalid",
+        "STT_AUDIO_TRANSCRIPTIONS_API_URL": "https://stt.invalid",
         "GENERATED_LLM_CHAT_COMPLETIONS_API_KEY": "llm-key-sentinel",
-        "LLM_CHAT_COMPLETIONS_API_TOKEN": "https://llm.invalid",
+        "LLM_CHAT_COMPLETIONS_API_URL": "https://llm.invalid",
         "GENERATED_TTS_AUDIO_SPEECH_API_KEY": "tts-key-sentinel",
-        "TTS_AUDIO_SPEECH_API_TOKEN": "https://tts.invalid",
+        "TTS_AUDIO_SPEECH_API_URL": "https://tts.invalid",
     }
     _assert_image_environment(
         monkeypatch, "worker_voice_realtime_session_beam", expected

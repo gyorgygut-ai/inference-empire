@@ -1,8 +1,8 @@
 import type { RealtimeToken } from "@tanstack/ai"
 import { api as voiceSchema } from "../../../../dist/voice.schema"
 
-export async function createSessionResponse(workerUrl?: string, secretBeamToken?: string) {
-  if (!workerUrl || !secretBeamToken) {
+export async function createSessionResponse(workerUrl?: string, workerAuthToken?: string) {
+  if (!workerUrl || !workerAuthToken) {
     return Response.json({ error: "Voice worker is not configured" }, { status: 503 })
   }
 
@@ -10,7 +10,7 @@ export async function createSessionResponse(workerUrl?: string, secretBeamToken?
     const response = await fetch(`${workerUrl.replace(/\/$/, "")}/v1/realtime/client_secrets`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${secretBeamToken}`,
+        Authorization: `Bearer ${workerAuthToken}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({}),

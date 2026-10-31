@@ -71,16 +71,35 @@ def test_invalid_token_cannot_negotiate_a_call():
 
 
 def test_trusted_server_receives_ephemeral_client_secret():
-    app = worker_voice.build_app(inference_client=DeterministicInferenceClient())
+    app = worker_voice.build_app(
+        inference_client=DeterministicInferenceClient(),
+        client_secret_auth_token="trusted-server-token",
+    )
     with TestClient(app) as client:
         response = client.post(
             "/v1/realtime/client_secrets",
+            headers={"Authorization": "Bearer trusted-server-token"},
             json={"session": {"type": "realtime", "instructions": "Be brief."}},
         )
     assert response.status_code == 200
     body = response.json()
     assert body["value"] and body["expires_at"] > int(time.time())
     assert body["session"]["instructions"] == "Be brief."
+
+
+def test_client_secret_endpoint_rejects_missing_or_invalid_server_credential():
+    app = worker_voice.build_app(
+        inference_client=DeterministicInferenceClient(),
+        client_secret_auth_token="trusted-server-token",
+    )
+    with TestClient(app) as client:
+        assert client.post("/v1/realtime/client_secrets", json={}).status_code == 401
+        response = client.post(
+            "/v1/realtime/client_secrets",
+            headers={"Authorization": "Bearer wrong"},
+            json={},
+        )
+    assert response.status_code == 401
 
 
 def test_turn_calls_stt_then_llm_then_tts_without_local_models():

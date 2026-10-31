@@ -31,7 +31,7 @@ class InferenceClient:
     @classmethod
     def from_env(cls) -> InferenceClient:
         def endpoint(prefix: str) -> InferenceEndpoint:
-            url = os.environ.get(f"{prefix}_API_TOKEN", "").strip()
+            url = os.environ.get(f"{prefix}_API_URL", "").strip()
             key = os.environ.get(f"GENERATED_{prefix}_API_KEY", "").strip()
             if not url or not key:
                 raise RuntimeError(f"{prefix} endpoint URL and credential must be configured")

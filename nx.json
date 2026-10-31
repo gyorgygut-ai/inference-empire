@@ -109,7 +109,7 @@
     }
   },
   "plugins": [
-    "@nx/next",
+    "@nx/next/plugin",
     "@nx/react",
     "@nx/node",
     "@nx/js",

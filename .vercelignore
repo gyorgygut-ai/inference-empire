@@ -1,0 +1,9 @@
+/.nx/
+/tmp/
+/apps/router/.wrangler/
+/apps/router/.netlify/
+/apps/workers/voice/hf-cache/
+/apps/face-value/.next/
+/apps/voice-chat/.next/
+/.ruff_cache/
+/.pytest_cache/

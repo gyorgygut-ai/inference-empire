@@ -24,20 +24,16 @@
       }
     },
     "build": {
-      "executor": "dotenvx:run-commands",
       "dependsOn": [
-        "prebuild"
+        "prebuild",
+        "build:manifest",
+        "^build"
       ],
       "cache": true,
       "inputs": [
         "production",
         "^production"
-      ],
-      "options": {
-        "command": "npm run",
-        "args": "build",
-        "cwd": "{projectRoot}"
-      }
+      ]
     },
     "test-unit": {
       "executor": "dotenvx:run-commands",
@@ -54,12 +50,16 @@
       "readyWhen": {
         "url": "http://localhost:{env.DEV_VOICE_CHAT_PORT}"
       },
-      "dependsOn": ["predev"],
+      "dependsOn": [
+        "predev",
+        { "projects": ["workers-voice"], "target": "deploy-realtime-session-beam" }
+      ],
       "options": {
         "cwd": "apps/voice-chat",
         "env": {
-          "WORKER_URL": "$(npx tsx $NX_WORKSPACE_ROOT/tools/get-beam-url.ts workers-voice)",
+          "SECRET_WORKER_URL": "$(npx tsx $NX_WORKSPACE_ROOT/tools/get-beam-url.ts workers-voice-realtime-session)",
           "SECRET_BEAM_TOKEN": "${SECRET_BEAM_TOKEN}",
+          "GENERATED_VOICE_WORKER_AUTH_TOKEN": "${GENERATED_VOICE_WORKER_AUTH_TOKEN}",
           "OPENAI_API_KEY": "${SECRET_OPENAI_API_KEY}"
         },
         "command": "npx next dev",
@@ -69,19 +69,23 @@
     "deploy": {
       "executor": "dotenvx:run-commands",
       "cache": false,
-      "dependsOn": ["build"],
+      "dependsOn": [
+        "build",
+        { "projects": ["workers-voice"], "target": "deploy-realtime-session-beam" }
+      ],
       "options": {
         "cwd": ".",
         "env": {
-          "WORKER_URL": "$(npx tsx $NX_WORKSPACE_ROOT/tools/get-beam-url.ts workers-voice)",
+          "SECRET_WORKER_URL": "$(npx tsx $NX_WORKSPACE_ROOT/tools/get-beam-url.ts workers-voice-realtime-session)",
           "SECRET_BEAM_TOKEN": "${SECRET_BEAM_TOKEN}",
+          "GENERATED_VOICE_WORKER_AUTH_TOKEN": "${GENERATED_VOICE_WORKER_AUTH_TOKEN}",
           "OPENAI_API_KEY": "${SECRET_OPENAI_API_KEY}",
           "VERCEL_TOKEN": "${SECRET_VOICE_CHAT_VERCEL_TOKEN}",
           "VERCEL_ORG_ID": "${SECRET_VOICE_CHAT_VERCEL_ORG_ID}",
           "VERCEL_PROJECT_ID": "${SECRET_VOICE_CHAT_VERCEL_PROJECT_ID}"
         },
-        "command": "npx vercel deploy",
-        "args": "--yes -e WORKER_URL=\"$WORKER_URL\" -b WORKER_URL=\"$WORKER_URL\" -e SECRET_BEAM_TOKEN=\"$SECRET_BEAM_TOKEN\" -e OPENAI_API_KEY=\"$OPENAI_API_KEY\""
+        "command": "npx vercel build --project \"$VERCEL_PROJECT_ID\" --prod --yes && npx vercel deploy --project \"$VERCEL_PROJECT_ID\" --prebuilt --prod",
+        "args": "--yes -e SECRET_WORKER_URL=\"$SECRET_WORKER_URL\" -e GENERATED_VOICE_WORKER_AUTH_TOKEN=\"$GENERATED_VOICE_WORKER_AUTH_TOKEN\" -e OPENAI_API_KEY=\"$OPENAI_API_KEY\""
       }
     }
   }

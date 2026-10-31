@@ -19,20 +19,23 @@ image = (
     )
     .with_envs(
         {
-            "STT_AUDIO_TRANSCRIPTIONS_API_TOKEN": os.environ[
-                "STT_AUDIO_TRANSCRIPTIONS_API_TOKEN"
+            "STT_AUDIO_TRANSCRIPTIONS_API_URL": os.environ[
+                "STT_AUDIO_TRANSCRIPTIONS_API_URL"
             ],
             "GENERATED_STT_AUDIO_TRANSCRIPTIONS_API_KEY": os.environ[
                 "GENERATED_STT_AUDIO_TRANSCRIPTIONS_API_KEY"
             ],
-            "LLM_CHAT_COMPLETIONS_API_TOKEN": os.environ[
-                "LLM_CHAT_COMPLETIONS_API_TOKEN"
+            "LLM_CHAT_COMPLETIONS_API_URL": os.environ[
+                "LLM_CHAT_COMPLETIONS_API_URL"
             ],
             "GENERATED_LLM_CHAT_COMPLETIONS_API_KEY": os.environ[
                 "GENERATED_LLM_CHAT_COMPLETIONS_API_KEY"
             ],
-            "TTS_AUDIO_SPEECH_API_TOKEN": os.environ[
-                "TTS_AUDIO_SPEECH_API_TOKEN"
+            "TTS_AUDIO_SPEECH_API_URL": os.environ[
+                "TTS_AUDIO_SPEECH_API_URL"
+            ],
+            "GENERATED_VOICE_WORKER_AUTH_TOKEN": os.environ[
+                "GENERATED_VOICE_WORKER_AUTH_TOKEN"
             ],
             "GENERATED_TTS_AUDIO_SPEECH_API_KEY": os.environ[
                 "GENERATED_TTS_AUDIO_SPEECH_API_KEY"
@@ -50,7 +53,7 @@ image = (
     concurrent_requests=10,
     keep_warm_seconds=10,
     timeout=120,
-    authorized=True,
+    authorized=False,
     secrets=[],
     autoscaler=QueueDepthAutoscaler(max_containers=1, min_containers=0),
 )
