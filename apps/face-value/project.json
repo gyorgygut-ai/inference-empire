@@ -78,8 +78,8 @@
           "VERCEL_ORG_ID": "${SECRET_FACE_VALUE_VERCEL_ORG_ID}",
           "VERCEL_PROJECT_ID": "${SECRET_FACE_VALUE_VERCEL_PROJECT_ID}"
         },
-        "command": "npx vercel build --project \"$VERCEL_PROJECT_ID\" --prod --yes && npx vercel deploy --project \"$VERCEL_PROJECT_ID\" --prebuilt --prod",
-        "args": "--yes -e ROUTER_URL=\"$ROUTER_URL\" -e ROUTER_AUTH_TOKEN=\"$ROUTER_AUTH_TOKEN\""
+        "command": "npx vercel deploy --project \"$VERCEL_PROJECT_ID\" --prod",
+        "args": "--yes -b ROUTER_URL=\"$ROUTER_URL\" -b ROUTER_AUTH_TOKEN=\"$ROUTER_AUTH_TOKEN\" -e ROUTER_URL=\"$ROUTER_URL\" -e ROUTER_AUTH_TOKEN=\"$ROUTER_AUTH_TOKEN\""
       }
     }
   }

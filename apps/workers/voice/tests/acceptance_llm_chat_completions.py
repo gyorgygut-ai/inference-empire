@@ -67,7 +67,7 @@ def request_completion(request: Request) -> CompletionResponse:
 
 
 def main() -> None:
-    token = os.environ["SECRET_BEAM_TOKEN"]
+    token = os.environ["GENERATED_LLM_CHAT_COMPLETIONS_API_KEY"]
     url = f"{deployed_url()}/v1/chat/completions"
     payload = json.dumps(
         {
@@ -101,7 +101,9 @@ def main() -> None:
             body, error = responses.get(timeout=15)
             break
         except queue.Empty:
-            print("🐣 LLM acceptance request is still running; Beam logs are streaming.", flush=True)
+            print(
+                "🐣 LLM acceptance request is still running; Beam logs are streaming.", flush=True
+            )
 
     if error is not None:
         raise error
@@ -111,6 +113,24 @@ def main() -> None:
     reply = body["choices"][0]["message"]["content"]
     if not isinstance(reply, str) or not reply.strip():
         raise AssertionError("deployed Chat Completions response has no reply text")
+
+    rejected_request = Request(
+        url,
+        data=payload,
+        headers={
+            "Authorization": "Bearer invalid-voice-api-key",
+            "Content-Type": "application/json",
+        },
+        method="POST",
+    )
+    try:
+        with urlopen(rejected_request, timeout=30):
+            raise AssertionError("Chat Completions accepted an invalid API key")
+    except HTTPError as error:
+        if error.code != 401:
+            raise AssertionError(
+                f"Chat Completions rejected an invalid API key with HTTP {error.code}, not 401"
+            ) from error
 
     print(json.dumps({"service": BEAM_SERVICE, "reply": reply}))
 

@@ -11,7 +11,9 @@ from typing import TYPE_CHECKING, Any
 from urllib.parse import urlparse
 
 from dist.contract_voice_stt_audio_transcriptions import Input, Output
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
+
+from shared.auth import require_bearer_token
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -19,7 +21,7 @@ if TYPE_CHECKING:
 MODELS = {
     "faster_whisper_large_v3": {
         "url": "https://huggingface.co/Systran/faster-whisper-large-v3",
-        "path": "./model-cache/faster_whisper_large_v3",
+        "path": "./hf-cache/faster_whisper_large_v3",
     },
 }
 MODEL_LOCK = threading.RLock()
@@ -87,8 +89,14 @@ def transcribe(request: Input, model: Any | None = None) -> Output:
 
 def build_app(
     transcriber: Callable[[Input], Output] = transcribe,
+    api_key: str | None = None,
 ) -> FastAPI:
     app = FastAPI(title="workers-voice-stt-audio-transcriptions")
+    expected_api_key = (
+        api_key
+        if api_key is not None
+        else os.environ.get("GENERATED_STT_AUDIO_TRANSCRIPTIONS_API_KEY")
+    )
 
     @app.get("/health")
     def health() -> dict[str, str]:
@@ -96,6 +104,7 @@ def build_app(
 
     @app.post("/v1/audio/transcriptions", response_model=Output)
     async def audio_transcriptions(
+        http_request: Request,
         file: UploadFile = File(...),
         model: str = Form(...),
         language: str = Form("en"),
@@ -103,6 +112,7 @@ def build_app(
         temperature: float = Form(0.0),
         response_format: str = Form("json"),
     ) -> Output:
+        require_bearer_token(http_request, expected_api_key)
         try:
             if response_format != "json":
                 raise ValueError("Only json response_format is supported")

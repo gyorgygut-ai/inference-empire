@@ -22,7 +22,7 @@ def test_local_speech_request_returns_non_silent_wav():
         port = available_port.getsockname()[1]
     server = uvicorn.Server(
         uvicorn.Config(
-            build_app(generator=local_tts),
+            build_app(generator=local_tts, api_key="local-tts-key"),
             host="127.0.0.1",
             port=port,
             log_level="error",
@@ -46,6 +46,7 @@ def test_local_speech_request_returns_non_silent_wav():
                     time.sleep(0.1)
             response = client.post(
                 f"{base_url}/v1/audio/speech",
+                headers={"Authorization": "Bearer local-tts-key"},
                 json={"model": "local-deterministic-tts", "input": "Say hello."},
             )
         samples, sample_rate = sf.read(io.BytesIO(response.content), dtype="float32")

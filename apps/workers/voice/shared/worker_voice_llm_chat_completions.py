@@ -16,7 +16,9 @@ from dist.contract_voice_llm_chat_completions import (
     ResponseMessage,
     Usage,
 )
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
+
+from shared.auth import require_bearer_token
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -24,7 +26,7 @@ if TYPE_CHECKING:
 MODELS = {
     "qwen2_5_3b_instruct": {
         "url": "https://huggingface.co/Qwen/Qwen2.5-3B-Instruct",
-        "path": "./model-cache/qwen2_5_3b_instruct",
+        "path": "./hf-cache/qwen2_5_3b_instruct",
     },
 }
 MODEL_LOCK = threading.RLock()
@@ -49,9 +51,7 @@ def load_model() -> dict[str, Any]:
 
         model_path = Path(
             snapshot_download(
-                repo_id=urlparse(
-                    MODELS["qwen2_5_3b_instruct"]["url"]
-                ).path.strip("/"),
+                repo_id=urlparse(MODELS["qwen2_5_3b_instruct"]["url"]).path.strip("/"),
                 cache_dir=MODELS["qwen2_5_3b_instruct"]["path"],
                 token=os.environ["SECRET_HUGGINGFACE_TOKEN"],
             )
@@ -120,15 +120,20 @@ def generate_reply(
 
 def build_app(
     generator: Callable[[Input], tuple[str, int, int]] = generate_reply,
+    api_key: str | None = None,
 ) -> FastAPI:
     app = FastAPI(title="workers-voice-llm-chat-completions")
+    expected_api_key = (
+        api_key if api_key is not None else os.environ.get("GENERATED_LLM_CHAT_COMPLETIONS_API_KEY")
+    )
 
     @app.get("/health")
     def health() -> dict[str, str]:
         return {"status": "ok"}
 
     @app.post("/v1/chat/completions", response_model=Output)
-    def chat_completions(request: Input) -> Output:
+    def chat_completions(request: Input, http_request: Request) -> Output:
+        require_bearer_token(http_request, expected_api_key)
         try:
             content, prompt_tokens, completion_tokens = generator(request)
         except ValueError as error:

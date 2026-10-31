@@ -12,9 +12,10 @@ def test_audio_transcriptions_multipart_request_returns_json_transcript() -> Non
         requests.append(request)
         return Output(text="deterministic local transcript")
 
-    client = TestClient(build_app(transcribe))
+    client = TestClient(build_app(transcribe, api_key="local-stt-key"))
     response = client.post(
         "/v1/audio/transcriptions",
+        headers={"Authorization": "Bearer local-stt-key"},
         files={"file": ("sample.wav", b"local audio fixture", "audio/wav")},
         data={"model": "whisper-1", "language": "en", "temperature": "0"},
     )

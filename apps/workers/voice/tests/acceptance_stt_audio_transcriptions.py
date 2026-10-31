@@ -57,11 +57,12 @@ def multipart_body(audio: bytes, boundary: str) -> bytes:
 
 
 def main() -> None:
-    token = os.environ["SECRET_BEAM_TOKEN"]
+    token = os.environ["GENERATED_STT_AUDIO_TRANSCRIPTIONS_API_KEY"]
     audio = (ROOT / "apps/workers/voice/references/gut.wav").read_bytes()
+    url = f"{deployed_url()}/v1/audio/transcriptions"
     boundary = f"voice-{uuid.uuid4().hex}"
     request = Request(
-        f"{deployed_url()}/v1/audio/transcriptions",
+        url,
         data=multipart_body(audio, boundary),
         headers={
             "Authorization": f"Bearer {token}",
@@ -76,9 +77,14 @@ def main() -> None:
             with urlopen(request, timeout=300) as response:
                 responses.put((json.load(response), None))
         except HTTPError as error:
-            responses.put((None, RuntimeError(
-                f"deployed Audio Transcriptions request failed with HTTP {error.code}"
-            )))
+            responses.put(
+                (
+                    None,
+                    RuntimeError(
+                        f"deployed Audio Transcriptions request failed with HTTP {error.code}"
+                    ),
+                )
+            )
         except Exception as error:
             responses.put((None, error))
 
@@ -100,6 +106,25 @@ def main() -> None:
     transcript = body.get("text")
     if not isinstance(transcript, str) or not transcript.strip():
         raise AssertionError("deployed Audio Transcriptions response has no transcript")
+
+    rejected_request = Request(
+        url,
+        data=multipart_body(audio, boundary),
+        headers={
+            "Authorization": "Bearer invalid-voice-api-key",
+            "Content-Type": f"multipart/form-data; boundary={boundary}",
+        },
+        method="POST",
+    )
+    try:
+        with urlopen(rejected_request, timeout=30):
+            raise AssertionError("Audio Transcriptions accepted an invalid API key")
+    except HTTPError as error:
+        if error.code != 401:
+            raise AssertionError(
+                f"Audio Transcriptions rejected an invalid API key with HTTP {error.code}, not 401"
+            ) from error
+
     print(json.dumps({"service": SERVICE, "transcript_chars": len(transcript)}))
 
 

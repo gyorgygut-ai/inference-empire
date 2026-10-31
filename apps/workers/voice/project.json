@@ -17,6 +17,7 @@
         "env": {
           "PYTHONPATH": ".",
           "SECRET_HUGGINGFACE_TOKEN": "${SECRET_HUGGINGFACE_TOKEN}",
+          "GENERATED_LLM_CHAT_COMPLETIONS_API_KEY": "${GENERATED_LLM_CHAT_COMPLETIONS_API_KEY}",
           "BEAM_TOKEN": "${SECRET_BEAM_TOKEN}"
         },
         "command": "uv run --locked --project ../../../ beam deploy",
@@ -34,6 +35,7 @@
         "env": {
           "PYTHONPATH": ".",
           "SECRET_HUGGINGFACE_TOKEN": "${SECRET_HUGGINGFACE_TOKEN}",
+          "GENERATED_TTS_AUDIO_SPEECH_API_KEY": "${GENERATED_TTS_AUDIO_SPEECH_API_KEY}",
           "BEAM_TOKEN": "${SECRET_BEAM_TOKEN}"
         },
         "command": "uv run --locked --project ../../../ beam deploy",
@@ -51,6 +53,7 @@
         "env": {
           "PYTHONPATH": ".",
           "SECRET_HUGGINGFACE_TOKEN": "${SECRET_HUGGINGFACE_TOKEN}",
+          "GENERATED_STT_AUDIO_TRANSCRIPTIONS_API_KEY": "${GENERATED_STT_AUDIO_TRANSCRIPTIONS_API_KEY}",
           "BEAM_TOKEN": "${SECRET_BEAM_TOKEN}"
         },
         "command": "uv run --locked --project ../../../ beam deploy",
@@ -215,19 +218,10 @@
     "test-e2e": {
       "executor": "dotenvx:run-commands",
       "cache": false,
-      "dependsOn": [
-        {
-          "projects": [
-            "workers-voice"
-          ],
-          "target": "serve-local",
-          "waitFor": "ready"
-        }
-      ],
       "options": {
         "cwd": "{projectRoot}",
-        "command": "uv run --locked python tests/probe_webrtc.py",
-        "args": "--url http://127.0.0.1:8765 --output-dir .proof/local"
+        "command": "uv run --locked pytest",
+        "args": "tests/test_worker_voice_realtime_session_e2e.py"
       }
     },
     "predeploy": {

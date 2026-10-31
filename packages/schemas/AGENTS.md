@@ -3,6 +3,8 @@
 **Source of Truth**:
 
 - `env/*.schema.json` and `workers/*.schema.json` are the language-agnostic source of truth, including the workspace runtime config contract.
+- `.env`, `env.runtime`, and `env.debug` each have a matching schema: `env/.env.schema.json`, `env/env.runtime.schema.json`, and `env/env.debug.schema.json`. Keep each contract explicit even when two files currently share the same fields.
+- Validate dotenvx-expanded values for `env.runtime`; command substitutions must be expanded before generated token values are checked.
 - Keep provider and worker contract files flat inside their respective directories.
 - Generated TypeScript and Python files are outputs; never edit them by hand.
 

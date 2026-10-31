@@ -12,7 +12,9 @@ from urllib.parse import urlparse
 import numpy as np
 import soundfile as sf
 from dist.contract_voice_tts_audio_speech import Input, Output
-from fastapi import FastAPI, HTTPException, Response
+from fastapi import FastAPI, HTTPException, Request, Response
+
+from shared.auth import require_bearer_token
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -20,7 +22,7 @@ if TYPE_CHECKING:
 MODELS = {
     "resembleai_chatterbox_tts": {
         "url": "https://huggingface.co/ResembleAI/chatterbox",
-        "path": "./model-cache/resembleai_chatterbox_tts",
+        "path": "./hf-cache/resembleai_chatterbox_tts",
     },
 }
 MODEL_LOCK = threading.RLock()
@@ -96,15 +98,20 @@ def synthesize(request: Input, model: Any | None = None) -> Output:
 
 def build_app(
     generator: Callable[[Input], Output] = synthesize,
+    api_key: str | None = None,
 ) -> FastAPI:
     app = FastAPI(title="workers-voice-tts-audio-speech")
+    expected_api_key = (
+        api_key if api_key is not None else os.environ.get("GENERATED_TTS_AUDIO_SPEECH_API_KEY")
+    )
 
     @app.get("/health")
     def health() -> dict[str, str]:
         return {"status": "ok"}
 
     @app.post("/v1/audio/speech")
-    def audio_speech(request: Input) -> Response:
+    def audio_speech(request: Input, http_request: Request) -> Response:
+        require_bearer_token(http_request, expected_api_key)
         try:
             result = generator(request)
             if result.format != "wav":

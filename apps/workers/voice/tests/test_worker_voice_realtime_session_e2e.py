@@ -15,7 +15,7 @@ import soundfile as sf
 import uvicorn
 from aiortc import RTCPeerConnection, RTCSessionDescription
 from aiortc.mediastreams import MediaStreamError, MediaStreamTrack
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, File, Request, UploadFile
 from fastapi.responses import Response as FastAPIResponse
 from shared.inference_client import InferenceClient, InferenceEndpoint
 from shared.worker_voice import build_app
@@ -90,7 +90,8 @@ def build_inference_app(calls: list[str]) -> FastAPI:
     app = FastAPI()
 
     @app.post("/v1/audio/transcriptions")
-    async def transcribe(file: UploadFile = File(...)):
+    async def transcribe(request: Request, file: UploadFile = File(...)):
+        assert request.headers.get("authorization") == "Bearer local-stt"
         assert file.filename == "audio.wav"
         assert (await file.read()).startswith(b"RIFF")
         assert file.headers.get("content-type") == "audio/wav"
@@ -98,13 +99,15 @@ def build_inference_app(calls: list[str]) -> FastAPI:
         return {"text": "Tell me something useful."}
 
     @app.post("/v1/chat/completions")
-    async def complete(request: dict):
+    async def complete(request: dict, http_request: Request):
+        assert http_request.headers.get("authorization") == "Bearer local-llm"
         assert request["messages"][-1]["content"] == "Tell me something useful."
         calls.append("llm")
         return {"choices": [{"message": {"content": "A complete local turn."}}]}
 
     @app.post("/v1/audio/speech")
-    async def speak(request: dict):
+    async def speak(request: dict, http_request: Request):
+        assert http_request.headers.get("authorization") == "Bearer local-tts"
         assert request["input"] == "A complete local turn."
         calls.append("tts")
         buffer = io.BytesIO()
@@ -208,9 +211,7 @@ async def _run_turn(
                 },
             )
             answer.raise_for_status()
-        await peer.setRemoteDescription(
-            RTCSessionDescription(sdp=answer.text, type="answer")
-        )
+        await peer.setRemoteDescription(RTCSessionDescription(sdp=answer.text, type="answer"))
         try:
             await asyncio.wait_for(connection_ready.wait(), timeout=10)
         except TimeoutError as error:
@@ -227,7 +228,9 @@ async def _run_turn(
                 f"detector calls={pause_detector.calls}, "
                 f"speech chunks={pause_detector.speech_chunks}"
             )
-            raise TimeoutError("Inference completed but WebRTC returned no non-silent audio") from error
+            raise TimeoutError(
+                "Inference completed but WebRTC returned no non-silent audio"
+            ) from error
         audio = np.concatenate(response_audio)
         assert audio.size > 0
         assert float(np.sqrt(np.mean(audio.astype(np.float32) ** 2))) > 150

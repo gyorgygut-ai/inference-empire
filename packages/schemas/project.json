@@ -15,6 +15,24 @@
         "cwd": "{workspaceRoot}"
       }
     },
+    "build-env-ts": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "inputs": [
+        "{projectRoot}/env/*.schema.json",
+        "{projectRoot}/env/.env.schema.json",
+        "{projectRoot}/tools/generate-zod-from-json.ts"
+      ],
+      "outputs": [
+        "{workspaceRoot}/packages/schemas/env/.env.schema.ts",
+        "{workspaceRoot}/packages/schemas/env/env.runtime.schema.ts",
+        "{workspaceRoot}/packages/schemas/env/env.debug.schema.ts"
+      ],
+      "options": {
+        "command": "npx tsx packages/schemas/tools/generate-zod-from-json.ts --source packages/schemas/env/.env.schema.json --out packages/schemas/env/.env.schema.ts && npx tsx packages/schemas/tools/generate-zod-from-json.ts --source packages/schemas/env/env.runtime.schema.json --out packages/schemas/env/env.runtime.schema.ts && npx tsx packages/schemas/tools/generate-zod-from-json.ts --source packages/schemas/env/env.debug.schema.json --out packages/schemas/env/env.debug.schema.ts",
+        "cwd": "{workspaceRoot}"
+      }
+    },
     "build-pydantic": {
       "executor": "nx:run-commands",
       "cache": true,

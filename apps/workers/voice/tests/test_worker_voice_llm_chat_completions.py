@@ -76,7 +76,7 @@ def test_model_configuration_uses_url_and_cache_path_mapping():
     assert MODELS == {
         "qwen2_5_3b_instruct": {
             "url": "https://huggingface.co/Qwen/Qwen2.5-3B-Instruct",
-            "path": "./model-cache/qwen2_5_3b_instruct",
+            "path": "./hf-cache/qwen2_5_3b_instruct",
         }
     }
 
@@ -101,10 +101,12 @@ def test_generate_reply_formats_messages_and_returns_token_usage():
     assert model.options == {"max_new_tokens": 128, "do_sample": False}
 
 
-def test_chat_completions_returns_openai_compatible_output():
+def test_chat_completions_returns_openai_compatible_output(monkeypatch):
+    monkeypatch.setenv("GENERATED_LLM_CHAT_COMPLETIONS_API_KEY", "llm-test-key")
     app = build_app(generator=lambda _: ("A deterministic reply.", 3, 4))
     response = TestClient(app).post(
         "/v1/chat/completions",
+        headers={"Authorization": "Bearer llm-test-key"},
         json={
             "model": "qwen",
             "messages": [{"role": "user", "content": "Hello"}],
@@ -125,15 +127,18 @@ def test_chat_completions_returns_openai_compatible_output():
     }
 
 
-def test_chat_completions_rejects_invalid_request_and_empty_reply():
+def test_chat_completions_rejects_invalid_request_and_empty_reply(monkeypatch):
+    monkeypatch.setenv("GENERATED_LLM_CHAT_COMPLETIONS_API_KEY", "llm-test-key")
     app = build_app(generator=lambda _: ("", 1, 0))
     client = TestClient(app)
     invalid = client.post(
         "/v1/chat/completions",
+        headers={"Authorization": "Bearer llm-test-key"},
         json={"model": "qwen", "messages": []},
     )
     empty = client.post(
         "/v1/chat/completions",
+        headers={"Authorization": "Bearer llm-test-key"},
         json={
             "model": "qwen",
             "messages": [{"role": "user", "content": "Hello"}],
@@ -142,3 +147,15 @@ def test_chat_completions_rejects_invalid_request_and_empty_reply():
 
     assert invalid.status_code == 422
     assert empty.status_code == 502
+
+
+def test_chat_completions_rejects_invalid_generated_api_key(monkeypatch):
+    monkeypatch.setenv("GENERATED_LLM_CHAT_COMPLETIONS_API_KEY", "llm-test-key")
+    app = build_app(generator=lambda _: pytest.fail("unauthorized request reached model"))
+    response = TestClient(app).post(
+        "/v1/chat/completions",
+        headers={"Authorization": "Bearer wrong-key"},
+        json={"model": "qwen", "messages": [{"role": "user", "content": "Hi"}]},
+    )
+
+    assert response.status_code == 401

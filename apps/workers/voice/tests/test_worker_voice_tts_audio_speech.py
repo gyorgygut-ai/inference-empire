@@ -39,16 +39,14 @@ def test_contract_rejects_empty_text_and_unsupported_audio_format():
     with pytest.raises(ValueError):
         Input.model_validate({"model": "chatterbox", "input": ""})
     with pytest.raises(ValueError):
-        Input.model_validate(
-            {"model": "chatterbox", "input": "Hello", "response_format": "mp3"}
-        )
+        Input.model_validate({"model": "chatterbox", "input": "Hello", "response_format": "mp3"})
 
 
 def test_model_mapping_declares_chatterbox_model_and_cache():
     assert MODELS == {
         "resembleai_chatterbox_tts": {
             "url": "https://huggingface.co/ResembleAI/chatterbox",
-            "path": "./model-cache/resembleai_chatterbox_tts",
+            "path": "./hf-cache/resembleai_chatterbox_tts",
         }
     }
 
@@ -72,22 +70,26 @@ def test_audio_encoder_rejects_silent_output():
         encode_audio(np.zeros(100, dtype=np.float32), 24_000)
 
 
-def test_speech_route_returns_audio_and_rejects_silent_response():
+def test_speech_route_returns_audio_and_rejects_silent_response(monkeypatch):
+    monkeypatch.setenv("GENERATED_TTS_AUDIO_SPEECH_API_KEY", "tts-test-key")
     audio = encode_audio(np.sin(np.linspace(0, 20, 2400)) * 0.2, 24_000)
     client = TestClient(build_app(generator=lambda _: audio))
     response = client.post(
         "/v1/audio/speech",
+        headers={"Authorization": "Bearer tts-test-key"},
         json={"model": "chatterbox", "input": "Hello there."},
     )
     silent_buffer = io.BytesIO()
     sf.write(silent_buffer, np.zeros(100, dtype=np.float32), 24_000, format="WAV")
     silent_output = Output(
         audio_base64=base64.b64encode(silent_buffer.getvalue()).decode("ascii"),
-        format="wav", sample_rate=24_000
+        format="wav",
+        sample_rate=24_000,
     )
     silent_client = TestClient(build_app(generator=lambda _: silent_output))
     silent = silent_client.post(
         "/v1/audio/speech",
+        headers={"Authorization": "Bearer tts-test-key"},
         json={"model": "chatterbox", "input": "Hello there."},
     )
 
@@ -95,3 +97,17 @@ def test_speech_route_returns_audio_and_rejects_silent_response():
     assert response.headers["content-type"] == "audio/wav"
     assert len(response.content) > 44
     assert silent.status_code == 502
+
+
+def test_speech_route_rejects_invalid_generated_api_key(monkeypatch):
+    monkeypatch.setenv("GENERATED_TTS_AUDIO_SPEECH_API_KEY", "tts-test-key")
+    client = TestClient(
+        build_app(generator=lambda _: pytest.fail("unauthorized request reached model"))
+    )
+    response = client.post(
+        "/v1/audio/speech",
+        headers={"Authorization": "Bearer wrong-key"},
+        json={"model": "chatterbox", "input": "Hello there."},
+    )
+
+    assert response.status_code == 401
