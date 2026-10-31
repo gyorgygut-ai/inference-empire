@@ -2,10 +2,13 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname } from 'node:path'
 import { parseArgs } from 'node:util'
+import $RefParser from '@apidevtools/json-schema-ref-parser'
 import { jsonSchemaToZod } from 'x-to-zod'
 
-function generate(schemaPath: string, outPath: string) {
-  const schema = JSON.parse(readFileSync(schemaPath, 'utf8'))
+async function generate(schemaPath: string, outPath: string) {
+  const source = JSON.parse(readFileSync(schemaPath, 'utf8'))
+  const resolved = await $RefParser.dereference(source)
+  const schema = JSON.parse(JSON.stringify(resolved))
   const code = jsonSchemaToZod(schema, {
     name: 'api',
     module: 'esm',
@@ -31,4 +34,4 @@ if (!values.source || !values.out) {
   throw new Error('usage: generate-zod-from-json.ts --source <schema-json> --out <output-ts>')
 }
 
-generate(values.source, values.out)
+await generate(values.source, values.out)

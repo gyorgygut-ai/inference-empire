@@ -8,7 +8,7 @@
     "seed": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "npx dotenvx run -f config.deploy -- uv run --locked --with huggingface-hub==0.36.2 python tools/seed-volumes/seed-volumes.py",
+        "command": "npx dotenvx run -f config.env -- uv run --locked --with huggingface-hub==0.36.2 python tools/seed-volumes/seed-volumes.py",
         "cwd": "."
       },
       "cache": false

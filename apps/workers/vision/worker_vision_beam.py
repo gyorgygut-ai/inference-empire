@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+
 from beam import Image, QueueDepthAutoscaler, task_queue
 from dist.contract_vision import Input as SmallVisionInput
 from shared.platform import beam_env
@@ -16,7 +18,12 @@ CACHE_PATH = MODEL_CACHES["qwen2_vl_2b_instruct"]["path"]
 VOLUMES = model_volumes()
 
 image = Image(python_version="python3.11").add_python_packages(DEPENDENCIES).with_envs(
-    beam_env(cache_path=CACHE_PATH)
+    beam_env(
+        cache_path=CACHE_PATH,
+        extra={
+            "SECRET_HUGGINGFACE_TOKEN": os.environ["SECRET_HUGGINGFACE_TOKEN"]
+        },
+    )
 )
 
 @task_queue(
@@ -31,7 +38,7 @@ image = Image(python_version="python3.11").add_python_packages(DEPENDENCIES).wit
     keep_warm_seconds=0,
     checkpoint_enabled=True,
     timeout=300,
-    secrets=["HF_TOKEN"],
+    secrets=[],
 )
 def generate(context, **kwargs) -> dict:
     model, processor, analyze_prompt = context.on_start_value

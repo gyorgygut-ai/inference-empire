@@ -20,61 +20,6 @@ const audioVisualization: AudioVisualization = {
   getOutputTimeDomainData: emptyAudioData,
 }
 
-const readIceServers = (value: unknown): Array<RTCIceServer> => {
-  if (typeof value !== "object" || value === null || !("iceServers" in value)) {
-    throw new Error("Voice worker returned invalid ICE configuration")
-  }
-
-  const { iceServers } = value
-  if (!Array.isArray(iceServers)) {
-    throw new Error("Voice worker returned invalid ICE configuration")
-  }
-
-  return iceServers.map((server: unknown) => {
-    if (typeof server !== "object" || server === null || !("urls" in server)) {
-      throw new Error("Voice worker returned invalid ICE server")
-    }
-
-    const { urls } = server
-    if (
-      typeof urls !== "string" &&
-      !(Array.isArray(urls) && urls.every((url) => typeof url === "string"))
-    ) {
-      throw new Error("Voice worker returned invalid ICE server URLs")
-    }
-
-    const iceServer: RTCIceServer = { urls }
-    if ("username" in server && typeof server.username === "string") {
-      iceServer.username = server.username
-    }
-    if ("credential" in server && typeof server.credential === "string") {
-      iceServer.credential = server.credential
-    }
-    return iceServer
-  })
-}
-
-const readSessionDescription = (value: unknown): RTCSessionDescriptionInit => {
-  if (
-    typeof value !== "object" ||
-    value === null ||
-    !("sdp" in value) ||
-    typeof value.sdp !== "string" ||
-    !("type" in value) ||
-    value.type !== "answer"
-  ) {
-    throw new Error("Voice worker returned an invalid WebRTC answer")
-  }
-
-  return { sdp: value.sdp, type: "answer" }
-}
-
-const fetchIceServers = async () => {
-  const response = await fetch("/api/voice/rtc-configuration", { cache: "no-store" })
-  if (!response.ok) throw new Error("Unable to retrieve voice connection configuration")
-  return readIceServers(await response.json())
-}
-
 const waitForPeerState = (
   peer: RTCPeerConnection,
   expectedState: RTCPeerConnectionState,
@@ -138,8 +83,28 @@ const waitForIceGathering = (peer: RTCPeerConnection) =>
     peer.addEventListener("connectionstatechange", onStateChange)
   })
 
-const connectFastRtc = async (sessionId: string) => {
-  const peer = new RTCPeerConnection({ iceServers: await fetchIceServers() })
+export const postFastRtcOffer = async (workerUrl: string, token: string, sdp: string) => {
+  const form = new FormData()
+  form.set("sdp", sdp)
+
+  const response = await fetch(`${workerUrl.replace(/\/$/, "")}/v1/realtime/calls`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: form,
+    cache: "no-store",
+    signal: AbortSignal.timeout(45_000),
+  })
+
+  if (!response.ok) throw new Error("Voice worker rejected the WebRTC offer")
+  const answer = await response.text()
+  if (!answer.trim()) throw new Error("Voice worker returned an empty WebRTC answer")
+  return answer
+}
+
+const connectFastRtc = async (workerUrl: string, token: string) => {
+  if (!workerUrl) throw new Error("Voice worker URL is not configured")
+
+  const peer = new RTCPeerConnection()
   const audioTransceiver = peer.addTransceiver("audio", { direction: "sendrecv" })
   const dataChannel = peer.createDataChannel("text")
   const audio = document.createElement("audio")
@@ -162,19 +127,8 @@ const connectFastRtc = async (sessionId: string) => {
       throw new Error("Unable to create WebRTC offer")
     }
 
-    const response = await fetch("/api/voice/offer", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        sdp: localDescription.sdp,
-        type: localDescription.type,
-        webrtc_id: sessionId,
-      }),
-    })
-
-    const answer: unknown = await response.json()
-    if (!response.ok) throw new Error("Voice worker rejected the WebRTC offer")
-    await peer.setRemoteDescription(readSessionDescription(answer))
+    const answer = await postFastRtcOffer(workerUrl, token, localDescription.sdp)
+    await peer.setRemoteDescription({ sdp: answer, type: "answer" })
     await waitForPeerState(peer, "connected")
 
     return { peer, audioTransceiver, dataChannel, audio }
@@ -191,11 +145,12 @@ export const fastRtcAdapter: RealtimeAdapter = {
   provider: "workers-voice",
 
   async connect(token: RealtimeToken) {
-    const { peer, audioTransceiver, dataChannel, audio } = await connectFastRtc(token.token)
+    const workerUrl: unknown = token.config.providerOptions?.workerUrl
+    if (typeof workerUrl !== "string" || !workerUrl) {
+      throw new Error("Voice worker URL is not configured")
+    }
+    const { peer, audioTransceiver, dataChannel, audio } = await connectFastRtc(workerUrl, token.token)
     const events = createRealtimeEventEmitter()
-    const heartbeat = setInterval(() => {
-      void fetch("/api/voice/heartbeat", { cache: "no-store" }).catch(() => undefined)
-    }, 1_000)
     let localStream: MediaStream | undefined
 
     peer.addEventListener("connectionstatechange", () => {
@@ -282,7 +237,6 @@ export const fastRtcAdapter: RealtimeAdapter = {
       getAudioVisualization: () => audioVisualization,
 
       async disconnect() {
-        clearInterval(heartbeat)
         localStream?.getTracks().forEach((track) => track.stop())
         dataChannel.close()
         audio.pause()
@@ -298,6 +252,7 @@ export const getFastRtcToken = async (): Promise<RealtimeToken> => {
   const response = await fetch("/api/voice/session", {
     method: "POST",
     cache: "no-store",
+    signal: AbortSignal.timeout(10_000),
   })
   if (!response.ok) throw new Error("Unable to start a voice session")
 
@@ -310,7 +265,15 @@ export const getFastRtcToken = async (): Promise<RealtimeToken> => {
     !("token" in token) ||
     typeof token.token !== "string" ||
     !("expiresAt" in token) ||
-    typeof token.expiresAt !== "number"
+    typeof token.expiresAt !== "number" ||
+    !("config" in token) ||
+    typeof token.config !== "object" ||
+    token.config === null ||
+    !("providerOptions" in token.config) ||
+    typeof token.config.providerOptions !== "object" ||
+    token.config.providerOptions === null ||
+    !("workerUrl" in token.config.providerOptions) ||
+    typeof token.config.providerOptions.workerUrl !== "string"
   ) {
     throw new Error("Voice session route returned an invalid session")
   }
@@ -319,6 +282,6 @@ export const getFastRtcToken = async (): Promise<RealtimeToken> => {
     provider: token.provider,
     token: token.token,
     expiresAt: token.expiresAt,
-    config: {},
+    config: { providerOptions: { workerUrl: token.config.providerOptions.workerUrl } },
   }
 }

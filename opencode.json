@@ -1,14 +1,25 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "mcp": {
-    "nx-mcp": {
-      "type": "local",
-      "command": [
-        "npx",
-        "nx",
-        "mcp"
-      ],
-      "enabled": true
+    "servers": {
+      "nx-mcp": {
+        "type": "local",
+        "command": [
+          "npx",
+          "nx",
+          "mcp"
+        ]
+      },
+      "maestro": {
+        "type": "local",
+        "command": [
+          "maestro",
+          "mcp",
+          "--no-viewer",
+          "--working-dir",
+          "apps/face-value"
+        ]
+      }
     }
   }
 }

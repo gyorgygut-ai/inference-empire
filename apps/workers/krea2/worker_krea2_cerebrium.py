@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from dist.contract_krea2 import Artifact, Input as Krea2Ref2ImgInput, Output as Krea2Ref2ImgOutput
+from dist.contract_krea2 import Artifact
+from dist.contract_krea2 import Input as Krea2Ref2ImgInput
+from dist.contract_krea2 import Output as Krea2Ref2ImgOutput
 from shared.worker_krea2 import do_inference, load_dependencies
 
 __all__ = ["Artifact", "Krea2Ref2ImgInput", "Krea2Ref2ImgOutput", "run"]

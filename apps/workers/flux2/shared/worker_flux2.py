@@ -7,7 +7,10 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from urllib.parse import urlparse
 
-from dist.contract_flux2 import Artifact, Input as Flux2Klein9bInput, Output as Flux2Klein9bOutput
+from dist.contract_flux2 import Artifact
+from dist.contract_flux2 import Input as Flux2Klein9bInput
+from dist.contract_flux2 import Output as Flux2Klein9bOutput
+
 from .validation import validate_image_b64
 
 if TYPE_CHECKING:
@@ -96,7 +99,7 @@ def load_pipeline():
     print(f"[INIT] loading model {MODEL_ID}", flush=True)
     t0 = time.time()
 
-    token = os.environ.get("HF_TOKEN")
+    token = os.environ["SECRET_HUGGINGFACE_TOKEN"]
 
     # importing sdnq registers its quantizer with transformers
     from sdnq import SDNQConfig  # noqa: F401  # ty: ignore[unresolved-import]

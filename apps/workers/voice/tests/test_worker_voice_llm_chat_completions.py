@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
-from fastapi.testclient import TestClient
 from dist.contract_voice_llm_chat_completions import Input
+from fastapi.testclient import TestClient
 from shared.worker_voice_llm_chat_completions import (
     MODELS,
     build_app,

@@ -25,6 +25,8 @@ def main() -> None:
             "jsonschema",
             "--output-model-type",
             "pydantic_v2.BaseModel",
+            "--enum-field-as-literal",
+            "all",
             "--disable-timestamp",
             "--output",
             str(args.out),

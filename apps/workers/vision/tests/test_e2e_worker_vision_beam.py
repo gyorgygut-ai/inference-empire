@@ -1,6 +1,5 @@
 import base64
 import io
-import os
 
 from PIL import Image
 from shared.worker_vision import (
@@ -26,9 +25,3 @@ def test_good_input_returns_contract():
     assert out.classification
     assert out.subjects
     assert out.description
-
-
-if __name__ == "__main__":
-    os.environ.setdefault("HF_TOKEN", "")
-    test_good_input_returns_contract()
-    print("E2E PASSED")

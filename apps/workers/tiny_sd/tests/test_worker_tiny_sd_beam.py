@@ -1,3 +1,4 @@
+import importlib
 import io
 from types import SimpleNamespace
 
@@ -90,3 +91,18 @@ def test_beam_generate_returns_image_artifact(bucket):
     ctx = SimpleNamespace(on_start_value=(bucket, FakeImagePipe(canned), FakeTorchModule()))
     out = worker_mod.generate.local(ctx, prompt="a tiny square", seed=42)
     assert bucket.fetch(out["artifact"]["presigned_url"].rsplit("/", 1)[-1]) == _png_bytes(canned)
+
+
+def test_beam_image_receives_schema_runtime_environment(monkeypatch):
+    expected = {
+        "SECRET_HUGGINGFACE_TOKEN": "hf-sentinel",
+        "SECRET_R2_ACCESS_KEY": "r2-access-sentinel",
+        "SECRET_R2_SECRET_KEY": "r2-secret-sentinel",
+        "SECRET_R2_ENDPOINT": "https://r2.invalid",
+        "SECRET_R2_BUCKET": "bucket-sentinel",
+    }
+    for name, value in expected.items():
+        monkeypatch.setenv(name, value)
+    importlib.reload(worker_mod)
+    configured = dict(line.split("=", 1) for line in worker_mod.image.env_vars)
+    assert all(configured.get(name) == value for name, value in expected.items())

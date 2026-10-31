@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from runpod_flash import Endpoint, GpuGroup
 from dist.contract_krea2 import Input as Krea2Ref2ImgInput
+from runpod_flash import Endpoint, GpuGroup
 from shared.platform import flash_env
 from shared.worker_krea2 import DEPENDENCIES, do_inference, load_dependencies
 

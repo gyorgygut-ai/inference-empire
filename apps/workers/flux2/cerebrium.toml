@@ -3,7 +3,7 @@ name = "workers-flux2"
 python_version = "3.11"
 disable_auth = true
 include = ["./*", "main.py", "worker_flux2_cerebrium.py", "cerebrium.toml", "shared/**/*"]
-exclude = [".*", "__pycache__/*", "*.pyc", ".venv/*", "dist/*", "fakes/*", "tests/*"]
+exclude = [".*", "__pycache__/*", "*.pyc", ".venv/*", "fakes/*", "tests/*"]
 use_uv = true
 deployment_initialization_timeout = 800
 

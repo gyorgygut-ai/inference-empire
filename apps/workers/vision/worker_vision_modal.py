@@ -13,7 +13,9 @@ from shared.worker_vision import (
 )
 
 app = modal.App("workers-vision")
-runtime_secret = modal.Secret.from_dict({"HF_TOKEN": os.environ["HF_TOKEN"]})
+runtime_secret = modal.Secret.from_dict(
+    {"SECRET_HUGGINGFACE_TOKEN": os.environ["SECRET_HUGGINGFACE_TOKEN"]}
+)
 hf_cache_vol = modal_volume()
 
 image = (

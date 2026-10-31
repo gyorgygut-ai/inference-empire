@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AudioTranscriptionsApi",
+  "type": "object",
+  "required": ["input", "output"],
+  "properties": {
+    "input": {"$ref": "#/$defs/Input"},
+    "output": {"$ref": "#/$defs/Output"}
+  },
+  "$defs": {
+    "Input": {
+      "additionalProperties": false,
+      "properties": {
+        "model": {"minLength": 1, "title": "Model", "type": "string"},
+        "file_base64": {"title": "File Base64", "type": "string"},
+        "filename": {"default": "audio.wav", "minLength": 1, "title": "Filename", "type": "string"},
+        "language": {"default": "en", "minLength": 1, "title": "Language", "type": "string"},
+        "prompt": {"default": "", "title": "Prompt", "type": "string"},
+        "temperature": {"default": 0.0, "minimum": 0.0, "maximum": 1.0, "title": "Temperature", "type": "number"},
+        "response_format": {"default": "json", "enum": ["json"], "title": "Response Format", "type": "string"}
+      },
+      "required": ["model", "file_base64"],
+      "title": "Input",
+      "type": "object"
+    },
+    "Output": {
+      "additionalProperties": false,
+      "properties": {
+        "text": {"minLength": 1, "title": "Text", "type": "string"}
+      },
+      "required": ["text"],
+      "title": "Output",
+      "type": "object"
+    }
+  }
+}

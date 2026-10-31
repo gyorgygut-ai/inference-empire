@@ -6,7 +6,10 @@ import time
 from pathlib import Path
 from urllib.parse import urlparse
 
-from dist.contract_vision import Input as SmallVisionInput, Output as SmallVisionOutput
+from dist.contract_vision import Input as SmallVisionInput
+from dist.contract_vision import Output as SmallVisionOutput
+
+from .validation import validate_image_b64
 
 MODEL_CACHES = {
     "qwen2_vl_2b_instruct": {
@@ -47,29 +50,16 @@ def download_models() -> dict[str, Path]:
             snapshot_download(
                 repo_id=urlparse(model["url"]).path.strip("/"),
                 cache_dir=model["path"],
+                token=os.environ["SECRET_HUGGINGFACE_TOKEN"],
             )
         )
         for name, model in MODEL_CACHES.items()
     }
 
 
-def _load_dotenv() -> None:
-    path = Path(__file__).parent.parent / ".env"
-    if not path.exists():
-        return
-    for line in path.read_text().splitlines():
-        line = line.strip()
-        if not line or line.startswith("#") or "=" not in line:
-            continue
-        key, _, value = line.partition("=")
-        key, value = key.strip(), value.strip().strip('"').strip("'")
-        if key and key not in os.environ:
-            os.environ[key] = value
-
-
 def build_analyze_prompt() -> str:
     classification = SmallVisionOutput.model_fields["classification"].annotation
-    classification_values = ", ".join(f'"{v}"' for v in classification.__args__)
+    classification_values = ", ".join(f'"{value}"' for value in classification.__args__)
     return f"""Analyze this image. Return valid JSON with exactly these fields:
 - classification: one of [{classification_values}]
 - subjects: array of strings (describe each main subject including people, e.g., "woman in red dress", "golden retriever")
@@ -118,7 +108,8 @@ def do_inference(model, processor, analyze_prompt: str, req: SmallVisionInput):
     t_req = time.time()
     print(f"[REQ] image_bytes={len(req.image_base64)}", flush=True)
 
-    img = PILImage.open(io.BytesIO(base64.b64decode(req.image_base64))).convert("RGB")
+    image_b64 = validate_image_b64(req.image_base64, "image_base64")
+    img = PILImage.open(io.BytesIO(base64.b64decode(image_b64))).convert("RGB")
 
     messages = [{"role": "user", "content": [
         {"type": "image", "image": img},

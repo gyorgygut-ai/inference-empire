@@ -1,3 +1,5 @@
+import os
+
 from beam import Image, QueueDepthAutoscaler, Volume, asgi
 from shared.worker_voice_llm_chat_completions import (
     MODELS,
@@ -21,6 +23,7 @@ image = (
         {
             "HF_HOME": "./hf-cache",
             "HF_HUB_ENABLE_HF_TRANSFER": "1",
+            "SECRET_HUGGINGFACE_TOKEN": os.environ["SECRET_HUGGINGFACE_TOKEN"],
         }
     )
 )
@@ -41,7 +44,7 @@ model_volumes = [
     keep_warm_seconds=10,
     timeout=-1,
     authorized=True,
-    secrets=["HF_TOKEN"],
+    secrets=[],
     autoscaler=QueueDepthAutoscaler(max_containers=1, min_containers=0),
 )
 def generate(context):

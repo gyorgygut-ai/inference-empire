@@ -10,11 +10,11 @@ from shared.worker_flux2 import DEPENDENCIES, do_inference, load_dependencies
 app = modal.App("workers-flux2")
 runtime_secret = modal.Secret.from_dict(
     {
-        "HF_TOKEN": os.environ["HF_TOKEN"],
-        "R2_ACCESS_KEY": os.environ["R2_ACCESS_KEY"],
-        "R2_SECRET_KEY": os.environ["R2_SECRET_KEY"],
-        "R2_ENDPOINT": os.environ["R2_ENDPOINT"],
-        "R2_BUCKET": os.environ.get("R2_BUCKET", "generated-media"),
+        "SECRET_HUGGINGFACE_TOKEN": os.environ["SECRET_HUGGINGFACE_TOKEN"],
+        "SECRET_R2_ACCESS_KEY": os.environ["SECRET_R2_ACCESS_KEY"],
+        "SECRET_R2_SECRET_KEY": os.environ["SECRET_R2_SECRET_KEY"],
+        "SECRET_R2_ENDPOINT": os.environ["SECRET_R2_ENDPOINT"],
+        "SECRET_R2_BUCKET": os.environ["SECRET_R2_BUCKET"],
     }
 )
 hf_cache_vol = modal_volume()

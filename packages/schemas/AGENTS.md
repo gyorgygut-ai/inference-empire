@@ -2,7 +2,7 @@
 
 **Source of Truth**:
 
-- `env/*.schema.json` and `workers/*.schema.json` are the language-agnostic source of truth.
+- `env/*.schema.json` and `workers/*.schema.json` are the language-agnostic source of truth, including the workspace runtime config contract.
 - Keep provider and worker contract files flat inside their respective directories.
 - Generated TypeScript and Python files are outputs; never edit them by hand.
 
@@ -13,12 +13,13 @@
 - `build-pydantic`: converts a JSON Schema to Pydantic v2 models with `datamodel-code-generator`.
   - **Options**: `source`, `out`
 - Both targets receive `source` and `out` from their consuming target with Nx `options: "forward"`.
+- Workspace-config cross-field constraints that JSON Schema cannot express live in the handwritten `config.schema.ts` wrapper around the generated `env/config.schema.ts`; never edit the generated file by hand.
 
 **Consumers**:
 
-- `functions:router:prebuild` generates the TypeScript contract into `apps/functions/dist/`.
+- `router:prebuild` generates the TypeScript contracts into `apps/router/dist/`.
 - `workers-{family}:predeploy` generates the Pydantic contract inside that worker project.
-- Worker generation must not use `dist/` or overwrite hand-maintained `shared/contract_*.py` files.
+- Worker `predeploy` generates Pydantic modules into worker-local `dist/`; these generated files are ignored and included in deployment bundles. Import them from `dist.*`; do not hand-edit generated files.
 
 ```json
 {
@@ -31,7 +32,7 @@
   ],
   "options": {
     "source": "packages/schemas/workers/flux2.schema.json",
-    "out": "apps/functions/dist/flux2.schema.ts"
+    "out": "apps/router/dist/flux2.schema.ts"
   }
 }
 ```
@@ -47,7 +48,7 @@
   ],
   "options": {
     "source": "packages/schemas/workers/flux2.schema.json",
-    "out": "apps/workers/flux2/shared/generated/flux2.schema.py"
+    "out": "apps/workers/flux2/dist/contract_flux2.py"
   }
 }
 ```

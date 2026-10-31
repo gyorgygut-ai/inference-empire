@@ -1,0 +1,26 @@
+{
+  "title": "Api",
+  "type": "object",
+  "required": [
+    "DEV_ROUTER_FLUX2_PORT",
+    "DEV_ROUTER_TINYSD_PORT",
+    "DEV_FACE_VALUE_PORT",
+    "DEV_VOICE_CHAT_PORT",
+    "GENERATED_ROUTER_FLUX2_AUTH_TOKEN",
+    "GENERATED_ROUTER_TINYSD_AUTH_TOKEN",
+    "GENERATED_STT_AUDIO_TRANSCRIPTIONS_API_KEY",
+    "GENERATED_LLM_CHAT_COMPLETIONS_API_KEY",
+    "GENERATED_TTS_AUDIO_SPEECH_API_KEY"
+  ],
+  "properties": {
+    "DEV_ROUTER_FLUX2_PORT": { "type": "integer", "minimum": 1024, "maximum": 65535 },
+    "DEV_ROUTER_TINYSD_PORT": { "type": "integer", "minimum": 1024, "maximum": 65535 },
+    "DEV_FACE_VALUE_PORT": { "type": "integer", "minimum": 1024, "maximum": 65535 },
+    "DEV_VOICE_CHAT_PORT": { "type": "integer", "minimum": 1024, "maximum": 65535 },
+    "GENERATED_ROUTER_FLUX2_AUTH_TOKEN": { "type": "string", "minLength": 32 },
+    "GENERATED_ROUTER_TINYSD_AUTH_TOKEN": { "type": "string", "minLength": 32 },
+    "GENERATED_STT_AUDIO_TRANSCRIPTIONS_API_KEY": { "type": "string", "minLength": 32 },
+    "GENERATED_LLM_CHAT_COMPLETIONS_API_KEY": { "type": "string", "minLength": 32 },
+    "GENERATED_TTS_AUDIO_SPEECH_API_KEY": { "type": "string", "minLength": 32 }
+  }
+}

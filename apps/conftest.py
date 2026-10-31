@@ -51,7 +51,11 @@ class _Fluent(metaclass=_FluentMeta):
     """Import-time stand-in for beam SDK builders (Image/Volume/Autoscaler)."""
 
     def __init__(self, *args, **kwargs):
-        pass
+        self.env_vars: list[str] = []
+
+    def with_envs(self, values):
+        self.env_vars.extend(f"{name}={value}" for name, value in values.items())
+        return self
 
     def __getattr__(self, name):
         return lambda *_, **__: self
@@ -99,4 +103,17 @@ def pytest_configure(config):
     # needs the real SDK for dispatch.put(). The beam TaskQueue decorator
     # prompts for a Token at import time, which has no TTY in CI.
     if (config.option.keyword or "").strip() != "e2e":
+        import os
+
+        # Explicit unit-test inputs for importing Beam wrappers. Runtime and
+        # E2E processes must receive their own configured values.
+        os.environ.update(
+            {
+                "SECRET_HUGGINGFACE_TOKEN": "unit-test-huggingface-token",
+                "SECRET_R2_ACCESS_KEY": "unit-test-r2-access-key",
+                "SECRET_R2_SECRET_KEY": "unit-test-r2-secret-key",
+                "SECRET_R2_ENDPOINT": "https://unit-test-r2.invalid",
+                "SECRET_R2_BUCKET": "unit-test-bucket",
+            }
+        )
         _install_beam_stub()

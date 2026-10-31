@@ -20,6 +20,7 @@
     "lint:fix": "nx run-many -t lint-fix"
   },
   "devDependencies": {
+    "@apidevtools/json-schema-ref-parser": "^15.5.2",
     "@dotenvx/dotenvx": "^2.38.2",
     "@nx/esbuild": "24.0.1",
     "@nx/jest": "24.0.1",
@@ -81,7 +82,7 @@
     "@tanstack/react-start": "^1.168.26",
     "hono": "^4.13.13",
     "itty-router": "^5.0.24",
-    "next": "~16.1.6",
+    "next": "16.2.12",
     "proper-lockfile": "^4.1.2",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",

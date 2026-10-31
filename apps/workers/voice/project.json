@@ -9,29 +9,6 @@
     "model:voice"
   ],
   "targets": {
-    "predeploy-beam": {
-      "executor": "nx:noop",
-      "cache": false,
-      "dependsOn": [
-        "predeploy",
-        "seed-reference-voices"
-      ]
-    },
-    "deploy-beam": {
-      "executor": "dotenvx:run-commands",
-      "cache": false,
-      "dependsOn": [
-        "predeploy-beam"
-      ],
-      "options": {
-        "cwd": "{projectRoot}",
-        "env": {
-          "PYTHONPATH": "."
-        },
-        "command": "uv run --locked --project ../../../ beam deploy",
-        "args": "worker_voice_beam.py:generate"
-      }
-    },
     "deploy-llm-chat-completions-beam": {
       "executor": "dotenvx:run-commands",
       "cache": false,
@@ -39,15 +16,94 @@
         "cwd": "{projectRoot}",
         "env": {
           "PYTHONPATH": ".",
-          "HF_TOKEN": "${SECRET_HUGGINGFACE_TOKEN}",
+          "SECRET_HUGGINGFACE_TOKEN": "${SECRET_HUGGINGFACE_TOKEN}",
           "BEAM_TOKEN": "${SECRET_BEAM_TOKEN}"
         },
         "command": "uv run --locked --project ../../../ beam deploy",
         "args": "worker_voice_llm_chat_completions_beam.py:generate"
       },
       "dependsOn": [
-        "predeploy"
+        "predeploy-llm-chat-completions"
       ]
+    },
+    "deploy-tts-audio-speech-beam": {
+      "executor": "dotenvx:run-commands",
+      "cache": false,
+      "options": {
+        "cwd": "{projectRoot}",
+        "env": {
+          "PYTHONPATH": ".",
+          "SECRET_HUGGINGFACE_TOKEN": "${SECRET_HUGGINGFACE_TOKEN}",
+          "BEAM_TOKEN": "${SECRET_BEAM_TOKEN}"
+        },
+        "command": "uv run --locked --project ../../../ beam deploy",
+        "args": "worker_voice_tts_audio_speech_beam.py:generate"
+      },
+      "dependsOn": [
+        "predeploy-tts-audio-speech"
+      ]
+    },
+    "deploy-stt-audio-transcriptions-beam": {
+      "executor": "dotenvx:run-commands",
+      "cache": false,
+      "options": {
+        "cwd": "{projectRoot}",
+        "env": {
+          "PYTHONPATH": ".",
+          "SECRET_HUGGINGFACE_TOKEN": "${SECRET_HUGGINGFACE_TOKEN}",
+          "BEAM_TOKEN": "${SECRET_BEAM_TOKEN}"
+        },
+        "command": "uv run --locked --project ../../../ beam deploy",
+        "args": "worker_voice_stt_audio_transcriptions_beam.py:generate"
+      },
+      "dependsOn": [
+        "predeploy-stt-audio-transcriptions"
+      ]
+    },
+    "deploy-realtime-session-beam": {
+      "executor": "dotenvx:run-commands",
+      "cache": false,
+      "options": {
+        "cwd": "{projectRoot}",
+        "env": {
+          "PYTHONPATH": ".",
+          "SECRET_BEAM_TOKEN": "${SECRET_BEAM_TOKEN}",
+          "GENERATED_STT_AUDIO_TRANSCRIPTIONS_API_KEY": "${GENERATED_STT_AUDIO_TRANSCRIPTIONS_API_KEY}",
+          "STT_AUDIO_TRANSCRIPTIONS_API_TOKEN": "$(npx tsx $NX_WORKSPACE_ROOT/tools/get-beam-url.ts workers-voice-stt-audio-transcriptions)",
+          "GENERATED_LLM_CHAT_COMPLETIONS_API_KEY": "${GENERATED_LLM_CHAT_COMPLETIONS_API_KEY}",
+          "LLM_CHAT_COMPLETIONS_API_TOKEN": "$(npx tsx $NX_WORKSPACE_ROOT/tools/get-beam-url.ts workers-voice-llm-chat-completions)",
+          "GENERATED_TTS_AUDIO_SPEECH_API_KEY": "${GENERATED_TTS_AUDIO_SPEECH_API_KEY}",
+          "TTS_AUDIO_SPEECH_API_TOKEN": "$(npx tsx $NX_WORKSPACE_ROOT/tools/get-beam-url.ts workers-voice-tts-audio-speech)"
+        },
+        "command": "uv run --locked --project ../../../ beam deploy",
+        "args": "worker_voice_realtime_session_beam.py:generate"
+      },
+      "dependsOn": [
+        "predeploy",
+        "deploy-stt-audio-transcriptions-beam",
+        "deploy-llm-chat-completions-beam",
+        "deploy-tts-audio-speech-beam"
+      ]
+    },
+    "test-unit-realtime-session": {
+      "executor": "dotenvx:run-commands",
+      "cache": false,
+      "dependsOn": ["predeploy"],
+      "options": {
+        "cwd": "{projectRoot}",
+        "command": "uv run --locked pytest",
+        "args": "tests/test_worker_voice.py"
+      }
+    },
+    "test-e2e-realtime-session": {
+      "executor": "dotenvx:run-commands",
+      "cache": false,
+      "dependsOn": ["predeploy"],
+      "options": {
+        "cwd": "{projectRoot}",
+        "command": "uv run --locked pytest",
+        "args": "tests/test_worker_voice_realtime_session_e2e.py"
+      }
     },
     "test-unit-llm-chat-completions": {
       "executor": "dotenvx:run-commands",
@@ -74,6 +130,72 @@
         "cwd": "{workspaceRoot}",
         "command": "uv run --locked --project apps/workers/voice python",
         "args": "apps/workers/voice/tests/acceptance_llm_chat_completions.py"
+      }
+    },
+    "test-unit-tts-audio-speech": {
+      "executor": "dotenvx:run-commands",
+      "cache": false,
+      "dependsOn": [
+        "predeploy-tts-audio-speech"
+      ],
+      "options": {
+        "cwd": "{projectRoot}",
+        "command": "uv run --locked pytest",
+        "args": "tests/test_worker_voice_tts_audio_speech.py"
+      }
+    },
+    "test-e2e-tts-audio-speech": {
+      "executor": "dotenvx:run-commands",
+      "cache": false,
+      "dependsOn": [
+        "predeploy-tts-audio-speech"
+      ],
+      "options": {
+        "cwd": "{projectRoot}",
+        "command": "uv run --locked pytest",
+        "args": "tests/test_worker_voice_tts_audio_speech_e2e.py"
+      }
+    },
+    "test-acceptance-tts-audio-speech": {
+      "executor": "dotenvx:run-commands",
+      "cache": false,
+      "options": {
+        "cwd": "{workspaceRoot}",
+        "command": "uv run --locked --project apps/workers/voice python",
+        "args": "apps/workers/voice/tests/acceptance_tts_audio_speech.py"
+      }
+    },
+    "test-unit-stt-audio-transcriptions": {
+      "executor": "dotenvx:run-commands",
+      "cache": false,
+      "dependsOn": [
+        "predeploy-stt-audio-transcriptions"
+      ],
+      "options": {
+        "cwd": "{projectRoot}",
+        "command": "uv run --locked pytest",
+        "args": "tests/test_worker_voice_stt_audio_transcriptions.py"
+      }
+    },
+    "test-e2e-stt-audio-transcriptions": {
+      "executor": "dotenvx:run-commands",
+      "cache": false,
+      "dependsOn": [
+        "predeploy-stt-audio-transcriptions"
+      ],
+      "options": {
+        "cwd": "{projectRoot}",
+        "command": "uv run --locked pytest",
+        "args": "tests/test_worker_voice_stt_audio_transcriptions_e2e.py"
+      }
+    },
+    "test-acceptance-stt-audio-transcriptions": {
+      "executor": "dotenvx:run-commands",
+      "cache": false,
+      "options": {
+        "cwd": "{workspaceRoot}",
+        "command": "uv run --locked --project apps/workers/voice python",
+        "args": "apps/workers/voice/tests/acceptance_stt_audio_transcriptions.py"
       }
     },
     "serve-local": {
@@ -107,9 +229,18 @@
         "args": "--url http://127.0.0.1:8765 --output-dir .proof/local"
       }
     },
-    "generate-voice": {
+    "predeploy": {
       "executor": "nx:noop",
       "cache": true,
+      "inputs": [
+        "{workspaceRoot}/packages/schemas/workers/voice.schema.json",
+        "{workspaceRoot}/packages/schemas/tools/generate_pydantic.py",
+        "{workspaceRoot}/pyproject.toml",
+        "{workspaceRoot}/uv.lock"
+      ],
+      "outputs": [
+        "{projectRoot}/dist/contract_voice.py"
+      ],
       "dependsOn": [
         {
           "projects": [
@@ -124,9 +255,26 @@
         "out": "apps/workers/voice/dist/contract_voice.py"
       }
     },
-    "generate-voice-llm-chat-completions": {
+    "seed-reference-voices": {
+      "executor": "dotenvx:run-commands",
+      "cache": false,
+      "options": {
+        "cwd": "{projectRoot}",
+        "command": "uv run --locked python tools/seed_reference_voices.py"
+      }
+    },
+    "predeploy-llm-chat-completions": {
       "executor": "nx:noop",
       "cache": true,
+      "inputs": [
+        "{workspaceRoot}/packages/schemas/workers/voice_llm_chat_completions.schema.json",
+        "{workspaceRoot}/packages/schemas/tools/generate_pydantic.py",
+        "{workspaceRoot}/pyproject.toml",
+        "{workspaceRoot}/uv.lock"
+      ],
+      "outputs": [
+        "{projectRoot}/dist/contract_voice_llm_chat_completions.py"
+      ],
       "dependsOn": [
         {
           "projects": [
@@ -141,20 +289,56 @@
         "out": "apps/workers/voice/dist/contract_voice_llm_chat_completions.py"
       }
     },
-    "predeploy": {
+    "predeploy-tts-audio-speech": {
       "executor": "nx:noop",
-      "dependsOn": [
-        "generate-voice",
-        "generate-voice-llm-chat-completions"
+      "cache": true,
+      "inputs": [
+        "{workspaceRoot}/packages/schemas/workers/voice_tts_audio_speech.schema.json",
+        "{workspaceRoot}/packages/schemas/tools/generate_pydantic.py",
+        "{workspaceRoot}/pyproject.toml",
+        "{workspaceRoot}/uv.lock"
       ],
-      "cache": false
-    },
-    "seed-reference-voices": {
-      "executor": "dotenvx:run-commands",
-      "cache": false,
+      "outputs": [
+        "{projectRoot}/dist/contract_voice_tts_audio_speech.py"
+      ],
+      "dependsOn": [
+        {
+          "projects": [
+            "schemas"
+          ],
+          "target": "build-pydantic",
+          "options": "forward"
+        }
+      ],
       "options": {
-        "cwd": "{projectRoot}",
-        "command": "uv run --locked python tools/seed_reference_voices.py"
+        "source": "packages/schemas/workers/voice_tts_audio_speech.schema.json",
+        "out": "apps/workers/voice/dist/contract_voice_tts_audio_speech.py"
+      }
+    },
+    "predeploy-stt-audio-transcriptions": {
+      "executor": "nx:noop",
+      "cache": true,
+      "inputs": [
+        "{workspaceRoot}/packages/schemas/workers/voice_stt_audio_transcriptions.schema.json",
+        "{workspaceRoot}/packages/schemas/tools/generate_pydantic.py",
+        "{workspaceRoot}/pyproject.toml",
+        "{workspaceRoot}/uv.lock"
+      ],
+      "outputs": [
+        "{projectRoot}/dist/contract_voice_stt_audio_transcriptions.py"
+      ],
+      "dependsOn": [
+        {
+          "projects": [
+            "schemas"
+          ],
+          "target": "build-pydantic",
+          "options": "forward"
+        }
+      ],
+      "options": {
+        "source": "packages/schemas/workers/voice_stt_audio_transcriptions.schema.json",
+        "out": "apps/workers/voice/dist/contract_voice_stt_audio_transcriptions.py"
       }
     }
   }

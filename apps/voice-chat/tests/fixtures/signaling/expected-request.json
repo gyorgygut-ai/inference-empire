@@ -1,0 +1,1 @@
+{"method":"POST","path":"/v1/realtime/calls","authorization":"Bearer ephemeral-test-token"}

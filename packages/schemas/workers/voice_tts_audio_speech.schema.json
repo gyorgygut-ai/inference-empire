@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AudioSpeechApi",
+  "type": "object",
+  "required": ["input", "output"],
+  "properties": {
+    "input": {"$ref": "#/$defs/Input"},
+    "output": {"$ref": "#/$defs/Output"}
+  },
+  "$defs": {
+    "Input": {
+      "additionalProperties": false,
+      "properties": {
+        "model": {"minLength": 1, "title": "Model", "type": "string"},
+        "input": {"minLength": 1, "title": "Input", "type": "string"},
+        "voice": {"default": "builtin", "minLength": 1, "title": "Voice", "type": "string"},
+        "response_format": {"default": "wav", "enum": ["wav"], "title": "Response Format", "type": "string"},
+        "speed": {"default": 1.0, "exclusiveMinimum": 0, "maximum": 4.0, "minimum": 0.25, "title": "Speed", "type": "number"}
+      },
+      "required": ["model", "input"],
+      "title": "Input",
+      "type": "object"
+    },
+    "Output": {
+      "additionalProperties": false,
+      "properties": {
+        "audio_base64": {"minLength": 1, "title": "Audio Base64", "type": "string"},
+        "format": {"const": "wav", "title": "Format", "type": "string"},
+        "sample_rate": {"exclusiveMinimum": 0, "title": "Sample Rate", "type": "integer"}
+      },
+      "required": ["audio_base64", "format", "sample_rate"],
+      "title": "Output",
+      "type": "object"
+    }
+  }
+}

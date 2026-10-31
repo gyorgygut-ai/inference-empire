@@ -19,8 +19,8 @@ NextJS app for realtime voice chat.
 ## Server ENV
 
 - `OPENAI_API_KEY`: server-side OpenAI credential
-- `WORKER_URL`: voice worker URL; used as the direct WebRTC destination
-- `BEAM_TOKEN`: server-side credential for requesting worker session tokens
+- `WORKER_URL`: server-side voice worker URL; used to request ephemeral sessions
+- `SECRET_BEAM_TOKEN`: workspace secret used by the server to request an ephemeral worker session token
 
 ---
 
@@ -78,8 +78,9 @@ NextJS app for realtime voice chat.
 
 **Approach**:
 - Browser requests `/api/voice/session`
-- Server requests a token from worker `POST /v1/realtime/client_secrets` using `BEAM_TOKEN`
-- Browser sends its offer and ephemeral token directly to the realtime-session worker at `WORKER_URL/v1/realtime/calls`
+- Server requests token from `POST /v1/realtime/client_secrets` using `SECRET_BEAM_TOKEN`
+- Server returns the ephemeral token and worker URL to the browser
+- Browser sends its offer directly to the worker URL from the server response at `/v1/realtime/calls`
 - Worker handles WebRTC and routes completed turns to configured STT -> LLM -> TTS endpoints
 - Inference endpoint URLs and credentials stay server-side
 - Text, image, and tool input are unsupported; interruption and session updates are unsupported

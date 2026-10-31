@@ -6,7 +6,9 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from urllib.parse import urlparse
 
-from .contract_tiny_sd import Artifact, TinySDInput, TinySDOutput
+from dist.contract_tiny_sd import Artifact
+from dist.contract_tiny_sd import Input as TinySDInput
+from dist.contract_tiny_sd import Output as TinySDOutput
 
 if TYPE_CHECKING:
     from diffusers import StableDiffusionPipeline
@@ -78,7 +80,7 @@ def load_pipeline():
     print(f"[INIT] loading model {MODEL_ID}", flush=True)
     t0 = time.time()
 
-    token = os.environ.get("HF_TOKEN")
+    token = os.environ["SECRET_HUGGINGFACE_TOKEN"]
 
     model_dir = download_models()[MODEL_NAME]
     pipe = diffusers.StableDiffusionPipeline.from_pretrained(

@@ -1,0 +1,1 @@
+{"method":"POST","path":"/v1/realtime/client_secrets","authorization":"Bearer trusted-test-credential","contentType":"application/json","body":"{}"}

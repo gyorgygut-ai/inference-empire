@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from runpod_flash import Endpoint, GpuGroup
 from dist.contract_flux2 import Input as Flux2Klein9bInput
+from runpod_flash import Endpoint, GpuGroup
 from shared.platform import flash_env
 from shared.worker_flux2 import DEPENDENCIES, do_inference, load_dependencies
 

@@ -9,8 +9,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 from urllib.parse import urlparse
 
-from fastapi import FastAPI, HTTPException
-
 from dist.contract_voice_llm_chat_completions import (
     Choice,
     Input,
@@ -18,6 +16,7 @@ from dist.contract_voice_llm_chat_completions import (
     ResponseMessage,
     Usage,
 )
+from fastapi import FastAPI, HTTPException
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -54,7 +53,7 @@ def load_model() -> dict[str, Any]:
                     MODELS["qwen2_5_3b_instruct"]["url"]
                 ).path.strip("/"),
                 cache_dir=MODELS["qwen2_5_3b_instruct"]["path"],
-                token=os.getenv("HF_TOKEN"),
+                token=os.environ["SECRET_HUGGINGFACE_TOKEN"],
             )
         )
         use_cuda = torch.cuda.is_available()
@@ -93,13 +92,15 @@ def generate_reply(
         add_generation_prompt=True,
     )
     inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
+    temperature = request.temperature if request.temperature is not None else 0.7
+    max_tokens = request.max_tokens if request.max_tokens is not None else 128
     generation_options: dict[str, Any] = {
-        "max_new_tokens": request.max_tokens,
-        "do_sample": request.temperature > 0,
+        "max_new_tokens": max_tokens,
+        "do_sample": temperature > 0,
     }
 
-    if request.temperature > 0:
-        generation_options["temperature"] = request.temperature
+    if temperature > 0:
+        generation_options["temperature"] = temperature
 
     with MODEL_LOCK:
         generated = model.generate(**inputs, **generation_options)

@@ -13,12 +13,15 @@
       "dependsOn": [
         "^prebuild",
         {
-          "projects": [
-            "schemas"
-          ],
-          "target": "build"
+          "projects": ["schemas"],
+          "target": "build-ts",
+          "options": "forward"
         }
-      ]
+      ],
+      "options": {
+        "source": "packages/schemas/workers/flux2.schema.json",
+        "out": "apps/face-value/dist/flux2.schema.ts"
+      }
     },
     "build": {
       "executor": "dotenvx:run-commands",
@@ -41,13 +44,13 @@
       "continuous": true,
       "cache": false,
       "readyWhen": {
-        "url": "http://localhost:{env.FACE_VALUE_PORT}"
+        "url": "http://localhost:{env.DEV_FACE_VALUE_PORT}"
       },
       "dependsOn": [
         "predev",
         {
           "projects": [
-            "functions"
+            "router"
           ],
           "target": "dev-flux2",
           "waitFor": "ready"
@@ -56,11 +59,11 @@
       "options": {
         "cwd": "apps/face-value",
         "env": {
-          "ROUTER_URL": "http://localhost:${ROUTER_FLUX2_PORT}",
-          "ROUTER_AUTH_TOKEN": "${ROUTER_FLUX2_GENERATED_AUTH_TOKEN}"
+          "ROUTER_URL": "http://localhost:${DEV_ROUTER_FLUX2_PORT}",
+          "ROUTER_AUTH_TOKEN": "${GENERATED_ROUTER_FLUX2_AUTH_TOKEN}"
         },
         "command": "npx next dev",
-        "args": "--port=\"$FACE_VALUE_PORT\""
+        "args": "--port=\"$DEV_FACE_VALUE_PORT\""
       }
     },
     "deploy": {
@@ -68,13 +71,13 @@
       "cache": false,
       "dependsOn": [
         "build",
-        "functions:deploy-flux2"
+        "router:deploy-flux2"
       ],
       "options": {
         "cwd": ".",
         "env": {
           "ROUTER_URL": "$(npx tsx $NX_WORKSPACE_ROOT/tools/get-cf-worker-url.ts router_flux2)",
-          "ROUTER_AUTH_TOKEN": "${ROUTER_FLUX2_GENERATED_AUTH_TOKEN}",
+          "ROUTER_AUTH_TOKEN": "${GENERATED_ROUTER_FLUX2_AUTH_TOKEN}",
           "VERCEL_TOKEN": "${SECRET_FACE_VALUE_VERCEL_TOKEN}",
           "VERCEL_ORG_ID": "${SECRET_FACE_VALUE_VERCEL_ORG_ID}",
           "VERCEL_PROJECT_ID": "${SECRET_FACE_VALUE_VERCEL_PROJECT_ID}"

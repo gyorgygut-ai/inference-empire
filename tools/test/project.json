@@ -26,10 +26,21 @@
         "args": "--config vitest.config.mts --exclude 'acceptance.*.test.ts'"
       }
     },
+    "preacceptance": {
+      "executor": "nx:noop",
+      "dependsOn": [
+        { "projects": ["schemas"], "target": "build-ts", "options": "forward" }
+      ],
+      "options": {
+        "source": "packages/schemas/env/config.schema.json",
+        "out": "packages/schemas/env/config.schema.ts"
+      }
+    },
     "acceptance:dev": {
       "executor": "dotenvx:run-commands",
       "cache": false,
       "dependsOn": [
+        "preacceptance",
         { "projects": ["face-value"], "target": "dev", "waitFor": "ready" }
       ],
       "options": {
@@ -42,7 +53,8 @@
       "executor": "dotenvx:run-commands",
       "cache": false,
       "dependsOn": [
-        { "projects": ["functions"], "target": "dev-tinysd", "waitFor": "ready" }
+        "preacceptance",
+        { "projects": ["router"], "target": "dev-tinysd", "waitFor": "ready" }
       ],
       "options": {
         "cwd": "tools/test",
@@ -54,9 +66,10 @@
       "executor": "dotenvx:run-commands",
       "cache": false,
       "dependsOn": [
+        "preacceptance",
         "face-value:deploy",
-        "functions:deploy",
-        "workers-voice:deploy-beam"
+        "router:deploy",
+        "workers-voice:deploy-realtime-session-beam"
       ],
       "options": {
         "cwd": "tools/test",

@@ -42,7 +42,7 @@
       "dependsOn": ["verify-tier-1-audit"],
       "options": {
         "cwd": "{workspaceRoot}",
-        "command": "npx dotenvx run -f config.dev -- npx nx run-many -p test -t acceptance:dev acceptance:dev-tinysd e2e:dev --nxBail --outputStyle=stream"
+        "command": "npx dotenvx run -f config.env -- npx nx run-many -p test -t acceptance:dev acceptance:dev-tinysd e2e:dev --nxBail --outputStyle=stream"
       }
     },
     "verify-tier-3-deploy": {
@@ -51,7 +51,7 @@
       "dependsOn": ["verify-tier-2-dev"],
       "options": {
         "cwd": "{workspaceRoot}",
-        "command": "npx dotenvx run -f config.deploy -- npx nx run-many -p test -t acceptance:deploy e2e:deploy --nxBail --outputStyle=stream"
+        "command": "npx dotenvx run -f config.env -- npx nx run-many -p test -t acceptance:deploy e2e:deploy --nxBail --outputStyle=stream"
       }
     },
     "audit": {
@@ -139,7 +139,7 @@
       },
       "include": [
         "tools/workspace-plugin/**/*",
-        "apps/functions/**/*"
+        "apps/router/**/*"
       ]
     },
     {

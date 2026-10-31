@@ -7,23 +7,23 @@ NextJS app for chat + inference requests.
 ## Dev ENV
 
 **env**:
-  - `PORT`: `${FACE_VALUE_PORT}`
-  - `ROUTER_URL`: `http://localhost:${ROUTER_FLUX2_PORT}`
-  - `ROUTER_AUTH_TOKEN`: `${ROUTER_FLUX2_GENERATED_AUTH_TOKEN}`
+  - `PORT`: `${DEV_FACE_VALUE_PORT}`
+  - `ROUTER_URL`: `http://localhost:${DEV_ROUTER_FLUX2_PORT}`
+  - `ROUTER_AUTH_TOKEN`: `${GENERATED_ROUTER_FLUX2_AUTH_TOKEN}`
 
 **NX**:
   - **Cmd**: `next dev` directly
-  - **Depends**: `predev`, `functions/dev-flux2` + `"waitFor": "ready"`
+  - **Depends**: `predev`, `router/dev-flux2` + `"waitFor": "ready"`
   - **Types**: `predev` -> `prebuild` -> `^prebuild`
 
 ## Deploy ENV
 
 **dotenv**:
-  - `ROUTER_AUTH_TOKEN`: `${ROUTER_FLUX2_GENERATED_AUTH_TOKEN}`
+  - `ROUTER_AUTH_TOKEN`: `${GENERATED_ROUTER_FLUX2_AUTH_TOKEN}`
 
 **NX**:
   - **Cmd**: `next deploy`, with `SECRET_FACE_VALUE_VERCEL_{TOKEN|ORG_ID|PROJECT_ID}`
-  - **Depends**: `build`, `functions/deploy-flux2`
+  - **Depends**: `build`, `router/deploy-flux2`
   - **Types**: `build` -> `prebuild` -> `^prebuild`
   - **ROUTER_URL**: get directly `get-cf-worker-url.ts(router_flux2)`
 

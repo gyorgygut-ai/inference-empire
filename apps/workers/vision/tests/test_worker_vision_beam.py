@@ -1,8 +1,10 @@
 import base64
+import importlib
 import io
 from types import SimpleNamespace
 
 import pytest
+import shared.worker_vision as vision_worker
 from fakes.vision_fake import FakeVisionModel, FakeVisionProcessor
 from PIL import Image
 from pydantic import ValidationError
@@ -125,3 +127,23 @@ def test_load_dependencies_mocked(monkeypatch):
     monkeypatch.setattr(worker_mod, "load_dependencies", fake_load)
     model, _processor, _prompt = worker_mod.load_dependencies()
     assert model is fake_model
+
+
+def test_model_download_uses_schema_huggingface_token(monkeypatch, tmp_path):
+    seen = {}
+
+    def snapshot_download(**kwargs):
+        seen.update(kwargs)
+        return str(tmp_path)
+
+    monkeypatch.setenv("SECRET_HUGGINGFACE_TOKEN", "hf-sentinel")
+    monkeypatch.setattr("huggingface_hub.snapshot_download", snapshot_download)
+    vision_worker.download_models()
+    assert seen.get("token") == "hf-sentinel"
+
+
+def test_beam_image_receives_schema_runtime_environment(monkeypatch):
+    monkeypatch.setenv("SECRET_HUGGINGFACE_TOKEN", "hf-sentinel")
+    importlib.reload(worker_mod)
+    configured = dict(line.split("=", 1) for line in worker_mod.image.env_vars)
+    assert configured.get("SECRET_HUGGINGFACE_TOKEN") == "hf-sentinel"

@@ -6,7 +6,10 @@ import uuid
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from dist.contract_krea2 import Artifact, Input as Krea2Ref2ImgInput, Output as Krea2Ref2ImgOutput
+from dist.contract_krea2 import Artifact
+from dist.contract_krea2 import Input as Krea2Ref2ImgInput
+from dist.contract_krea2 import Output as Krea2Ref2ImgOutput
+
 from .validation import validate_image_b64
 
 if TYPE_CHECKING:
@@ -94,7 +97,7 @@ def load_pipeline(cache_dir=None):
         snapshot_kwargs["cache_dir"] = cache_dir
     runtime_dir = Path(snapshot_download(REID_REPO, **snapshot_kwargs))
 
-    token = os.environ.get("HF_TOKEN") or None
+    token = os.environ["SECRET_HUGGINGFACE_TOKEN"]
 
     tokenizer_kwargs = {
         "subfolder": "tokenizer",

@@ -12,6 +12,18 @@
     },
     "output": {
       "$ref": "#/$defs/Output"
+    },
+    "client_secret_input": {
+      "$ref": "#/$defs/ClientSecretInput"
+    },
+    "client_secret_output": {
+      "$ref": "#/$defs/ClientSecretOutput"
+    },
+    "realtime_session": {
+      "$ref": "#/$defs/RealtimeSession"
+    },
+    "realtime_turn": {
+      "$ref": "#/$defs/RealtimeTurn"
     }
   },
   "$defs": {
@@ -72,6 +84,46 @@
         "audio"
       ],
       "title": "Output",
+      "type": "object"
+    },
+    "RealtimeSession": {
+      "additionalProperties": false,
+      "properties": {
+        "type": {"default": "realtime", "enum": ["realtime"], "title": "Type", "type": "string"},
+        "model": {"default": "gpt-4o-realtime-preview", "minLength": 1, "title": "Model", "type": "string"},
+        "instructions": {"default": "You are a concise, helpful voice assistant.", "title": "Instructions", "type": "string"},
+        "voice": {"default": "alloy", "minLength": 1, "title": "Voice", "type": "string"}
+      },
+      "title": "RealtimeSession",
+      "type": "object"
+    },
+    "ClientSecretInput": {
+      "additionalProperties": false,
+      "properties": {
+        "session": {"$ref": "#/$defs/RealtimeSession"}
+      },
+      "title": "ClientSecretInput",
+      "type": "object"
+    },
+    "ClientSecretOutput": {
+      "additionalProperties": false,
+      "properties": {
+        "value": {"minLength": 1, "title": "Value", "type": "string"},
+        "expires_at": {"minimum": 0, "title": "Expires At", "type": "integer"},
+        "session": {"$ref": "#/$defs/RealtimeSession"}
+      },
+      "required": ["value", "expires_at", "session"],
+      "title": "ClientSecretOutput",
+      "type": "object"
+    },
+    "RealtimeTurn": {
+      "additionalProperties": false,
+      "properties": {
+        "transcript": {"minLength": 1, "title": "Transcript", "type": "string"},
+        "response": {"minLength": 1, "title": "Response", "type": "string"}
+      },
+      "required": ["transcript", "response"],
+      "title": "RealtimeTurn",
       "type": "object"
     }
   }

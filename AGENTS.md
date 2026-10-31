@@ -6,7 +6,11 @@
 
 ## Non-negotiables
 
-**Config**: Use `dotenvx run -f config.{dev|deploy} --` for `nx` if config is needed
+**Env Vars**: 
+
+- **Secrets**: `nx` injects all required secrets from `.env*`
+- **Runtime config**: `dotenvx run -f config.env --` injects the shared `nx` runtime config for dev and deploy
+- **Schemas**: `@packages/schemas` describes `env` all var names to match and use
 
 **Correct**:
 
@@ -27,7 +31,7 @@
 **Key Apps**:
 
   - **GPU Workers**: [Workers](./apps/workers/AGENTS.md)
-  - **Multi-tenant Router**: [Router](./apps/functions/AGENTS.md)
+  - **Multi-tenant Router**: [Router](./apps/router/AGENTS.md)
   - **Face Value Frontend**: [Face Value](./apps/face-value/AGENTS.md)
 
 **Dev URLs**:
@@ -60,54 +64,54 @@
   - `consumer` accesses `AUTH_TOKEN={GENERATED_TOKEN}`
   - `consumer` can authenticate itself to `producer`
 
-**Env Delegation**:
+**Config Delegation**:
 
 - **Problem**: I want to delegate `dev` + `deploy` config
 - **Approach**: 
-  - `config.{dev|deploy}` holds mandatory runtime config
+  - tracked `config.env` holds shared mandatory runtime config for dev + deploy
   - `options.{env|args}` instead of one-by-one env plumbing
   - `dotenvx/run-commands` supports `options.env` interpolation
   - `.env*`, ids, urls, tokens all treated as secret; gitignored
-  - `dotenvx run -f config.{dev|deploy} --` ensures consistent env
+  - `dotenvx run -f config.env --` ensures consistent env
 - **Acceptance**:
   - `workflows/deploy.yml`, `gh secrets` kept in sync
   - Untracked `.env*` at `{workspaceRoot}` + `{projectRoot}`
   - Tracked JSON Schema source contracts live in
     `packages/schemas/env/` and `packages/schemas/workers/`
   - Generated TypeScript contracts are outputs; do not edit them by hand
-  - Tracked `config.dev` + `config.deploy` at `{workspaceRoot}`
+  - Tracked `config.env` at `{workspaceRoot}`
 
 ---
 
 ## Acceptance Criteria
 
-**Task**: `functions:dev`
+**Task**: `router:dev`
 
 - PING `{get-beam-url.ts(workers-flux2)}` suceeds
 - PING `{get-beam-url.ts(workers-tinysd)}` suceeds
-- POST `:${ROUTER_FLUX2_PORT}/q` + `ROUTER_FLUX2_GENERATED_AUTH_TOKEN`
+- POST `:${DEV_ROUTER_FLUX2_PORT}/q` + `GENERATED_ROUTER_FLUX2_AUTH_TOKEN`
   -> produces a `flux2` `presigned_url`
-- POST `:${ROUTER_TINYSD_PORT}/q` + `ROUTER_FLUX2_GENERATED_AUTH_TOKEN`
+- POST `:${DEV_ROUTER_TINYSD_PORT}/q` + `GENERATED_ROUTER_FLUX2_AUTH_TOKEN`
   -> rejects the token
-- POST `:${ROUTER_TINYSD_PORT}/q` + `ROUTER_TINYSD_GENERATED_AUTH_TOKEN`
+- POST `:${DEV_ROUTER_TINYSD_PORT}/q` + `GENERATED_ROUTER_TINYSD_AUTH_TOKEN`
   -> produces a `tinysd` `presigned_url`
 
-**Task**: `functions:deploy`
+**Task**: `router:deploy`
 
 - PING `{get-beam-url.ts(workers-flux2)}` suceeds
 - PING `{get-beam-url.ts(workers-tinysd)}` suceeds
-- POST `get-cf-worker-url.ts(router_flux2)/q` + `ROUTER_FLUX2_GENERATED_AUTH_TOKEN`
+- POST `get-cf-worker-url.ts(router_flux2)/q` + `GENERATED_ROUTER_FLUX2_AUTH_TOKEN`
   -> produces a `flux2` `presigned_url`
-- POST `get-cf-worker-url.ts(router_flux2)/q` + `ROUTER_TINYSD_GENERATED_AUTH_TOKEN`
+- POST `get-cf-worker-url.ts(router_flux2)/q` + `GENERATED_ROUTER_TINYSD_AUTH_TOKEN`
   -> rejects the token
-- POST `get-cf-worker-url.ts(router_tinysd)/q` + `ROUTER_TINYSD_GENERATED_AUTH_TOKEN`
+- POST `get-cf-worker-url.ts(router_tinysd)/q` + `GENERATED_ROUTER_TINYSD_AUTH_TOKEN`
   -> produces a `tinysd` `presigned_url`
 
 **Task**: `face-value:dev`
 
 - ping `get-beam-url.ts(workers-flux2)` suceeds
-- ping `http://127.0.0.1:${ROUTER_FLUX2_PORT}` suceeds
-- ping `http://127.0.0.1:${FACE_VALUE_PORT}` suceeds
+- ping `http://127.0.0.1:${DEV_ROUTER_FLUX2_PORT}` suceeds
+- ping `http://127.0.0.1:${DEV_FACE_VALUE_PORT}` suceeds
 
 **Task**: `face-value:deploy`
 
