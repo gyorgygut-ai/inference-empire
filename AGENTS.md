@@ -73,44 +73,22 @@
 
 - **Problem**: I want to delegate `dev` + `deploy` config
 - **Approach**: 
-  - tracked `config.env` holds shared mandatory runtime config for dev + deploy
+  - tracked `env.runtime` holds shared mandatory runtime config for dev + deploy
   - `options.{env|args}` instead of one-by-one env plumbing
   - `dotenvx/run-commands` supports `options.env` interpolation
   - `.env*`, ids, urls, tokens all treated as secret; gitignored
-  - `dotenvx run -f config.env --` ensures consistent env
+  - `dotenvx run -f env.runtime --` ensures consistent env
 - **Acceptance**:
   - `workflows/deploy.yml`, `gh secrets` kept in sync
   - Untracked `.env*` at `{workspaceRoot}` + `{projectRoot}`
   - Tracked JSON Schema source contracts live in
     `packages/schemas/env/` and `packages/schemas/workers/`
   - Generated TypeScript contracts are outputs; do not edit them by hand
-  - Tracked `config.env` at `{workspaceRoot}`
+  - Tracked `env.runtime` at `{workspaceRoot}`
 
 ---
 
 ## Acceptance Criteria
-
-**Task**: `router:dev`
-
-- PING `{get-beam-url.ts(workers-flux2)}` suceeds
-- PING `{get-beam-url.ts(workers-tinysd)}` suceeds
-- POST `:${DEV_ROUTER_FLUX2_PORT}/q` + `GENERATED_ROUTER_FLUX2_AUTH_TOKEN`
-  -> produces a `flux2` `presigned_url`
-- POST `:${DEV_ROUTER_TINYSD_PORT}/q` + `GENERATED_ROUTER_FLUX2_AUTH_TOKEN`
-  -> rejects the token
-- POST `:${DEV_ROUTER_TINYSD_PORT}/q` + `GENERATED_ROUTER_TINYSD_AUTH_TOKEN`
-  -> produces a `tinysd` `presigned_url`
-
-**Task**: `router:deploy`
-
-- PING `{get-beam-url.ts(workers-flux2)}` suceeds
-- PING `{get-beam-url.ts(workers-tinysd)}` suceeds
-- POST `get-cf-worker-url.ts(router_flux2)/q` + `GENERATED_ROUTER_FLUX2_AUTH_TOKEN`
-  -> produces a `flux2` `presigned_url`
-- POST `get-cf-worker-url.ts(router_flux2)/q` + `GENERATED_ROUTER_TINYSD_AUTH_TOKEN`
-  -> rejects the token
-- POST `get-cf-worker-url.ts(router_tinysd)/q` + `GENERATED_ROUTER_TINYSD_AUTH_TOKEN`
-  -> produces a `tinysd` `presigned_url`
 
 **Task**: `face-value:dev`
 
@@ -122,13 +100,27 @@
 
 - ping `get-beam-url.ts(workers-flux2)` suceeds
 - ping `get-cf-worker-url.ts(router_flux2)` suceeds
+  - POST `get-cf-worker-url.ts(router_flux2)/q` + `invalid token`
+    -> rejects
+  - POST `get-cf-worker-url.ts(router_flux2)/q` + `GENERATED_ROUTER_FLUX2_AUTH_TOKEN`
+    -> produces `presigned_url`
 - ping `get-vercel-url.ts(SECRET_FACE_VALUE_VERCEL_PROJECT_ID)` suceeds
+
+**Task**: `voice-chat:dev`
+
+- ping `get-beam-url.ts(workers-voice)` suceeds
+- ping `http://127.0.0.1:${DEV_VOICE_CHAT_PORT}` suceeds
+
+**Task**: `voice-chat:deploy`
+
+- ping `get-beam-url.ts(workers-voice)` suceeds
+- ping `get-vercel-url.ts(SECRET_VOICE_CHAT_VERCEL_PROJECT_ID)` suceeds
 
 ---
 
 ## Verification
 
-**Non-negotiable**:
+**Rules**:
 
 - **Proof**: the verification chain must prove the implementation
 - **Progress**: tier-by-tier; until each tier passes or a failure
@@ -139,21 +131,17 @@
 **💪🏾 Full Chain**: `verify`
 
 -> `npx nx run-many -t verify --nxBail`
--> runs `verify-tier-1` gates `verify-tier-2` gates `verify-tier-3`
+-> runs `Tier 1` gates `Tier 2` gates `Tier 3`
 
-**🧐 Tier 1: audit**: `verify-tier-1-audit` 
+**🧐 Tier 1: audit**:
 
 -> **dependsOn**: `["lint", "build", "test-unit"]`
 
-**🏡 Tier 2: dev**: `verify-tier-2-dev`
+**🏡 Tier 2: dev**:
 
--> **dependsOn**: `["verify-tier-1*", "acceptance:dev*", "e2e:dev*"]`
 -> **test:acceptance:dev**: `./tools/test/acceptance.dev.test.ts`
 -> **test:acceptance:dev-tinysd**: `./tools/test/acceptance.dev-tinysd.test.ts`
--> **test:e2e:dev**: `nx:no-op`
 
-**🏰 Tier 3: deploy**: `verify-tier-3-deploy`
+**🏰 Tier 3: deploy**:
 
--> **dependsOn**: `["verify-tier-2*", "acceptance:deploy*", "e2e:deploy*"]`
 -> **test:acceptance:deploy**: `./tools/test/acceptance.deploy.test.ts`
--> **test:e2e:deploy**: `nx:no-op`

@@ -70,6 +70,7 @@
         "cwd": "{projectRoot}",
         "env": {
           "PYTHONPATH": ".",
+          "SECRET_HUGGINGFACE_TOKEN": "${SECRET_HUGGINGFACE_TOKEN}",
           "SECRET_BEAM_TOKEN": "${SECRET_BEAM_TOKEN}",
           "GENERATED_VOICE_WORKER_AUTH_TOKEN": "${GENERATED_VOICE_WORKER_AUTH_TOKEN}",
           "GENERATED_STT_AUDIO_TRANSCRIPTIONS_API_KEY": "${GENERATED_STT_AUDIO_TRANSCRIPTIONS_API_KEY}",
@@ -248,14 +249,6 @@
       "options": {
         "source": "packages/schemas/workers/voice.schema.json",
         "out": "apps/workers/voice/dist/contract_voice.py"
-      }
-    },
-    "seed-reference-voices": {
-      "executor": "dotenvx:run-commands",
-      "cache": false,
-      "options": {
-        "cwd": "{projectRoot}",
-        "command": "uv run --locked python tools/seed_reference_voices.py"
       }
     },
     "predeploy-llm-chat-completions": {

@@ -15,15 +15,14 @@
     "test:run": "echo 'no tests'"
   },
   "dependencies": {
-    "@inference/ui": "*",
-    "@tanstack/ai": "^0.69.0",
-    "@tanstack/ai-openai": "0.30.0",
-    "@tanstack/ai-react": "^0.30.3",
+    "@tanstack/ai": "^0.65.1",
+    "@tanstack/ai-react": "0.30.0",
     "clsx": "^2.1.1",
     "next": "16.2.12",
-    "react": "19.2.8",
-    "react-dom": "19.2.8",
-    "server-only": "^0.0.1"
+    
+    "server-only": "^0.0.1",
+    "vitest": "5.0.5",
+    "react": "^19.1.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

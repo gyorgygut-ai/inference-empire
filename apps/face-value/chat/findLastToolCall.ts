@@ -20,5 +20,6 @@ export function isGenerationLocked(
   if (!last || last.type !== "tool-call") {
     return false;
   }
+
   return last.state !== "approval-requested";
 }

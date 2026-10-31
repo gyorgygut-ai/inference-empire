@@ -20,7 +20,7 @@ export const GenerateImageApproval = ({ part }: { part: ApprovalPart }) => {
   }
 
   return (
-    <div className="mb-4 animate-in fade-in-50 slide-in-from-bottom-2 duration-400">
+    <div className="animate-in fade-in-50 slide-in-from-bottom-2 duration-400">
       <button
         type="button"
         onClick={handleApprove}

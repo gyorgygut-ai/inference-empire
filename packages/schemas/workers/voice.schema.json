@@ -97,6 +97,44 @@
       "title": "RealtimeSession",
       "type": "object"
     },
+    "RTCIceServer": {
+      "additionalProperties": false,
+      "properties": {
+        "urls": {
+          "oneOf": [
+            { "minLength": 1, "type": "string" },
+            {
+              "items": { "minLength": 1, "type": "string" },
+              "minItems": 1,
+              "type": "array"
+            }
+          ]
+        },
+        "username": { "type": "string" },
+        "credential": { "type": "string" },
+        "credentialType": { "enum": ["password", "oauth"], "type": "string" }
+      },
+      "required": ["urls"],
+      "title": "RTCIceServer",
+      "type": "object"
+    },
+    "RTCConfiguration": {
+      "additionalProperties": false,
+      "properties": {
+        "iceServers": {
+          "items": { "$ref": "#/$defs/RTCIceServer" },
+          "minItems": 1,
+          "type": "array"
+        },
+        "iceTransportPolicy": {
+          "enum": ["all", "relay"],
+          "type": "string"
+        }
+      },
+      "required": ["iceServers"],
+      "title": "RTCConfiguration",
+      "type": "object"
+    },
     "ClientSecretInput": {
       "additionalProperties": false,
       "properties": {
@@ -110,9 +148,10 @@
       "properties": {
         "value": {"minLength": 1, "title": "Value", "type": "string"},
         "expires_at": {"minimum": 0, "title": "Expires At", "type": "integer"},
-        "session": {"$ref": "#/$defs/RealtimeSession"}
+        "session": {"$ref": "#/$defs/RealtimeSession"},
+        "rtc_configuration": {"$ref": "#/$defs/RTCConfiguration"}
       },
-      "required": ["value", "expires_at", "session"],
+      "required": ["value", "expires_at", "session", "rtc_configuration"],
       "title": "ClientSecretOutput",
       "type": "object"
     },

@@ -32,7 +32,12 @@ export async function createSessionResponse(workerUrl?: string, workerAuthToken?
       provider: "workers-voice",
       token: parsed.data.value,
       expiresAt: parsed.data.expires_at * 1000,
-      config: { providerOptions: { workerUrl } },
+      config: {
+        providerOptions: {
+          workerUrl,
+          rtcConfiguration: parsed.data.rtc_configuration,
+        },
+      },
     } satisfies RealtimeToken
 
     return Response.json(token, { headers: { "Cache-Control": "no-store" } })

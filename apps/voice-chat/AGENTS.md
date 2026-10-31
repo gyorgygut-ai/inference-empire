@@ -80,8 +80,10 @@ NextJS app for realtime voice chat.
 **Approach**:
 - Browser requests `/api/voice/session`
 - Server requests token from `POST /v1/realtime/client_secrets` using `GENERATED_VOICE_WORKER_AUTH_TOKEN`
-- Server returns the ephemeral token and worker URL to the browser
+- Server returns the ephemeral token, worker URL, and short-lived TURN credentials to the browser
 - Browser sends its offer directly to the worker URL from the server response at `/v1/realtime/calls`
+- Browser configures `RTCPeerConnection` with the returned TURN configuration; fail closed if it is missing
+- The temporary TURN credentials are browser-visible by design; `SECRET_HUGGINGFACE_TOKEN` and permanent credentials remain server-side
 - Worker handles WebRTC and routes completed turns to configured STT -> LLM -> TTS endpoints
 - Inference endpoint URLs and credentials stay server-side
 - Text, image, and tool input are unsupported; interruption and session updates are unsupported

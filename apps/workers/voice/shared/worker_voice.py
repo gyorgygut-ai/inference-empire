@@ -8,7 +8,7 @@ import os
 import secrets
 import time
 import uuid
-from typing import TYPE_CHECKING, Protocol
+from typing import Any, Protocol
 
 import numpy as np
 import soundfile as sf
@@ -17,15 +17,6 @@ from fastapi import FastAPI, HTTPException, Request, Response
 
 from shared.inference_client import InferenceClient
 
-logger = logging.getLogger(__name__)
-SAMPLE_RATE = 24_000
-TOKEN_TTL_SECONDS = 60
-VAD_SPEECH_RMS_THRESHOLD = 0.01
-
-
-if TYPE_CHECKING:
-    from collections.abc import Callable
-
 
 class InferencePipeline(Protocol):
     def transcribe(self, audio: bytes, filename: str) -> str: ...
@@ -33,6 +24,33 @@ class InferencePipeline(Protocol):
     def complete(self, transcript: str) -> str: ...
 
     def speak(self, text: str) -> tuple[bytes, int | None]: ...
+
+logger = logging.getLogger(__name__)
+SAMPLE_RATE = 24_000
+TOKEN_TTL_SECONDS = 60
+VAD_SPEECH_RMS_THRESHOLD = 0.01
+
+
+
+class SessionTokens:
+    def __init__(self, ttl_seconds: int = TOKEN_TTL_SECONDS):
+        self.ttl_seconds = ttl_seconds
+        self._tokens: dict[str, float] = {}
+
+    def create(self) -> tuple[str, int]:
+        now = int(time.time())
+        token = secrets.token_urlsafe(32)
+        self._tokens[token] = float(now + self.ttl_seconds)
+        return token, now + self.ttl_seconds
+
+    def validate(self, token: str) -> bool:
+        expires_at = self._tokens.get(token)
+        if expires_at is None:
+            return False
+        if expires_at <= time.time():
+            del self._tokens[token]
+            return False
+        return True
 
 
 class EnergyPauseDetector:
@@ -59,27 +77,6 @@ class EnergyPauseDetector:
         return None
 
 
-class SessionTokens:
-    def __init__(self, ttl_seconds: int = TOKEN_TTL_SECONDS):
-        self.ttl_seconds = ttl_seconds
-        self._tokens: dict[str, float] = {}
-
-    def create(self) -> tuple[str, int]:
-        now = int(time.time())
-        token = secrets.token_urlsafe(32)
-        self._tokens[token] = float(now + self.ttl_seconds)
-        return token, now + self.ttl_seconds
-
-    def validate(self, token: str) -> bool:
-        expires_at = self._tokens.get(token)
-        if expires_at is None:
-            return False
-        if expires_at <= time.time():
-            del self._tokens[token]
-            return False
-        return True
-
-
 def _resample(audio: np.ndarray, source_rate: int, target_rate: int) -> np.ndarray:
     values = np.asarray(audio, dtype=np.float32).reshape(-1)
     if source_rate == target_rate or values.size == 0:
@@ -96,7 +93,11 @@ def _wav_bytes(audio: np.ndarray, sample_rate: int) -> bytes:
     return buffer.getvalue()
 
 
-def run_turn(audio: np.ndarray, sample_rate: int, client: InferencePipeline) -> tuple[str, str, np.ndarray]:
+def run_turn(
+    audio: np.ndarray,
+    sample_rate: int,
+    client: InferencePipeline,
+) -> tuple[str, str, np.ndarray]:
     samples = np.asarray(audio, dtype=np.float32).reshape(-1)
     if samples.size == 0 or not np.isfinite(samples).all() or float(np.max(np.abs(samples))) < 0.005:
         raise ValueError("speech input is empty or silent")
@@ -127,9 +128,9 @@ def build_app(
     inference_client: InferencePipeline | None = None,
     token_store: SessionTokens | None = None,
     client_secret_auth_token: str | None = None,
-    turn_runner: Callable[[np.ndarray, int, InferencePipeline], tuple[str, str, np.ndarray]] = run_turn,
+    turn_credentials_provider: Any | None = None,
 ) -> FastAPI:
-    from fastrtc import ReplyOnPause, Stream
+    from fastrtc import Stream, get_cloudflare_turn_credentials_async
     from fastrtc.stream import Body
 
     client = inference_client or InferenceClient.from_env()
@@ -137,16 +138,96 @@ def build_app(
     trusted_server_token = client_secret_auth_token or os.environ.get(
         "GENERATED_VOICE_WORKER_AUTH_TOKEN"
     )
+    huggingface_token = os.environ.get("SECRET_HUGGINGFACE_TOKEN")
+    if turn_credentials_provider is None and not huggingface_token:
+        raise RuntimeError("SECRET_HUGGINGFACE_TOKEN is required for TURN credentials")
+
+    async def get_turn_configuration() -> dict[str, Any]:
+        if turn_credentials_provider is None:
+            configuration = await get_cloudflare_turn_credentials_async(
+                hf_token=huggingface_token,
+                ttl=600,
+            )
+        else:
+            configuration = await turn_credentials_provider()
+        if not isinstance(configuration, dict):
+            raise RuntimeError("FastRTC returned an invalid TURN configuration")
+        ice_servers = configuration.get("iceServers")
+        if not isinstance(ice_servers, list):
+            raise RuntimeError("FastRTC returned no TURN relay")
+        for server in ice_servers:
+            if not isinstance(server, dict):
+                continue
+            urls = server.get("urls")
+            urls = [urls] if isinstance(urls, str) else urls
+            if (
+                isinstance(urls, list)
+                and any(
+                    isinstance(url, str) and url.startswith(("turn:", "turns:"))
+                    for url in urls
+                )
+                and isinstance(server.get("username"), str)
+                and server["username"]
+                and isinstance(server.get("credential"), str)
+                and server["credential"]
+            ):
+                break
+        else:
+            raise RuntimeError("FastRTC returned no TURN relay")
+        return configuration
+
     app = FastAPI(title="workers-voice-realtime-session")
-    app.state.rtc_configuration = {"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]}
+    pause_detector = EnergyPauseDetector()
+    app.state.pause_detector = pause_detector
+
+    # Per-conversation state keyed by webrtc_id
+    conversation_histories: dict[str, list[dict[str, str]]] = {}
+
+    stream = Stream(
+        handler=None,  # will be set below; FastRTC requires handler
+        modality="audio",
+        mode="send-receive",
+        rtc_configuration=get_turn_configuration,
+        server_rtc_configuration={
+            "iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]
+        },
+    )
+
+    async def on_turn(audio: tuple[int, np.ndarray]):
+        rate, samples = audio
+        transcript, reply, response_audio = run_turn(
+            np.asarray(samples), rate, client
+        )
+        logger.info(
+            "realtime turn completed transcript_chars=%d response_chars=%d",
+            len(transcript),
+            len(reply),
+        )
+        # Update conversation history
+        webrtc_id = getattr(app.state, "webrtc_id", None) or "unknown"
+        if webrtc_id not in conversation_histories:
+            conversation_histories[webrtc_id] = [
+                {
+                    "role": "system",
+                    "content": "You are a concise, helpful voice assistant.",
+                }
+            ]
+        conversation_histories[webrtc_id].append({"role": "user", "content": transcript})
+        conversation_histories[webrtc_id].append({"role": "assistant", "content": reply})
+        max_history = 20
+        if len(conversation_histories[webrtc_id]) > max_history:
+            conversation_histories[webrtc_id] = conversation_histories[webrtc_id][-max_history:]
+        yield SAMPLE_RATE, response_audio
+
+    stream.handler = on_turn
 
     @app.get("/health")
     def health() -> dict[str, str]:
         return {"status": "ok"}
 
     @app.post("/v1/realtime/client_secrets", response_model=ClientSecretOutput)
-    def create_client_secret(
-        request: ClientSecretInput, http_request: Request
+    async def create_client_secret(
+        request: ClientSecretInput, http_request: Request, response: Response
     ) -> ClientSecretOutput:
         authorization = http_request.headers.get("authorization", "")
         scheme, _, supplied_token = authorization.partition(" ")
@@ -156,35 +237,24 @@ def build_app(
             supplied_token.encode(), trusted_server_token.encode()
         ):
             raise HTTPException(status_code=401, detail="Invalid server credential")
+        try:
+            rtc_configuration = await stream.resolve_rtc_configuration()
+            if not isinstance(rtc_configuration, dict):
+                raise RuntimeError("FastRTC returned no RTC configuration")
+        except Exception as error:
+            logger.exception("Unable to create TURN credentials")
+            raise HTTPException(
+                status_code=503,
+                detail="TURN credentials are unavailable",
+            ) from error
         token, expires_at = tokens.create()
+        response.headers["Cache-Control"] = "no-store"
         return ClientSecretOutput(
             value=token,
             expires_at=expires_at,
             session=request.session or RealtimeSession(),
+            rtc_configuration=rtc_configuration,
         )
-
-    def on_turn(audio: tuple[int, np.ndarray]):
-        rate, samples = audio
-        transcript, reply, response_audio = turn_runner(np.asarray(samples), rate, client)
-        logger.info(
-            "realtime turn completed transcript_chars=%d response_chars=%d",
-            len(transcript), len(reply),
-        )
-        yield SAMPLE_RATE, response_audio
-
-    pause_detector = EnergyPauseDetector()
-    app.state.pause_detector = pause_detector
-    stream = Stream(
-        handler=ReplyOnPause(on_turn, model=pause_detector), modality="audio", mode="send-receive",
-        rtc_configuration=app.state.rtc_configuration,
-        server_rtc_configuration=app.state.rtc_configuration,
-    )
-    original_offer = stream.offer
-    stream.mount(app, path="/_internal")
-    app.router.routes = [
-        route for route in app.router.routes
-        if not getattr(route, "path", "").startswith("/_internal/")
-    ]
 
     @app.post("/v1/realtime/calls")
     async def realtime_call(request: Request) -> Response:
@@ -205,7 +275,7 @@ def build_app(
             raise HTTPException(status_code=422, detail="Invalid realtime session") from error
         body = Body(sdp=sdp, type="offer", webrtc_id=uuid.uuid4().hex)
         try:
-            answer = await original_offer(body)
+            answer = await stream.offer(body)
         except Exception as error:
             logger.exception("WebRTC offer negotiation failed")
             raise HTTPException(status_code=502, detail="WebRTC offer negotiation failed") from error
@@ -214,3 +284,4 @@ def build_app(
         return Response(content=answer["sdp"], media_type="application/sdp")
 
     return app
+

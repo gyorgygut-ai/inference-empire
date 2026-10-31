@@ -10,7 +10,7 @@ image = (
             "aiortc==1.15.0",
             "av==17.1.0",
             "fastapi==0.141.1",
-            "fastrtc[vad]==0.0.34",
+            "fastrtc[vad] @ git+https://github.com/gradio-app/fastrtc@59ca4f77e1669a9599c0895fd0d7c39f356bf89f",
             "httpx==0.28.1",
             "numpy==2.4.3",
             "python-multipart==0.0.32",
@@ -19,6 +19,7 @@ image = (
     )
     .with_envs(
         {
+            "SECRET_HUGGINGFACE_TOKEN": os.environ["SECRET_HUGGINGFACE_TOKEN"],
             "STT_AUDIO_TRANSCRIPTIONS_API_URL": os.environ[
                 "STT_AUDIO_TRANSCRIPTIONS_API_URL"
             ],

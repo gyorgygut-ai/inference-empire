@@ -20,6 +20,43 @@ const audioVisualization: AudioVisualization = {
   getOutputTimeDomainData: emptyAudioData,
 }
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value)
+
+const isIceServer = (value: unknown): value is RTCIceServer => {
+  if (!isRecord(value)) return false
+  const urls = value.urls
+  const validUrls = typeof urls === "string" ||
+    (Array.isArray(urls) && urls.length > 0 && urls.every((url) => typeof url === "string"))
+  return validUrls &&
+    (value.username === undefined || typeof value.username === "string") &&
+    (value.credential === undefined || typeof value.credential === "string") &&
+    (value.credentialType === undefined ||
+      value.credentialType === "password" ||
+      value.credentialType === "oauth")
+}
+
+const readRtcConfiguration = (value: unknown): RTCConfiguration => {
+  if (!isRecord(value) || !Array.isArray(value.iceServers)) {
+    throw new Error("Voice session is missing TURN configuration")
+  }
+  const iceServers = value.iceServers.filter(isIceServer)
+  const hasTurnRelay = iceServers.some((server) => {
+    const urls = typeof server.urls === "string" ? [server.urls] : server.urls
+    return urls.some((url) => /^turns?:/i.test(url))
+  })
+  if (!hasTurnRelay) throw new Error("Voice session does not include a TURN relay")
+
+  const policy = value.iceTransportPolicy
+  if (policy !== undefined && policy !== "all" && policy !== "relay") {
+    throw new Error("Voice session has an invalid ICE transport policy")
+  }
+  return {
+    iceServers,
+    ...(policy === undefined ? {} : { iceTransportPolicy: policy }),
+  }
+}
+
 const waitForPeerState = (
   peer: RTCPeerConnection,
   expectedState: RTCPeerConnectionState,
@@ -101,10 +138,14 @@ export const postFastRtcOffer = async (workerUrl: string, token: string, sdp: st
   return answer
 }
 
-const connectFastRtc = async (workerUrl: string, token: string) => {
+const connectFastRtc = async (
+  workerUrl: string,
+  token: string,
+  rtcConfiguration: RTCConfiguration,
+) => {
   if (!workerUrl) throw new Error("Voice worker URL is not configured")
 
-  const peer = new RTCPeerConnection()
+  const peer = new RTCPeerConnection(rtcConfiguration)
   const audioTransceiver = peer.addTransceiver("audio", { direction: "sendrecv" })
   const dataChannel = peer.createDataChannel("text")
   const audio = document.createElement("audio")
@@ -149,7 +190,14 @@ export const fastRtcAdapter: RealtimeAdapter = {
     if (typeof workerUrl !== "string" || !workerUrl) {
       throw new Error("Voice worker URL is not configured")
     }
-    const { peer, audioTransceiver, dataChannel, audio } = await connectFastRtc(workerUrl, token.token)
+    const rtcConfiguration = readRtcConfiguration(
+      token.config.providerOptions?.rtcConfiguration,
+    )
+    const { peer, audioTransceiver, dataChannel, audio } = await connectFastRtc(
+      workerUrl,
+      token.token,
+      rtcConfiguration,
+    )
     const events = createRealtimeEventEmitter()
     let localStream: MediaStream | undefined
 
@@ -273,15 +321,24 @@ export const getFastRtcToken = async (): Promise<RealtimeToken> => {
     typeof token.config.providerOptions !== "object" ||
     token.config.providerOptions === null ||
     !("workerUrl" in token.config.providerOptions) ||
-    typeof token.config.providerOptions.workerUrl !== "string"
+    typeof token.config.providerOptions.workerUrl !== "string" ||
+    !("rtcConfiguration" in token.config.providerOptions)
   ) {
     throw new Error("Voice session route returned an invalid session")
   }
 
+  const rtcConfiguration = readRtcConfiguration(
+    token.config.providerOptions.rtcConfiguration,
+  )
   return {
     provider: token.provider,
     token: token.token,
     expiresAt: token.expiresAt,
-    config: { providerOptions: { workerUrl: token.config.providerOptions.workerUrl } },
+    config: {
+      providerOptions: {
+        workerUrl: token.config.providerOptions.workerUrl,
+        rtcConfiguration,
+      },
+    },
   }
 }

@@ -9,20 +9,22 @@
     "tools/*"
   ],
   "scripts": {
-    "build": "nx run-many -t build",
-    "test-unit": "nx run-many -t test-unit",
-    "test-e2e": "nx run-many -t test-e2e",
     "test": "nx run-many -t test",
+    "build": "nx run-many -t build",
     "lint": "nx run-many -t lint",
+    "lint:fix": "nx run-many -t lint-fix",
     "verify": "nx run-many -t verify --nxBail --parallel=1",
-    "verify:affected": "nx affected -t verify --nxBail --parallel=1 --base=origin/main",
-    "py-check": "uv run --locked --group test ruff check . && uv run --locked --group test ty check . && uv run --locked --group test vulture .",
-    "lint:fix": "nx run-many -t lint-fix"
+    "nx:face-value:dev": "dotenvx run -f env.runtime -- npx nx run face-value:dev",
+    "nx:voce-chat:dev": "dotenvx run -f env.runtime -- npx nx run voice-chat:dev",
+    "nx:deploy": "dotenvx run -f env.runtime -- npx nx affected -t deploy --base=origin/main~1",
+    "nx:face-value:deploy": "dotenvx run -f env.runtime -- npx nx run face-value:deploy",
+    "nx:voice-chat:deploy": "dotenvx run -f env.runtime -- npx nx run voice-chat:deploy"
   },
   "devDependencies": {
     "@apidevtools/json-schema-ref-parser": "^15.5.2",
     "@dotenvx/dotenvx": "^2.38.2",
     "@nx/esbuild": "24.0.1",
+    "@nx/eslint-plugin": "^24.0.1",
     "@nx/jest": "24.0.1",
     "@nx/js": "24.0.1",
     "@nx/next": "24.0.1",
@@ -50,7 +52,9 @@
     "@vitest/coverage-v8": "5.0.5",
     "@vitest/ui": "5.0.5",
     "esbuild": "^0.27.0",
+    "eslint": "^9.39.5",
     "jsdom": "^27.1.0",
+    "jsonc-eslint-parser": "^3.3.0",
     "nx": "24.0.1",
     "oxlint": "^1.87.0",
     "tslib": "^2.3.0",
@@ -64,7 +68,9 @@
   "overrides": {
     "nx": {
       "dotenv-expand": "1000.0.0"
-    }
+    },
+    "react": "$react",
+    "react-dom": "$react-dom"
   },
   "engines": {
     "node": ">=20"

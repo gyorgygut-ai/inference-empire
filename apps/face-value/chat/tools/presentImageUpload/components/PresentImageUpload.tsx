@@ -34,29 +34,33 @@ export const PresentImageUpload = ({ part }: PresentImageUploadProps) => {
   }
 
   return (
-    <div className="mb-4 animate-in fade-in-50 slide-in-from-bottom-2 duration-500 bg-surface italic rounded-xl p-4" aria-labelledby="uploadReference">
-      <span id="uploadReference" className="sr-only">{vocabulary.messages.uploadReference}</span>
-      <input
-        ref={inputRef}
-        type="file"
-        accept="image/*"
-        hidden
-        disabled={disabled}
-        onChange={handleChange}
-      />
-      <button
-        type="button"
-        onClick={handleOpen}
-        disabled={disabled}
-        className="w-full px-4 py-3 border-2 border-dashed rounded-xl hover:bg-primary/5 transition-colors"
-      >
-        <div className="flex items-center justify-center gap-2 text-sm text-secondary-foreground">📎 {""} {vocabulary.messages.uploadCta}</div>
-      </button>
+    <div className="flex flex-col gap-2">
+      <div className="animate-in fade-in-50 slide-in-from-bottom-2 duration-500 bg-surface italic rounded-xl p-4" aria-labelledby="uploadReference">
+        <span id="uploadReference" className="sr-only">{vocabulary.messages.uploadReference}</span>
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/*"
+          hidden
+          disabled={disabled}
+          onChange={handleChange}
+        />
+        <button
+          type="button"
+          onClick={handleOpen}
+          disabled={disabled}
+          className="w-full px-4 py-3 border-2 border-dashed rounded-xl hover:bg-primary/5 transition-colors"
+        >
+          <span className="flex items-center justify-center gap-2 text-sm text-secondary-foreground">
+            📎 {vocabulary.messages.uploadCta}
+          </span>
+        </button>
+      </div>
       {preview ? (
         <img
-          src={`data:${preview.mimeType};base64,${preview.base64}`}
+          className="max-w-24 self-end rounded-xl"
           alt={vocabulary.messages.resultAlt}
-          className="mt-3 w-full rounded-xl"
+          src={`data:${preview.mimeType};base64,${preview.base64}`}
         />
       ) : null}
     </div>

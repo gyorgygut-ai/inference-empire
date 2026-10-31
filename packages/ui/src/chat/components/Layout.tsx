@@ -6,7 +6,7 @@ export const Layout = ({ Messages, Interrupts, Queue }: {
   Interrupts: React.ComponentType;
   Queue: React.ComponentType;
 }) => (
-  <div className="h-full flex flex-col">
+  <div className="flex flex-col gap-6">
     <Messages />
     <Interrupts />
     <Queue />

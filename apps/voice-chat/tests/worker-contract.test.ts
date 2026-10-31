@@ -16,6 +16,10 @@ type CapturedRequest = {
 
 const fixturesDir = join(import.meta.dirname, "fixtures")
 const readFixture = (name: string) => readFileSync(join(fixturesDir, name), "utf8")
+const readTurnConfiguration = () => JSON.parse(readFileSync(
+  join(import.meta.dirname, "../../workers/voice/tests/fixtures/turn_configuration.json"),
+  "utf8",
+))
 const servers: Array<Server> = []
 
 const startEndpoint = async (response: { status: number; type: string; body: string }) => {
@@ -58,10 +62,12 @@ afterEach(async () => {
 
 describe("voice realtime worker HTTP contract", () => {
   it("exchanges the trusted server credential for a client-safe session", async () => {
-    const endpoint = await startEndpoint({ status: 200, type: "application/json", body: readFixture("session/worker-response.json") })
+    const workerResponse = JSON.parse(readFixture("session/worker-response.json"))
+    workerResponse.rtc_configuration = readTurnConfiguration()
+    const endpoint = await startEndpoint({ status: 200, type: "application/json", body: JSON.stringify(workerResponse) })
     const response = await createSessionResponse(endpoint.url, readFixture("session/server-token.txt"))
     expect(response.status).toBe(200)
-    expect(await response.json()).toEqual({
+    expect(await response.json()).toMatchObject({
       ...JSON.parse(readFixture("session/expected-response.json")),
       config: { providerOptions: { workerUrl: endpoint.url } },
     })

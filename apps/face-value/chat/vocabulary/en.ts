@@ -1,34 +1,33 @@
 export const vocabulary = {
   meta: {
     name: "Face Value",
-    description: "AI face transformation",
+    description: "Face - Value",
   },
   messages: {
     selectOutcome: "Select an outcome.",
     uploadReference: "Upload your photo...",
-    uploadCta: "Click or drag & drop an image",
+    uploadCta: "Click || drop",
     outcomesAria: "Outcomes",
 
     working: "Working on it...",
     resultAlt: "Generated",
-    download: "Download",
   },
   requestSelectedOutcome: {
-    assistantMessage: "Select an outcome.",
+    assistantMessage: "Select an outcome:",
   },
   requestReferenceImage: {
     assistantMessage: "Upload your photo...",
   },
   runGenerateImage: {
     requested: {
-      assistantMessage: "Ready to generate. Approve to run inference.",
-      userApprove: "Generate",
+      assistantMessage: "Ready?",
+      userApprove: "Generate Image",
     },
     responded: {
       assistantMessage: "Approved. Generating...",
     },
     error: {
-      assistantMessage: "Generation failed.",
+      assistantMessage: "Request failed.",
     },
     streaming: {
       assistantMessage: "Working on it...",

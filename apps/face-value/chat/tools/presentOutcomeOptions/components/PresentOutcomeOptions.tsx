@@ -24,7 +24,7 @@ export const PresentOutcomeOptions = ({ part }: PresentOutcomeOptionsProps) => {
 
   return (
     <div
-      className="mb-6 animate-in fade-in-50 slide-in-from-bottom-2 duration-400"
+      className="animate-in fade-in-50 slide-in-from-bottom-2 duration-400"
       aria-labelledby="selectOutcome"
     >
       <div

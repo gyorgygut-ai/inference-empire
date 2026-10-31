@@ -34,7 +34,12 @@
     "verify-tier-1-audit": {
       "executor": "nx:noop",
       "cache": false,
-      "dependsOn": ["lint", "build", "test-unit"]
+      "dependsOn": [
+        "lint",
+        "build",
+        "test-unit",
+        { "projects": ["workspace-plugin"], "target": "dependency-checks" }
+      ]
     },
     "verify-tier-2-dev": {
       "executor": "dotenvx:run-commands",

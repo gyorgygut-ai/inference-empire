@@ -370,7 +370,7 @@ wheels = [
 [[package]]
 name = "fastrtc"
 version = "0.0.34"
-source = { registry = "https://pypi.org/simple" }
+source = { git = "https://github.com/gradio-app/fastrtc?rev=59ca4f77e1669a9599c0895fd0d7c39f356bf89f#59ca4f77e1669a9599c0895fd0d7c39f356bf89f" }
 dependencies = [
     { name = "aioice" },
     { name = "aiortc" },
@@ -378,9 +378,6 @@ dependencies = [
     { name = "librosa" },
     { name = "numba" },
     { name = "numpy" },
-]
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/af/e1/ea3968b064a183d9ac595dcbde0e6c67033afe01852d5854a0001f7c9faa/fastrtc-0.0.34-py3-none-any.whl", hash = "sha256:6da3831da9c2257810b6c5e5fd7cdd4f1636d716f47ab49d8bb3f2d5d9e499ac", size = 2806078, upload-time = "2025-11-24T17:14:12.68Z" },
 ]
 
 [package.optional-dependencies]
@@ -1888,7 +1885,7 @@ requires-dist = [
     { name = "av", specifier = "==17.1.0" },
     { name = "fastapi", specifier = "==0.141.1" },
     { name = "faster-whisper", specifier = "==1.2.1" },
-    { name = "fastrtc", extras = ["vad"], specifier = "==0.0.34" },
+    { name = "fastrtc", extras = ["vad"], git = "https://github.com/gradio-app/fastrtc?rev=59ca4f77e1669a9599c0895fd0d7c39f356bf89f" },
     { name = "httpx", specifier = "==0.28.1" },
     { name = "huggingface-hub", specifier = "==1.33.0" },
     { name = "numpy", specifier = "==2.4.3" },
