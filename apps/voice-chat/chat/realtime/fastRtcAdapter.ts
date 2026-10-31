@@ -183,7 +183,7 @@ const connectFastRtc = async (
 }
 
 export const fastRtcAdapter: RealtimeAdapter = {
-  provider: "workers-voice",
+  provider: "worker-voice",
 
   async connect(token: RealtimeToken) {
     const workerUrl: unknown = token.config.providerOptions?.workerUrl
@@ -262,15 +262,15 @@ export const fastRtcAdapter: RealtimeAdapter = {
       },
 
       sendText() {
-        throw new Error("The workers-voice WebRTC contract does not support text input")
+        throw new Error("The worker-voice WebRTC contract does not support text input")
       },
 
       sendImage() {
-        throw new Error("The workers-voice WebRTC contract does not support image input")
+        throw new Error("The worker-voice WebRTC contract does not support image input")
       },
 
       sendToolResult() {
-        throw new Error("The workers-voice WebRTC contract does not support tool results")
+        throw new Error("The worker-voice WebRTC contract does not support tool results")
       },
 
       updateSession() {
@@ -309,7 +309,7 @@ export const getFastRtcToken = async (): Promise<RealtimeToken> => {
     typeof token !== "object" ||
     token === null ||
     !("provider" in token) ||
-    token.provider !== "workers-voice" ||
+    token.provider !== "worker-voice" ||
     !("token" in token) ||
     typeof token.token !== "string" ||
     !("expiresAt" in token) ||

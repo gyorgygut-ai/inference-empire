@@ -7,7 +7,7 @@ from shared.worker_flux2 import DEPENDENCIES, do_inference, load_dependencies
 
 
 @Endpoint(
-    name="workers-flux2",
+    name="worker-flux2",
     gpu=[GpuGroup.AMPERE_16],
     workers=(0, 1),
     idle_timeout=5,

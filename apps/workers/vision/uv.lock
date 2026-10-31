@@ -904,7 +904,7 @@ wheels = [
 ]
 
 [[package]]
-name = "workers-vision"
+name = "worker-vision"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [

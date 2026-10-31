@@ -1,7 +1,7 @@
 import os
 
 from beam import Image, QueueDepthAutoscaler, Volume, asgi
-from shared.worker_voice_tts_audio_speech import build_app
+from shared.worker_tts_audio_speech import build_app
 
 image = (
     Image(python_version="python3.11")
@@ -33,15 +33,15 @@ image = (
             "HF_HOME": "./hf-cache",
             "HF_HUB_ENABLE_HF_TRANSFER": "1",
             "SECRET_HUGGINGFACE_TOKEN": os.environ["SECRET_HUGGINGFACE_TOKEN"],
-            "GENERATED_TTS_AUDIO_SPEECH_API_KEY": os.environ["GENERATED_TTS_AUDIO_SPEECH_API_KEY"],
+            "SECRET_TTS_AUDIO_SPEECH_API_KEY": os.environ["SECRET_TTS_AUDIO_SPEECH_API_KEY"],
         }
     )
 )
-model_volumes = [Volume(name="workers-voice-tts-hf-cache", mount_path="./hf-cache")]
+model_volumes = [Volume(name="worker-tts-hf-cache", mount_path="./hf-cache")]
 
 
 @asgi(
-    name="workers-voice-tts-audio-speech",
+    name="worker-tts",
     image=image,
     volumes=model_volumes,
     gpu="RTX4090",

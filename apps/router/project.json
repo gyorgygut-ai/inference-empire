@@ -53,13 +53,13 @@
       },
       "dependsOn": [
         "predev",
-        "workers-flux2:deploy-beam"
+        "worker-flux2:deploy-beam"
       ],
       "options": {
         "cwd": "apps/router",
         "env": {
           "AUTH_TOKEN": "${GENERATED_ROUTER_FLUX2_AUTH_TOKEN}",
-          "WORKER_BEAM_URL": "$(npx tsx $NX_WORKSPACE_ROOT/tools/get-beam-url.ts workers-flux2)",
+          "WORKER_BEAM_URL": "$(npx tsx $NX_WORKSPACE_ROOT/tools/get-beam-url.ts worker-flux2)",
           "CLOUDFLARE_INCLUDE_PROCESS_ENV": "true"
         },
         "command": "npx wrangler dev",
@@ -75,13 +75,13 @@
       },
       "dependsOn": [
         "predev",
-        "workers-tiny_sd:deploy-beam"
+        "worker-tiny_sd:deploy-beam"
       ],
       "options": {
         "cwd": "apps/router",
         "env": {
           "AUTH_TOKEN": "${GENERATED_ROUTER_TINYSD_AUTH_TOKEN}",
-          "WORKER_BEAM_URL": "$(npx tsx $NX_WORKSPACE_ROOT/tools/get-beam-url.ts workers-tiny_sd)",
+          "WORKER_BEAM_URL": "$(npx tsx $NX_WORKSPACE_ROOT/tools/get-beam-url.ts worker-tiny_sd)",
           "CLOUDFLARE_INCLUDE_PROCESS_ENV": "true"
         },
         "command": "npx wrangler dev",
@@ -100,13 +100,13 @@
       "cache": false,
       "dependsOn": [
         "build",
-        "workers-flux2:deploy-beam"
+        "worker-flux2:deploy-beam"
       ],
       "options": {
         "cwd": "apps/router",
         "env": {
           "AUTH_TOKEN": "${GENERATED_ROUTER_FLUX2_AUTH_TOKEN}",
-          "WORKER_BEAM_URL": "$(npx tsx $NX_WORKSPACE_ROOT/tools/get-beam-url.ts workers-flux2)"
+          "WORKER_BEAM_URL": "$(npx tsx $NX_WORKSPACE_ROOT/tools/get-beam-url.ts worker-flux2)"
         },
         "commands": [
           "npx wrangler deploy {args}",
@@ -121,13 +121,13 @@
       "cache": false,
       "dependsOn": [
         "build",
-        "workers-tiny_sd:deploy-beam"
+        "worker-tiny_sd:deploy-beam"
       ],
       "options": {
         "cwd": "apps/router",
         "env": {
           "AUTH_TOKEN": "${GENERATED_ROUTER_TINYSD_AUTH_TOKEN}",
-          "WORKER_BEAM_URL": "$(npx tsx $NX_WORKSPACE_ROOT/tools/get-beam-url.ts workers-tiny_sd)"
+          "WORKER_BEAM_URL": "$(npx tsx $NX_WORKSPACE_ROOT/tools/get-beam-url.ts worker-tiny_sd)"
         },
         "commands": [
           "npx wrangler deploy {args}",

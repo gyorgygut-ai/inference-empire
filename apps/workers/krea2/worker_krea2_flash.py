@@ -7,7 +7,7 @@ from shared.worker_krea2 import DEPENDENCIES, do_inference, load_dependencies
 
 
 @Endpoint(
-    name="workers-krea2",
+    name="worker-krea2",
     gpu=[GpuGroup.AMPERE_48, GpuGroup.ADA_48_PRO],
     workers=(0, 1),
     idle_timeout=5,

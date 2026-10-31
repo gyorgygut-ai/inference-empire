@@ -7,7 +7,7 @@ from dist.contract_tiny_sd import Input as TinySDInput
 from shared.platform import MODAL_HF_MOUNT, MODAL_IMAGE_IGNORE, modal_env, modal_volume
 from shared.worker_tiny_sd import DEPENDENCIES, do_inference, load_dependencies
 
-app = modal.App("workers-tiny_sd")
+app = modal.App("worker-tiny_sd")
 runtime_secret = modal.Secret.from_dict(
     {
         "SECRET_HUGGINGFACE_TOKEN": os.environ["SECRET_HUGGINGFACE_TOKEN"],

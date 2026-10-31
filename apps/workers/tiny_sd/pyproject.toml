@@ -1,5 +1,5 @@
 [project]
-name = "workers-tiny_sd"
+name = "worker-tiny_sd"
 version = "0.1.0"
 requires-python = ">=3.11,<3.12"
 dependencies = [

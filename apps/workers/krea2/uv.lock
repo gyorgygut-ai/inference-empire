@@ -944,7 +944,7 @@ wheels = [
 ]
 
 [[package]]
-name = "workers-krea2"
+name = "worker-krea2"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [

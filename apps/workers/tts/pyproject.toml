@@ -1,0 +1,19 @@
+[project]
+name = "worker-tts"
+version = "0.1.0"
+requires-python = ">=3.11,<3.12"
+dependencies = [
+    "fastapi==0.141.1",
+    "huggingface-hub==1.33.0",
+    "numpy==2.4.3",
+    "soundfile==0.14.0",
+]
+
+[dependency-groups]
+dev = ["httpx==0.28.1", "pytest==9.1.1", "ruff==0.15.2", "ty==0.0.1a30"]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+pythonpath = ["."]

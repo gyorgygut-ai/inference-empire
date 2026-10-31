@@ -27,7 +27,7 @@ image = Image(python_version="python3.11").add_python_packages(DEPENDENCIES).wit
 )
 
 @task_queue(
-    name="workers-vision",
+    name="worker-vision",
     cpu=4,
     memory="32Gi",
     gpu="RTX4090",

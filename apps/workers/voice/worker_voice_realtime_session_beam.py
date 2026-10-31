@@ -23,23 +23,23 @@ image = (
             "STT_AUDIO_TRANSCRIPTIONS_API_URL": os.environ[
                 "STT_AUDIO_TRANSCRIPTIONS_API_URL"
             ],
-            "GENERATED_STT_AUDIO_TRANSCRIPTIONS_API_KEY": os.environ[
-                "GENERATED_STT_AUDIO_TRANSCRIPTIONS_API_KEY"
+            "SECRET_STT_AUDIO_TRANSCRIPTIONS_API_KEY": os.environ[
+                "SECRET_STT_AUDIO_TRANSCRIPTIONS_API_KEY"
             ],
             "LLM_CHAT_COMPLETIONS_API_URL": os.environ[
                 "LLM_CHAT_COMPLETIONS_API_URL"
             ],
-            "GENERATED_LLM_CHAT_COMPLETIONS_API_KEY": os.environ[
-                "GENERATED_LLM_CHAT_COMPLETIONS_API_KEY"
+            "SECRET_LLM_CHAT_COMPLETIONS_API_KEY": os.environ[
+                "SECRET_LLM_CHAT_COMPLETIONS_API_KEY"
             ],
             "TTS_AUDIO_SPEECH_API_URL": os.environ[
                 "TTS_AUDIO_SPEECH_API_URL"
             ],
-            "GENERATED_VOICE_WORKER_AUTH_TOKEN": os.environ[
-                "GENERATED_VOICE_WORKER_AUTH_TOKEN"
+            "SECRET_VOICE_WORKER_AUTH_TOKEN": os.environ[
+                "SECRET_VOICE_WORKER_AUTH_TOKEN"
             ],
-            "GENERATED_TTS_AUDIO_SPEECH_API_KEY": os.environ[
-                "GENERATED_TTS_AUDIO_SPEECH_API_KEY"
+            "SECRET_TTS_AUDIO_SPEECH_API_KEY": os.environ[
+                "SECRET_TTS_AUDIO_SPEECH_API_KEY"
             ],
         }
     )
@@ -47,7 +47,7 @@ image = (
 
 
 @asgi(
-    name="workers-voice-realtime-session",
+    name="worker-voice",
     image=image,
     cpu=2,
     memory="4Gi",

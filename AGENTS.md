@@ -92,13 +92,13 @@
 
 **Task**: `face-value:dev`
 
-- ping `get-beam-url.ts(workers-flux2)` suceeds
+- ping `get-beam-url.ts(worker-flux2)` suceeds
 - ping `http://127.0.0.1:${DEV_ROUTER_FLUX2_PORT}` suceeds
 - ping `http://127.0.0.1:${DEV_FACE_VALUE_PORT}` suceeds
 
 **Task**: `face-value:deploy`
 
-- ping `get-beam-url.ts(workers-flux2)` suceeds
+- ping `get-beam-url.ts(worker-flux2)` suceeds
 - ping `get-cf-worker-url.ts(router_flux2)` suceeds
   - POST `get-cf-worker-url.ts(router_flux2)/q` + `invalid token`
     -> rejects
@@ -108,12 +108,12 @@
 
 **Task**: `voice-chat:dev`
 
-- ping `get-beam-url.ts(workers-voice)` suceeds
+- ping `get-beam-url.ts(worker-voice)` suceeds
 - ping `http://127.0.0.1:${DEV_VOICE_CHAT_PORT}` suceeds
 
 **Task**: `voice-chat:deploy`
 
-- ping `get-beam-url.ts(workers-voice)` suceeds
+- ping `get-beam-url.ts(worker-voice)` suceeds
 - ping `get-vercel-url.ts(SECRET_VOICE_CHAT_VERCEL_PROJECT_ID)` suceeds
 
 ---

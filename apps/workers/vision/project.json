@@ -1,6 +1,6 @@
 {
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
-  "name": "workers-vision",
+  "name": "worker-vision",
   "projectType": "application",
   "sourceRoot": "apps/workers/vision",
   "tags": [
@@ -28,7 +28,7 @@
         "args": "worker_vision_modal.py"
       },
       "dependsOn": [
-        "predeploy"
+        "prebuild"
       ]
     },
     "deploy-beam": {
@@ -49,7 +49,7 @@
         "args": "worker_vision_beam.py:generate"
       },
       "dependsOn": [
-        "predeploy"
+        "prebuild"
       ]
     },
     "deploy": {
@@ -60,7 +60,7 @@
       ],
       "cache": false
     },
-    "predeploy": {
+    "prebuild": {
       "executor": "nx:noop",
       "cache": true,
       "inputs": [

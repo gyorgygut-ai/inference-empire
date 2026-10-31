@@ -12,7 +12,7 @@ from shared.worker_vision import (
 
 
 @Endpoint(
-    name="workers-vision",
+    name="worker-vision",
     gpu=[GpuGroup.AMPERE_16],
     workers=(0, 1),
     idle_timeout=5,

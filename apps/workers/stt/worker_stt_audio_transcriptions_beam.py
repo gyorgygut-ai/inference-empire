@@ -1,7 +1,7 @@
 import os
 
 from beam import Image, QueueDepthAutoscaler, Volume, asgi
-from shared.worker_voice_stt_audio_transcriptions import build_app
+from shared.worker_stt_audio_transcriptions import build_app
 
 image = (
     Image(python_version="python3.11")
@@ -22,17 +22,15 @@ image = (
             "HF_HUB_ENABLE_HF_TRANSFER": "1",
             "LD_LIBRARY_PATH": "/usr/local/lib/python3.11/dist-packages/nvidia/cublas/lib:/usr/local/lib/python3.11/dist-packages/nvidia/cudnn/lib",
             "SECRET_HUGGINGFACE_TOKEN": os.environ["SECRET_HUGGINGFACE_TOKEN"],
-            "GENERATED_STT_AUDIO_TRANSCRIPTIONS_API_KEY": os.environ[
-                "GENERATED_STT_AUDIO_TRANSCRIPTIONS_API_KEY"
-            ],
+            "SECRET_STT_AUDIO_TRANSCRIPTIONS_API_KEY": os.environ["SECRET_STT_AUDIO_TRANSCRIPTIONS_API_KEY"],
         }
     )
 )
-model_volumes = [Volume(name="workers-voice-stt-hf-cache", mount_path="./hf-cache")]
+model_volumes = [Volume(name="worker-stt-hf-cache", mount_path="./hf-cache")]
 
 
 @asgi(
-    name="workers-voice-stt-audio-transcriptions",
+    name="worker-stt",
     image=image,
     volumes=model_volumes,
     gpu="RTX4090",

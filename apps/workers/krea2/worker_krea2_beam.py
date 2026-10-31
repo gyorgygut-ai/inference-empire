@@ -23,7 +23,7 @@ image = Image(python_version="python3.11").add_python_packages(DEPENDENCIES).wit
 )
 
 @task_queue(
-    name="workers-krea2",
+    name="worker-krea2",
     cpu=8,
     memory="64Gi",
     gpu="RTX5090",

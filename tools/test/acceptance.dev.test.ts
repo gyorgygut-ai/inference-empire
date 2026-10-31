@@ -6,7 +6,7 @@ import { expectImage, generateImage, inferenceTimeout, pingFrontend, pingRouter,
 const env = { ...configSchema.parse(process.env), ...devSecretsSchema.parse(process.env) }
 const routerUrl = `http://127.0.0.1:${env.DEV_ROUTER_FLUX2_PORT}`
 
-test('workers-flux2 accepts an authenticated ping', () => pingWorker('workers-flux2', env.SECRET_BEAM_TOKEN))
+test('worker-flux2 accepts an authenticated ping', () => pingWorker('worker-flux2', env.SECRET_BEAM_TOKEN))
 
 test('flux2 /q produces a downloadable image with its own token', { timeout: inferenceTimeout + 60000 }, async () => {
   const url = await generateImage('flux2', routerUrl, env.GENERATED_ROUTER_FLUX2_AUTH_TOKEN)

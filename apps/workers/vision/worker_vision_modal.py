@@ -12,7 +12,7 @@ from shared.worker_vision import (
     resolve_analyze_prompt,
 )
 
-app = modal.App("workers-vision")
+app = modal.App("worker-vision")
 runtime_secret = modal.Secret.from_dict(
     {"SECRET_HUGGINGFACE_TOKEN": os.environ["SECRET_HUGGINGFACE_TOKEN"]}
 )

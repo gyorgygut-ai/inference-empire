@@ -31,7 +31,7 @@ image = Image(python_version="python3.11").add_python_packages(DEPENDENCIES).wit
 )
 
 @task_queue(
-    name="workers-flux2",
+    name="worker-flux2",
     cpu=4,
     memory="32Gi",
     gpu="RTX4090",

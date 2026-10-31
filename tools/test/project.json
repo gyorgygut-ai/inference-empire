@@ -69,7 +69,7 @@
         "preacceptance",
         "face-value:deploy",
         "router:deploy",
-        "workers-voice:deploy-realtime-session-beam"
+        "worker-voice:deploy-beam"
       ],
       "options": {
         "cwd": "tools/test",

@@ -98,8 +98,8 @@ test('frontend and flux2 share one token and the delegated router URL', () => {
 })
 
 test('router targets resolve the matching worker URL', () => {
-  expect(results[0]['router-dev-flux2'].workerUrl).toBe('https://workers-flux2.example.test')
-  expect(results[0]['router-dev-tinysd'].workerUrl).toBe('https://workers-tiny_sd.example.test')
+  expect(results[0]['router-dev-flux2'].workerUrl).toBe('https://worker-flux2.example.test')
+  expect(results[0]['router-dev-tinysd'].workerUrl).toBe('https://worker-tiny_sd.example.test')
 })
 
 test('tokens stay consistent across tasks within each invocation', () => {

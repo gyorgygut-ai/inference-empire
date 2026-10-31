@@ -1344,7 +1344,7 @@ wheels = [
 ]
 
 [[package]]
-name = "workers-tiny-sd"
+name = "worker-tiny_sd"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [

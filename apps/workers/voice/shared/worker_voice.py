@@ -136,7 +136,7 @@ def build_app(
     client = inference_client or InferenceClient.from_env()
     tokens = token_store or SessionTokens()
     trusted_server_token = client_secret_auth_token or os.environ.get(
-        "GENERATED_VOICE_WORKER_AUTH_TOKEN"
+        "SECRET_VOICE_WORKER_AUTH_TOKEN"
     )
     huggingface_token = os.environ.get("SECRET_HUGGINGFACE_TOKEN")
     if turn_credentials_provider is None and not huggingface_token:
@@ -176,7 +176,7 @@ def build_app(
             raise RuntimeError("FastRTC returned no TURN relay")
         return configuration
 
-    app = FastAPI(title="workers-voice-realtime-session")
+    app = FastAPI(title="worker-voice")
     pause_detector = EnergyPauseDetector()
     app.state.pause_detector = pause_detector
 

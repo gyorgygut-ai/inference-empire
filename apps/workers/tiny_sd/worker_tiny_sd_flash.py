@@ -7,7 +7,7 @@ from shared.worker_tiny_sd import DEPENDENCIES, do_inference, load_dependencies
 
 
 @Endpoint(
-    name="workers-tiny_sd",
+    name="worker-tiny_sd",
     gpu=[GpuGroup.AMPERE_16],
     workers=(0, 1),
     idle_timeout=5,

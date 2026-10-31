@@ -30,17 +30,29 @@ class InferenceClient:
 
     @classmethod
     def from_env(cls) -> InferenceClient:
-        def endpoint(prefix: str) -> InferenceEndpoint:
-            url = os.environ.get(f"{prefix}_API_URL", "").strip()
-            key = os.environ.get(f"GENERATED_{prefix}_API_KEY", "").strip()
-            if not url or not key:
-                raise RuntimeError(f"{prefix} endpoint URL and credential must be configured")
-            return InferenceEndpoint(url=url, api_key=key)
+        def endpoint(name: str, url: str | None, api_key: str | None) -> InferenceEndpoint:
+            resolved_url = (url or "").strip()
+            resolved_key = (api_key or "").strip()
+            if not resolved_url or not resolved_key:
+                raise RuntimeError(f"{name} endpoint URL and credential must be configured")
+            return InferenceEndpoint(url=resolved_url, api_key=resolved_key)
 
         return cls(
-            stt=endpoint("STT_AUDIO_TRANSCRIPTIONS"),
-            llm=endpoint("LLM_CHAT_COMPLETIONS"),
-            tts=endpoint("TTS_AUDIO_SPEECH"),
+            stt=endpoint(
+                "STT Audio Transcriptions",
+                os.environ.get("STT_AUDIO_TRANSCRIPTIONS_API_URL"),
+                os.environ.get("SECRET_STT_AUDIO_TRANSCRIPTIONS_API_KEY"),
+            ),
+            llm=endpoint(
+                "LLM Chat Completions",
+                os.environ.get("LLM_CHAT_COMPLETIONS_API_URL"),
+                os.environ.get("SECRET_LLM_CHAT_COMPLETIONS_API_KEY"),
+            ),
+            tts=endpoint(
+                "TTS Audio Speech",
+                os.environ.get("TTS_AUDIO_SPEECH_API_URL"),
+                os.environ.get("SECRET_TTS_AUDIO_SPEECH_API_KEY"),
+            ),
         )
 
     def _post(self, endpoint: InferenceEndpoint, path: str, **kwargs) -> httpx.Response:

@@ -12,7 +12,7 @@ const workspaceRoot = resolve(process.cwd(), '../..')
 
 async function deployedVoiceTurn() {
   const { stdout: workerUrl } = await execFileAsync(
-    'npx', ['tsx', 'tools/get-beam-url.ts', 'workers-voice'],
+    'npx', ['tsx', 'tools/get-beam-url.ts', 'worker-voice'],
     { cwd: workspaceRoot, env: process.env, timeout: 30_000 },
   )
   const { stdout } = await execFileAsync(
@@ -31,9 +31,9 @@ async function deployedVoiceTurn() {
   return JSON.parse(stdout) as { output_rms: number; session_id: string }
 }
 
-test('deployed workers-flux2 accepts an authenticated ping', () => pingWorker('workers-flux2', env.SECRET_BEAM_TOKEN))
+test('deployed worker-flux2 accepts an authenticated ping', () => pingWorker('worker-flux2', env.SECRET_BEAM_TOKEN))
 
-test('deployed workers-tiny_sd accepts an authenticated ping', () => pingWorker('workers-tiny_sd', env.SECRET_BEAM_TOKEN))
+test('deployed worker-tiny_sd accepts an authenticated ping', () => pingWorker('worker-tiny_sd', env.SECRET_BEAM_TOKEN))
 
 test('deployed flux2 /q produces a downloadable image with its own token', { timeout: inferenceTimeout + 60000 }, async () => {
   const url = await generateImage('flux2', deployedUrl('cf-worker', 'router_flux2'), env.GENERATED_ROUTER_FLUX2_AUTH_TOKEN)
@@ -55,7 +55,7 @@ test('deployed face-value can reach its flux2 router', () => pingRouter(deployed
 
 test('deployed face-value serves the app', () => pingFrontend(deployedUrl('vercel', env.SECRET_FACE_VALUE_VERCEL_PROJECT_ID, '--org', env.SECRET_FACE_VALUE_VERCEL_ORG_ID)))
 
-test('deployed workers-voice completes a named-voice WebRTC speech turn', { timeout: 670_000 }, async () => {
+test('deployed worker-voice completes a named-voice WebRTC speech turn', { timeout: 670_000 }, async () => {
   const proof = await deployedVoiceTurn()
   expect(proof.output_rms).toBeGreaterThan(160)
   expect(proof.session_id).toEqual(expect.any(String))

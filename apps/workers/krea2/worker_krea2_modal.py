@@ -7,7 +7,7 @@ from dist.contract_krea2 import Input as Krea2Ref2ImgInput
 from shared.platform import MODAL_HF_MOUNT, MODAL_IMAGE_IGNORE, modal_env, modal_volume
 from shared.worker_krea2 import DEPENDENCIES, do_inference, load_dependencies
 
-app = modal.App("workers-krea2")
+app = modal.App("worker-krea2")
 runtime_secret = modal.Secret.from_dict(
     {
         "SECRET_HUGGINGFACE_TOKEN": os.environ["SECRET_HUGGINGFACE_TOKEN"],

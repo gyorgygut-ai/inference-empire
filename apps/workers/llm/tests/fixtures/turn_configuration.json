@@ -1,0 +1,9 @@
+{
+  "iceServers": [
+    {
+      "urls": ["turn:127.0.0.1:3478"],
+      "username": "test-user",
+      "credential": "test-password"
+    }
+  ]
+}

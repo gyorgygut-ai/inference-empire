@@ -13,9 +13,9 @@ Stateless task queue api router, routing across worker urls.
 **NX**:
   - **Cmd**: `wrangler dev` directly
   - **Readiness**: `{ continuous, readyWhen": { "url": "http://localhost:{env.DEV_ROUTER_FLUX2_PORT}" }}`
-  - **Depends**: `predev`, `workers-flux2/deploy-beam`
+  - **Depends**: `predev`, `worker-flux2/deploy-beam`
   - **Types**: `predev` -> `prebuild` -> `^prebuild`
-  - **WORKER_BEAM_URL**: get directly `{get-beam-url.ts(workers-flux2)}`
+  - **WORKER_BEAM_URL**: get directly `{get-beam-url.ts(worker-flux2)}`
 
 ## deploy-flux2 ENV
 
@@ -24,9 +24,9 @@ Stateless task queue api router, routing across worker urls.
 
 **NX**:
   - **Cmd**: `wrangler deploy`
-  - **Depends**: `workers-flux2/deploy-beam`
+  - **Depends**: `worker-flux2/deploy-beam`
   - **Types**: `build` -> `prebuild` -> `^prebuild`
-  - **WORKER_BEAM_URL**: get directly `{get-beam-url.ts(workers-flux2)}`
+  - **WORKER_BEAM_URL**: get directly `{get-beam-url.ts(worker-flux2)}`
 
 # Other tasks
 

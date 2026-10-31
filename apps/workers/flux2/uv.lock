@@ -1359,7 +1359,7 @@ wheels = [
 ]
 
 [[package]]
-name = "workers-flux2"
+name = "worker-flux2"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [

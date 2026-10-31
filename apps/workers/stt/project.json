@@ -1,0 +1,85 @@
+{
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "name": "worker-stt",
+  "projectType": "application",
+  "sourceRoot": "apps/workers/stt",
+  "tags": [
+    "type:app",
+    "scope:gpu-worker",
+    "model:stt"
+  ],
+  "targets": {
+    "deploy-beam": {
+      "executor": "dotenvx:run-commands",
+      "cache": false,
+      "options": {
+        "cwd": "{projectRoot}",
+        "env": {
+          "PYTHONPATH": ".",
+          "SECRET_HUGGINGFACE_TOKEN": "${SECRET_HUGGINGFACE_TOKEN}",
+          "SECRET_STT_AUDIO_TRANSCRIPTIONS_API_KEY": "${GENERATED_STT_AUDIO_TRANSCRIPTIONS_API_KEY}",
+          "BEAM_TOKEN": "${SECRET_BEAM_TOKEN}"
+        },
+        "command": "uv run --locked --project ../../../ beam deploy",
+        "args": "worker_stt_audio_transcriptions_beam.py:generate"
+      },
+      "dependsOn": [
+        "prebuild"
+      ]
+    },
+    "deploy": {
+      "executor": "nx:noop",
+      "dependsOn": [
+        "deploy-beam"
+      ],
+      "cache": false
+    },
+    "prebuild": {
+      "executor": "nx:noop",
+      "cache": true,
+      "inputs": [
+        "{workspaceRoot}/packages/schemas/workers/voice_stt_audio_transcriptions.schema.json",
+        "{workspaceRoot}/packages/schemas/tools/generate_pydantic.py",
+        "{workspaceRoot}/pyproject.toml",
+        "{workspaceRoot}/uv.lock"
+      ],
+      "outputs": [
+        "{projectRoot}/dist/contract_stt_audio_transcriptions.py"
+      ],
+      "dependsOn": [
+        {
+          "projects": [
+            "schemas"
+          ],
+          "target": "build-pydantic",
+          "options": "forward"
+        }
+      ],
+      "options": {
+        "source": "packages/schemas/workers/voice_stt_audio_transcriptions.schema.json",
+        "out": "apps/workers/stt/dist/contract_stt_audio_transcriptions.py"
+      }
+    },
+    "test-unit": {
+      "executor": "dotenvx:run-commands",
+      "cache": false,
+      "dependsOn": [
+        "prebuild"
+      ],
+      "options": {
+        "cwd": "{projectRoot}",
+        "command": "uv run --locked pytest",
+        "args": "tests/unit/test_stt_audio_transcriptions_unit.py"
+      }
+    },
+    "test-acceptance": {
+      "executor": "dotenvx:run-commands",
+      "cache": false,
+      "options": {
+        "cwd": "{workspaceRoot}",
+        "command": "uv run --locked --project apps/workers/stt python",
+        "args": "apps/workers/stt/tests/acceptance_stt_audio_transcriptions.py"
+      }
+    }
+  }
+}

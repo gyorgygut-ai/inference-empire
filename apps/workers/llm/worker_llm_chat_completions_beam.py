@@ -1,7 +1,7 @@
 import os
 
 from beam import Image, QueueDepthAutoscaler, Volume, asgi
-from shared.worker_voice_llm_chat_completions import build_app
+from shared.worker_llm_chat_completions import build_app
 
 image = (
     Image(python_version="python3.11")
@@ -21,17 +21,17 @@ image = (
             "HF_HOME": "./hf-cache",
             "HF_HUB_ENABLE_HF_TRANSFER": "1",
             "SECRET_HUGGINGFACE_TOKEN": os.environ["SECRET_HUGGINGFACE_TOKEN"],
-            "GENERATED_LLM_CHAT_COMPLETIONS_API_KEY": os.environ[
-                "GENERATED_LLM_CHAT_COMPLETIONS_API_KEY"
+            "SECRET_LLM_CHAT_COMPLETIONS_API_KEY": os.environ[
+                "SECRET_LLM_CHAT_COMPLETIONS_API_KEY"
             ],
         }
     )
 )
-model_volumes = [Volume(name="workers-voice-llm-hf-cache", mount_path="./hf-cache")]
+model_volumes = [Volume(name="worker-llm-hf-cache", mount_path="./hf-cache")]
 
 
 @asgi(
-    name="workers-voice-llm-chat-completions",
+    name="worker-llm",
     image=image,
     volumes=model_volumes,
     gpu="RTX4090",

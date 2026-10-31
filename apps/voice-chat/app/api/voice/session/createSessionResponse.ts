@@ -29,7 +29,7 @@ export async function createSessionResponse(workerUrl?: string, workerAuthToken?
     }
 
     const token = {
-      provider: "workers-voice",
+      provider: "worker-voice",
       token: parsed.data.value,
       expiresAt: parsed.data.expires_at * 1000,
       config: {

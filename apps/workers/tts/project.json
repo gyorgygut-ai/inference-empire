@@ -1,0 +1,65 @@
+{
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "name": "worker-tts",
+  "projectType": "application",
+  "sourceRoot": "apps/workers/tts",
+  "tags": ["type:app","scope:gpu-worker","model:tts"],
+  "targets": {
+    "deploy-beam": {
+      "executor": "dotenvx:run-commands",
+      "cache": false,
+      "options": {
+        "cwd": "{projectRoot}",
+        "env": {
+          "PYTHONPATH": ".",
+          "SECRET_HUGGINGFACE_TOKEN": "${SECRET_HUGGINGFACE_TOKEN}",
+          "SECRET_TTS_AUDIO_SPEECH_API_KEY": "${GENERATED_TTS_AUDIO_SPEECH_API_KEY}",
+          "BEAM_TOKEN": "${SECRET_BEAM_TOKEN}"
+        },
+        "command": "uv run --locked --project ../../../ beam deploy",
+        "args": "worker_tts_audio_speech_beam.py:generate"
+      },
+      "dependsOn": ["prebuild"]
+    },
+    "deploy": {
+      "executor": "nx:noop",
+      "dependsOn": ["deploy-beam"],
+      "cache": false
+    },
+    "prebuild": {
+      "executor": "nx:noop",
+      "cache": true,
+      "inputs": [
+        "{workspaceRoot}/packages/schemas/workers/voice_tts_audio_speech.schema.json",
+        "{workspaceRoot}/packages/schemas/tools/generate_pydantic.py",
+        "{workspaceRoot}/pyproject.toml",
+        "{workspaceRoot}/uv.lock"
+      ],
+      "outputs": ["{projectRoot}/dist/contract_tts_audio_speech.py"],
+      "dependsOn": [{"projects": ["schemas"], "target": "build-pydantic", "options": "forward"}],
+      "options": {
+        "source": "packages/schemas/workers/voice_tts_audio_speech.schema.json",
+        "out": "apps/workers/tts/dist/contract_tts_audio_speech.py"
+      }
+    },
+    "test-unit": {
+      "executor": "dotenvx:run-commands",
+      "cache": false,
+      "dependsOn": ["prebuild"],
+      "options": {
+        "cwd": "{projectRoot}",
+        "command": "uv run --locked pytest",
+        "args": "tests/unit/test_tts_audio_speech_unit.py"
+      }
+    },
+    "test-acceptance": {
+      "executor": "dotenvx:run-commands",
+      "cache": false,
+      "options": {
+        "cwd": "{workspaceRoot}",
+        "command": "uv run --locked --project apps/workers/tts python",
+        "args": "apps/workers/tts/tests/acceptance_tts_audio_speech.py"
+      }
+    }
+  }
+}

@@ -20,8 +20,8 @@
 **Consumers**:
 
 - `router:prebuild` generates the TypeScript contracts into `apps/router/dist/`.
-- `workers-{family}:predeploy` generates the Pydantic contract inside that worker project.
-- Worker `predeploy` generates Pydantic modules into worker-local `dist/`; these generated files are ignored and included in deployment bundles. Import them from `dist.*`; do not hand-edit generated files.
+- `worker-{family}:prebuild` generates the Pydantic contract inside that worker project.
+- Worker `prebuild` generates Pydantic modules into worker-local `dist/`; these generated files are ignored and included in deployment bundles. Import them from `dist.*`; do not hand-edit generated files.
 
 ```json
 {

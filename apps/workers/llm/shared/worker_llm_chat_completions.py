@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 from urllib.parse import urlparse
 
-from dist.contract_voice_llm_chat_completions import (
+from dist.contract_llm_chat_completions import (
     Choice,
     Input,
     Output,
@@ -122,9 +122,9 @@ def build_app(
     generator: Callable[[Input], tuple[str, int, int]] = generate_reply,
     api_key: str | None = None,
 ) -> FastAPI:
-    app = FastAPI(title="workers-voice-llm-chat-completions")
+    app = FastAPI(title="worker-llm")
     expected_api_key = (
-        api_key if api_key is not None else os.environ.get("GENERATED_LLM_CHAT_COMPLETIONS_API_KEY")
+        api_key if api_key is not None else os.environ.get("SECRET_LLM_CHAT_COMPLETIONS_API_KEY")
     )
 
     @app.get("/health")
