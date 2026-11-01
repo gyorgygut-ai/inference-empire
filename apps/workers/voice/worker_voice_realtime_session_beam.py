@@ -51,7 +51,6 @@ image = (
     image=image,
     cpu=2,
     memory="4Gi",
-    concurrent_requests=10,
     keep_warm_seconds=10,
     timeout=120,
     authorized=False,

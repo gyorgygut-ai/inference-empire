@@ -1,14 +1,14 @@
 from __future__ import annotations
 
+import asyncio
 import hmac
 import io
-import json
 import logging
 import os
 import secrets
 import time
 import uuid
-from typing import Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol
 
 import numpy as np
 import soundfile as sf
@@ -17,19 +17,31 @@ from fastapi import FastAPI, HTTPException, Request, Response
 
 from shared.inference_client import InferenceClient
 
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+SAMPLE_RATE = 24_000
+TOKEN_TTL_SECONDS = 60
+MAX_HISTORY_MESSAGES = 20
+TURN_AUDIO_CHUNK_DURATION = 0.3
+TURN_STARTED_TALKING_THRESHOLD = 0.1
+TURN_SPEECH_THRESHOLD = 0.1
+SYSTEM_MESSAGE = "You are a concise, helpful voice assistant."
+logger = logging.getLogger(__name__)
+
 
 class InferencePipeline(Protocol):
     def transcribe(self, audio: bytes, filename: str) -> str: ...
 
-    def complete(self, transcript: str) -> str: ...
+    def complete(self, messages: list[dict[str, str]]) -> str: ...
 
-    def speak(self, text: str) -> tuple[bytes, int | None]: ...
+    def speak(self, text: str) -> tuple[bytes, int]: ...
 
-logger = logging.getLogger(__name__)
-SAMPLE_RATE = 24_000
-TOKEN_TTL_SECONDS = 60
-VAD_SPEECH_RMS_THRESHOLD = 0.01
 
+class TurnError(Exception):
+    def __init__(self, stage: str, reason: str):
+        super().__init__(reason)
+        self.stage = stage
 
 
 class SessionTokens:
@@ -38,10 +50,10 @@ class SessionTokens:
         self._tokens: dict[str, float] = {}
 
     def create(self) -> tuple[str, int]:
-        now = int(time.time())
+        expires_at = int(time.time()) + self.ttl_seconds
         token = secrets.token_urlsafe(32)
-        self._tokens[token] = float(now + self.ttl_seconds)
-        return token, now + self.ttl_seconds
+        self._tokens[token] = float(expires_at)
+        return token, expires_at
 
     def validate(self, token: str) -> bool:
         expires_at = self._tokens.get(token)
@@ -53,88 +65,123 @@ class SessionTokens:
         return True
 
 
-class EnergyPauseDetector:
+class SessionHistories:
     def __init__(self) -> None:
-        self.calls = 0
-        self.speech_chunks = 0
+        self._histories: dict[str, list[dict[str, str]]] = {}
+        self._locks: dict[str, asyncio.Lock] = {}
 
-    def vad(self, audio: tuple[int, np.ndarray], options: object) -> tuple[float, list]:
-        del options
-        self.calls += 1
-        sample_rate, samples = audio
-        values = np.asarray(samples, dtype=np.float32).reshape(-1)
-        if values.size == 0:
-            return 0.0, []
-        if np.max(np.abs(values)) > 1.0:
-            values = values / 32768.0
-        rms = float(np.sqrt(np.mean(np.square(values))))
-        if rms >= VAD_SPEECH_RMS_THRESHOLD:
-            self.speech_chunks += 1
-            return len(values) / sample_rate, []
-        return 0.0, []
+    def get(self, session_id: str) -> list[dict[str, str]]:
+        return list(
+            self._histories.get(
+                session_id, [{"role": "system", "content": SYSTEM_MESSAGE}]
+            )
+        )
 
-    def warmup(self) -> None:
-        return None
+    def lock(self, session_id: str) -> asyncio.Lock:
+        return self._locks.setdefault(session_id, asyncio.Lock())
 
+    def append(self, session_id: str, transcript: str, reply: str) -> None:
+        history = self.get(session_id)
+        history.extend(
+            [
+                {"role": "user", "content": transcript},
+                {"role": "assistant", "content": reply},
+            ]
+        )
+        self._histories[session_id] = [history[0], *history[1:][-MAX_HISTORY_MESSAGES:]]
 
-def _resample(audio: np.ndarray, source_rate: int, target_rate: int) -> np.ndarray:
-    values = np.asarray(audio, dtype=np.float32).reshape(-1)
-    if source_rate == target_rate or values.size == 0:
-        return values
-    count = round(len(values) * target_rate / source_rate)
-    return np.interp(
-        np.linspace(0, max(len(values) - 1, 0), count), np.arange(len(values)), values
-    ).astype(np.float32)
+    def remove(self, session_id: str) -> None:
+        self._histories.pop(session_id, None)
+        self._locks.pop(session_id, None)
 
 
-def _wav_bytes(audio: np.ndarray, sample_rate: int) -> bytes:
+def _wav_bytes(audio: np.ndarray) -> bytes:
     buffer = io.BytesIO()
-    sf.write(buffer, audio, sample_rate, format="WAV", subtype="PCM_16")
+    sf.write(buffer, audio, SAMPLE_RATE, format="WAV", subtype="PCM_16")
     return buffer.getvalue()
+
+
+def _float_audio(audio: np.ndarray) -> np.ndarray:
+    samples = np.asarray(audio)
+    if samples.ndim > 1:
+        if samples.shape[0] == 1:
+            samples = samples.reshape(-1)
+        elif samples.shape[-1] == 1:
+            samples = samples.reshape(-1)
+        else:
+            raise TurnError("stt", "input audio must be mono")
+    samples = samples.reshape(-1)
+    if samples.dtype == np.int16:
+        values = samples.astype(np.float32) / 32768.0
+    else:
+        values = samples.astype(np.float32)
+    if values.size == 0 or not np.isfinite(values).all():
+        raise TurnError("stt", "input audio is empty or invalid")
+    if float(np.max(np.abs(values))) < 0.005:
+        raise TurnError("stt", "input audio is silent")
+    return values
 
 
 def run_turn(
     audio: np.ndarray,
     sample_rate: int,
     client: InferencePipeline,
+    history: list[dict[str, str]],
 ) -> tuple[str, str, np.ndarray]:
-    samples = np.asarray(audio, dtype=np.float32).reshape(-1)
-    if samples.size == 0 or not np.isfinite(samples).all() or float(np.max(np.abs(samples))) < 0.005:
-        raise ValueError("speech input is empty or silent")
-    normalized = samples / 32768.0 if np.max(np.abs(samples)) > 1.0 else samples
-    wav = _wav_bytes(normalized, sample_rate)
-    transcript = client.transcribe(wav, "audio.wav")
-    if not transcript.strip():
-        raise ValueError("Audio Transcriptions returned an empty transcript")
-    reply = client.complete(transcript)
-    if not reply.strip():
-        raise ValueError("Chat Completions returned an empty response")
-    response_audio, output_rate = client.speak(reply)
-    decoded, decoded_rate = sf.read(
-        io.BytesIO(response_audio), dtype="float32", always_2d=False
-    )
-    if decoded.size == 0 or not np.isfinite(decoded).all():
-        raise ValueError("Audio Speech returned invalid audio")
-    mono = np.asarray(decoded, dtype=np.float32)
-    if mono.ndim > 1:
-        mono = mono.mean(axis=1)
-    if float(np.max(np.abs(mono))) < 0.001:
-        raise ValueError("Audio Speech returned silent audio")
-    rate = output_rate or decoded_rate
-    return transcript, reply, _resample(mono, int(rate), SAMPLE_RATE)
+    if sample_rate != SAMPLE_RATE:
+        raise TurnError("stt", "input sample rate is not 24 kHz")
+    samples = _float_audio(audio)
+    try:
+        transcript = client.transcribe(_wav_bytes(samples), "audio.wav")
+        if not transcript.strip():
+            raise ValueError("empty transcript")
+    except Exception as error:
+        raise TurnError("stt", "transcription failed") from error
+
+    messages = [*history, {"role": "user", "content": transcript}]
+    try:
+        reply = client.complete(messages)
+        if not reply.strip():
+            raise ValueError("empty reply")
+    except Exception as error:
+        raise TurnError("llm", "completion failed") from error
+
+    try:
+        wav_bytes, output_rate = client.speak(reply)
+        decoded, decoded_rate = sf.read(
+            io.BytesIO(wav_bytes), dtype="float32", always_2d=True
+        )
+        if output_rate != SAMPLE_RATE or decoded_rate != SAMPLE_RATE:
+            raise ValueError("TTS audio must be 24 kHz")
+        if decoded.shape[1] != 1 or decoded.shape[0] == 0:
+            raise ValueError("TTS audio must be non-empty mono audio")
+        mono = decoded[:, 0]
+        if not np.isfinite(mono).all() or float(np.max(np.abs(mono))) < 0.001:
+            raise ValueError("TTS audio is invalid or silent")
+        output = np.clip(mono, -1.0, 1.0)
+        return transcript, reply, (output * 32767).astype(np.int16)
+    except Exception as error:
+        raise TurnError("tts", "speech synthesis failed") from error
 
 
 def build_app(
     inference_client: InferencePipeline | None = None,
     token_store: SessionTokens | None = None,
     client_secret_auth_token: str | None = None,
-    turn_credentials_provider: Any | None = None,
+    turn_credentials_provider: Callable[[], Any] | None = None,
 ) -> FastAPI:
-    from fastrtc import Stream, get_cloudflare_turn_credentials_async
+    from fastrtc import (
+        AlgoOptions,
+        ReplyOnPause,
+        Stream,
+        WebRTCError,
+        get_cloudflare_turn_credentials_async,
+        get_current_context,
+    )
     from fastrtc.stream import Body
 
-    client = inference_client or InferenceClient.from_env()
-    tokens = token_store or SessionTokens()
+    client = inference_client if inference_client is not None else InferenceClient.from_env()
+    tokens = token_store if token_store is not None else SessionTokens()
     trusted_server_token = client_secret_auth_token or os.environ.get(
         "SECRET_VOICE_WORKER_AUTH_TOKEN"
     )
@@ -143,83 +190,72 @@ def build_app(
         raise RuntimeError("SECRET_HUGGINGFACE_TOKEN is required for TURN credentials")
 
     async def get_turn_configuration() -> dict[str, Any]:
-        if turn_credentials_provider is None:
-            configuration = await get_cloudflare_turn_credentials_async(
-                hf_token=huggingface_token,
-                ttl=600,
-            )
-        else:
-            configuration = await turn_credentials_provider()
-        if not isinstance(configuration, dict):
-            raise RuntimeError("FastRTC returned an invalid TURN configuration")
-        ice_servers = configuration.get("iceServers")
-        if not isinstance(ice_servers, list):
-            raise RuntimeError("FastRTC returned no TURN relay")
-        for server in ice_servers:
-            if not isinstance(server, dict):
-                continue
-            urls = server.get("urls")
-            urls = [urls] if isinstance(urls, str) else urls
-            if (
-                isinstance(urls, list)
-                and any(
-                    isinstance(url, str) and url.startswith(("turn:", "turns:"))
-                    for url in urls
+        if turn_credentials_provider is not None:
+            return await turn_credentials_provider()
+        return await get_cloudflare_turn_credentials_async(
+            hf_token=huggingface_token,
+            ttl=600,
+        )
+
+    histories = SessionHistories()
+
+    async def on_turn(audio: tuple[int, np.ndarray]):
+        session_id = get_current_context().webrtc_id
+        sample_rate, samples = audio
+        lock = histories.lock(session_id)
+        try:
+            async with lock:
+                transcript, reply, output = await asyncio.to_thread(
+                    run_turn,
+                    np.asarray(samples),
+                    sample_rate,
+                    client,
+                    histories.get(session_id),
                 )
-                and isinstance(server.get("username"), str)
-                and server["username"]
-                and isinstance(server.get("credential"), str)
-                and server["credential"]
-            ):
-                break
-        else:
-            raise RuntimeError("FastRTC returned no TURN relay")
-        return configuration
+                histories.append(session_id, transcript, reply)
+        except TurnError as error:
+            logger.error("realtime turn failed stage=%s reason=%s", error.stage, error)
+            WebRTCError(f"{error.stage} failed")
+            return
+        except Exception as error:
+            logger.exception("realtime turn failed stage=llm reason=%s", error)
+            WebRTCError("llm failed")
+            return
+        logger.info(
+            "realtime turn completed transcript_chars=%d response_chars=%d output_rms=%.6f",
+            len(transcript),
+            len(reply),
+            float(np.sqrt(np.mean(np.square(output.astype(np.float32))))),
+        )
+        yield SAMPLE_RATE, output
 
-    app = FastAPI(title="worker-voice")
-    pause_detector = EnergyPauseDetector()
-    app.state.pause_detector = pause_detector
+    reply_handler = ReplyOnPause(
+        on_turn,
+        algo_options=AlgoOptions(
+            audio_chunk_duration=TURN_AUDIO_CHUNK_DURATION,
+            started_talking_threshold=TURN_STARTED_TALKING_THRESHOLD,
+            speech_threshold=TURN_SPEECH_THRESHOLD,
+        ),
+        expected_layout="mono",
+        input_sample_rate=SAMPLE_RATE,
+        output_sample_rate=SAMPLE_RATE,
+    )
 
-    # Per-conversation state keyed by webrtc_id
-    conversation_histories: dict[str, list[dict[str, str]]] = {}
+    class SessionStream(Stream):
+        def clean_up(self, webrtc_id: str):
+            histories.remove(webrtc_id)
+            return super().clean_up(webrtc_id)
 
-    stream = Stream(
-        handler=None,  # will be set below; FastRTC requires handler
+    stream = SessionStream(
+        handler=reply_handler,
         modality="audio",
         mode="send-receive",
         rtc_configuration=get_turn_configuration,
-        server_rtc_configuration={
-            "iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]
-        },
     )
-
-    async def on_turn(audio: tuple[int, np.ndarray]):
-        rate, samples = audio
-        transcript, reply, response_audio = run_turn(
-            np.asarray(samples), rate, client
-        )
-        logger.info(
-            "realtime turn completed transcript_chars=%d response_chars=%d",
-            len(transcript),
-            len(reply),
-        )
-        # Update conversation history
-        webrtc_id = getattr(app.state, "webrtc_id", None) or "unknown"
-        if webrtc_id not in conversation_histories:
-            conversation_histories[webrtc_id] = [
-                {
-                    "role": "system",
-                    "content": "You are a concise, helpful voice assistant.",
-                }
-            ]
-        conversation_histories[webrtc_id].append({"role": "user", "content": transcript})
-        conversation_histories[webrtc_id].append({"role": "assistant", "content": reply})
-        max_history = 20
-        if len(conversation_histories[webrtc_id]) > max_history:
-            conversation_histories[webrtc_id] = conversation_histories[webrtc_id][-max_history:]
-        yield SAMPLE_RATE, response_audio
-
-    stream.handler = on_turn
+    app = FastAPI(title="worker-voice")
+    app.state.stream = stream
+    app.state.turn_handler = on_turn
+    app.state.histories = histories
 
     @app.get("/health")
     def health() -> dict[str, str]:
@@ -239,8 +275,6 @@ def build_app(
             raise HTTPException(status_code=401, detail="Invalid server credential")
         try:
             rtc_configuration = await stream.resolve_rtc_configuration()
-            if not isinstance(rtc_configuration, dict):
-                raise RuntimeError("FastRTC returned no RTC configuration")
         except Exception as error:
             logger.exception("Unable to create TURN credentials")
             raise HTTPException(
@@ -266,22 +300,17 @@ def build_app(
         sdp = form.get("sdp")
         if not isinstance(sdp, str) or not sdp.strip():
             raise HTTPException(status_code=422, detail="sdp is required")
-        session_value = form.get("session")
-        try:
-            RealtimeSession.model_validate(
-                json.loads(session_value) if isinstance(session_value, str) else {}
-            )
-        except (ValueError, TypeError) as error:
-            raise HTTPException(status_code=422, detail="Invalid realtime session") from error
         body = Body(sdp=sdp, type="offer", webrtc_id=uuid.uuid4().hex)
         try:
             answer = await stream.offer(body)
         except Exception as error:
             logger.exception("WebRTC offer negotiation failed")
-            raise HTTPException(status_code=502, detail="WebRTC offer negotiation failed") from error
+            raise HTTPException(
+                status_code=502,
+                detail="WebRTC offer negotiation failed",
+            ) from error
         if not isinstance(answer, dict) or not isinstance(answer.get("sdp"), str):
             raise HTTPException(status_code=502, detail="WebRTC negotiation returned an invalid answer")
         return Response(content=answer["sdp"], media_type="application/sdp")
 
     return app
-

@@ -3,8 +3,7 @@ from __future__ import annotations
 from dist.contract_flux2 import Input as Flux2Klein9bInput
 from runpod_flash import Endpoint, GpuGroup
 from shared.platform import flash_env
-from shared.worker_flux2 import DEPENDENCIES, do_inference, load_dependencies
-
+from shared.worker_flux2 import DEPENDENCIES, do_inference, load_dependencies, load_pipeline_lazy
 
 @Endpoint(
     name="worker-flux2",
@@ -20,7 +19,12 @@ class FluxKleinWorker:
 
     def __init__(self):
         self.storage, self.pipe, self.torch_module = load_dependencies()
+        # Initialize as None for lazy loading
+        self.pipe = None
+        self.torch_module = None
 
     def generate(self, **kwargs) -> dict:
         req = Flux2Klein9bInput(**kwargs)
+        if self.pipe is None:
+            self.pipe, self.torch_module = load_pipeline_lazy()
         return do_inference(self.pipe, self.torch_module, self.storage, req).model_dump()

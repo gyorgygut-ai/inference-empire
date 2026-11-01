@@ -186,12 +186,53 @@ def pipe_factory() -> Flux2KleinPipeline:
     """Factory for the flux2 pipeline."""
     return load_pipeline()[0]
 
+def load_pipeline_lazy():
+    """Lazy load pipeline on first request (not at startup)."""
+    from beam import Volume
+
+    print(f"[INIT] lazily loading model {MODEL_ID}", flush=True)
+    t0 = time.time()
+
+    token = os.environ["SECRET_HUGGINGFACE_TOKEN"]
+
+    # importing sdnq registers its quantizer with transformers
+    from sdnq import SDNQConfig  # noqa: F401
+
+    model_dir = download_models()[MODEL_NAME]
+    pipe = diffusers.Flux2KleinPipeline.from_pretrained(
+        str(model_dir),
+        torch_dtype=torch.bfloat16,
+        token=token,
+        ignore_mismatched_sizes=True,
+    )
+    pipe.to("cuda")
+
+    try:
+        sdnq_common = importlib.import_module("sdnq.common")
+        sdnq_loader = importlib.import_module("sdnq.loader")
+        use_torch_compile = sdnq_common.use_torch_compile
+        apply_sdnq_options_to_model = sdnq_loader.apply_sdnq_options_to_model
+    except ImportError:
+        use_torch_compile = None
+        apply_sdnq_options_to_model = None
+
+    if use_torch_compile and torch.cuda.is_available():
+        pipe.transformer = apply_sdnq_options_to_model(
+            pipe.transformer, use_quantized_matmul=True
+        )
+        pipe.text_encoder = apply_sdnq_options_to_model(
+            pipe.text_encoder, use_quantized_matmul=True
+        )
+
+    print(f"[INIT] model loaded lazily in {time.time() - t0:.1f}s", flush=True)
+    return pipe, torch
 def load_dependencies():
-    """Load all dependencies for flux2-klein9b worker."""
+    """Load all dependencies for flux2-klein9b worker (model loaded lazily)."""
     from .artifacts import R2Artifacts
 
     storage = R2Artifacts()
-    return storage, load_pipeline()[0], _TorchModuleService()
+    # Model pipeline loaded lazily on first generate() request
+    return storage, None, _TorchModuleService()
 
 
 class _TorchModuleService:

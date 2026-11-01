@@ -47,6 +47,19 @@
         "args": "tests/unit/test_realtime_session_unit.py"
       }
     },
+    "test-acceptance": {
+      "executor": "dotenvx:run-commands",
+      "cache": false,
+      "dependsOn": ["deploy-beam"],
+      "options": {
+        "cwd": "{workspaceRoot}",
+        "env": {
+          "VOICE_REALTIME_SESSION_API_URL": "$(npx tsx $NX_WORKSPACE_ROOT/tools/get-beam-url.ts worker-voice)"
+        },
+        "command": "uv run --locked --project apps/workers/voice python",
+        "args": "apps/workers/voice/tests/acceptance_realtime_session.py"
+      }
+    },
     "serve-local": {
       "executor": "dotenvx:run-commands",
       "continuous": true,

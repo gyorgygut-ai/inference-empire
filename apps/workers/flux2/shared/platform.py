@@ -1,6 +1,6 @@
 
 MODAL_HF_MOUNT = "/root/.cache/huggingface"
-MODAL_VOLUME_NAME = "hf-cache"
+MODAL_VOLUME_NAME = "worker-flux2"
 MODAL_IMAGE_IGNORE = (
     ".venv",
     "**/.venv/**",
@@ -20,7 +20,7 @@ MODAL_IMAGE_IGNORE = (
     "fakes/**",
 )
 BEAM_CACHE_PATH = "./hf-cache"
-BEAM_VOLUME_NAME = "hf-cache"
+BEAM_VOLUME_NAME = "worker-flux2"
 FLASH_HF_HOME = "/runpod-volume/huggingface-cache"
 HF_TRANSFER_ENV = "1"
 

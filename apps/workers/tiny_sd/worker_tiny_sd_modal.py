@@ -5,7 +5,7 @@ import os
 import modal
 from dist.contract_tiny_sd import Input as TinySDInput
 from shared.platform import MODAL_HF_MOUNT, MODAL_IMAGE_IGNORE, modal_env, modal_volume
-from shared.worker_tiny_sd import DEPENDENCIES, do_inference, load_dependencies
+from shared.worker_tiny_sd import DEPENDENCIES, do_inference, load_dependencies, load_pipeline_lazy
 
 app = modal.App("worker-tiny_sd")
 runtime_secret = modal.Secret.from_dict(
@@ -40,8 +40,13 @@ class TinySDWorker:
     @modal.enter()
     def load(self):
         self.storage, self.pipe, self.torch_module = load_dependencies()
+        # Initialize as None for lazy loading
+        self.pipe = None
+        self.torch_module = None
 
     @modal.method()
     def generate(self, **kwargs) -> dict:
         req = TinySDInput(**kwargs)
+        if self.pipe is None:
+            self.pipe, self.torch_module = load_pipeline_lazy()
         return do_inference(self.pipe, self.torch_module, self.storage, req).model_dump()

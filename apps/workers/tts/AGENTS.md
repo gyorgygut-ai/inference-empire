@@ -2,26 +2,34 @@
 
 TTS Audio Speech worker. OpenAI-compatible Audio Speech API.
 
-## Authentication
+## SPECS
 
-**Problem**: Authenticate requests without exposing Beam credentials.
+**Authentication**:
 
-**Approach**:
-- Bearer token `SECRET_TTS_AUDIO_SPEECH_API_KEY` required for `POST /v1/audio/speech`; `project.json` maps it from `GENERATED_TTS_AUDIO_SPEECH_API_KEY`
+- **Problem**: Requests need authentication without exposing Beam credentials.
+- **Acceptance**:
+  - Require Bearer token `SECRET_TTS_AUDIO_SPEECH_API_KEY` on `POST /v1/audio/speech`.
+  - Map it in `project.json` from `GENERATED_TTS_AUDIO_SPEECH_API_KEY`.
+  - Reject missing or invalid tokens with `401`.
+- **Outcome**: Only callers with the configured API key can request speech synthesis.
 
-**Outcome**:
-- Unauthorized requests rejected
+**Audio response**:
 
-## Contract
+- **Problem**: Callers need usable speech audio in the response without an R2 artifact.
+- **Acceptance**:
+  - Return JSON containing inline `audio_base64` with WAV audio at `24 kHz` mono.
+  - Reject unsupported `response_format` values with `422`.
+  - For authenticated text requesting WAV, return non-silent audio.
+  - Full-clip synthesis is acceptable until streaming is implemented.
+- **Outcome**: Valid requests return non-silent WAV audio inline.
 
-- Response is `json` with inline `audio_base64` (`wav`, `24 kHz` mono); not `R2` `presigned_url`
-- Response audio must be non-silent; full-clip synthesis accepted until streaming lands
+**Health**:
 
-## Acceptance Criteria
+- **Problem**: Deployment health checks must not trigger inference.
+- **Acceptance**:
+  - `GET /health` succeeds without triggering inference.
+- **Outcome**: Health checks do not run synthesis.
+
+## DEPLOY
 
 **Task**: `worker-tts:deploy-beam`
-
-- `GET /health` → succeeds without triggering inference
-- `POST /v1/audio/speech` + missing or invalid token → rejects `401`
-- `POST /v1/audio/speech` + unsupported `response_format` → rejects `422`
-- `POST /v1/audio/speech` + authenticated text requesting `wav` → non-silent WAV audio

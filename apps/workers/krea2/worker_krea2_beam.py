@@ -5,7 +5,7 @@ import os
 from beam import Image, QueueDepthAutoscaler, task_queue
 from dist.contract_krea2 import Input as Krea2Ref2ImgInput
 from shared.platform import BEAM_CACHE_PATH, beam_env, beam_volume
-from shared.worker_krea2 import DEPENDENCIES, do_inference, load_dependencies
+from shared.worker_krea2 import DEPENDENCIES, do_inference, load_dependencies, load_pipeline_lazy
 
 CACHE_PATH = BEAM_CACHE_PATH
 
@@ -38,5 +38,8 @@ image = Image(python_version="python3.11").add_python_packages(DEPENDENCIES).wit
 )
 def generate(context, **kwargs) -> dict:
     storage, pipe, runtime_dir, torch_module = context.on_start_value
+    if pipe is None:
+        # Lazy load model on first request
+        pipe, runtime_dir = load_pipeline_lazy(cache_dir=CACHE_PATH)
     req = Krea2Ref2ImgInput(**kwargs)
     return do_inference(pipe, runtime_dir, torch_module, storage, req).model_dump()

@@ -46,5 +46,9 @@ image = Image(python_version="python3.11").add_python_packages(DEPENDENCIES).wit
 )
 def generate(context, **kwargs) -> dict:
     storage, pipe, torch_module = context.on_start_value
+    if pipe is None:
+        # Lazy load model on first request (not at container startup)
+        from shared.worker_flux2 import load_pipeline_lazy
+        pipe, torch_module = load_pipeline_lazy()
     req = Flux2Klein9bInput(**kwargs)
     return do_inference(pipe, torch_module, storage, req).model_dump()

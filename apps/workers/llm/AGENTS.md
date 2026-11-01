@@ -1,27 +1,38 @@
+
+
 # LLM Chat Completions
 
 LLM Chat Completions worker. OpenAI-compatible Chat Completions API.
 
-## Authentication
+## SPECS
 
-**Problem**: Authenticate requests without exposing Beam credentials.
+**Authentication**:
 
-**Approach**:
-- Bearer token `SECRET_LLM_CHAT_COMPLETIONS_API_KEY` required for `POST /v1/chat/completions`; `project.json` maps it from `GENERATED_LLM_CHAT_COMPLETIONS_API_KEY`
-- Token validated server-side
+- **Problem**: Requests need authentication without exposing Beam credentials.
+- **Acceptance**:
+  - Require Bearer token `SECRET_LLM_CHAT_COMPLETIONS_API_KEY` on `POST /v1/chat/completions`.
+  - Map it in `project.json` from `GENERATED_LLM_CHAT_COMPLETIONS_API_KEY`.
+  - Validate the token server-side.
+  - Reject missing or invalid tokens with `401`.
+- **Outcome**: Only callers with the configured API key can request completions.
 
-**Outcome**:
-- Unauthorized requests rejected
+**Request and response**:
 
-## Contract
+- **Problem**: Callers need chat completions without the worker retaining their conversation state.
+- **Acceptance**:
+  - Keep conversation history caller-owned; the worker stores no session state.
+  - Reject malformed request bodies with `422`.
+  - For authenticated messages, return non-empty `choices[0].message.content`.
+- **Outcome**: Conversation state stays with the caller; the worker returns the completion.
 
-- History is caller-owned; the worker keeps no session state
+**Health**:
 
-## Acceptance Criteria
+- **Problem**: Deployment health checks must not trigger inference.
+- **Acceptance**:
+  - `GET /health` succeeds without triggering inference.
+- **Outcome**: Health checks do not run inference.
+
+## DEPLOY
 
 **Task**: `worker-llm:deploy-beam`
-
-- `GET /health` → succeeds without triggering inference
-- `POST /v1/chat/completions` + missing or invalid token → rejects `401`
-- `POST /v1/chat/completions` + malformed request body → rejects `422`
-- `POST /v1/chat/completions` + authenticated messages → non-empty `choices[0].message.content`
+apps/workers/voice/AGENTS.md

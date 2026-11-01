@@ -70,9 +70,9 @@ def resolve_analyze_prompt(loaded_default: str, override: str | None) -> str:
     """Return caller override when set, else the built-in default prompt."""
     return override if override else loaded_default
 
-def load_models():
-    """Production path: always boots the real model."""
-    print(f"[INIT] loading model {REPO_ID}", flush=True)
+def load_pipeline_lazy():
+    """Lazy load model on first request (not at startup)."""
+    print(f"[INIT] lazily loading model {REPO_ID}", flush=True)
     t0 = time.time()
     import torch
     import torch.distributed as dist
@@ -95,7 +95,7 @@ def load_models():
     ).eval()
     processor = AutoProcessor.from_pretrained(str(model_dir))
 
-    print(f"[INIT] model loaded in {time.time() - t0:.1f}s", flush=True)
+    print(f"[INIT] model loaded lazily in {time.time() - t0:.1f}s", flush=True)
     return model, processor, build_analyze_prompt()
 
 def do_inference(model, processor, analyze_prompt: str, req: SmallVisionInput):
@@ -141,6 +141,6 @@ def do_inference(model, processor, analyze_prompt: str, req: SmallVisionInput):
     return SmallVisionOutput.model_validate_json(m.group())
 
 def load_dependencies():
-    """Load all dependencies for small-vision worker."""
-    model, processor, analyze_prompt = load_models()
-    return model, processor, analyze_prompt
+    """Load all dependencies for vision worker (model loaded lazily)."""
+    # Model pipeline loaded lazily on first do_inference() request
+    return None, None, None

@@ -7,16 +7,17 @@ from dist.contract_tiny_sd import Input as TinySDInput
 from shared.platform import beam_env
 from shared.worker_tiny_sd import (
     DEPENDENCIES,
-    MODEL_CACHES,
     do_inference,
     load_dependencies,
+    load_pipeline_lazy,
     model_volumes,
 )
-
 CACHE_PATH = MODEL_CACHES["segmind_tiny_sd"]["path"]
 VOLUMES = model_volumes()
 
-image = Image(python_version="python3.11").add_python_packages(DEPENDENCIES).with_envs(
+image = Image(python_version="python3.11").add_python_packages(
+    DEPENDENCIES
+).with_envs(
     beam_env(
         cache_path=CACHE_PATH,
         extra={
@@ -45,5 +46,8 @@ image = Image(python_version="python3.11").add_python_packages(DEPENDENCIES).wit
 )
 def generate(context, **kwargs) -> dict:
     storage, pipe, torch_module = context.on_start_value
+    if pipe is None:
+        # Lazy load model on first request (not at container startup)
+        pipe, torch_module = load_pipeline_lazy()
     req = TinySDInput(**kwargs)
     return do_inference(pipe, torch_module, storage, req).model_dump()

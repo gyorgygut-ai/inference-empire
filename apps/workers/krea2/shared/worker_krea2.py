@@ -243,11 +243,72 @@ def pipe_factory(cache_dir=None) -> DiffusionPipeline:
     """Factory for the krea2 pipeline."""
     return load_pipeline(cache_dir=cache_dir)[0]
 
+def load_pipeline_lazy(cache_dir=None):
+    """Lazy load pipeline on first request (not at startup)."""
+    import os
+
+    import torch
+    from diffusers import DiffusionPipeline
+    from huggingface_hub import snapshot_download
+    from transformers import AutoTokenizer
+
+    print("[INIT] lazily loading model krea/Krea-2-Turbo", flush=True)
+    t0 = time.time()
+
+    _apply_qwen3_vl_rope_patch()
+
+    snapshot_kwargs: dict[str, Any] = {
+        "allow_patterns": [
+            "pipeline.py",
+            "face_crop.py",
+            "models/*.onnx",
+            "krea2_reid_rank32.safetensors",
+        ],
+    }
+    if cache_dir:
+        snapshot_kwargs["cache_dir"] = cache_dir
+    runtime_dir = Path(snapshot_download(REID_REPO, **snapshot_kwargs))
+
+    token = os.environ["SECRET_HUGGINGFACE_TOKEN"]
+
+    tokenizer_kwargs = {
+        "subfolder": "tokenizer",
+        "token": token,
+        "trust_remote_code": True,
+        "extra_special_tokens": {t: t for t in EXTRA_SPECIAL_TOKENS},
+    }
+    if cache_dir:
+        tokenizer_kwargs["cache_dir"] = cache_dir
+    tokenizer = AutoTokenizer.from_pretrained(MODEL_REPO, **tokenizer_kwargs)
+
+    pipe_kwargs = {
+        "custom_pipeline": str(runtime_dir),
+        "torch_dtype": torch.bfloat16,
+        "token": token,
+        "trust_remote_code": True,
+        "tokenizer": None,
+    }
+    if cache_dir:
+        pipe_kwargs["cache_dir"] = cache_dir
+    pipe = DiffusionPipeline.from_pretrained(MODEL_REPO, **pipe_kwargs)
+    pipe.tokenizer = tokenizer
+    pipe.load_lora_weights(
+        runtime_dir,
+        weight_name="krea2_reid_rank32.safetensors",
+        adapter_name="reid",
+    )
+    pipe.set_adapters(["reid"], weights=[1.0])
+    pipe.enable_model_cpu_offload()
+    print(f"[INIT] model loaded lazily in {time.time() - t0:.1f}s", flush=True)
+    return pipe, runtime_dir, torch
+
 def load_dependencies(cache_dir=None):
+    """Load all dependencies for krea2 worker (model loaded lazily)."""
     from .artifacts import R2Artifacts
+
     storage = R2Artifacts()
-    pipe, runtime_dir, _ = load_pipeline(cache_dir=cache_dir)
-    return storage, pipe, runtime_dir, _TorchModuleService()
+    # Model pipeline loaded lazily on first generate() request
+    return storage, None, None, _TorchModuleService()
 
 
 class _TorchModuleService:

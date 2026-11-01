@@ -139,12 +139,36 @@ def pipe_factory() -> StableDiffusionPipeline:
     return load_pipeline()[0]
 
 
+def load_pipeline_lazy():
+    """Lazy load pipeline on first request (not at startup)."""
+    import os
+
+    import diffusers
+    import torch
+
+    print(f"[INIT] lazily loading model {MODEL_ID}", flush=True)
+    t0 = time.time()
+
+    token = os.environ["SECRET_HUGGINGFACE_TOKEN"]
+
+    model_dir = download_models()[MODEL_NAME]
+    pipe = diffusers.StableDiffusionPipeline.from_pretrained(
+        str(model_dir),
+        torch_dtype=torch.float16,
+        token=token,
+    )
+    pipe.to("cuda")
+
+    print(f"[INIT] model loaded lazily in {time.time() - t0:.1f}s", flush=True)
+    return pipe, torch
+
 def load_dependencies():
-    """Load all dependencies for tiny-sd worker."""
+    """Load all dependencies for tiny-sd worker (model loaded lazily)."""
     from .artifacts import R2Artifacts
 
     storage = R2Artifacts()
-    return storage, load_pipeline()[0], _TorchModuleService()
+    # Model pipeline loaded lazily on first generate() request
+    return storage, None, _TorchModuleService()
 
 
 class _TorchModuleService:

@@ -1,12 +1,12 @@
 MODAL_HF_MOUNT = "/root/.cache/huggingface"
-MODAL_VOLUME_NAME = "hf-cache"
+MODAL_VOLUME_NAME = "worker-tiny_sd"
 MODAL_IMAGE_IGNORE = (
     ".venv", "**/.venv/**", "__pycache__", "**/__pycache__/**",
     ".pytest_cache", "**/.pytest_cache/**", ".ruff_cache", "**/.ruff_cache/**",
     ".env", ".env.*", "**/.env", "**/.env.*", "tests", "tests/**", "fakes", "fakes/**",
 )
 BEAM_CACHE_PATH = "./hf-cache"
-BEAM_VOLUME_NAME = "hf-cache"
+BEAM_VOLUME_NAME = "worker-tiny_sd"
 FLASH_HF_HOME = "/runpod-volume/huggingface-cache"
 HF_TRANSFER_ENV = "1"
 def modal_env(extra=None):
