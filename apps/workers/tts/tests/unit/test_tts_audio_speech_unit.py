@@ -1,11 +1,13 @@
+import base64
 import io
 import os
-import struct
 import wave
 
+import numpy as np
 import pytest
+from dist.contract_tts_audio_speech import Output
 from fastapi.testclient import TestClient
-from shared.worker_tts_audio_speech import build_app
+from shared.worker_tts_audio_speech import build_app, encode_audio
 from tests.stub_services import tts_generator_stub
 
 TTS_API_KEY = "tts-test-key"
@@ -97,7 +99,7 @@ def test_tts_valid_text_wav_returns_200(client):
     assert r.status_code == 200, "valid text request failed"
 
 
-def test_tts_valid_text_wav_response_content_type(client):
+def test_tts_response_contains_inline_audio_base64(client):
     r = client.post(
         "/v1/audio/speech",
         headers={"Authorization": f"Bearer {TTS_API_KEY}"},
@@ -108,7 +110,8 @@ def test_tts_valid_text_wav_response_content_type(client):
         },
     )
     assert r.status_code == 200
-    assert r.headers.get("content-type", "").startswith("audio/wav"), "wrong content type"
+    assert r.headers.get("content-type", "").startswith("application/json")
+    assert isinstance(r.json().get("audio_base64"), str)
 
 
 def test_tts_valid_text_wav_response_non_silent(client):
@@ -122,15 +125,47 @@ def test_tts_valid_text_wav_response_non_silent(client):
         },
     )
     assert r.status_code == 200
-    audio_bytes = r.content
+    audio_bytes = base64.b64decode(r.json()["audio_base64"], validate=True)
     assert len(audio_bytes) > 0, "empty audio response"
 
-    # Parse WAV and check for non-silent audio
-    try:
-        with wave.open(io.BytesIO(audio_bytes), "rb") as wav:
-            frames = wav.readframes(wav.getnframes())
-            samples = struct.unpack(f"<{len(frames)//2}h", frames)
-            assert any(abs(s) > 0 for s in samples), "audio is silent"
-    except Exception:
-        # If WAV parsing fails, fall back to simple length check
-        assert len(audio_bytes) > 0, "audio is empty"
+    with wave.open(io.BytesIO(audio_bytes), "rb") as wav:
+        assert wav.getframerate() == 24_000
+        assert wav.getnchannels() == 1
+        frames = wav.readframes(wav.getnframes())
+        assert any(frames), "audio is silent"
+
+
+def test_tts_encode_audio_normalizes_to_mono_24khz():
+    result = encode_audio(np.ones((2, 1600), dtype=np.float32) * 0.25, 16_000)
+    audio_bytes = base64.b64decode(result.audio_base64, validate=True)
+    with wave.open(io.BytesIO(audio_bytes), "rb") as wav:
+        assert result.sample_rate == wav.getframerate() == 24_000
+        assert wav.getnchannels() == 1
+        assert wav.getnframes() == 2400
+
+
+def test_tts_encode_audio_rejects_silence():
+    with pytest.raises(ValueError, match="silent"):
+        encode_audio(np.zeros(100, dtype=np.float32), 24_000)
+
+
+def test_tts_endpoint_rejects_malformed_wav():
+    def malformed_generator(_request) -> Output:
+        return Output(
+            format="wav",
+            audio_base64=base64.b64encode(b"not wav").decode("ascii"),
+            sample_rate=24_000,
+        )
+
+    app = build_app(generator=malformed_generator, api_key=TTS_API_KEY)
+    with TestClient(app) as client:
+        response = client.post(
+            "/v1/audio/speech",
+            headers={"Authorization": f"Bearer {TTS_API_KEY}"},
+            json={
+                "model": "resembleai_chatterbox_tts",
+                "input": "hello",
+                "response_format": "wav",
+            },
+        )
+    assert response.status_code == 502

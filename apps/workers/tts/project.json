@@ -55,6 +55,7 @@
     "test-acceptance": {
       "executor": "dotenvx:run-commands",
       "cache": false,
+      "dependsOn": ["deploy-beam"],
       "options": {
         "cwd": "{workspaceRoot}",
         "command": "uv run --locked --project apps/workers/tts python",

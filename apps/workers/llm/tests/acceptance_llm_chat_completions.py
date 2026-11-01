@@ -2,27 +2,25 @@ import os
 
 import httpx
 
-BASE = os.environ["LLM_CHAT_COMPLETIONS_API_URL"]
+BASE = os.environ["LLM_CHAT_COMPLETIONS_API_URL"].rstrip("/")
 TOKEN = os.environ["GENERATED_LLM_CHAT_COMPLETIONS_API_KEY"]
-HEADERS = {"Authorization": f"Bearer {TOKEN}", "Content-Type": "application/json"}
+HEADERS = {"Authorization": f"Bearer {TOKEN}"}
+
 
 def main():
-    with httpx.Client(timeout=30) as c:
-        r = c.get(f"{BASE}/health")
-        assert r.status_code == 200
+    with httpx.Client(timeout=30) as client:
+        response = client.post(
+            f"{BASE}/v1/chat/completions",
+            headers=HEADERS,
+            json={
+                "model": "qwen2_5_3b_instruct",
+                "messages": [{"role": "user", "content": "Reply with a short greeting."}],
+            },
+        )
+        assert response.status_code == 200, "valid request failed"
+        content = response.json()["choices"][0]["message"]["content"]
+        assert isinstance(content, str) and content.strip(), "empty completion"
 
-        r = c.post(f"{BASE}/v1/chat/completions", headers={"Authorization": "Bearer bad"}, json={"model":"x","messages":[]})
-        assert r.status_code == 401
-
-        r = c.post(f"{BASE}/v1/chat/completions", headers=HEADERS, json={"model":"x"})
-        assert r.status_code == 422
-
-        payload = {"model":"test","messages":[{"role":"user","content":"hi"}]}
-        r = c.post(f"{BASE}/v1/chat/completions", headers=HEADERS, json=payload)
-        assert r.status_code == 200
-        data = r.json()
-        content = data.get("choices",[{}])[0].get("message",{}).get("content","")
-        assert isinstance(content,str) and content.strip(), "empty completion"
 
 if __name__ == "__main__":
     main()

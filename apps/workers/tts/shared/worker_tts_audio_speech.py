@@ -6,13 +6,13 @@ import io
 import logging
 import os
 import threading
+import wave
 from typing import TYPE_CHECKING, Any
 from urllib.parse import urlparse
 
 import numpy as np
-import soundfile as sf
 from dist.contract_tts_audio_speech import Input, Output
-from fastapi import FastAPI, HTTPException, Request, Response
+from fastapi import FastAPI, HTTPException, Request
 
 from shared.auth import require_bearer_token
 
@@ -32,17 +32,40 @@ logger = logging.getLogger(__name__)
 
 
 def encode_audio(audio: np.ndarray, sample_rate: int) -> Output:
-    samples = np.asarray(audio, dtype=np.float32).reshape(-1)
+    samples = np.asarray(audio, dtype=np.float32)
+    samples = np.squeeze(samples)
+    if samples.ndim == 2:
+        if samples.shape[0] <= 8 < samples.shape[1]:
+            samples = samples.mean(axis=0)
+        elif samples.shape[1] <= 8 < samples.shape[0]:
+            samples = samples.mean(axis=1)
+        else:
+            raise ValueError("TTS returned audio with ambiguous channel dimensions")
+    samples = samples.reshape(-1)
     if samples.size == 0 or not np.isfinite(samples).all():
         raise ValueError("TTS returned invalid audio")
+    if sample_rate <= 0:
+        raise ValueError("TTS returned an invalid sample rate")
+    if sample_rate != SAMPLE_RATE:
+        output_size = max(1, round(samples.size * SAMPLE_RATE / sample_rate))
+        samples = np.interp(
+            np.linspace(0, samples.size - 1, output_size),
+            np.arange(samples.size),
+            samples,
+        ).astype(np.float32)
     if float(np.max(np.abs(samples))) < 0.001:
         raise ValueError("TTS returned silent audio")
+    pcm_samples = (np.clip(samples, -1.0, 1.0) * 32767).astype("<i2")
     buffer = io.BytesIO()
-    sf.write(buffer, samples, sample_rate, format="WAV", subtype="PCM_16")
+    with wave.open(buffer, "wb") as wav:
+        wav.setnchannels(1)
+        wav.setsampwidth(2)
+        wav.setframerate(SAMPLE_RATE)
+        wav.writeframes(pcm_samples.tobytes())
     return Output(
         audio_base64=base64.b64encode(buffer.getvalue()).decode("ascii"),
         format="wav",
-        sample_rate=sample_rate,
+        sample_rate=SAMPLE_RATE,
     )
 
 
@@ -96,7 +119,7 @@ def build_app(generator: Callable[[Input], Output] = synthesize, api_key: str | 
         return {"status": "ok"}
 
     @app.post("/v1/audio/speech")
-    def audio_speech(request: Input, http_request: Request) -> Response:
+    def audio_speech(request: Input, http_request: Request) -> Output:
         require_bearer_token(http_request, expected_api_key)
         if request.response_format not in (None, "wav"):
             raise HTTPException(status_code=422, detail="Only wav response_format is supported")
@@ -105,17 +128,26 @@ def build_app(generator: Callable[[Input], Output] = synthesize, api_key: str | 
             if result.format != "wav":
                 raise ValueError("TTS returned an unsupported audio format")
             audio = base64.b64decode(result.audio_base64, validate=True)
-            with sf.SoundFile(io.BytesIO(audio)) as stream:
-                samples = stream.read(dtype="float32")
-                if stream.format != "WAV" or stream.samplerate != result.sample_rate:
+            try:
+                wav = wave.open(io.BytesIO(audio), "rb")
+            except (wave.Error, EOFError) as error:
+                raise ValueError("TTS returned invalid WAV audio") from error
+            with wav:
+                frames = wav.readframes(wav.getnframes())
+                if (
+                    wav.getframerate() != SAMPLE_RATE
+                    or wav.getnchannels() != 1
+                    or wav.getsampwidth() != 2
+                    or result.sample_rate != SAMPLE_RATE
+                ):
                     raise ValueError("TTS returned invalid WAV metadata")
-                if samples.size == 0 or not np.isfinite(samples).all() or float(np.max(np.abs(samples))) < 0.001:
+                if not frames or not any(frames):
                     raise ValueError("TTS returned empty or silent audio")
         except ValueError as error:
             raise HTTPException(status_code=502, detail=str(error)) from error
         except Exception as error:
             logger.exception("Audio Speech generation failed")
             raise HTTPException(status_code=500, detail="Audio Speech generation failed") from error
-        return Response(content=audio, media_type="audio/wav")
+        return result
 
     return app

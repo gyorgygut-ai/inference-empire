@@ -80,7 +80,7 @@ ignore = [
 # else (PIL, numpy, boto3, apps.*) stays a hard error.
 allowed-unresolved-imports = [
     "torch.**", "diffusers.**", "transformers.**", "huggingface_hub.**",
-    "fastrtc.**", "aiortc.**", "faster_whisper.**",
+    "fastrtc.**", "aiortc.**", "faster_whisper.**", "soundfile.**",
 ]
 
 [tool.ty.environment]

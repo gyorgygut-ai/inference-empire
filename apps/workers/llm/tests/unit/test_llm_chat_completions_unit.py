@@ -102,3 +102,31 @@ def test_llm_valid_messages_response_content_non_empty(client):
     assert len(choices) >= 1, "no choices returned"
     content = choices[0].get("message", {}).get("content", "")
     assert isinstance(content, str) and content.strip(), "empty completion"
+
+
+def test_llm_forwards_each_request_history_without_retaining_prior_messages():
+    received_messages = []
+
+    def recording_generator(request):
+        received_messages.append([message.model_dump() for message in request.messages])
+        return "reply", 1, 1
+
+    client = TestClient(build_app(generator=recording_generator, api_key=LLM_API_KEY))
+    headers = {"Authorization": f"Bearer {LLM_API_KEY}"}
+    histories = [
+        [
+            {"role": "user", "content": "first request"},
+            {"role": "assistant", "content": "first reply"},
+        ],
+        [{"role": "user", "content": "independent request"}],
+    ]
+
+    for messages in histories:
+        response = client.post(
+            "/v1/chat/completions",
+            headers=headers,
+            json={"model": "qwen2_5_3b_instruct", "messages": messages},
+        )
+        assert response.status_code == 200
+
+    assert received_messages == histories

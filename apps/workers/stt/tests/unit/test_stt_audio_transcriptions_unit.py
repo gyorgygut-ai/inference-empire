@@ -1,4 +1,6 @@
+import io
 import os
+import wave
 
 import pytest
 from fastapi.testclient import TestClient
@@ -6,6 +8,21 @@ from shared.worker_stt_audio_transcriptions import build_app
 from tests.stub_services import stt_transcriber_stub
 
 STT_API_KEY = "stt-test-key"
+
+
+def wav_fixture(
+    *, sample_rate: int = 24_000, channels: int = 1, amplitude: int = 1000
+) -> bytes:
+    samples = [amplitude] * 240
+    if channels == 2:
+        samples = [sample for value in samples for sample in (value, value)]
+    buffer = io.BytesIO()
+    with wave.open(buffer, "wb") as wav:
+        wav.setnchannels(channels)
+        wav.setsampwidth(2)
+        wav.setframerate(sample_rate)
+        wav.writeframes(b"".join(sample.to_bytes(2, "little", signed=True) for sample in samples))
+    return buffer.getvalue()
 
 
 @pytest.fixture
@@ -56,41 +73,31 @@ def test_stt_missing_or_invalid_token_response_error(client):
     assert "detail" in r.json(), "missing detail in error response"
 
 
-def test_stt_empty_or_invalid_audio_returns_422(client):
-    # Empty payload
-    r = client.post(
+@pytest.mark.parametrize(
+    "audio",
+    [
+        b"",
+        b"not audio",
+        wav_fixture(sample_rate=16_000),
+        wav_fixture(channels=2),
+        wav_fixture(amplitude=0),
+        wav_fixture(amplitude=10),
+    ],
+    ids=["empty", "malformed", "wrong-rate", "stereo", "silent", "near-silent"],
+)
+def test_stt_invalid_audio_returns_422(client, audio):
+    response = client.post(
         "/v1/audio/transcriptions",
         headers={"Authorization": f"Bearer {STT_API_KEY}"},
-        files={"file": ("audio.wav", b"", "audio/wav")},
+        files={"file": ("audio.wav", audio, "audio/wav")},
         data={"model": "faster_whisper_large_v3"},
     )
-    assert r.status_code == 422, "empty payload not rejected"
-
-    # Non-audio bytes (invalid base64 will be caught by stub)
-    r = client.post(
-        "/v1/audio/transcriptions",
-        headers={"Authorization": f"Bearer {STT_API_KEY}"},
-        files={"file": ("audio.wav", b"not audio", "audio/wav")},
-        data={"model": "faster_whisper_large_v3"},
-    )
-    # Our stub doesn't validate base64 strictly, but real endpoint would return 422
-    # For now we accept either 422 or 500 (stub limitation)
-    assert r.status_code in (422, 500), "non-audio payload not rejected"
-
-
-def test_stt_empty_or_invalid_audio_response_error(client):
-    r = client.post(
-        "/v1/audio/transcriptions",
-        headers={"Authorization": f"Bearer {STT_API_KEY}"},
-        files={"file": ("audio.wav", b"", "audio/wav")},
-        data={"model": "faster_whisper_large_v3"},
-    )
-    assert r.status_code == 422
-    assert "detail" in r.json(), "missing detail in error response"
+    assert response.status_code == 422
+    assert "detail" in response.json()
 
 
 def test_stt_valid_fixture_returns_200(client):
-    audio = b"\x52\x49\x46\x46" + b"\x00" * 10  # Minimal WAV header
+    audio = wav_fixture()
     r = client.post(
         "/v1/audio/transcriptions",
         headers={"Authorization": f"Bearer {STT_API_KEY}"},
@@ -101,7 +108,7 @@ def test_stt_valid_fixture_returns_200(client):
 
 
 def test_stt_valid_fixture_response_text_non_empty(client):
-    audio = b"\x52\x49\x46\x46" + b"\x00" * 10
+    audio = wav_fixture()
     r = client.post(
         "/v1/audio/transcriptions",
         headers={"Authorization": f"Bearer {STT_API_KEY}"},

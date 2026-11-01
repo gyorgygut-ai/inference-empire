@@ -3,9 +3,12 @@ from __future__ import annotations
 import base64
 import binascii
 import logging
+import math
 import os
 import tempfile
 import threading
+import wave
+from io import BytesIO
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 from urllib.parse import urlparse
@@ -36,7 +39,47 @@ def decode_audio(request: Input) -> bytes:
         raise ValueError("Audio file must be valid base64") from error
     if not audio:
         raise ValueError("Audio file is empty")
+    validate_audio(audio)
     return audio
+
+
+def validate_audio(audio: bytes) -> None:
+    if not audio:
+        raise ValueError("Audio file is empty")
+
+    try:
+        with wave.open(BytesIO(audio), "rb") as wav:
+            if wav.getcomptype() != "NONE":
+                raise ValueError("Audio file must be uncompressed WAV")
+            if wav.getframerate() != 24_000 or wav.getnchannels() != 1:
+                raise ValueError("Audio file must be 24 kHz mono WAV")
+            sample_width = wav.getsampwidth()
+            frame_count = wav.getnframes()
+            frames = wav.readframes(frame_count)
+    except (wave.Error, EOFError) as error:
+        raise ValueError("Audio file must be valid WAV") from error
+
+    if frame_count == 0 or not frames:
+        raise ValueError("Audio file contains no samples")
+    if sample_width not in (1, 2, 3, 4):
+        raise ValueError("Audio file has an unsupported sample width")
+
+    full_scale = 1 << (sample_width * 8 - 1)
+    sample_count = 0
+    sum_squares = 0.0
+    for offset in range(0, len(frames), sample_width):
+        sample = (
+            (frames[offset] - 128) / 128
+            if sample_width == 1
+            else int.from_bytes(
+                frames[offset : offset + sample_width], "little", signed=True
+            )
+            / full_scale
+        )
+        sample_count += 1
+        sum_squares += sample * sample
+    if not sample_count or math.sqrt(sum_squares / sample_count) <= 0.001:
+        raise ValueError("Audio file is silent")
 
 
 def transcription_output(text: str) -> Output:
@@ -91,6 +134,7 @@ def build_app(transcriber: Callable[[Input], Output] = transcribe, api_key: str 
             if response_format != "json":
                 raise ValueError("Only json response_format is supported")
             payload = await file.read()
+            validate_audio(payload)
             request = Input(model=model, file_base64=base64.b64encode(payload).decode("ascii"), filename=file.filename or "audio.wav", language=language, prompt=prompt, temperature=temperature, response_format=response_format)
             return transcriber(request)
         except ValueError as error:

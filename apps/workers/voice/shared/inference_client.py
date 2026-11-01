@@ -92,16 +92,13 @@ class InferenceClient:
             raise RuntimeError("Audio Transcriptions returned an empty transcript")
         return text.strip()
 
-    def complete(self, transcript: str) -> str:
+    def complete(self, messages: list[dict[str, str]]) -> str:
         response = self._post(
             self.llm,
             "/v1/chat/completions",
             json={
                 "model": "configured",
-                "messages": [
-                    {"role": "system", "content": "You are a concise, helpful voice assistant."},
-                    {"role": "user", "content": transcript},
-                ],
+                "messages": messages,
             },
         )
         try:
@@ -112,17 +109,23 @@ class InferenceClient:
             raise RuntimeError("Chat Completions returned an empty reply")
         return content.strip()
 
-    def speak(self, text: str) -> tuple[bytes, int | None]:
+    def speak(self, text: str) -> tuple[bytes, int]:
         response = self._post(
             self.tts,
             "/v1/audio/speech",
             json={"model": "configured", "input": text, "response_format": "wav"},
         )
-        audio = response.content
+        try:
+            payload = response.json()
+            audio = base64.b64decode(payload["audio_base64"], validate=True)
+            sample_rate = payload["sample_rate"]
+        except (ValueError, KeyError, TypeError) as error:
+            raise RuntimeError("Audio Speech returned an invalid response") from error
         if not audio:
             raise RuntimeError("Audio Speech returned empty audio")
-        sample_rate = response.headers.get("x-audio-sample-rate")
-        return audio, int(sample_rate) if sample_rate and sample_rate.isdigit() else None
+        if not isinstance(sample_rate, int) or sample_rate <= 0:
+            raise RuntimeError("Audio Speech returned an invalid sample rate")
+        return audio, sample_rate
 
 
 def encode_audio(audio: bytes) -> str:
