@@ -4,10 +4,8 @@ import { CenteredLayout } from "@/chat/shell/CenteredLayout"
 
 export const dynamic = "force-dynamic"
 
-const Home = async ({ searchParams }: { searchParams: Promise<{ provider?: string }> }) => {
-  const { provider } = await searchParams
-  const selectedProvider = provider === "openai" ? "openai" : "workers"
-  return <CenteredLayout chat={<VoiceChatView key={selectedProvider} provider={selectedProvider} />} />
+const Home = () => {
+  return <CenteredLayout chat={<VoiceChatView />} />
 }
 
 export default Home

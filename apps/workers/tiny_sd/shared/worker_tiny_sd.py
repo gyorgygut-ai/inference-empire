@@ -50,13 +50,17 @@ def model_volumes():
 
 def download_models() -> dict[str, Path]:
     """Download declared models into their mounted cache paths."""
+    import os
+
     from huggingface_hub import snapshot_download
 
+    token = os.environ["SECRET_HUGGINGFACE_TOKEN"]
     return {
         name: Path(
             snapshot_download(
                 repo_id=urlparse(model["url"]).path.strip("/"),
                 cache_dir=model["path"],
+                token=token,
             )
         )
         for name, model in MODEL_CACHES.items()

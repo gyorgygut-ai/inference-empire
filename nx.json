@@ -79,6 +79,11 @@
         "production",
         "^production"
       ],
+      "options": {
+        "env": {
+          "NODE_ENV": "production"
+        }
+      },
       "cache": true
     },
     "test": {

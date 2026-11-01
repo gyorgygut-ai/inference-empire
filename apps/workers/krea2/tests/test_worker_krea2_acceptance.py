@@ -5,8 +5,6 @@ Runs after deploy-beam; proves the deployed worker serves a request.
 import os
 import urllib.request
 
-import pytest
-
 
 def test_worker_krea2_acceptance():
     """Ping the deployed worker-krea2 and assert it returns a valid contract."""

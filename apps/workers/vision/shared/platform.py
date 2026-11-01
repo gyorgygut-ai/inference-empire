@@ -8,14 +8,13 @@ MODAL_IMAGE_IGNORE = (
 BEAM_CACHE_PATH = "./hf-cache"
 BEAM_VOLUME_NAME = "worker-vision"
 FLASH_HF_HOME = "/runpod-volume/huggingface-cache"
-HF_TRANSFER_ENV = "1"
 def modal_env(extra=None):
-    env = {"HF_HOME": MODAL_HF_MOUNT, "HF_HUB_ENABLE_HF_TRANSFER": HF_TRANSFER_ENV}
+    env = {"HF_HOME": MODAL_HF_MOUNT, "HF_XET_HIGH_PERFORMANCE": "1"}
     if extra:
         env.update(extra)
     return env
 def beam_env(cache_path=BEAM_CACHE_PATH, extra=None):
-    env = {"HF_HOME": cache_path, "HF_HUB_ENABLE_HF_TRANSFER": HF_TRANSFER_ENV}
+    env = {"HF_HOME": cache_path, "HF_XET_HIGH_PERFORMANCE": "1"}
     if extra:
         env.update(extra)
     return env

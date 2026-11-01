@@ -1,6 +1,8 @@
 "use client"
 import React from "react"
+import { useChatContext } from "@/chat/client"
 import { vocabulary } from "@/chat/vocabulary/en"
+import { findLastToolCall } from "../../../findLastToolCall"
 import type { ToolProps } from "@tanstack/ai-react/ui"
 import type { ChatOptions } from "../../../options"
 import { Spinner } from "./Spinner"
@@ -10,10 +12,15 @@ import { GenerateImageApproval } from "./GenerateImageApproval"
 type RunGenerateImageProps = ToolProps<ChatOptions, "runGenerateImage">
 
 export const GenerateImageTool = ({ part, result }: RunGenerateImageProps) => {
+  const chat = useChatContext()
   if (part.state === "awaiting-input" || part.state === "input-streaming") {
     return <Spinner />
   }
   if (part.state === "approval-requested") {
+    const last = findLastToolCall(chat.messages, "runGenerateImage")
+    if (last?.type === "tool-call" && last.id !== part.id) {
+      return null
+    }
     return <GenerateImageApproval part={part} />
   }
   if (part.state === "error") {
@@ -28,7 +35,7 @@ export const GenerateImageTool = ({ part, result }: RunGenerateImageProps) => {
   if (part.output?.presignedUrl) {
     return <GenerateImageArtifact url={part.output.presignedUrl} />
   }
-  if (part.state === "approval-responded") {
+  if (part.state === "input-complete") {
     return (
       <div className="my-2 flex items-center gap-2" role="status">
         <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />

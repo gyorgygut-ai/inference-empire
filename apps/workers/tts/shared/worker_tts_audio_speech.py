@@ -5,6 +5,7 @@ import importlib
 import io
 import logging
 import os
+import tempfile
 import threading
 import wave
 from typing import TYPE_CHECKING, Any
@@ -13,11 +14,12 @@ from urllib.parse import urlparse
 import numpy as np
 from dist.contract_tts_audio_speech import Input, Output
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import StreamingResponse
 
 from shared.auth import require_bearer_token
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Callable, Iterator
 
 MODELS = {
     "resembleai_chatterbox_tts": {
@@ -99,8 +101,35 @@ def synthesize(request: Input, model: Any | None = None) -> Output:
     if request.response_format not in (None, "wav"):
         raise ValueError("Only wav response_format is supported")
     engine = model if model is not None else load_model()
-    with MODEL_LOCK:
-        generated = engine.generate(request.input)
+    voice = request.voice or "alloy"
+    reference_audio_base64 = request.reference_audio_base64
+    if voice.casefold() == "alloy":
+        with MODEL_LOCK:
+            generated = engine.generate(request.input)
+    else:
+        if not reference_audio_base64:
+            raise ValueError("Reference audio is required for a reference voice")
+        try:
+            reference_audio = base64.b64decode(reference_audio_base64, validate=True)
+            with wave.open(io.BytesIO(reference_audio), "rb") as wav:
+                if (
+                    wav.getnchannels() != 1
+                    or wav.getsampwidth() != 2
+                    or wav.getframerate() <= 0
+                    or wav.getnframes() == 0
+                ):
+                    raise ValueError("Reference audio must be non-empty mono PCM WAV")
+        except (ValueError, wave.Error, EOFError) as error:
+            raise ValueError("Reference audio is not a valid WAV file") from error
+        with tempfile.TemporaryDirectory(prefix="worker-tts-voice-") as directory:
+            reference_path = os.path.join(directory, "reference.wav")
+            with open(reference_path, "wb") as reference_file:
+                reference_file.write(reference_audio)
+            with MODEL_LOCK:
+                generated = engine.generate(
+                    request.input,
+                    audio_prompt_path=reference_path,
+                )
     audio = np.asarray(generated.squeeze().detach().cpu(), dtype=np.float32).reshape(-1)
     speed = float(request.speed) if request.speed is not None else 1.0
     if speed != 1.0 and audio.size:
@@ -110,7 +139,71 @@ def synthesize(request: Input, model: Any | None = None) -> Output:
     return encode_audio(audio, rate)
 
 
-def build_app(generator: Callable[[Input], Output] = synthesize, api_key: str | None = None) -> FastAPI:
+def stream_synthesize(request: Input, model: Any | None = None) -> Iterator[bytes]:
+    if request.response_format not in (None, "wav"):
+        raise ValueError("Only wav response_format is supported")
+    engine = model if model is not None else load_model()
+    voice = request.voice or "alloy"
+    reference_path = None
+    reference_context = None
+    if voice.casefold() != "alloy":
+        if not request.reference_audio_base64:
+            raise ValueError("Reference audio is required for a reference voice")
+        try:
+            reference_audio = base64.b64decode(
+                request.reference_audio_base64, validate=True
+            )
+            with wave.open(io.BytesIO(reference_audio), "rb") as wav:
+                if (
+                    wav.getnchannels() != 1
+                    or wav.getsampwidth() != 2
+                    or wav.getframerate() <= 0
+                    or wav.getnframes() == 0
+                ):
+                    raise ValueError("Reference audio must be non-empty mono PCM WAV")
+        except (ValueError, wave.Error, EOFError) as error:
+            raise ValueError("Reference audio is not a valid WAV file") from error
+        reference_context = tempfile.TemporaryDirectory(prefix="worker-tts-voice-")
+        reference_path = os.path.join(reference_context.name, "reference.wav")
+        with open(reference_path, "wb") as reference_file:
+            reference_file.write(reference_audio)
+
+    try:
+        stream_kwargs = (
+            {"audio_prompt_path": reference_path} if reference_path is not None else {}
+        )
+        chunks = engine.generate_stream(request.input, **stream_kwargs)
+        emitted_audio = False
+        for audio_chunk, _metrics in chunks:
+            samples = np.asarray(
+                audio_chunk.squeeze().detach().cpu(), dtype=np.float32
+            ).reshape(-1)
+            if samples.size == 0 or not np.isfinite(samples).all():
+                raise ValueError("TTS returned invalid audio chunk")
+            rate = int(getattr(engine, "sr", SAMPLE_RATE))
+            if rate != SAMPLE_RATE:
+                output_size = max(1, round(samples.size * SAMPLE_RATE / rate))
+                samples = np.interp(
+                    np.linspace(0, samples.size - 1, output_size),
+                    np.arange(samples.size),
+                    samples,
+                ).astype(np.float32)
+            if float(np.max(np.abs(samples))) < 0.001:
+                continue
+            emitted_audio = True
+            yield (np.clip(samples, -1.0, 1.0) * 32767).astype("<i2").tobytes()
+        if not emitted_audio:
+            raise ValueError("TTS returned empty or silent audio")
+    finally:
+        if reference_context is not None:
+            reference_context.cleanup()
+
+
+def build_app(
+    generator: Callable[[Input], Output] = synthesize,
+    api_key: str | None = None,
+    streaming_generator: Callable[[Input], Iterator[bytes]] = stream_synthesize,
+) -> FastAPI:
     app = FastAPI(title="worker-tts")
     expected_api_key = api_key if api_key is not None else os.environ.get("SECRET_TTS_AUDIO_SPEECH_API_KEY")
 
@@ -123,6 +216,12 @@ def build_app(generator: Callable[[Input], Output] = synthesize, api_key: str | 
         require_bearer_token(http_request, expected_api_key)
         if request.response_format not in (None, "wav"):
             raise HTTPException(status_code=422, detail="Only wav response_format is supported")
+        voice = request.voice or "alloy"
+        if voice.casefold() != "alloy" and not request.reference_audio_base64:
+            raise HTTPException(
+                status_code=422,
+                detail="Reference audio is required for a reference voice",
+            )
         try:
             result = generator(request)
             if result.format != "wav":
@@ -149,5 +248,21 @@ def build_app(generator: Callable[[Input], Output] = synthesize, api_key: str | 
             logger.exception("Audio Speech generation failed")
             raise HTTPException(status_code=500, detail="Audio Speech generation failed") from error
         return result
+
+    @app.post("/v1/audio/speech/stream")
+    def audio_speech_stream(request: Input, http_request: Request) -> StreamingResponse:
+        require_bearer_token(http_request, expected_api_key)
+        if request.response_format not in (None, "wav"):
+            raise HTTPException(status_code=422, detail="Only wav response_format is supported")
+        if (request.voice or "alloy").casefold() != "alloy" and not request.reference_audio_base64:
+            raise HTTPException(
+                status_code=422,
+                detail="Reference audio is required for a reference voice",
+            )
+        return StreamingResponse(
+            streaming_generator(request),
+            media_type="application/octet-stream",
+            headers={"X-Sample-Rate": str(SAMPLE_RATE)},
+        )
 
     return app

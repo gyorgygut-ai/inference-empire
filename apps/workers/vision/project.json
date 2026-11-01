@@ -122,6 +122,20 @@
         "source": "packages/schemas/workers/vision.schema.json",
         "out": "apps/workers/vision/dist/contract_vision.py"
       }
+    },
+    "test-acceptance": {
+      "executor": "dotenvx:run-commands",
+      "cache": false,
+      "dependsOn": ["deploy-beam"],
+      "options": {
+        "cwd": "{workspaceRoot}",
+        "env": {
+          "SECRET_WORKER_VISION_URL": "$(npx tsx $NX_WORKSPACE_ROOT/tools/get-beam-url.ts worker-vision)",
+          "SECRET_BEAM_TOKEN": "${SECRET_BEAM_TOKEN}"
+        },
+        "command": "uv run --locked --group test pytest",
+        "args": "apps/workers/vision/tests/test_worker_vision_acceptance.py -q"
+      }
     }
   }
 }

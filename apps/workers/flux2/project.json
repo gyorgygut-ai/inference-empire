@@ -122,6 +122,20 @@
         "source": "packages/schemas/workers/flux2.schema.json",
         "out": "apps/workers/flux2/dist/contract_flux2.py"
       }
+    },
+    "test-acceptance": {
+      "executor": "dotenvx:run-commands",
+      "cache": false,
+      "dependsOn": ["deploy-beam"],
+      "options": {
+        "cwd": "{workspaceRoot}",
+        "env": {
+          "SECRET_WORKER_FLUX2_URL": "$(npx tsx $NX_WORKSPACE_ROOT/tools/get-beam-url.ts worker-flux2)",
+          "SECRET_BEAM_TOKEN": "${SECRET_BEAM_TOKEN}"
+        },
+        "command": "uv run --locked --group test pytest",
+        "args": "apps/workers/flux2/tests/test_worker_flux2_acceptance.py -q"
+      }
     }
   }
 }

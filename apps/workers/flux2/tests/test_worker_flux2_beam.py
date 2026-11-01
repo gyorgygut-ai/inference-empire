@@ -1,5 +1,6 @@
 import importlib
 import io
+import sys
 from types import SimpleNamespace
 
 import pytest
@@ -13,6 +14,7 @@ from apps.workers.flux2.shared.worker_flux2 import (
     Flux2Klein9bInput,
     Flux2Klein9bOutput,
     do_inference,
+    download_models,
 )
 
 
@@ -20,6 +22,23 @@ def _png_bytes(img):
     buffer = io.BytesIO()
     img.save(buffer, format="PNG")
     return buffer.getvalue()
+
+
+def test_download_models_authenticates_with_secret(monkeypatch):
+    calls = []
+    monkeypatch.setenv("SECRET_HUGGINGFACE_TOKEN", "hf-sentinel")
+    monkeypatch.setitem(
+        sys.modules,
+        "huggingface_hub",
+        SimpleNamespace(
+            snapshot_download=lambda **kwargs: calls.append(kwargs) or "/model"
+        ),
+    )
+
+    download_models()
+
+    assert len(calls) == 1
+    assert calls[0]["token"] == "hf-sentinel"
 
 
 class SpyPipe(FakeImagePipe):

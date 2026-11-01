@@ -1,5 +1,6 @@
 import importlib
 import io
+import sys
 from types import SimpleNamespace
 
 import pytest
@@ -7,7 +8,7 @@ from PIL import Image
 from pydantic import ValidationError
 from shared.fakes.image_pipe_fake import FakeImagePipe
 from shared.fakes.torch_module_fake import FakeTorchModule
-from shared.worker_tiny_sd import TinySDInput, TinySDOutput, do_inference
+from shared.worker_tiny_sd import TinySDInput, TinySDOutput, do_inference, download_models
 
 import apps.workers.tiny_sd.worker_tiny_sd_beam as worker_mod
 
@@ -16,6 +17,23 @@ def _png_bytes(img):
     buffer = io.BytesIO()
     img.save(buffer, format="PNG")
     return buffer.getvalue()
+
+
+def test_download_models_authenticates_with_secret(monkeypatch):
+    calls = []
+    monkeypatch.setenv("SECRET_HUGGINGFACE_TOKEN", "hf-sentinel")
+    monkeypatch.setitem(
+        sys.modules,
+        "huggingface_hub",
+        SimpleNamespace(
+            snapshot_download=lambda **kwargs: calls.append(kwargs) or "/model"
+        ),
+    )
+
+    download_models()
+
+    assert len(calls) == 1
+    assert calls[0]["token"] == "hf-sentinel"
 
 
 class SpyPipe(FakeImagePipe):

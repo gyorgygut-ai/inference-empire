@@ -5,6 +5,20 @@
   "sourceRoot": "apps/workers/llm",
   "tags": ["type:app", "scope:gpu-worker", "model:llm"],
   "targets": {
+    "stub-beam": {
+      "executor": "dotenvx:run-commands",
+      "continuous": true,
+      "cache": false,
+      "readyWhen": { "url": "http://127.0.0.1:18762/health" },
+      "options": {
+        "cwd": "{projectRoot}",
+        "env": {
+          "SECRET_LLM_CHAT_COMPLETIONS_API_KEY": "${GENERATED_LLM_CHAT_COMPLETIONS_API_KEY}"
+        },
+        "command": "uv run --locked --project ../../../ uvicorn",
+        "args": "fakes.worker_llm_chat_completions_beam:app --host 127.0.0.1 --port 18762"
+      }
+    },
     "deploy-beam": {
       "executor": "dotenvx:run-commands",
       "cache": true,
@@ -71,6 +85,9 @@
       "dependsOn": ["deploy-beam"],
       "options": {
         "cwd": "{workspaceRoot}",
+        "env": {
+          "LLM_CHAT_COMPLETIONS_API_URL": "$(npx tsx $NX_WORKSPACE_ROOT/tools/get-beam-url.ts worker-llm)"
+        },
         "command": "uv run --locked --project apps/workers/llm python",
         "args": "apps/workers/llm/tests/acceptance_llm_chat_completions.py"
       }

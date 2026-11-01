@@ -1,29 +1,76 @@
 import asyncio
+import json
 import math
 import os
+import time
+import wave
 from pathlib import Path
 
 import httpx
 import numpy as np
+import pytest
+from aioice import TransportPolicy
 from aiortc import RTCConfiguration, RTCIceServer, RTCPeerConnection, RTCSessionDescription
 from aiortc.contrib.media import MediaPlayer
 
 BASE = os.environ["VOICE_REALTIME_SESSION_API_URL"].rstrip("/")
-SERVER_TOKEN = os.environ["GENERATED_VOICE_WORKER_AUTH_TOKEN"]
+TEST_MODE = os.environ.get("VOICE_TEST_MODE", "real")
+SERVER_TOKEN = os.environ.get("SECRET_VOICE_WORKER_AUTH_TOKEN") or os.environ[
+    "GENERATED_VOICE_WORKER_AUTH_TOKEN"
+]
 FIXTURES = Path(__file__).parent.parent / "fixtures"
 MESSAGE_AUDIO = FIXTURES / "message.wav"
+CLIENT_TIMEOUT = httpx.Timeout(connect=2.0, read=30.0, write=5.0, pool=2.0)
+UNSET = object()
+STUBS = {
+    "stt": os.environ.get("STT_AUDIO_TRANSCRIPTIONS_API_URL", "http://127.0.0.1:18761").rstrip("/"),
+    "llm": os.environ.get("LLM_CHAT_COMPLETIONS_API_URL", "http://127.0.0.1:18762").rstrip("/"),
+    "tts": os.environ.get("TTS_AUDIO_SPEECH_API_URL", "http://127.0.0.1:18763").rstrip("/"),
+}
 
 
-async def _complete_realtime_call() -> None:
-    async with httpx.AsyncClient(timeout=120) as client:
-        secret_response = await client.post(
-            f"{BASE}/v1/realtime/client_secrets",
-            headers={"Authorization": f"Bearer {SERVER_TOKEN}"},
-            json={"session": {}},
-        )
-        assert secret_response.status_code == 200, secret_response.text
-        secret = secret_response.json()
-        ice_servers = secret["rtc_configuration"]["iceServers"]
+def _output_rms(samples: np.ndarray) -> float:
+    normalized = samples.astype(np.float32)
+    if np.issubdtype(samples.dtype, np.floating):
+        normalized *= 32767
+    return math.sqrt(float(np.mean(np.square(normalized))))
+
+
+def _run_async(coroutine):
+    errors: list[dict[str, object]] = []
+    runner = asyncio.Runner()
+    try:
+        loop = runner.get_loop()
+        loop.set_exception_handler(lambda _loop, context: errors.append(context))
+        result = runner.run(coroutine)
+        loop.run_until_complete(asyncio.sleep(0.2))
+    finally:
+        runner.close()
+    if errors:
+        details = [str(item.get("exception") or item.get("message")) for item in errors]
+        raise AssertionError(f"uncaught asyncio errors during WebRTC test: {details}")
+    return result
+
+
+async def _client_secret(client: httpx.AsyncClient, voice: object = UNSET):
+    session = {} if voice is UNSET else {"voice": voice}
+    response = await client.post(
+        f"{BASE}/v1/realtime/client_secrets",
+        headers={"Authorization": f"Bearer {SERVER_TOKEN}"},
+        json={"session": session},
+    )
+    assert response.status_code == 200, response.text
+    return response.json()
+
+
+async def _start_call(
+    voice: object = UNSET,
+    audio_path: Path = MESSAGE_AUDIO,
+    *,
+    relay_only: bool = False,
+):
+    async with httpx.AsyncClient(timeout=CLIENT_TIMEOUT) as client:
+        secret = await _client_secret(client, voice)
         configuration = RTCConfiguration(
             iceServers=[
                 RTCIceServer(
@@ -31,27 +78,37 @@ async def _complete_realtime_call() -> None:
                     username=server.get("username"),
                     credential=server.get("credential"),
                 )
-                for server in ice_servers
+                for server in secret["rtc_configuration"]["iceServers"]
             ]
         )
-
         peer = RTCPeerConnection(configuration=configuration)
-        player = MediaPlayer(str(MESSAGE_AUDIO), format="wav")
-        assert player.audio is not None, "message fixture contains no audio"
-        peer.addTrack(player.audio)
-        peer.createDataChannel("text")
+        player = MediaPlayer(str(audio_path), format="wav")
+        assert player.audio is not None, "audio input could not be sent"
+        sender = peer.addTrack(player.audio)
+        channel = peer.createDataChannel("text")
+        ice_transports = {
+            transceiver.receiver.transport.transport
+            for transceiver in peer.getTransceivers()
+        }
+        if peer.sctp is not None:
+            ice_transports.add(peer.sctp.transport.transport)
+        if relay_only:
+            for transport in ice_transports:
+                transport._connection._transport_policy = TransportPolicy.RELAY
         received_audio = asyncio.Event()
         output_rms: list[float] = []
+        channel_messages: list[str] = []
+
+        @channel.on("message")
+        def receive_message(message):
+            if isinstance(message, str):
+                channel_messages.append(message)
 
         @peer.on("track")
-        async def on_track(track):
+        async def receive_audio(track):
             while True:
                 frame = await track.recv()
-                samples = frame.to_ndarray()
-                samples_float = samples.astype(np.float32)
-                if np.issubdtype(samples.dtype, np.floating):
-                    samples_float *= 32767
-                rms = math.sqrt(float(np.mean(np.square(samples_float))))
+                rms = _output_rms(frame.to_ndarray())
                 output_rms.append(rms)
                 if rms > 32:
                     received_audio.set()
@@ -64,6 +121,25 @@ async def _complete_realtime_call() -> None:
                 if asyncio.get_running_loop().time() >= deadline:
                     raise TimeoutError("ICE gathering timed out")
                 await asyncio.sleep(0.1)
+            if relay_only:
+                offered_types = [
+                    line.split(" typ ")[1].split()[0]
+                    for line in peer.localDescription.sdp.splitlines()
+                    if line.startswith("a=candidate:") and " typ " in line
+                ]
+                assert "relay" in offered_types, (
+                    f"offer contained no allocated TURN candidate: {offered_types}"
+                )
+                for transport in ice_transports:
+                    relay_protocols = [
+                        protocol
+                        for protocol in transport._connection._protocols
+                        if protocol.local_candidate.type == "relay"
+                    ]
+                    if not relay_protocols:
+                        raise AssertionError("client failed to allocate a TURN relay")
+                    # Retain all gathered sockets; only the relay candidates are used.
+                    transport._connection._protocols = relay_protocols
 
             answer = await client.post(
                 f"{BASE}/v1/realtime/calls",
@@ -75,12 +151,230 @@ async def _complete_realtime_call() -> None:
             await peer.setRemoteDescription(
                 RTCSessionDescription(sdp=answer.text, type="answer")
             )
-            await asyncio.wait_for(received_audio.wait(), timeout=120)
-            assert max(output_rms, default=0) > 32, "worker returned silent audio"
-        finally:
+            return (
+                peer,
+                player,
+                sender,
+                received_audio,
+                output_rms,
+                channel_messages,
+                secret,
+            )
+        except BaseException:
             await peer.close()
             player.audio.stop()
+            raise
 
 
-def test_local_worker_completes_realtime_voice_call() -> None:
-    asyncio.run(_complete_realtime_call())
+async def _wait_for_audio(received_audio: asyncio.Event, messages: list[str]) -> None:
+    waiter = asyncio.create_task(received_audio.wait())
+    try:
+        deadline = asyncio.get_running_loop().time() + 120
+        while not waiter.done():
+            for message in messages:
+                try:
+                    event = json.loads(message)
+                except ValueError:
+                    continue
+                if event.get("type") == "error":
+                    raise AssertionError(f"realtime turn failed: {event}")
+            if asyncio.get_running_loop().time() >= deadline:
+                raise TimeoutError("realtime audio response timed out")
+            await asyncio.sleep(0.1)
+    finally:
+        if not waiter.done():
+            waiter.cancel()
+
+
+async def _run_audio_turn(voice: object = UNSET) -> tuple[float, str]:
+    peer, player, _, received_audio, output_rms, messages, secret = await _start_call(voice)
+    try:
+        await _wait_for_audio(received_audio, messages)
+        return max(output_rms, default=0), secret["session"]["voice"]
+    finally:
+        await peer.close()
+        player.audio.stop()
+
+
+async def _valid_client_secret() -> bool:
+    async with httpx.AsyncClient(timeout=CLIENT_TIMEOUT) as client:
+        secret = await _client_secret(client)
+        now = int(time.time())
+    servers = secret["rtc_configuration"].get("iceServers", [])
+    urls = [server["urls"] for server in servers]
+    urls = [url for group in urls for url in (group if isinstance(group, list) else [group])]
+
+    return (
+        secret["value"] != SERVER_TOKEN
+        and 0 < secret["expires_at"] - now <= 60
+        and any("turn:" in url for url in urls)
+    )
+
+
+def test_client_secrets_with_valid_server_token_returns_ephemeral_token_expiry_and_turn_config():
+    assert _run_async(_valid_client_secret())
+
+
+async def _client_secret_rejects(authorization: str | None) -> bool:
+    headers = {} if authorization is None else {"Authorization": authorization}
+    async with httpx.AsyncClient(timeout=CLIENT_TIMEOUT) as client:
+        response = await client.post(
+            f"{BASE}/v1/realtime/client_secrets", headers=headers, json={"session": {}}
+        )
+    return response.status_code == 401
+
+
+@pytest.mark.parametrize("authorization", [None, "Bearer invalid"])
+def test_client_secrets_with_missing_or_invalid_server_token_returns_401(authorization):
+    assert _run_async(_client_secret_rejects(authorization))
+
+
+async def _call_rejects_missing_and_invalid_tokens() -> bool:
+    async with httpx.AsyncClient(timeout=CLIENT_TIMEOUT) as client:
+        responses = [
+            await client.post(
+                f"{BASE}/v1/realtime/calls", headers=headers, data={"sdp": "invalid"}
+            )
+            for headers in ({}, {"Authorization": "Bearer invalid"})
+        ]
+    return all(response.status_code == 401 for response in responses)
+
+
+def test_call_with_missing_or_invalid_session_token_returns_401():
+    assert _run_async(_call_rejects_missing_and_invalid_tokens())
+
+
+async def _call_returns_audio_through_turn_relay() -> bool:
+    before = None
+    if TEST_MODE == "stub":
+        await _reset_stub_counts()
+        before = await _stub_counts()
+    peer, player, sender, received_audio, output_rms, messages, _ = await _start_call(
+        relay_only=True
+    )
+    try:
+        await _wait_for_audio(received_audio, messages)
+        ice_transports = {
+            transceiver.receiver.transport.transport
+            for transceiver in peer.getTransceivers()
+        }
+        if peer.sctp is not None:
+            ice_transports.add(peer.sctp.transport.transport)
+        nominated = [
+            pair
+            for transport in ice_transports
+            for pair in transport._connection._nominated.values()
+        ]
+        counts = await _stub_counts() if TEST_MODE == "stub" else None
+        sender_stats = await sender.getStats()
+        sent_packets = sum(
+            stat.packetsSent
+            for stat in sender_stats.values()
+            if getattr(stat, "type", None) == "outbound-rtp"
+        )
+        return (
+            peer.iceConnectionState == "completed"
+            and peer.connectionState == "connected"
+            and any(pair.local_candidate.type == "relay" for pair in nominated)
+            and any(pair.remote_candidate.type in {"host", "srflx", "prflx", "relay"} for pair in nominated)
+            and sent_packets > 0
+            and max(output_rms, default=0) > 32
+            and (
+                TEST_MODE != "stub"
+                or all(counts[name] > before[name] for name in STUBS)
+            )
+        )
+    finally:
+        await peer.close()
+        player.audio.stop()
+
+
+def test_call_with_valid_session_token_completes_turn_through_turn_relay():
+    assert _run_async(_call_returns_audio_through_turn_relay())
+
+
+async def _voice_input_returns_audio(voice: object, expected: str) -> bool:
+    rms, selected_voice = await _run_audio_turn(voice)
+    return selected_voice == expected and rms > 32
+
+
+@pytest.mark.parametrize(
+    ("voice", "expected"),
+    [(UNSET, "alloy"), (None, "alloy"), ("alloy", "alloy"), ("GUT", "GUT")],
+    ids=["omitted", "null", "alloy", "reference"],
+)
+def test_turn_with_voice_input_returns_audible_audio(voice, expected):
+    assert _run_async(_voice_input_returns_audio(voice, expected))
+
+
+async def _silent_turn_recovers(tmp_path: Path) -> bool:
+    silence_path = tmp_path / "silence.wav"
+    with wave.open(str(silence_path), "wb") as wav:
+        wav.setnchannels(1)
+        wav.setsampwidth(2)
+        wav.setframerate(24_000)
+        wav.writeframes(bytes(int(24_000 * 2.4 * 2)))
+
+    peer, player, sender, received_audio, output_rms, messages, _ = await _start_call(
+        "alloy", silence_path
+    )
+    valid_player = None
+    try:
+        deadline = asyncio.get_running_loop().time() + 30
+        while asyncio.get_running_loop().time() < deadline:
+            if any(
+                json.loads(message).get("type") == "error"
+                for message in messages
+                if message.startswith("{")
+            ):
+                break
+            await asyncio.sleep(0.1)
+        else:
+            return False
+
+        valid_player = MediaPlayer(str(MESSAGE_AUDIO), format="wav")
+        if valid_player.audio is None:
+            return False
+        sender.replaceTrack(valid_player.audio)
+        await asyncio.wait_for(received_audio.wait(), timeout=120)
+        return max(output_rms, default=0) > 32
+    finally:
+        await peer.close()
+        player.audio.stop()
+        if valid_player and valid_player.audio:
+            valid_player.audio.stop()
+
+
+def test_turn_with_silent_audio_emits_error_and_same_call_recovers(tmp_path):
+    assert _run_async(_silent_turn_recovers(tmp_path))
+
+
+async def _concurrent_turns_return_audio() -> bool:
+    results = await asyncio.gather(
+        _run_audio_turn("alloy"),
+        _run_audio_turn("GUT"),
+    )
+    return [(voice, rms > 32) for rms, voice in results] == [("alloy", True), ("GUT", True)]
+
+
+def test_turns_with_two_concurrent_clients_both_return_audible_audio():
+    assert _run_async(_concurrent_turns_return_audio())
+
+
+async def _stub_counts() -> dict[str, int]:
+    async with httpx.AsyncClient(timeout=CLIENT_TIMEOUT) as client:
+        responses = await asyncio.gather(
+            *(client.get(f"{url}/__test__/metrics") for url in STUBS.values())
+        )
+    for response in responses:
+        assert response.status_code == 200, response.text
+    return {name: response.json()["requests"] for name, response in zip(STUBS, responses, strict=True)}
+
+
+async def _reset_stub_counts() -> None:
+    async with httpx.AsyncClient(timeout=CLIENT_TIMEOUT) as client:
+        responses = await asyncio.gather(
+            *(client.post(f"{url}/__test__/reset") for url in STUBS.values())
+        )
+    for response in responses:
+        assert response.status_code == 200, response.text

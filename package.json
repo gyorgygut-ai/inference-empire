@@ -15,7 +15,7 @@
     "lint:fix": "nx run-many -t lint-fix",
     "verify": "nx run-many -t verify --nxBail --parallel=1",
     "nx:face-value:dev": "dotenvx run -f env.runtime -- npx nx run face-value:dev",
-    "nx:voce-chat:dev": "dotenvx run -f env.runtime -- npx nx run voice-chat:dev",
+    "nx:voice-chat:dev": "dotenvx run -f env.runtime -- npx nx run voice-chat:dev",
     "nx:deploy": "dotenvx run -f env.runtime -- npx nx affected -t deploy --base=origin/main~1",
     "nx:face-value:deploy": "dotenvx run -f env.runtime -- npx nx run face-value:deploy",
     "nx:voice-chat:deploy": "dotenvx run -f env.runtime -- npx nx run voice-chat:deploy"
@@ -39,6 +39,7 @@
     "@swc/cli": "~0.8.1",
     "@swc/core": "~1.15.5",
     "@swc/helpers": "~0.5.18",
+    "@tailwindcss/postcss": "^4.1.18",
     "@tailwindcss/typography": "^0.5.20",
     "@tailwindcss/vite": "^4.1.18",
     "@testing-library/dom": "10.4.0",
@@ -70,7 +71,8 @@
       "dotenv-expand": "1000.0.0"
     },
     "react": "$react",
-    "react-dom": "$react-dom"
+    "react-dom": "$react-dom",
+    "next": "$next"
   },
   "engines": {
     "node": ">=20"
@@ -79,25 +81,25 @@
     "@assistant-ui/react": "^0.15.18",
     "@hono/node-server": "^2.1.5",
     "@nx/devkit": "24.0.1",
-    "@tanstack/ai": "^0.65.1",
-    "@tanstack/ai-client": "^0.18.2",
-    "@tanstack/ai-openrouter": "0.21.1",
-    "@tanstack/ai-react": "0.30.0",
-    "@tanstack/ai-react-ui": "^0.9.7",
+    "@tanstack/ai": "^1.0.1",
+    "@tanstack/ai-client": "^1.0.1",
+    "@tanstack/ai-openai": "^1.0.1",
+    "@tanstack/ai-openrouter": "^1.0.1",
+    "@tanstack/ai-react": "^1.0.1",
     "@tanstack/react-router": "^1.170.16",
     "@tanstack/react-start": "^1.168.26",
     "hono": "^4.13.13",
     "itty-router": "^5.0.24",
-    "next": "16.2.12",
+    "next": "16.4.4",
     "proper-lockfile": "^4.1.2",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
     "react-markdown": "^10.1.0",
     "rehype-highlight": "^7.0.2",
     "rehype-raw": "^7.0.0",
     "rehype-sanitize": "^6.0.0",
     "remark-gfm": "^4.0.1",
     "tailwindcss": "^4.1.18",
-    "zod": "^4.2.0"
+    "zod": "^4.6.5"
   }
 }

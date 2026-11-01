@@ -6,6 +6,7 @@ const parsedConfigSchema = runtimeConfigSchema.extend({
   DEV_ROUTER_TINYSD_PORT: z.coerce.number().pipe(runtimeConfigSchema.shape.DEV_ROUTER_TINYSD_PORT),
   DEV_FACE_VALUE_PORT: z.coerce.number().pipe(runtimeConfigSchema.shape.DEV_FACE_VALUE_PORT),
   DEV_VOICE_CHAT_PORT: z.coerce.number().pipe(runtimeConfigSchema.shape.DEV_VOICE_CHAT_PORT),
+  DEV_VOICE_WORKER_PORT: z.coerce.number().pipe(runtimeConfigSchema.shape.DEV_VOICE_WORKER_PORT),
 })
 
 export const configSchema = parsedConfigSchema.refine(
@@ -14,7 +15,8 @@ export const configSchema = parsedConfigSchema.refine(
     config.DEV_ROUTER_TINYSD_PORT,
     config.DEV_FACE_VALUE_PORT,
     config.DEV_VOICE_CHAT_PORT,
-  ]).size === 4,
+    config.DEV_VOICE_WORKER_PORT,
+  ]).size === 5,
   { message: 'Development ports must be distinct' },
 ).refine(
   config => config.GENERATED_ROUTER_FLUX2_AUTH_TOKEN !== config.GENERATED_ROUTER_TINYSD_AUTH_TOKEN,

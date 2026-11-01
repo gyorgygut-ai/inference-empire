@@ -8,8 +8,9 @@ image = (
     .add_python_packages(
         [
             "fastapi==0.141.1",
-            "librosa==0.11.0",
-            "numpy==2.4.3",
+            "librosa==0.10.0",
+            "numpy==1.26.4",
+            "resampy==0.4.3",
             "diffusers==0.29.0",
             "conformer==0.3.2",
             "safetensors==0.5.3",
@@ -19,15 +20,15 @@ image = (
             "spacy-pkuseg==1.0.1",
             "torch==2.6.0",
             "torchaudio==2.6.0",
-            "transformers==5.2.0",
-            "huggingface-hub[hf-transfer]==1.29.0",
+            "transformers==4.46.3",
+            "huggingface-hub[hf-transfer]==0.36.0",
             "hf_xet==1.6.0",
             "resemble-perth==1.0.1",
             "pyloudnorm==0.2.0",
-            "omegaconf==2.3.1",
+            "omegaconf==2.3.0",
         ]
     )
-    .add_commands(["pip install --no-deps chatterbox-tts==0.1.7"])
+    .add_commands(["pip install --no-deps chatterbox-streaming==0.1.2"])
     .with_envs(
         {
             "HF_HOME": "./hf-cache",

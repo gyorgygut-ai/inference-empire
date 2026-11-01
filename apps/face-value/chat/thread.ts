@@ -13,7 +13,7 @@ import type { ChatOptions } from "./options"
 
 type ChatApi = Pick<
   ReturnType<typeof useChatContext>,
-  "messages" | "append" | "addToolResult" | "addToolApprovalResponse"
+  "messages" | "append" | "addToolResult"
 >
 
 type OutcomeSelection = ToolProps<ChatOptions, "presentOutcomeOptions">["part"]
@@ -41,12 +41,11 @@ export const selectOutcome = async (
   part: OutcomeSelection,
   outcome: { id: string },
 ): Promise<void> => {
-  if (isGenerationLocked(chat.messages)) {
-    return
-  }
   await chat.addToolResult(outcomeSelected(part.id, outcome))
   const hasUpload = chat.messages.some((message) =>
-    message.parts.some((p) => p.type === "tool-call" && p.name === "presentImageUpload"),
+    message.parts.some(
+      (part) => part.type === "tool-call" && part.name === "presentImageUpload",
+    ),
   )
   if (!hasUpload) {
     await chat.append(requestReferenceImage(outcome.id))
@@ -72,11 +71,18 @@ export const uploadReference = async (
   }
   const data = await readFileAsData(file)
   await chat.addToolResult(referenceUploaded(part.id, data))
-  const hasGeneration = chat.messages.some((message) =>
-    message.parts.some((p) => p.type === "tool-call" && p.name === "runGenerateImage"),
-  )
-  if (!hasGeneration) {
-    await chat.append(runGenerateImage({ outcomeId, base64: data.base64, mimeType: data.mimeType }))
+  const lastGeneration = findLastToolCall(chat.messages, "runGenerateImage")
+  const hasPendingApproval =
+    lastGeneration?.type === "tool-call" &&
+    lastGeneration.state === "approval-requested"
+  if (!hasPendingApproval) {
+    await chat.append(
+      runGenerateImage(
+        { outcomeId, base64: data.base64, mimeType: data.mimeType },
+        crypto.randomUUID(),
+        "approval-requested",
+      ),
+    )
   }
 }
 
@@ -84,16 +90,16 @@ export const approveGeneration = async (
   chat: ChatApi,
   part: GenerationCall,
 ): Promise<void> => {
-  const approval = part.approval
   const input = part.input
-  if (!approval || !input) {
+  if (!input || isGenerationLocked(chat.messages)) {
     return
   }
-  await chat.addToolApprovalResponse({ id: approval.id, approved: true })
+  const toolCallId = crypto.randomUUID()
+  await chat.append(runGenerateImage(input, toolCallId, "input-complete"))
   const generation = await generateImageAction(input)
   await chat.addToolResult(
     "presignedUrl" in generation
-      ? generationSucceeded(part.id, generation)
-      : generationFailed(part.id, generation),
+      ? generationSucceeded(toolCallId, generation)
+      : generationFailed(toolCallId, generation),
   )
 }

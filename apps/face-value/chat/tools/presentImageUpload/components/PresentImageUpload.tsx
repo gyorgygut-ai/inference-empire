@@ -1,5 +1,6 @@
 "use client"
 import React from "react"
+import clsx from "clsx"
 import { useChatContext } from "@/chat/client"
 import { vocabulary } from "@/chat/vocabulary/en"
 import { uploadReference } from "../../../thread"
@@ -49,7 +50,10 @@ export const PresentImageUpload = ({ part }: PresentImageUploadProps) => {
           type="button"
           onClick={handleOpen}
           disabled={disabled}
-          className="w-full px-4 py-3 border-2 border-dashed rounded-xl hover:bg-primary/5 transition-colors"
+          className={clsx(
+            "w-full px-4 py-3 border-2 border-dashed rounded-xl transition-colors",
+            disabled ? "cursor-not-allowed" : "hover:bg-primary/5",
+          )}
         >
           <span className="flex items-center justify-center gap-2 text-sm text-secondary-foreground">
             📎 {vocabulary.messages.uploadCta}

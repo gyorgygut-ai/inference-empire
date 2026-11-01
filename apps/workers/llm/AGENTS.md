@@ -6,6 +6,10 @@ LLM Chat Completions worker. OpenAI-compatible Chat Completions API.
 
 ## SPECS
 
+## Hugging Face authentication
+
+Authenticate every Hugging Face Hub request with `SECRET_HUGGINGFACE_TOKEN`. Pass the token directly to Hub APIs and initialize Hub authentication before libraries perform internal downloads.
+
 **Authentication**:
 
 - **Problem**: Requests need authentication without exposing Beam credentials.

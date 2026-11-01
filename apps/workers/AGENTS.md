@@ -30,7 +30,8 @@
   - Keep shared business logic at `{projectRoot}/shared/worker_{model}.py` and use it from wrappers.
   - `prebuild` generates Pydantic contracts into ignored `{projectRoot}/dist/`.
   - Generate `Input`/`Output` types from `packages/schemas/workers/*.schema.json`; never hand-edit generated contracts.
-  - Keep artifact uploads, fakes, and validation under `{projectRoot}/shared/**/*.py`; keep them self-contained.
+  - Keep artifact uploads and validation under `{projectRoot}/shared/**/*.py`; keep them self-contained.
+  - Local-only fake workers may use a thin platform wrapper and shared stub logic under `{projectRoot}/fakes/`; keep fake code self-contained, CPU-only, and outside deploy targets.
 - **Outcome**: Each worker separates platform code, shared logic, and generated contracts.
 
 ## DEPLOY
@@ -51,6 +52,7 @@
 - Use `worker-{family}` consistently for the Nx project, deployed app, Python distribution, and cache volume.
 - Push environment variables idempotently during deploy; do not set them manually.
 - Workers read `SECRET_*`; `project.json` maps `SECRET_*` from `GENERATED_*`, allowing external credentials to be substituted without changing worker code.
+- Authenticate every Hugging Face Hub request with `SECRET_HUGGINGFACE_TOKEN`. Pass the token directly to Hub APIs and initialize Hub authentication before libraries perform internal downloads.
 - Keep local names as `GENERATED_*` in `env.runtime` and `.env*`.
 - Never put container-only `SECRET_*` names in `packages/schemas/env/*`.
 

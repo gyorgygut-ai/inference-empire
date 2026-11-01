@@ -69,7 +69,8 @@
         "preacceptance",
         "face-value:deploy",
         "router:deploy",
-        "worker-voice:deploy-beam"
+        "worker-voice:deploy-beam",
+        "worker-voice:test-acceptance"
       ],
       "options": {
         "cwd": "tools/test",
@@ -79,8 +80,12 @@
       }
     },
     "e2e:dev": {
-      "executor": "nx:noop",
-      "cache": false
+      "executor": "dotenvx:run-commands",
+      "cache": false,
+      "options": {
+        "cwd": "{workspaceRoot}",
+        "command": "npx nx run worker-voice:test-integration && npx nx run worker-voice:test-e2e"
+      }
     },
     "e2e:deploy": {
       "executor": "nx:noop",

@@ -7,9 +7,14 @@ Realtime voice worker. Client connects directly over WebRTC.
 - In untracked `{projectRoot}/references`
 - Reference voices are `.wav` files
 - `:predeploy-beam` seeds voices to volume
-- Must work without references; default `builtin`
+- Must work without references; default and `null` voice normalize to `alloy`
+- Explicit `alloy` uses default synthesis; a catalog name selects its `.wav` reference
 
 ## SPECS
+
+## Hugging Face authentication
+
+Authenticate every Hugging Face Hub request with `SECRET_HUGGINGFACE_TOKEN`. Pass the token directly to Hub APIs and initialize Hub authentication before libraries perform internal downloads.
 
 **Authentication**:
 
@@ -24,11 +29,13 @@ Realtime voice worker. Client connects directly over WebRTC.
   - Reject missing or invalid server credentials with `401`.
   - Reject invalid or expired session tokens with `401`.
   - With a trusted token, return an ephemeral token, `expires_at`, and TURN `rtc_configuration`.
+  - Normalize omitted or `null` session voice to `alloy`.
 - **Outcome**: The trusted credential stays server-side; the browser receives only a short-lived session token.
 
 **Transport**:
 
 - **Problem**: Realtime media needs browser-compatible ICE configuration, negotiation, and teardown.
+- **FastRTC TURN endpoint**: Since September 10, 2026, the live credentials proxy is `https://fastrtc-turn-service.hf.space/credentials`. Do not use the obsolete `turn.fastrtc.org` endpoint; verify the pinned FastRTC revision uses the live proxy.
 - **Acceptance**:
   - Use `fastrtc.Stream` for negotiation, teardown, and RTC configuration, following the documented API for the pinned FastRTC revision.
   - Set `rtc_configuration=get_cloudflare_turn_credentials_async`; TURN is required, STUN alone is insufficient.
@@ -59,6 +66,16 @@ Realtime voice worker. Client connects directly over WebRTC.
   - Reject silent TTS output.
   - After a completed STT → LLM → TTS turn, produce non-silent `int16` reply audio, proven with `output_rms`.
 - **Outcome**: Each completed turn returns audible audio under a consistent contract.
+
+**Voice selection**:
+
+- **Problem**: Callers need a stable default voice and selectable reference voices.
+- **Acceptance**:
+  - The contract default is `alloy`; omitted and `null` values resolve to `alloy`.
+  - `alloy` uses default synthesis without a reference WAV.
+  - A configured reference voice uses the matching WAV and its manifest prompt.
+  - The worker remains functional when no reference voices are present.
+- **Outcome**: Voice selection is explicit and reference audio is used only for configured voices.
 
 **Concurrency**:
 

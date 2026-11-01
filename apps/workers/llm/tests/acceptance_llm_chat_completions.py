@@ -8,7 +8,7 @@ HEADERS = {"Authorization": f"Bearer {TOKEN}"}
 
 
 def main():
-    with httpx.Client(timeout=30) as client:
+    with httpx.Client(timeout=300) as client:
         response = client.post(
             f"{BASE}/v1/chat/completions",
             headers=HEADERS,

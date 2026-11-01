@@ -29,7 +29,7 @@ class Model:
 
 
 def declared_models(root: Path = ROOT) -> list[Model]:
-    """Read literal worker MODEL_CACHES declarations without importing workers."""
+    """Read literal worker model declarations without importing workers."""
     models: list[Model] = []
     workers_root = root / "apps" / "workers"
 
@@ -38,15 +38,21 @@ def declared_models(root: Path = ROOT) -> list[Model]:
         for node in tree.body:
             if not isinstance(node, ast.Assign):
                 continue
-            if not any(
-                isinstance(target, ast.Name) and target.id == "MODEL_CACHES"
-                for target in node.targets
-            ):
+            declaration_name = next(
+                (
+                    target.id
+                    for target in node.targets
+                    if isinstance(target, ast.Name)
+                    and target.id in {"MODEL_CACHES", "MODELS"}
+                ),
+                None,
+            )
+            if declaration_name is None:
                 continue
 
             entries = ast.literal_eval(node.value)
             if not isinstance(entries, dict):
-                raise ValueError(f"{declaration}: MODEL_CACHES must be a dictionary")
+                raise ValueError(f"{declaration}: {declaration_name} must be a dictionary")
 
             for name, values in entries.items():
                 if not isinstance(name, str) or not isinstance(values, dict):
@@ -171,7 +177,7 @@ def _cache_repo_dir(cache_root: Path, repo_id: str) -> Path:
 def seed_model(model: Model, volume_names: set[str]) -> None:
     from huggingface_hub import HfApi, snapshot_download
 
-    token = os.environ.get("HF_TOKEN")
+    token = os.environ["SECRET_HUGGINGFACE_TOKEN"]
     api = HfApi(token=token)
     revision = api.model_info(model.repo_id).sha
     if not revision:

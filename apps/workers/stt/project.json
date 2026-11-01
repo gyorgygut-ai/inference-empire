@@ -9,6 +9,20 @@
     "model:stt"
   ],
   "targets": {
+    "stub-beam": {
+      "executor": "dotenvx:run-commands",
+      "continuous": true,
+      "cache": false,
+      "readyWhen": { "url": "http://127.0.0.1:18761/health" },
+      "options": {
+        "cwd": "{projectRoot}",
+        "env": {
+          "SECRET_STT_AUDIO_TRANSCRIPTIONS_API_KEY": "${GENERATED_STT_AUDIO_TRANSCRIPTIONS_API_KEY}"
+        },
+        "command": "uv run --locked --project ../../../ uvicorn",
+        "args": "fakes.worker_stt_audio_transcriptions_beam:app --host 127.0.0.1 --port 18761"
+      }
+    },
     "deploy-beam": {
       "executor": "dotenvx:run-commands",
       "cache": true,
@@ -93,6 +107,9 @@
       ],
       "options": {
         "cwd": "{workspaceRoot}",
+        "env": {
+          "STT_AUDIO_TRANSCRIPTIONS_API_URL": "$(npx tsx $NX_WORKSPACE_ROOT/tools/get-beam-url.ts worker-stt)"
+        },
         "command": "uv run --locked --project apps/workers/stt python",
         "args": "apps/workers/stt/tests/acceptance_stt_audio_transcriptions.py"
       }

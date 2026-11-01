@@ -1,10 +1,9 @@
 "use client"
 
-import { startTransition, useOptimistic, useRef } from "react"
+import { startTransition, useOptimistic, useRef, useState } from "react"
 import { useRealtimeChat } from "@tanstack/ai-react"
 import type { RealtimeStatus } from "@tanstack/ai"
 import { openaiRealtime } from "@tanstack/ai-openai"
-import { useRouter } from "next/navigation"
 import { Toggle } from "@inference/ui/components/Toggle"
 import { vocabulary } from "@/messages"
 import Draggable from "@/chat/components/Draggable"
@@ -16,18 +15,19 @@ type Provider = "workers" | "openai"
 const isActiveStatus = (status: RealtimeStatus) =>
   status === "connected" || status === "connecting" || status === "reconnecting"
 
-export const VoiceChatView = ({ provider }: { provider: Provider }) => {
-  const router = useRouter()
+export const VoiceChatView = () => {
+  const [provider, setProvider] = useState<Provider>("workers")
+  
   const { status, mode, connect, disconnect } = useRealtimeChat({
     adapter: provider === "openai" ? openaiRealtime() : fastRtcAdapter,
     getToken: provider === "openai" ? getOpenAiToken : getFastRtcToken,
   })
   const [displayStatus, setDisplayStatus] = useOptimistic(status)
   const connectionQueue = useRef<Promise<void>>(Promise.resolve())
-
+  
   const toggleConnection = () => {
     const nextStatus = isActiveStatus(displayStatus) ? "idle" : "connecting"
-
+    
     startTransition(async () => {
       setDisplayStatus(nextStatus)
       connectionQueue.current = connectionQueue.current
@@ -36,7 +36,7 @@ export const VoiceChatView = ({ provider }: { provider: Provider }) => {
       await connectionQueue.current
     })
   }
-
+  
   return (
     <>
       <Draggable
@@ -53,9 +53,7 @@ export const VoiceChatView = ({ provider }: { provider: Provider }) => {
           options={[{ value: "workers", label: "Workers" }, { value: "openai", label: "OpenAI" }]}
           value={provider}
           onValueChange={(nextProvider) => {
-            const url = new URL(window.location.href)
-            url.searchParams.set("provider", nextProvider)
-            router.push(`${url.pathname}${url.search}`)
+            setProvider(nextProvider)
           }}
         />
       </div>

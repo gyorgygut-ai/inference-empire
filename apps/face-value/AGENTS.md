@@ -79,6 +79,11 @@ Progressive chat thread, with NO LLM: tool result triggres next tool call.
 - Types: TS api types auto-generated (TO BE DISCUSSED)
 - Reference image validated and resized to max. 512×512 on server
 
+**No Empty Nodes**:
+
+- **Problem**: `MessageProps.message` has `parts`; empty arrays render empty articles
+- **Approach**: `if (!message.parts || message.parts.length === 0) return null` — guard before DOM
+
 **1. Request Selected Outcome**:
 
 - Trigger: initial assistant message
@@ -91,15 +96,24 @@ Progressive chat thread, with NO LLM: tool result triggres next tool call.
 - Text: `requestReferenceImage.assistantMessage`
 - Tool: `presentImageUpload` -> image upload dropzone
 
-**3. Run Image Generation**:
+**3. Approve + Run Image Generation**:
 
 - Trigger: `requestReferenceImage` result
-- Tool: `runGenerateImage` -> needs approval
-  - awaiting-input+input-streaming: `<Spinner />`
-  - approval-requested: `<GenerateImageApproval />`
+- Tool: `runGenerateImage` -> two calls of the same tool:
+  - call 1 `approval-requested`: `<GenerateImageApproval />`
     - text: `runGenerateImage.requested.assistantMessage`
     - button: `runGenerateImage.requested.userApprove`
-  - approval-responded: `runGenerateImage.responded.assistantMessage`
+  - call 2 `input-complete`: `<Spinner />`
+    - text: `runGenerateImage.responded.assistantMessage`
   - error: `runGenerateImage.error.assistantMessage`
-  - streaming: `runGenerateImage.streaming.assistantMessage`
   - complete: `<GenerateImageArtifact src={presigned url} />`
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+## This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

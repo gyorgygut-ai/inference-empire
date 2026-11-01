@@ -1,5 +1,5 @@
 "use client"
-import React from "react"
+import React, { useId } from "react"
 import { createChatHook } from "@tanstack/ai-react/ui"
 import { chatOptions } from "./options"
 import { initialMessage } from "./messages/initialMessage"
@@ -28,6 +28,7 @@ export const { useAppChat, useChatContext } = createChatHook({
 
 export const ChatClient = ({ outcomes }: { outcomes: PublicOutcome[] }) => {
   const chat = useAppChat({
+    threadId: useId(),
     initialMessages: [initialMessage(outcomes)],
   })
 

@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
 import { useChatContext } from "@/chat/client";
+import { selectOutcome } from "../../../thread";
 import { vocabulary } from "@/chat/vocabulary/en";
 
 import type { ToolProps } from "@tanstack/ai-react/ui";
@@ -21,6 +22,11 @@ export const PresentOutcomeOptions = ({ part }: PresentOutcomeOptionsProps) => {
   );
   const selectedOutcomeId = part.output?.outcomeId || null;
   const locked = isGenerationLocked(messages);
+  const handleSelect = (outcome: (typeof outcomes)[number]) => {
+    if (!locked) {
+      void selectOutcome(chat, part, outcome);
+    }
+  };
 
   return (
     <div
@@ -39,11 +45,10 @@ export const PresentOutcomeOptions = ({ part }: PresentOutcomeOptionsProps) => {
         {outcomes.map((outcome) => (
           <OutcomeOptionButton
             key={outcome.id}
-            chat={chat}
-            part={part}
             outcome={outcome}
             selected={selectedOutcomeId === outcome.id}
             disabled={locked}
+            onSelect={() => handleSelect(outcome)}
           />
         ))}
       </div>

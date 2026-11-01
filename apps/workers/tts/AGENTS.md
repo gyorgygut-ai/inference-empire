@@ -4,6 +4,10 @@ TTS Audio Speech worker. OpenAI-compatible Audio Speech API.
 
 ## SPECS
 
+## Hugging Face authentication
+
+Authenticate every Hugging Face Hub request with `SECRET_HUGGINGFACE_TOKEN`. Pass the token directly to Hub APIs and initialize Hub authentication before libraries perform internal downloads.
+
 **Authentication**:
 
 - **Problem**: Requests need authentication without exposing Beam credentials.
@@ -22,6 +26,12 @@ TTS Audio Speech worker. OpenAI-compatible Audio Speech API.
   - For authenticated text requesting WAV, return non-silent audio.
   - Full-clip synthesis is acceptable until streaming is implemented.
 - **Outcome**: Valid requests return non-silent WAV audio inline.
+
+**Voice selection**:
+
+- `voice` defaults to `alloy`; `null` is normalized to `alloy`.
+- `alloy` synthesizes without a reference audio prompt.
+- A named reference voice requires valid inline `reference_audio_base64` WAV data and synthesizes with that prompt.
 
 **Health**:
 

@@ -52,12 +52,16 @@
       },
       "dependsOn": [
         "predev",
-        { "projects": ["worker-voice"], "target": "deploy-beam" }
+        {
+          "projects": ["worker-voice"],
+          "target": "dev-beam",
+          "waitFor": "ready"
+        }
       ],
       "options": {
         "cwd": "apps/voice-chat",
         "env": {
-          "SECRET_WORKER_URL": "$(npx tsx $NX_WORKSPACE_ROOT/tools/get-beam-url.ts worker-voice)",
+          "SECRET_WORKER_URL": "http://127.0.0.1:${DEV_VOICE_WORKER_PORT}",
           "SECRET_BEAM_TOKEN": "${SECRET_BEAM_TOKEN}",
           "GENERATED_VOICE_WORKER_AUTH_TOKEN": "${GENERATED_VOICE_WORKER_AUTH_TOKEN}",
           "OPENAI_API_KEY": "${SECRET_OPENAI_API_KEY}"

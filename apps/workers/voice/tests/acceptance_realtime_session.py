@@ -53,7 +53,7 @@ async def verify_realtime_voice_call() -> None:
         peer = RTCPeerConnection(configuration=rtc_configuration)
         player = MediaPlayer(str(FIXTURE_AUDIO), format="wav")
         assert player.audio is not None, "fixture has no audio track"
-        peer.addTrack(player.audio)
+        sender = peer.addTrack(player.audio)
         peer.createDataChannel("text")
         audio_received = asyncio.Event()
         rms_values: list[float] = []
@@ -93,18 +93,30 @@ async def verify_realtime_voice_call() -> None:
             )
             await asyncio.wait_for(audio_received.wait(), timeout=120)
 
-            stats = await peer.getStats()
-            candidates = {stat.id: stat for stat in stats.values() if stat.type == "local-candidate"}
-            selected_pairs = [
-                stat
-                for stat in stats.values()
-                if stat.type == "candidate-pair" and stat.state == "succeeded"
+            ice_transports = {
+                transceiver.receiver.transport.transport
+                for transceiver in peer.getTransceivers()
+            }
+            if peer.sctp is not None:
+                ice_transports.add(peer.sctp.transport.transport)
+            nominated_pairs = [
+                pair
+                for transport in ice_transports
+                for pair in transport._connection._nominated.values()
             ]
+            assert peer.iceConnectionState == "completed", "ICE did not complete"
+            assert peer.connectionState == "connected", "WebRTC peer did not connect"
             assert any(
-                candidates.get(pair.localCandidateId)
-                and candidates[pair.localCandidateId].candidateType == "relay"
-                for pair in selected_pairs
-            ), "WebRTC call did not use a TURN relay candidate"
+                pair.local_candidate.type == "relay"
+                and pair.remote_candidate.type in {"host", "srflx", "prflx", "relay"}
+                for pair in nominated_pairs
+            ), "nominated WebRTC pair did not use client TURN relay"
+            sender_stats = await sender.getStats()
+            assert any(
+                getattr(stat, "type", None) == "outbound-rtp"
+                and getattr(stat, "packetsSent", 0) > 0
+                for stat in sender_stats.values()
+            ), "fixture audio was not sent"
             assert max(rms_values, default=0) > 32, "worker returned silent audio"
         finally:
             await peer.close()

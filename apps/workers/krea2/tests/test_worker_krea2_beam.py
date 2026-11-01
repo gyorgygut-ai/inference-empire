@@ -1,5 +1,6 @@
 import importlib
 import io
+import sys
 from types import SimpleNamespace
 
 import pytest
@@ -12,6 +13,7 @@ import apps.workers.krea2.worker_krea2_beam as worker_mod
 from apps.workers.krea2.shared.worker_krea2 import (
     Krea2Ref2ImgInput,
     Krea2Ref2ImgOutput,
+    _download_reid_runtime,
     do_inference,
 )
 
@@ -20,6 +22,24 @@ def _png_bytes(img):
     buffer = io.BytesIO()
     img.save(buffer, format="PNG")
     return buffer.getvalue()
+
+
+def test_reid_snapshot_authenticates_with_secret(monkeypatch):
+    calls = []
+    monkeypatch.setenv("SECRET_HUGGINGFACE_TOKEN", "hf-sentinel")
+    monkeypatch.setitem(
+        sys.modules,
+        "huggingface_hub",
+        SimpleNamespace(
+            snapshot_download=lambda repo, **kwargs: calls.append((repo, kwargs))
+            or "/runtime"
+        ),
+    )
+
+    _download_reid_runtime()
+
+    assert len(calls) == 1
+    assert calls[0][1]["token"] == "hf-sentinel"
 
 
 class SpyPipe(FakeImagePipe):

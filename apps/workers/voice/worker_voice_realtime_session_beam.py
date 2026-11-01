@@ -1,6 +1,6 @@
 import os
 
-from beam import Image, QueueDepthAutoscaler, asgi
+from beam import Image, QueueDepthAutoscaler, Volume, asgi
 from shared.worker_voice import build_app
 
 image = (
@@ -41,16 +41,25 @@ image = (
             "SECRET_TTS_AUDIO_SPEECH_API_KEY": os.environ[
                 "SECRET_TTS_AUDIO_SPEECH_API_KEY"
             ],
+            "VOICE_REFERENCES_DIR": "./references",
         }
     )
+)
+
+
+reference_volume = Volume(
+    name="worker-voice-reference-voices",
+    mount_path="./references",
 )
 
 
 @asgi(
     name="worker-voice",
     image=image,
+    volumes=[reference_volume],
     cpu=2,
     memory="4Gi",
+    concurrent_requests=2,
     keep_warm_seconds=10,
     timeout=120,
     authorized=False,

@@ -4,12 +4,19 @@ import importlib.util
 import sys
 from pathlib import Path
 
+import pytest
+
 SCRIPT = Path(__file__).resolve().parents[1] / "seed-volumes.py"
 SPEC = importlib.util.spec_from_file_location("seed_volumes", SCRIPT)
 assert SPEC is not None and SPEC.loader is not None
 seed_volumes = importlib.util.module_from_spec(SPEC)
 sys.modules[SPEC.name] = seed_volumes
 SPEC.loader.exec_module(seed_volumes)
+
+
+@pytest.fixture(autouse=True)
+def huggingface_secret(monkeypatch) -> None:
+    monkeypatch.setenv("SECRET_HUGGINGFACE_TOKEN", "hf-sentinel")
 
 
 def test_discovers_worker_models_without_importing_worker_modules() -> None:
@@ -85,10 +92,11 @@ def test_temporary_download_is_removed_after_copy_failure(monkeypatch, tmp_path:
         declaration=tmp_path / "worker.py",
     )
     temporary_roots: list[Path] = []
+    received_tokens: dict[str, str | None] = {}
 
     class Api:
         def __init__(self, token=None):
-            pass
+            received_tokens["api"] = token
 
         def model_info(self, _repo_id):
             return type("Info", (), {"sha": "revision"})()
@@ -98,9 +106,10 @@ def test_temporary_download_is_removed_after_copy_failure(monkeypatch, tmp_path:
             return ["config.json"]
 
     def download(*, repo_id, revision, cache_dir, token):
+        received_tokens["snapshot"] = token
         assert (repo_id, revision) == ("org/model", "revision")
         repo_dir = cache_dir / "models--org--model"
-        repo_dir.mkdir(parents=True)
+        (repo_dir / "snapshots" / revision).mkdir(parents=True)
         temporary_roots.append(cache_dir.parent)
         return str(repo_dir / "snapshots" / revision)
 
@@ -125,6 +134,7 @@ def test_temporary_download_is_removed_after_copy_failure(monkeypatch, tmp_path:
 
     assert temporary_roots
     assert not temporary_roots[0].exists()
+    assert received_tokens == {"api": "hf-sentinel", "snapshot": "hf-sentinel"}
 
 
 def test_temporary_download_is_removed_after_verification_failure(
@@ -151,7 +161,7 @@ def test_temporary_download_is_removed_after_verification_failure(
 
     def download(*, repo_id, revision, cache_dir, token):
         repo_dir = cache_dir / "models--org--model"
-        repo_dir.mkdir(parents=True)
+        (repo_dir / "snapshots" / revision).mkdir(parents=True)
         temporary_roots.append(cache_dir.parent)
         return str(repo_dir / "snapshots" / revision)
 

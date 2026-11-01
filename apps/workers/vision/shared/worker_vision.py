@@ -26,10 +26,9 @@ DEPENDENCIES = [
 "transformers==5.16.1",
 "torchvision==0.24.1",
 "pillow==12.3.0",
-"accelerate==1.14.0",
-"boto3==1.43.83",
-"fastapi==0.141.1",
-"hf_transfer==0.1.9",
+    "accelerate==1.14.0",
+    "boto3==1.43.83",
+    "fastapi==0.141.1",
 ]
 
 def model_volumes():
@@ -125,6 +124,9 @@ def do_inference(model, processor, analyze_prompt: str, req: SmallVisionInput):
         response_format={"type": "json_object"},
         max_new_tokens=MAX_NEW_TOKENS,
         do_sample=False,
+        temperature=1.0,
+        top_p=1.0,
+        top_k=50,
     )
 
     print("[GEN] starting inference", flush=True)

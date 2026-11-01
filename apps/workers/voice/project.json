@@ -11,6 +11,8 @@
       "inputs": [
         "{projectRoot}/worker_voice_realtime_session_beam.py",
         "{projectRoot}/shared/**/*.py",
+        "{projectRoot}/tools/seed_reference_voices.py",
+        "{projectRoot}/references/**/*",
         "{workspaceRoot}/nx.json",
         "{workspaceRoot}/package.json",
         "{workspaceRoot}/pyproject.toml",
@@ -39,6 +41,7 @@
         "args": "worker_voice_realtime_session_beam.py:generate"
       },
       "dependsOn": [
+        "predeploy-beam",
         "prebuild",
         "worker-stt:deploy-beam",
         "worker-llm:deploy-beam",
@@ -50,6 +53,15 @@
       "dependsOn": ["deploy-beam"],
       "cache": false
     },
+    "predeploy-beam": {
+      "executor": "dotenvx:run-commands",
+      "cache": false,
+      "options": {
+        "cwd": "{projectRoot}",
+        "command": "uv run --locked python",
+        "args": "tools/seed_reference_voices.py"
+      }
+    },
     "test-unit": {
       "executor": "dotenvx:run-commands",
       "cache": false,
@@ -58,6 +70,35 @@
         "cwd": "{projectRoot}",
         "command": "uv run --locked pytest",
         "args": "tests/unit/test_realtime_session_unit.py"
+      }
+    },
+    "test-integration": {
+      "executor": "dotenvx:run-commands",
+      "cache": false,
+      "dependsOn": [
+        "prebuild",
+        { "projects": ["worker-stt"], "target": "stub-beam", "waitFor": "ready" },
+        { "projects": ["worker-llm"], "target": "stub-beam", "waitFor": "ready" },
+        { "projects": ["worker-tts"], "target": "stub-beam", "waitFor": "ready" }
+      ],
+      "options": {
+        "cwd": "{workspaceRoot}",
+        "env": {
+          "REAL_STT_AUDIO_TRANSCRIPTIONS_API_URL": "$(npx tsx $NX_WORKSPACE_ROOT/tools/get-beam-url.ts worker-stt)",
+          "REAL_SECRET_STT_AUDIO_TRANSCRIPTIONS_API_KEY": "${GENERATED_STT_AUDIO_TRANSCRIPTIONS_API_KEY}",
+          "STUB_STT_AUDIO_TRANSCRIPTIONS_API_URL": "http://127.0.0.1:18761",
+          "STUB_SECRET_STT_AUDIO_TRANSCRIPTIONS_API_KEY": "${GENERATED_STT_AUDIO_TRANSCRIPTIONS_API_KEY}",
+          "REAL_LLM_CHAT_COMPLETIONS_API_URL": "$(npx tsx $NX_WORKSPACE_ROOT/tools/get-beam-url.ts worker-llm)",
+          "REAL_SECRET_LLM_CHAT_COMPLETIONS_API_KEY": "${GENERATED_LLM_CHAT_COMPLETIONS_API_KEY}",
+          "STUB_LLM_CHAT_COMPLETIONS_API_URL": "http://127.0.0.1:18762",
+          "STUB_SECRET_LLM_CHAT_COMPLETIONS_API_KEY": "${GENERATED_LLM_CHAT_COMPLETIONS_API_KEY}",
+          "REAL_TTS_AUDIO_SPEECH_API_URL": "$(npx tsx $NX_WORKSPACE_ROOT/tools/get-beam-url.ts worker-tts)",
+          "REAL_SECRET_TTS_AUDIO_SPEECH_API_KEY": "${GENERATED_TTS_AUDIO_SPEECH_API_KEY}",
+          "STUB_TTS_AUDIO_SPEECH_API_URL": "http://127.0.0.1:18763",
+          "STUB_SECRET_TTS_AUDIO_SPEECH_API_KEY": "${GENERATED_TTS_AUDIO_SPEECH_API_KEY}"
+        },
+        "command": "uv run --locked --project apps/workers/voice pytest",
+        "args": "apps/workers/voice/tests/integration/test_inference_backends.py"
       }
     },
     "test-acceptance": {
@@ -73,12 +114,12 @@
         "args": "apps/workers/voice/tests/acceptance_realtime_session.py"
       }
     },
-    "serve-local": {
+    "dev-beam": {
       "executor": "dotenvx:run-commands",
       "continuous": true,
       "cache": false,
       "readyWhen": {
-        "url": "http://127.0.0.1:8765/health"
+        "url": "http://127.0.0.1:{env.DEV_VOICE_WORKER_PORT}/health"
       },
       "options": {
         "cwd": "{projectRoot}",
@@ -90,10 +131,40 @@
           "SECRET_LLM_CHAT_COMPLETIONS_API_KEY": "${GENERATED_LLM_CHAT_COMPLETIONS_API_KEY}",
           "LLM_CHAT_COMPLETIONS_API_URL": "$(npx tsx $NX_WORKSPACE_ROOT/tools/get-beam-url.ts worker-llm)",
           "SECRET_TTS_AUDIO_SPEECH_API_KEY": "${GENERATED_TTS_AUDIO_SPEECH_API_KEY}",
-          "TTS_AUDIO_SPEECH_API_URL": "$(npx tsx $NX_WORKSPACE_ROOT/tools/get-beam-url.ts worker-tts)"
+          "TTS_AUDIO_SPEECH_API_URL": "$(npx tsx $NX_WORKSPACE_ROOT/tools/get-beam-url.ts worker-tts)",
+          "VOICE_REFERENCES_DIR": "tests/fixtures"
         },
-        "command": "uv run --locked python -c pass && uv pip install --python .venv/bin/python --no-deps chatterbox-tts==0.1.7 && uv run --locked uvicorn",
-        "args": "shared.worker_voice:build_app --factory --host 127.0.0.1 --port 8765"
+        "command": "uv run --locked uvicorn",
+        "args": "shared.worker_voice:build_app --factory --host 127.0.0.1 --port=\"$DEV_VOICE_WORKER_PORT\""
+      }
+    },
+    "stub-beam": {
+      "executor": "dotenvx:run-commands",
+      "continuous": true,
+      "cache": false,
+      "readyWhen": {
+        "url": "http://127.0.0.1:{env.DEV_VOICE_WORKER_PORT}/health"
+      },
+      "dependsOn": [
+        { "projects": ["worker-stt"], "target": "stub-beam", "waitFor": "ready" },
+        { "projects": ["worker-llm"], "target": "stub-beam", "waitFor": "ready" },
+        { "projects": ["worker-tts"], "target": "stub-beam", "waitFor": "ready" }
+      ],
+      "options": {
+        "cwd": "{projectRoot}",
+        "env": {
+          "SECRET_HUGGINGFACE_TOKEN": "${SECRET_HUGGINGFACE_TOKEN}",
+          "SECRET_VOICE_WORKER_AUTH_TOKEN": "${GENERATED_VOICE_WORKER_AUTH_TOKEN}",
+          "SECRET_STT_AUDIO_TRANSCRIPTIONS_API_KEY": "${GENERATED_STT_AUDIO_TRANSCRIPTIONS_API_KEY}",
+          "STT_AUDIO_TRANSCRIPTIONS_API_URL": "http://127.0.0.1:18761",
+          "SECRET_LLM_CHAT_COMPLETIONS_API_KEY": "${GENERATED_LLM_CHAT_COMPLETIONS_API_KEY}",
+          "LLM_CHAT_COMPLETIONS_API_URL": "http://127.0.0.1:18762",
+          "SECRET_TTS_AUDIO_SPEECH_API_KEY": "${GENERATED_TTS_AUDIO_SPEECH_API_KEY}",
+          "TTS_AUDIO_SPEECH_API_URL": "http://127.0.0.1:18763",
+          "VOICE_REFERENCES_DIR": "tests/fixtures"
+        },
+        "command": "uv run --locked uvicorn",
+        "args": "shared.worker_voice:build_app --factory --host 127.0.0.1 --port=\"$DEV_VOICE_WORKER_PORT\""
       }
     },
     "test-e2e": {
@@ -101,16 +172,14 @@
       "cache": false,
       "dependsOn": [
         "prebuild",
-        "worker-stt:deploy-beam",
-        "worker-llm:deploy-beam",
-        "worker-tts:deploy-beam",
-        { "target": "serve-local", "waitFor": "ready" }
+        { "target": "dev-beam", "waitFor": "ready" }
       ],
       "options": {
         "cwd": "{workspaceRoot}",
         "env": {
-          "VOICE_REALTIME_SESSION_API_URL": "http://127.0.0.1:8765",
-          "GENERATED_VOICE_WORKER_AUTH_TOKEN": "${GENERATED_VOICE_WORKER_AUTH_TOKEN}"
+          "VOICE_REALTIME_SESSION_API_URL": "http://127.0.0.1:${DEV_VOICE_WORKER_PORT}",
+          "SECRET_VOICE_WORKER_AUTH_TOKEN": "${GENERATED_VOICE_WORKER_AUTH_TOKEN}",
+          "VOICE_TEST_MODE": "real"
         },
         "command": "uv run --locked --project apps/workers/voice pytest",
         "args": "apps/workers/voice/tests/e2e/test_realtime_voice.py"

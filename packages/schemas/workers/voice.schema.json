@@ -41,9 +41,9 @@
           "type": "integer"
         },
         "voice": {
-          "default": "builtin",
+          "default": "alloy",
           "title": "Voice",
-          "type": "string"
+          "type": ["string", "null"]
         },
         "language": {
           "default": "en",
@@ -92,7 +92,7 @@
         "type": {"default": "realtime", "enum": ["realtime"], "title": "Type", "type": "string"},
         "model": {"default": "gpt-4o-realtime-preview", "minLength": 1, "title": "Model", "type": "string"},
         "instructions": {"default": "You are a concise, helpful voice assistant.", "title": "Instructions", "type": "string"},
-        "voice": {"default": "alloy", "minLength": 1, "title": "Voice", "type": "string"}
+        "voice": {"default": "alloy", "minLength": 1, "title": "Voice", "type": ["string", "null"]}
       },
       "title": "RealtimeSession",
       "type": "object"

@@ -5,25 +5,42 @@ import type { ChatOptions } from "../options"
 
 type Tools = ChatOptions["tools"]
 
-export function runGenerateImage(input: { outcomeId: string; base64: string; mimeType: string }): UIMessage<Tools> {
+type GenerationInput = { outcomeId: string; base64: string; mimeType: string }
+type GenerationState = "approval-requested" | "input-complete"
+
+export function runGenerateImage(
+  input: GenerationInput,
+  toolCallId: string,
+  state: GenerationState,
+): UIMessage<Tools> {
+  const id = crypto.randomUUID()
+  if (state === "approval-requested") {
+    const parts: MessagePart<Tools>[] = [
+      textPart(vocabulary.runGenerateImage.requested.assistantMessage),
+      {
+        type: "tool-call",
+        id: toolCallId,
+        name: "runGenerateImage",
+        arguments: JSON.stringify(input),
+        input,
+        state,
+        approval: {
+          id: crypto.randomUUID(),
+          needsApproval: true,
+        },
+      },
+    ]
+    return { id, role: "assistant", parts }
+  }
   const parts: MessagePart<Tools>[] = [
-    textPart(vocabulary.runGenerateImage.requested.assistantMessage),
     {
       type: "tool-call",
-      id: crypto.randomUUID(),
+      id: toolCallId,
       name: "runGenerateImage",
       arguments: JSON.stringify(input),
       input,
-      state: "approval-requested",
-      approval: {
-        id: crypto.randomUUID(),
-        needsApproval: true,
-      },
+      state,
     },
   ]
-  return {
-    id: crypto.randomUUID(),
-    role: "assistant",
-    parts,
-  }
+  return { id, role: "assistant", parts }
 }

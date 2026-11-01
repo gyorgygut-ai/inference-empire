@@ -122,6 +122,16 @@
         "source": "packages/schemas/workers/krea2.schema.json",
         "out": "apps/workers/krea2/dist/contract_krea2.py"
       }
+    },
+    "test-acceptance": {
+      "executor": "dotenvx:run-commands",
+      "cache": false,
+      "dependsOn": ["deploy-beam"],
+      "options": {
+        "cwd": "{workspaceRoot}",
+        "command": "uv run --locked --project ../../../ krea2 python",
+        "args": "apps/workers/krea2/tests/test_worker_krea2_acceptance.py"
+      }
     }
   }
 }

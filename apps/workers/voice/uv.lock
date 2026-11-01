@@ -320,7 +320,7 @@ wheels = [
 [[package]]
 name = "fastrtc"
 version = "0.0.34"
-source = { git = "https://github.com/gradio-app/fastrtc?rev=59ca4f77e1669a9599c0895fd0d7c39f356bf89f#59ca4f77e1669a9599c0895fd0d7c39f356bf89f" }
+source = { git = "https://github.com/gradio-app/fastrtc?rev=c1785b6c3fac7a87e03dcfedc31917d0c8602477#c1785b6c3fac7a87e03dcfedc31917d0c8602477" }
 dependencies = [
     { name = "aioice" },
     { name = "aiortc" },
@@ -1414,7 +1414,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "fastapi", specifier = "==0.141.1" },
-    { name = "fastrtc", extras = ["vad"], git = "https://github.com/gradio-app/fastrtc?rev=59ca4f77e1669a9599c0895fd0d7c39f356bf89f" },
+    { name = "fastrtc", extras = ["vad"], git = "https://github.com/gradio-app/fastrtc?rev=c1785b6c3fac7a87e03dcfedc31917d0c8602477" },
     { name = "httpx", specifier = "==0.28.1" },
     { name = "numpy", specifier = "==2.4.3" },
     { name = "python-multipart", specifier = "==0.0.32" },

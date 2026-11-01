@@ -64,6 +64,26 @@ def _apply_qwen3_vl_rope_patch():
 
     _q3vl_modeling.Qwen3VLTextRotaryEmbedding.__init__ = _safe_rope_init
 
+
+def _download_reid_runtime(cache_dir=None) -> Path:
+    import os
+
+    from huggingface_hub import snapshot_download
+
+    snapshot_kwargs: dict[str, Any] = {
+        "token": os.environ["SECRET_HUGGINGFACE_TOKEN"],
+        "allow_patterns": [
+            "pipeline.py",
+            "face_crop.py",
+            "models/*.onnx",
+            "krea2_reid_rank32.safetensors",
+        ],
+    }
+    if cache_dir:
+        snapshot_kwargs["cache_dir"] = cache_dir
+    return Path(snapshot_download(REID_REPO, **snapshot_kwargs))
+
+
 def load_pipeline(cache_dir=None):
     """Production path: always boots the real model."""
     import torch.distributed as dist
@@ -82,20 +102,9 @@ def load_pipeline(cache_dir=None):
 
     import torch
     from diffusers import DiffusionPipeline
-    from huggingface_hub import snapshot_download
     from transformers import AutoTokenizer
 
-    snapshot_kwargs: dict[str, Any] = {
-        "allow_patterns": [
-            "pipeline.py",
-            "face_crop.py",
-            "models/*.onnx",
-            "krea2_reid_rank32.safetensors",
-        ],
-    }
-    if cache_dir:
-        snapshot_kwargs["cache_dir"] = cache_dir
-    runtime_dir = Path(snapshot_download(REID_REPO, **snapshot_kwargs))
+    runtime_dir = _download_reid_runtime(cache_dir)
 
     token = os.environ["SECRET_HUGGINGFACE_TOKEN"]
 
@@ -249,7 +258,6 @@ def load_pipeline_lazy(cache_dir=None):
 
     import torch
     from diffusers import DiffusionPipeline
-    from huggingface_hub import snapshot_download
     from transformers import AutoTokenizer
 
     print("[INIT] lazily loading model krea/Krea-2-Turbo", flush=True)
@@ -257,17 +265,7 @@ def load_pipeline_lazy(cache_dir=None):
 
     _apply_qwen3_vl_rope_patch()
 
-    snapshot_kwargs: dict[str, Any] = {
-        "allow_patterns": [
-            "pipeline.py",
-            "face_crop.py",
-            "models/*.onnx",
-            "krea2_reid_rank32.safetensors",
-        ],
-    }
-    if cache_dir:
-        snapshot_kwargs["cache_dir"] = cache_dir
-    runtime_dir = Path(snapshot_download(REID_REPO, **snapshot_kwargs))
+    runtime_dir = _download_reid_runtime(cache_dir)
 
     token = os.environ["SECRET_HUGGINGFACE_TOKEN"]
 

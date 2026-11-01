@@ -122,6 +122,20 @@
         "source": "packages/schemas/workers/tiny_sd.schema.json",
         "out": "apps/workers/tiny_sd/dist/contract_tiny_sd.py"
       }
+    },
+    "test-acceptance": {
+      "executor": "dotenvx:run-commands",
+      "cache": false,
+      "dependsOn": ["deploy-beam"],
+      "options": {
+        "cwd": "{workspaceRoot}",
+        "env": {
+          "SECRET_WORKER_TINY_SD_URL": "$(npx tsx $NX_WORKSPACE_ROOT/tools/get-beam-url.ts worker-tiny_sd)",
+          "SECRET_BEAM_TOKEN": "${SECRET_BEAM_TOKEN}"
+        },
+        "command": "uv run --locked --group test pytest",
+        "args": "apps/workers/tiny_sd/tests/test_worker_tiny_sd_acceptance.py -q"
+      }
     }
   }
 }

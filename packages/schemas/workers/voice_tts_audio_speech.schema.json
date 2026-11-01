@@ -13,7 +13,8 @@
       "properties": {
         "model": {"minLength": 1, "title": "Model", "type": "string"},
         "input": {"minLength": 1, "title": "Input", "type": "string"},
-        "voice": {"default": "builtin", "minLength": 1, "title": "Voice", "type": "string"},
+        "voice": {"default": "alloy", "minLength": 1, "title": "Voice", "type": ["string", "null"]},
+        "reference_audio_base64": {"title": "Reference Audio Base64", "type": "string"},
         "response_format": {"default": "wav", "enum": ["wav"], "title": "Response Format", "type": "string"},
         "speed": {"default": 1.0, "exclusiveMinimum": 0, "maximum": 4.0, "minimum": 0.25, "title": "Speed", "type": "number"}
       },

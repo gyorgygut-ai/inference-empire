@@ -5,6 +5,20 @@
   "sourceRoot": "apps/workers/tts",
   "tags": ["type:app","scope:gpu-worker","model:tts"],
   "targets": {
+    "stub-beam": {
+      "executor": "dotenvx:run-commands",
+      "continuous": true,
+      "cache": false,
+      "readyWhen": { "url": "http://127.0.0.1:18763/health" },
+      "options": {
+        "cwd": "{projectRoot}",
+        "env": {
+          "SECRET_TTS_AUDIO_SPEECH_API_KEY": "${GENERATED_TTS_AUDIO_SPEECH_API_KEY}"
+        },
+        "command": "uv run --locked --project ../../../ uvicorn",
+        "args": "fakes.worker_tts_audio_speech_beam:app --host 127.0.0.1 --port 18763"
+      }
+    },
     "deploy-beam": {
       "executor": "dotenvx:run-commands",
       "cache": true,
@@ -71,6 +85,9 @@
       "dependsOn": ["deploy-beam"],
       "options": {
         "cwd": "{workspaceRoot}",
+        "env": {
+          "TTS_AUDIO_SPEECH_API_URL": "$(npx tsx $NX_WORKSPACE_ROOT/tools/get-beam-url.ts worker-tts)"
+        },
         "command": "uv run --locked --project apps/workers/tts python",
         "args": "apps/workers/tts/tests/acceptance_tts_audio_speech.py"
       }

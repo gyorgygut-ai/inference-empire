@@ -1,5 +1,5 @@
 "use client"
-import React from "react"
+import React, { useId } from "react"
 import { createChatHook } from "@tanstack/ai-react/ui"
 import { chatOptions } from "./options"
 import { Layout, Message } from "@inference/ui/chat/components"
@@ -17,6 +17,6 @@ export const { useAppChat, useChatContext } = createChatHook({
 })
 
 export const ChatClient = () => {
-  const chat = useAppChat()
+  const chat = useAppChat({ threadId: useId() })
   return <chat.AppChat />
 }
