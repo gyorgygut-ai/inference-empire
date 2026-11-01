@@ -3,10 +3,10 @@ import io
 import pytest
 from PIL import Image
 from pydantic import ValidationError
+from shared.fakes.image_pipe_fake import FakeImagePipe
+from shared.fakes.torch_module_fake import FakeTorchModule
 
 import apps.workers.krea2.worker_krea2_modal as worker_mod
-from apps.workers.krea2.fakes.image_pipe_fake import FakeImagePipe
-from apps.workers.krea2.fakes.torch_module_fake import FakeTorchModule
 from apps.workers.krea2.shared.worker_krea2 import (
     Krea2Ref2ImgInput,
     Krea2Ref2ImgOutput,

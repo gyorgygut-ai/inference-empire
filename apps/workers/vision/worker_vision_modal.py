@@ -8,7 +8,7 @@ from shared.platform import MODAL_HF_MOUNT, MODAL_IMAGE_IGNORE, modal_env, modal
 from shared.worker_vision import (
     DEPENDENCIES,
     do_inference,
-    load_dependencies,
+    load_pipeline_lazy,
     resolve_analyze_prompt,
 )
 
@@ -38,10 +38,16 @@ image = (
 class SmallVisionWorker:
     @modal.enter()
     def load(self):
-        self.model, self.processor, self.analyze_prompt = load_dependencies()
+        # Initialize as None for lazy loading
+        self.model = None
+        self.processor = None
+        self.analyze_prompt = None
 
     @modal.method()
     def generate(self, **kwargs) -> dict:
         req = SmallVisionInput(**kwargs)
+        if self.model is None:
+            self.model, self.processor, self.analyze_prompt = load_pipeline_lazy()
+        assert self.analyze_prompt is not None
         prompt = resolve_analyze_prompt(self.analyze_prompt, getattr(req, "prompt", None))
         return do_inference(self.model, self.processor, prompt, req).model_dump()

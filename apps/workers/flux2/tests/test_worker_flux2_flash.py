@@ -3,10 +3,10 @@ import io
 import pytest
 from PIL import Image
 from pydantic import ValidationError
+from shared.fakes.image_pipe_fake import FakeImagePipe
+from shared.fakes.torch_module_fake import FakeTorchModule
 
 import apps.workers.flux2.worker_flux2_flash as worker_mod
-from apps.workers.flux2.fakes.image_pipe_fake import FakeImagePipe
-from apps.workers.flux2.fakes.torch_module_fake import FakeTorchModule
 from apps.workers.flux2.shared.worker_flux2 import (
     Flux2Klein9bInput,
     Flux2Klein9bOutput,

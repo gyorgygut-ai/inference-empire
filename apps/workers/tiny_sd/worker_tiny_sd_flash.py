@@ -5,6 +5,7 @@ from runpod_flash import Endpoint, GpuGroup
 from shared.platform import flash_env
 from shared.worker_tiny_sd import DEPENDENCIES, do_inference, load_dependencies, load_pipeline_lazy
 
+
 @Endpoint(
     name="worker-tiny_sd",
     gpu=[GpuGroup.AMPERE_16],

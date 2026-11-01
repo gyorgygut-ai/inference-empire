@@ -7,7 +7,20 @@
   "targets": {
     "deploy-beam": {
       "executor": "dotenvx:run-commands",
-      "cache": false,
+      "cache": true,
+      "inputs": [
+        "{projectRoot}/worker_llm_chat_completions_beam.py",
+        "{projectRoot}/shared/**/*.py",
+        "{workspaceRoot}/nx.json",
+        "{workspaceRoot}/package.json",
+        "{workspaceRoot}/pyproject.toml",
+        "{workspaceRoot}/uv.lock",
+        "{workspaceRoot}/packages/schemas/workers/voice_llm_chat_completions.schema.json",
+        "{workspaceRoot}/packages/schemas/tools/generate_pydantic.py",
+        { "env": "SECRET_HUGGINGFACE_TOKEN" },
+        { "env": "SECRET_BEAM_TOKEN" }
+      ],
+      "outputs": [],
       "options": {
         "cwd": "{projectRoot}",
         "env": {

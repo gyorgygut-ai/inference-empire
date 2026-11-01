@@ -7,11 +7,13 @@ from dist.contract_tiny_sd import Input as TinySDInput
 from shared.platform import beam_env
 from shared.worker_tiny_sd import (
     DEPENDENCIES,
+    MODEL_CACHES,
     do_inference,
     load_dependencies,
     load_pipeline_lazy,
     model_volumes,
 )
+
 CACHE_PATH = MODEL_CACHES["segmind_tiny_sd"]["path"]
 VOLUMES = model_volumes()
 

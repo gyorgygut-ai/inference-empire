@@ -1,10 +1,10 @@
 import io
 
 import pytest
-from fakes.image_pipe_fake import FakeImagePipe
-from fakes.torch_module_fake import FakeTorchModule
 from PIL import Image
 from pydantic import ValidationError
+from shared.fakes.image_pipe_fake import FakeImagePipe
+from shared.fakes.torch_module_fake import FakeTorchModule
 from shared.worker_tiny_sd import TinySDInput, TinySDOutput, do_inference
 
 import apps.workers.tiny_sd.worker_tiny_sd_flash as worker_mod

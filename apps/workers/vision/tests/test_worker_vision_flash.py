@@ -2,9 +2,9 @@ import base64
 import io
 
 import pytest
-from fakes.vision_fake import FakeVisionModel, FakeVisionProcessor
 from PIL import Image
 from pydantic import ValidationError
+from shared.fakes.vision_fake import FakeVisionModel, FakeVisionProcessor
 from shared.worker_vision import (
     SmallVisionInput,
     SmallVisionOutput,
@@ -124,8 +124,8 @@ def test_load_dependencies_mocked(monkeypatch):
     def fake_load(cache_dir=None):
         return fake_model, fake_processor, fake_prompt
 
-    monkeypatch.setattr(worker_mod, "load_dependencies", fake_load)
-    model, processor, prompt = worker_mod.load_dependencies()
+    monkeypatch.setattr(worker_mod, "load_pipeline_lazy", fake_load)
+    model, processor, prompt = worker_mod.load_pipeline_lazy()
     assert model is fake_model
     assert processor is fake_processor
     assert prompt == fake_prompt

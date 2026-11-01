@@ -5,9 +5,9 @@ from types import SimpleNamespace
 
 import pytest
 import shared.worker_vision as vision_worker
-from fakes.vision_fake import FakeVisionModel, FakeVisionProcessor
 from PIL import Image
 from pydantic import ValidationError
+from shared.fakes.vision_fake import FakeVisionModel, FakeVisionProcessor
 from shared.worker_vision import (
     SmallVisionInput,
     SmallVisionOutput,

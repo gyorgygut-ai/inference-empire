@@ -5,6 +5,7 @@ from runpod_flash import Endpoint, GpuGroup
 from shared.platform import flash_env
 from shared.worker_krea2 import DEPENDENCIES, do_inference, load_dependencies, load_pipeline_lazy
 
+
 @Endpoint(
     name="worker-krea2",
     gpu=[GpuGroup.AMPERE_48, GpuGroup.ADA_48_PRO],

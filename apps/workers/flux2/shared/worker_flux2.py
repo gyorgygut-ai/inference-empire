@@ -188,7 +188,10 @@ def pipe_factory() -> Flux2KleinPipeline:
 
 def load_pipeline_lazy():
     """Lazy load pipeline on first request (not at startup)."""
-    from beam import Volume
+    import os
+
+    import diffusers
+    import torch
 
     print(f"[INIT] lazily loading model {MODEL_ID}", flush=True)
     t0 = time.time()
@@ -196,7 +199,7 @@ def load_pipeline_lazy():
     token = os.environ["SECRET_HUGGINGFACE_TOKEN"]
 
     # importing sdnq registers its quantizer with transformers
-    from sdnq import SDNQConfig  # noqa: F401
+    importlib.import_module("sdnq")
 
     model_dir = download_models()[MODEL_NAME]
     pipe = diffusers.Flux2KleinPipeline.from_pretrained(
@@ -216,7 +219,7 @@ def load_pipeline_lazy():
         use_torch_compile = None
         apply_sdnq_options_to_model = None
 
-    if use_torch_compile and torch.cuda.is_available():
+    if use_torch_compile and callable(apply_sdnq_options_to_model) and torch.cuda.is_available():
         pipe.transformer = apply_sdnq_options_to_model(
             pipe.transformer, use_quantized_matmul=True
         )
