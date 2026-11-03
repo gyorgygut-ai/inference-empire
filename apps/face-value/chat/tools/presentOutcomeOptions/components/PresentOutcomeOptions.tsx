@@ -3,6 +3,7 @@ import React from "react";
 import { useChatContext } from "@/chat/client";
 import { selectOutcome } from "../../../thread";
 import { vocabulary } from "@/chat/vocabulary/en";
+import { findLastToolCall } from "../../../findLastToolCall";
 
 import type { ToolProps } from "@tanstack/ai-react/ui";
 import type { ChatOptions } from "../../../options";
@@ -20,7 +21,12 @@ export const PresentOutcomeOptions = ({ part }: PresentOutcomeOptionsProps) => {
   const outcomes = [...(part.input?.outcomes ?? [])].sort(
     (a, b) => a.order - b.order,
   );
-  const selectedOutcomeId = part.output?.outcomeId || null;
+  const latestSelection = findLastToolCall(messages, "presentOutcomeOptions");
+  const selectedOutcomeId =
+    latestSelection?.type === "tool-call" &&
+    latestSelection.name === "presentOutcomeOptions"
+      ? latestSelection.output?.outcomeId ?? null
+      : null;
   const locked = isGenerationLocked(messages);
   const handleSelect = (outcome: (typeof outcomes)[number]) => {
     if (!locked) {
