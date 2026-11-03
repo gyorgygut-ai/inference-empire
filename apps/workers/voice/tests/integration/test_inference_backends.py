@@ -8,7 +8,6 @@ from pathlib import Path
 import httpx
 import numpy as np
 import pytest
-
 from shared.inference_client import InferenceClient, InferenceEndpoint
 from shared.worker_voice import SYSTEM_MESSAGE, run_turn
 
@@ -25,7 +24,6 @@ class Service:
 
 @dataclass(frozen=True)
 class Backend:
-    name: str
     stt: Service
     llm: Service
     tts: Service
@@ -34,7 +32,6 @@ class Backend:
 
 BACKENDS = {
     "stub": Backend(
-        name="stub",
         stt=Service(
             os.environ["STUB_STT_AUDIO_TRANSCRIPTIONS_API_URL"].rstrip("/"),
             os.environ["STUB_SECRET_STT_AUDIO_TRANSCRIPTIONS_API_KEY"],
@@ -53,7 +50,6 @@ BACKENDS = {
         is_stub=True,
     ),
     "real": Backend(
-        name="real",
         stt=Service(
             os.environ["REAL_STT_AUDIO_TRANSCRIPTIONS_API_URL"].rstrip("/"),
             os.environ["REAL_SECRET_STT_AUDIO_TRANSCRIPTIONS_API_KEY"],
@@ -93,27 +89,35 @@ def test_dependency_rejects_invalid_bearer_token(
     backend: Backend, service_name: str
 ) -> None:
     service = getattr(backend, service_name)
-    kwargs = {}
     if service_name == "stt":
-        kwargs["files"] = {"file": ("test.wav", b"RIFF", "audio/wav")}
+        response = httpx.post(
+            f"{service.url}{service.path}",
+            headers={"Authorization": "Bearer invalid"},
+            data={"model": "configured", "response_format": "json"},
+            files={"file": ("test.wav", b"RIFF", "audio/wav")},
+            timeout=15,
+        )
     elif service_name == "llm":
-        kwargs["json"] = {
-            "model": "configured",
-            "messages": [{"role": "user", "content": "test"}],
-        }
+        response = httpx.post(
+            f"{service.url}{service.path}",
+            headers={"Authorization": "Bearer invalid"},
+            json={
+                "model": "configured",
+                "messages": [{"role": "user", "content": "test"}],
+            },
+            timeout=15,
+        )
     else:
-        kwargs["json"] = {
-            "model": "configured",
-            "input": "test",
-            "response_format": "wav",
-        }
-
-    response = httpx.post(
-        f"{service.url}{service.path}",
-        headers={"Authorization": "Bearer invalid"},
-        timeout=15,
-        **kwargs,
-    )
+        response = httpx.post(
+            f"{service.url}{service.path}",
+            headers={"Authorization": "Bearer invalid"},
+            json={
+                "model": "configured",
+                "input": "test",
+                "response_format": "wav",
+            },
+            timeout=15,
+        )
 
     assert response.status_code == 401, response.text
 

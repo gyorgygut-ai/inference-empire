@@ -321,9 +321,11 @@ def build_app(
                         histories.get(session_id, system_message),
                     )
                 )
+                logger.info("realtime turn inference started")
                 async for frame in wait_with_heartbeat(turn_task):
                     yield frame
                 transcript, reply = await turn_task
+                logger.info("realtime turn inference completed")
                 audio_queue: queue.Queue[tuple[str, Any]] = queue.Queue(maxsize=1)
                 stop_stream = threading.Event()
 
@@ -349,6 +351,7 @@ def build_app(
                         send_stream_item(("done", None))
 
                 producer_task = asyncio.create_task(asyncio.to_thread(produce_audio))
+                logger.info("realtime turn speech stream started")
                 total_square_sum = 0.0
                 total_samples = 0
                 audible = False
@@ -386,6 +389,7 @@ def build_app(
                 await producer_task
                 if not audible:
                     raise ValueError("TTS stream returned empty or silent audio")
+                logger.info("realtime turn speech stream completed samples=%d", total_samples)
                 histories.append(session_id, transcript, reply, system_message)
         except TurnError as error:
             logger.exception("realtime turn failed stage=%s reason=%s", error.stage, error)
@@ -437,6 +441,57 @@ def build_app(
     app.state.stream = stream
     app.state.turn_handler = on_turn
     app.state.histories = histories
+    async_errors: list[dict[str, object]] = []
+
+    if os.environ.get("VOICE_TEST_DIAGNOSTICS") == "1":
+        app.state.async_errors = async_errors
+
+        def record_async_error(
+            loop: asyncio.AbstractEventLoop, context: dict[str, object]
+        ) -> None:
+            task = context.get("future")
+            error = context.get("exception")
+            frame = None
+            traceback = getattr(error, "__traceback__", None)
+            while traceback is not None:
+                if traceback.tb_frame.f_code.co_name == "send_data":
+                    frame = traceback.tb_frame
+                traceback = traceback.tb_next
+            local_vars = frame.f_locals if frame is not None else {}
+            protocol = local_vars.get("self")
+            response = getattr(error, "response", None)
+            attributes = getattr(response, "attributes", {})
+            error_code = attributes.get("ERROR-CODE")
+            detail = {
+                "exception": str(error),
+                "message": context.get("message"),
+                "task": (
+                    task.get_name()
+                    if isinstance(task, asyncio.Task)
+                    else None
+                ),
+                "turn_server": getattr(protocol, "server", None),
+                "peer_address": local_vars.get("addr"),
+                "turn_error_code": error_code,
+                "turn_realm_present": "REALM" in attributes,
+                "turn_nonce_present": "NONCE" in attributes,
+            }
+            async_errors.append(detail)
+            logger.error("uncaught asyncio task error diagnostics=%s", detail)
+            loop.default_exception_handler(context)
+
+        app.router.on_startup.append(
+            lambda: asyncio.get_running_loop().set_exception_handler(record_async_error)
+        )
+
+        @app.get("/__test__/async-errors")
+        def get_async_errors() -> dict[str, list[dict[str, object]]]:
+            return {"errors": list(async_errors)}
+
+        @app.post("/__test__/async-errors/reset")
+        def reset_async_errors() -> dict[str, list[dict[str, object]]]:
+            async_errors.clear()
+            return {"errors": []}
 
     @app.get("/health")
     def health() -> dict[str, str]:

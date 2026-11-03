@@ -1,12 +1,15 @@
 import asyncio
+import ipaddress
 import math
 import os
 from pathlib import Path
 
 import httpx
 import numpy as np
+from aioice import TransportPolicy
 from aiortc import RTCConfiguration, RTCIceServer, RTCPeerConnection, RTCSessionDescription
 from aiortc.contrib.media import MediaPlayer
+from aiortc.mediastreams import MediaStreamError
 
 BASE = os.environ["VOICE_REALTIME_SESSION_API_URL"].rstrip("/")
 SERVER_TOKEN = os.environ["GENERATED_VOICE_WORKER_AUTH_TOKEN"]
@@ -17,6 +20,20 @@ FIXTURE_AUDIO = (
     / "fixtures"
     / "hello.wav"
 )
+
+
+def _without_non_global_candidates(sdp: str) -> str:
+    lines = []
+    for line in sdp.splitlines():
+        if line.startswith("a=candidate:"):
+            fields = line.split()
+            try:
+                if not ipaddress.ip_address(fields[4]).is_global:
+                    continue
+            except (IndexError, ValueError):
+                pass
+        lines.append(line)
+    return "\r\n".join(lines) + "\r\n"
 
 
 async def verify_realtime_voice_call() -> None:
@@ -55,13 +72,24 @@ async def verify_realtime_voice_call() -> None:
         assert player.audio is not None, "fixture has no audio track"
         sender = peer.addTrack(player.audio)
         peer.createDataChannel("text")
+        ice_transports = {
+            transceiver.receiver.transport.transport
+            for transceiver in peer.getTransceivers()
+        }
+        if peer.sctp is not None:
+            ice_transports.add(peer.sctp.transport.transport)
+        for transport in ice_transports:
+            transport._connection._transport_policy = TransportPolicy.RELAY
         audio_received = asyncio.Event()
         rms_values: list[float] = []
 
         @peer.on("track")
         async def receive_audio(track):
             while True:
-                frame = await track.recv()
+                try:
+                    frame = await track.recv()
+                except MediaStreamError:
+                    return
                 samples = frame.to_ndarray()
                 normalized = samples.astype(np.float32)
                 if np.issubdtype(samples.dtype, np.floating):
@@ -78,27 +106,32 @@ async def verify_realtime_voice_call() -> None:
                 if asyncio.get_running_loop().time() >= deadline:
                     raise TimeoutError("ICE gathering timed out")
                 await asyncio.sleep(0.1)
+            for transport in ice_transports:
+                relay_protocols = [
+                    protocol
+                    for protocol in transport._connection._protocols
+                    if protocol.local_candidate.type == "relay"
+                ]
+                assert relay_protocols, "client failed to allocate a TURN relay"
+                transport._connection._protocols = relay_protocols
 
             answer_response = await client.post(
                 f"{BASE}/v1/realtime/calls",
                 headers={"Authorization": f"Bearer {secret['value']}"},
-                data={"sdp": peer.localDescription.sdp},
+                data={"sdp": _without_non_global_candidates(peer.localDescription.sdp)},
             )
             assert answer_response.status_code == 200, "worker rejected WebRTC offer"
             assert answer_response.headers.get("content-type", "").startswith(
                 "application/sdp"
             ), "worker returned an invalid SDP answer"
             await peer.setRemoteDescription(
-                RTCSessionDescription(sdp=answer_response.text, type="answer")
+                RTCSessionDescription(
+                    sdp=_without_non_global_candidates(answer_response.text),
+                    type="answer",
+                )
             )
             await asyncio.wait_for(audio_received.wait(), timeout=120)
 
-            ice_transports = {
-                transceiver.receiver.transport.transport
-                for transceiver in peer.getTransceivers()
-            }
-            if peer.sctp is not None:
-                ice_transports.add(peer.sctp.transport.transport)
             nominated_pairs = [
                 pair
                 for transport in ice_transports
@@ -124,7 +157,27 @@ async def verify_realtime_voice_call() -> None:
 
 
 def main() -> None:
-    asyncio.run(verify_realtime_voice_call())
+    errors: list[dict[str, object]] = []
+    runner = asyncio.Runner()
+    loop = runner.get_loop()
+    loop.set_exception_handler(lambda _loop, context: errors.append(context))
+    run_error = None
+    try:
+        runner.run(verify_realtime_voice_call())
+        loop.run_until_complete(asyncio.sleep(0.2))
+    except Exception as error:
+        run_error = error
+    finally:
+        runner.close()
+
+    if errors:
+        details = [str(item.get("exception") or item.get("message")) for item in errors]
+        raise AssertionError(
+            f"uncaught asyncio errors during deployed voice acceptance: {details}; "
+            f"acceptance_error={run_error}"
+        ) from run_error
+    if run_error is not None:
+        raise run_error
 
 
 if __name__ == "__main__":

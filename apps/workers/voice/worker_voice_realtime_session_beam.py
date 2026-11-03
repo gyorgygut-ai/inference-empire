@@ -17,33 +17,6 @@ image = (
             "soundfile==0.14.0",
         ]
     )
-    .with_envs(
-        {
-            "SECRET_HUGGINGFACE_TOKEN": os.environ["SECRET_HUGGINGFACE_TOKEN"],
-            "STT_AUDIO_TRANSCRIPTIONS_API_URL": os.environ[
-                "STT_AUDIO_TRANSCRIPTIONS_API_URL"
-            ],
-            "SECRET_STT_AUDIO_TRANSCRIPTIONS_API_KEY": os.environ[
-                "SECRET_STT_AUDIO_TRANSCRIPTIONS_API_KEY"
-            ],
-            "LLM_CHAT_COMPLETIONS_API_URL": os.environ[
-                "LLM_CHAT_COMPLETIONS_API_URL"
-            ],
-            "SECRET_LLM_CHAT_COMPLETIONS_API_KEY": os.environ[
-                "SECRET_LLM_CHAT_COMPLETIONS_API_KEY"
-            ],
-            "TTS_AUDIO_SPEECH_API_URL": os.environ[
-                "TTS_AUDIO_SPEECH_API_URL"
-            ],
-            "SECRET_VOICE_WORKER_AUTH_TOKEN": os.environ[
-                "SECRET_VOICE_WORKER_AUTH_TOKEN"
-            ],
-            "SECRET_TTS_AUDIO_SPEECH_API_KEY": os.environ[
-                "SECRET_TTS_AUDIO_SPEECH_API_KEY"
-            ],
-            "VOICE_REFERENCES_DIR": "./references",
-        }
-    )
 )
 
 
@@ -60,10 +33,33 @@ reference_volume = Volume(
     cpu=2,
     memory="4Gi",
     concurrent_requests=2,
-    keep_warm_seconds=10,
+    keep_warm_seconds=120,
     timeout=120,
     authorized=False,
     secrets=[],
+    env={
+        "SECRET_HUGGINGFACE_TOKEN": os.environ["SECRET_HUGGINGFACE_TOKEN"],
+        "STT_AUDIO_TRANSCRIPTIONS_API_URL": os.environ[
+            "STT_AUDIO_TRANSCRIPTIONS_API_URL"
+        ],
+        "SECRET_STT_AUDIO_TRANSCRIPTIONS_API_KEY": os.environ[
+            "SECRET_STT_AUDIO_TRANSCRIPTIONS_API_KEY"
+        ],
+        "LLM_CHAT_COMPLETIONS_API_URL": os.environ[
+            "LLM_CHAT_COMPLETIONS_API_URL"
+        ],
+        "SECRET_LLM_CHAT_COMPLETIONS_API_KEY": os.environ[
+            "SECRET_LLM_CHAT_COMPLETIONS_API_KEY"
+        ],
+        "TTS_AUDIO_SPEECH_API_URL": os.environ["TTS_AUDIO_SPEECH_API_URL"],
+        "SECRET_VOICE_WORKER_AUTH_TOKEN": os.environ[
+            "SECRET_VOICE_WORKER_AUTH_TOKEN"
+        ],
+        "SECRET_TTS_AUDIO_SPEECH_API_KEY": os.environ[
+            "SECRET_TTS_AUDIO_SPEECH_API_KEY"
+        ],
+        "VOICE_REFERENCES_DIR": "./references",
+    },
     autoscaler=QueueDepthAutoscaler(max_containers=1, min_containers=0),
 )
 def generate(context):

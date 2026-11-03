@@ -1,4 +1,5 @@
 import asyncio
+import ipaddress
 import json
 import math
 import os
@@ -12,9 +13,9 @@ import pytest
 from aioice import TransportPolicy
 from aiortc import RTCConfiguration, RTCIceServer, RTCPeerConnection, RTCSessionDescription
 from aiortc.contrib.media import MediaPlayer
+from aiortc.mediastreams import MediaStreamError
 
 BASE = os.environ["VOICE_REALTIME_SESSION_API_URL"].rstrip("/")
-TEST_MODE = os.environ.get("VOICE_TEST_MODE", "real")
 SERVER_TOKEN = os.environ.get("SECRET_VOICE_WORKER_AUTH_TOKEN") or os.environ[
     "GENERATED_VOICE_WORKER_AUTH_TOKEN"
 ]
@@ -22,11 +23,20 @@ FIXTURES = Path(__file__).parent.parent / "fixtures"
 MESSAGE_AUDIO = FIXTURES / "message.wav"
 CLIENT_TIMEOUT = httpx.Timeout(connect=2.0, read=30.0, write=5.0, pool=2.0)
 UNSET = object()
-STUBS = {
-    "stt": os.environ.get("STT_AUDIO_TRANSCRIPTIONS_API_URL", "http://127.0.0.1:18761").rstrip("/"),
-    "llm": os.environ.get("LLM_CHAT_COMPLETIONS_API_URL", "http://127.0.0.1:18762").rstrip("/"),
-    "tts": os.environ.get("TTS_AUDIO_SPEECH_API_URL", "http://127.0.0.1:18763").rstrip("/"),
-}
+
+
+def _without_non_global_candidates(sdp: str) -> str:
+    lines = []
+    for line in sdp.splitlines():
+        if line.startswith("a=candidate:"):
+            fields = line.split()
+            try:
+                if not ipaddress.ip_address(fields[4]).is_global:
+                    continue
+            except (IndexError, ValueError):
+                pass
+        lines.append(line)
+    return "\r\n".join(lines) + "\r\n"
 
 
 def _output_rms(samples: np.ndarray) -> float:
@@ -37,18 +47,68 @@ def _output_rms(samples: np.ndarray) -> float:
 
 
 def _run_async(coroutine):
+    reset_response = httpx.post(f"{BASE}/__test__/async-errors/reset", timeout=5)
+    assert reset_response.status_code == 200, reset_response.text
     errors: list[dict[str, object]] = []
     runner = asyncio.Runner()
+    loop = runner.get_loop()
+    loop.set_exception_handler(lambda _loop, context: errors.append(context))
+    result = None
+    run_error = None
     try:
-        loop = runner.get_loop()
-        loop.set_exception_handler(lambda _loop, context: errors.append(context))
         result = runner.run(coroutine)
         loop.run_until_complete(asyncio.sleep(0.2))
+    except BaseException as error:
+        run_error = error
     finally:
         runner.close()
+
+    worker_response = httpx.get(f"{BASE}/__test__/async-errors", timeout=5)
+    assert worker_response.status_code == 200, worker_response.text
+    worker_errors = worker_response.json()["errors"]
     if errors:
-        details = [str(item.get("exception") or item.get("message")) for item in errors]
-        raise AssertionError(f"uncaught asyncio errors during WebRTC test: {details}")
+        details = []
+        for item in errors:
+            task = item.get("future")
+            error = item.get("exception")
+            response = getattr(error, "response", None)
+            attributes = getattr(response, "attributes", {})
+            frames = []
+            traceback = getattr(error, "__traceback__", None)
+            while traceback is not None:
+                frame = traceback.tb_frame
+                local_vars = frame.f_locals
+                protocol = local_vars.get("self")
+                frames.append(
+                    {
+                        "function": frame.f_code.co_name,
+                        "server": getattr(protocol, "server", None),
+                        "peer_address": local_vars.get("addr"),
+                        "channel": local_vars.get("channel"),
+                    }
+                )
+                traceback = traceback.tb_next
+            details.append(
+                {
+                    "exception": str(error),
+                    "message": item.get("message"),
+                    "task": task.get_coro().__qualname__ if isinstance(task, asyncio.Task) else None,
+                    "turn_method": getattr(response, "message_method", None),
+                    "turn_error_code": attributes.get("ERROR-CODE"),
+                    "turn_realm_present": "REALM" in attributes,
+                    "turn_nonce_present": "NONCE" in attributes,
+                    "frames": frames,
+                }
+            )
+    else:
+        details = []
+    if errors or worker_errors:
+        raise AssertionError(
+            "uncaught asyncio errors during WebRTC test: "
+            f"client={details}; worker={worker_errors}; result={result}"
+        ) from run_error
+    if run_error is not None:
+        raise run_error
     return result
 
 
@@ -107,7 +167,10 @@ async def _start_call(
         @peer.on("track")
         async def receive_audio(track):
             while True:
-                frame = await track.recv()
+                try:
+                    frame = await track.recv()
+                except MediaStreamError:
+                    return
                 rms = _output_rms(frame.to_ndarray())
                 output_rms.append(rms)
                 if rms > 32:
@@ -144,12 +207,16 @@ async def _start_call(
             answer = await client.post(
                 f"{BASE}/v1/realtime/calls",
                 headers={"Authorization": f"Bearer {secret['value']}"},
-                data={"sdp": peer.localDescription.sdp},
+                data={
+                    "sdp": _without_non_global_candidates(peer.localDescription.sdp)
+                },
             )
             assert answer.status_code == 200, answer.text
             assert answer.headers.get("content-type", "").startswith("application/sdp")
             await peer.setRemoteDescription(
-                RTCSessionDescription(sdp=answer.text, type="answer")
+                RTCSessionDescription(
+                    sdp=_without_non_global_candidates(answer.text), type="answer"
+                )
             )
             return (
                 peer,
@@ -245,10 +312,6 @@ def test_call_with_missing_or_invalid_session_token_returns_401():
 
 
 async def _call_returns_audio_through_turn_relay() -> bool:
-    before = None
-    if TEST_MODE == "stub":
-        await _reset_stub_counts()
-        before = await _stub_counts()
     peer, player, sender, received_audio, output_rms, messages, _ = await _start_call(
         relay_only=True
     )
@@ -265,7 +328,6 @@ async def _call_returns_audio_through_turn_relay() -> bool:
             for transport in ice_transports
             for pair in transport._connection._nominated.values()
         ]
-        counts = await _stub_counts() if TEST_MODE == "stub" else None
         sender_stats = await sender.getStats()
         sent_packets = sum(
             stat.packetsSent
@@ -279,10 +341,6 @@ async def _call_returns_audio_through_turn_relay() -> bool:
             and any(pair.remote_candidate.type in {"host", "srflx", "prflx", "relay"} for pair in nominated)
             and sent_packets > 0
             and max(output_rms, default=0) > 32
-            and (
-                TEST_MODE != "stub"
-                or all(counts[name] > before[name] for name in STUBS)
-            )
         )
     finally:
         await peer.close()
@@ -359,22 +417,3 @@ async def _concurrent_turns_return_audio() -> bool:
 
 def test_turns_with_two_concurrent_clients_both_return_audible_audio():
     assert _run_async(_concurrent_turns_return_audio())
-
-
-async def _stub_counts() -> dict[str, int]:
-    async with httpx.AsyncClient(timeout=CLIENT_TIMEOUT) as client:
-        responses = await asyncio.gather(
-            *(client.get(f"{url}/__test__/metrics") for url in STUBS.values())
-        )
-    for response in responses:
-        assert response.status_code == 200, response.text
-    return {name: response.json()["requests"] for name, response in zip(STUBS, responses, strict=True)}
-
-
-async def _reset_stub_counts() -> None:
-    async with httpx.AsyncClient(timeout=CLIENT_TIMEOUT) as client:
-        responses = await asyncio.gather(
-            *(client.post(f"{url}/__test__/reset") for url in STUBS.values())
-        )
-    for response in responses:
-        assert response.status_code == 200, response.text

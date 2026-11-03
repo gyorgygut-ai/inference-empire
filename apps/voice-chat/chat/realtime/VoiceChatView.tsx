@@ -4,9 +4,8 @@ import { startTransition, useOptimistic, useRef, useState } from "react"
 import { useRealtimeChat } from "@tanstack/ai-react"
 import type { RealtimeStatus } from "@tanstack/ai"
 import { openaiRealtime } from "@tanstack/ai-openai"
-import { Toggle } from "@inference/ui/components/Toggle"
+import { Draggable, useMessageQueue, Toast } from "@inference/ui"
 import { vocabulary } from "@/messages"
-import Draggable from "@/chat/components/Draggable"
 import VoiceOrb from "@/chat/parts/voice-orb"
 import { fastRtcAdapter, getFastRtcToken } from "./fastRtcAdapter"
 
@@ -17,26 +16,34 @@ const isActiveStatus = (status: RealtimeStatus) =>
 
 export const VoiceChatView = () => {
   const [provider, setProvider] = useState<Provider>("workers")
-  
+
+  const { messages, addMessage, removeMessage } = useMessageQueue()
+
   const { status, mode, connect, disconnect } = useRealtimeChat({
     adapter: provider === "openai" ? openaiRealtime() : fastRtcAdapter,
     getToken: provider === "openai" ? getOpenAiToken : getFastRtcToken,
   })
   const [displayStatus, setDisplayStatus] = useOptimistic(status)
   const connectionQueue = useRef<Promise<void>>(Promise.resolve())
-  
+
   const toggleConnection = () => {
     const nextStatus = isActiveStatus(displayStatus) ? "idle" : "connecting"
-    
+
     startTransition(async () => {
       setDisplayStatus(nextStatus)
       connectionQueue.current = connectionQueue.current
         .then(() => nextStatus === "idle" ? disconnect() : connect())
-        .catch(() => undefined)
+        .catch((error: unknown) => {
+          if (error instanceof Error) {
+            addMessage(error.message)
+          } else {
+            addMessage("Voice worker request failed")
+          }
+        })
       await connectionQueue.current
     })
   }
-  
+
   return (
     <>
       <Draggable
@@ -57,6 +64,7 @@ export const VoiceChatView = () => {
           }}
         />
       </div>
+      <Toast messages={messages} onRemove={removeMessage} />
     </>
   )
 }
