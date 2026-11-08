@@ -1,0 +1,9 @@
+{
+  "title": "Api",
+  "type": "object",
+  "required": ["SECRET_ELEVENLABS_API_KEY", "SECRET_ELEVENLABS_AGENT_ID"],
+  "properties": {
+    "SECRET_ELEVENLABS_API_KEY": { "type": "string", "minLength": 1 },
+    "SECRET_ELEVENLABS_AGENT_ID": { "type": "string", "minLength": 1 }
+  }
+}

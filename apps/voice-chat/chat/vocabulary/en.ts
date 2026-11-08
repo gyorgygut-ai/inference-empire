@@ -7,5 +7,11 @@ export const vocabulary = {
     orbLabel: "Voice chat orb",
     dragHandleLabel: "Toggle voice chat. Drag or use arrow keys to move the orb.",
   },
+  provider: {
+    label: "Voice provider",
+    elevenLabs: "11Labs",
+    openAi: "OpenAI",
+    fastRtc: "FastRTC",
+  },
   messages: {},
 }
