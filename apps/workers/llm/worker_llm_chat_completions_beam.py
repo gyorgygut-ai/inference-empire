@@ -21,8 +21,8 @@ image = (
             "HF_HOME": "./hf-cache",
             "HF_HUB_ENABLE_HF_TRANSFER": "1",
             "SECRET_HUGGINGFACE_TOKEN": os.environ["SECRET_HUGGINGFACE_TOKEN"],
-            "SECRET_LLM_CHAT_COMPLETIONS_API_KEY": os.environ[
-                "SECRET_LLM_CHAT_COMPLETIONS_API_KEY"
+            "LLM_CHAT_COMPLETIONS_API_KEY": os.environ[
+                "LLM_CHAT_COMPLETIONS_API_KEY"
             ],
         }
     )

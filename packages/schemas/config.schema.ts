@@ -19,14 +19,14 @@ export const configSchema = parsedConfigSchema.refine(
   ]).size === 5,
   { message: 'Development ports must be distinct' },
 ).refine(
-  config => config.GENERATED_ROUTER_FLUX2_AUTH_TOKEN !== config.GENERATED_ROUTER_TINYSD_AUTH_TOKEN,
+  config => config.ROUTER_FLUX2_AUTH_TOKEN !== config.ROUTER_TINYSD_AUTH_TOKEN,
   { message: 'Model families must use distinct router tokens' },
 ).refine(
   config => new Set([
-    config.GENERATED_STT_AUDIO_TRANSCRIPTIONS_API_KEY,
-    config.GENERATED_LLM_CHAT_COMPLETIONS_API_KEY,
-    config.GENERATED_TTS_AUDIO_SPEECH_API_KEY,
-    config.GENERATED_VOICE_WORKER_AUTH_TOKEN,
+    config.STT_AUDIO_TRANSCRIPTIONS_API_KEY,
+    config.LLM_CHAT_COMPLETIONS_API_KEY,
+    config.TTS_AUDIO_SPEECH_API_KEY,
+    config.VOICE_WORKER_AUTH_TOKEN,
   ]).size === 4,
   { message: 'Voice service credentials must be distinct' },
 )

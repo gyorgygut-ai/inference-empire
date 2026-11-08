@@ -51,9 +51,9 @@
 - Queue tasks and return a task ID where possible.
 - Use `worker-{family}` consistently for the Nx project, deployed app, Python distribution, and cache volume.
 - Push environment variables idempotently during deploy; do not set them manually.
-- Workers read `SECRET_*`; `project.json` maps `SECRET_*` from `GENERATED_*`, allowing external credentials to be substituted without changing worker code.
+- Root workspace credentials use the `SECRET_*` prefix. `project.json` maps them to each worker's prefixless application environment names. Platform credentials such as `SECRET_HUGGINGFACE_TOKEN` retain their documented runtime names.
 - Authenticate every Hugging Face Hub request with `SECRET_HUGGINGFACE_TOKEN`. Pass the token directly to Hub APIs and initialize Hub authentication before libraries perform internal downloads.
-- Keep local names as `GENERATED_*` in `env.runtime` and `.env*`.
+- Keep workspace credential names static and descriptive in `.env`; encrypt sensitive values with dotenvx.
 - Never put container-only `SECRET_*` names in `packages/schemas/env/*`.
 
 ## TESTING

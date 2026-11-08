@@ -86,6 +86,7 @@ node_modules
 .claude/settings.local.json
 # Secrets
 **/.env*
+!/.env
 !packages/schemas/env/.env.schema.json
 !packages/schemas/env/.env.schema.ts
 **/.dev.vars*

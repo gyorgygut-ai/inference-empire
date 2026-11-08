@@ -124,7 +124,7 @@ def build_app(
 ) -> FastAPI:
     app = FastAPI(title="worker-llm")
     expected_api_key = (
-        api_key if api_key is not None else os.environ.get("SECRET_LLM_CHAT_COMPLETIONS_API_KEY")
+        api_key if api_key is not None else os.environ.get("LLM_CHAT_COMPLETIONS_API_KEY")
     )
 
     @app.get("/health")

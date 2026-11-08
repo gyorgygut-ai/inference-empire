@@ -9,26 +9,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     env:
-      SECRET_BEAM_TOKEN: ${{ secrets.SECRET_BEAM_TOKEN }}
-      SECRET_RUNPOD_API_KEY: ${{ secrets.SECRET_RUNPOD_API_KEY }}
-      SECRET_MODAL_TOKEN_ID: ${{ secrets.SECRET_MODAL_TOKEN_ID }}
-      SECRET_MODAL_TOKEN_SECRET: ${{ secrets.SECRET_MODAL_TOKEN_SECRET }}
-      SECRET_HUGGINGFACE_TOKEN: ${{ secrets.SECRET_HUGGINGFACE_TOKEN }}
-      SECRET_R2_ACCESS_KEY: ${{ secrets.SECRET_R2_ACCESS_KEY }}
-      SECRET_R2_SECRET_KEY: ${{ secrets.SECRET_R2_SECRET_KEY }}
-      SECRET_R2_ENDPOINT: ${{ secrets.SECRET_R2_ENDPOINT }}
-      SECRET_R2_BUCKET: ${{ secrets.SECRET_R2_BUCKET }}
-      SECRET_OPENAI_API_KEY: ${{ secrets.SECRET_OPENAI_API_KEY }}
-      SECRET_ELEVENLABS_API_KEY: ${{ secrets.SECRET_ELEVENLABS_API_KEY }}
-      SECRET_ELEVENLABS_AGENT_ID: ${{ secrets.SECRET_ELEVENLABS_AGENT_ID }}
-      SECRET_FACE_VALUE_VERCEL_TOKEN: ${{ secrets.SECRET_FACE_VALUE_VERCEL_TOKEN }}
-      SECRET_FACE_VALUE_VERCEL_ORG_ID: ${{ secrets.SECRET_FACE_VALUE_VERCEL_ORG_ID }}
-      SECRET_FACE_VALUE_VERCEL_PROJECT_ID: ${{ secrets.SECRET_FACE_VALUE_VERCEL_PROJECT_ID }}
-      SECRET_VOICE_CHAT_VERCEL_TOKEN: ${{ secrets.SECRET_VOICE_CHAT_VERCEL_TOKEN }}
-      SECRET_VOICE_CHAT_VERCEL_ORG_ID: ${{ secrets.SECRET_VOICE_CHAT_VERCEL_ORG_ID }}
-      SECRET_VOICE_CHAT_VERCEL_PROJECT_ID: ${{ secrets.SECRET_VOICE_CHAT_VERCEL_PROJECT_ID }}
-      SECRET_CLOUDFLARE_API_TOKEN: ${{ secrets.SECRET_CLOUDFLARE_API_TOKEN }}
-      SECRET_CLOUDFLARE_ACCOUNT_ID: ${{ secrets.SECRET_CLOUDFLARE_ACCOUNT_ID }}
+      DOTENV_PRIVATE_KEY: ${{ secrets.DOTENV_PRIVATE_KEY }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -39,4 +20,4 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx nx affected -t test-unit,lint,typecheck,validate-deps --base=origin/main~1 --head=HEAD
-      - run: npx dotenvx run -f env.runtime -- npx nx affected -t deploy --base=origin/main~1 --head=HEAD
+      - run: npx nx affected -t deploy --base=origin/main~1 --head=HEAD

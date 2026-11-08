@@ -7,7 +7,7 @@ import wave
 import httpx
 
 BASE = os.environ["TTS_AUDIO_SPEECH_API_URL"].rstrip("/")
-TOKEN = os.environ["GENERATED_TTS_AUDIO_SPEECH_API_KEY"]
+TOKEN = os.environ["TTS_AUDIO_SPEECH_API_KEY"]
 HEADERS = {"Authorization": f"Bearer {TOKEN}"}
 
 

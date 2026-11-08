@@ -22,7 +22,7 @@ image = (
             "HF_HUB_ENABLE_HF_TRANSFER": "1",
             "LD_LIBRARY_PATH": "/usr/local/lib/python3.11/dist-packages/nvidia/cublas/lib:/usr/local/lib/python3.11/dist-packages/nvidia/cudnn/lib",
             "SECRET_HUGGINGFACE_TOKEN": os.environ["SECRET_HUGGINGFACE_TOKEN"],
-            "SECRET_STT_AUDIO_TRANSCRIPTIONS_API_KEY": os.environ["SECRET_STT_AUDIO_TRANSCRIPTIONS_API_KEY"],
+            "STT_AUDIO_TRANSCRIPTIONS_API_KEY": os.environ["STT_AUDIO_TRANSCRIPTIONS_API_KEY"],
         }
     )
 )

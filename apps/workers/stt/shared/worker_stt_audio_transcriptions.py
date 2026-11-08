@@ -121,7 +121,7 @@ def transcribe(request: Input, model: Any | None = None) -> Output:
 
 def build_app(transcriber: Callable[[Input], Output] = transcribe, api_key: str | None = None) -> FastAPI:
     app = FastAPI(title="worker-stt")
-    expected_api_key = api_key if api_key is not None else os.environ.get("SECRET_STT_AUDIO_TRANSCRIPTIONS_API_KEY")
+    expected_api_key = api_key if api_key is not None else os.environ.get("STT_AUDIO_TRANSCRIPTIONS_API_KEY")
 
     @app.get("/health")
     def health() -> dict[str, str]:

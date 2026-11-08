@@ -56,7 +56,7 @@
         "cwd": "apps/face-value",
         "env": {
           "ROUTER_URL": "http://localhost:${DEV_ROUTER_FLUX2_PORT}",
-          "ROUTER_AUTH_TOKEN": "${GENERATED_ROUTER_FLUX2_AUTH_TOKEN}"
+          "ROUTER_AUTH_TOKEN": "${SECRET_ROUTER_FLUX2_AUTH_TOKEN}"
         },
         "command": "npx next dev",
         "args": "--port=\"$DEV_FACE_VALUE_PORT\""
@@ -73,7 +73,7 @@
         "cwd": ".",
         "env": {
           "ROUTER_URL": "$(npx tsx $NX_WORKSPACE_ROOT/tools/get-cf-worker-url.ts router_flux2)",
-          "ROUTER_AUTH_TOKEN": "${GENERATED_ROUTER_FLUX2_AUTH_TOKEN}",
+          "ROUTER_AUTH_TOKEN": "${SECRET_ROUTER_FLUX2_AUTH_TOKEN}",
           "VERCEL_TOKEN": "${SECRET_FACE_VALUE_VERCEL_TOKEN}",
           "VERCEL_ORG_ID": "${SECRET_FACE_VALUE_VERCEL_ORG_ID}",
           "VERCEL_PROJECT_ID": "${SECRET_FACE_VALUE_VERCEL_PROJECT_ID}"

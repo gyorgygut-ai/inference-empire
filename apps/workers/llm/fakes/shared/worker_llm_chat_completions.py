@@ -14,7 +14,7 @@ REPLIES = (
 
 def build_app() -> FastAPI:
     app = FastAPI(title="worker-llm-local-stub")
-    expected_token = os.environ.get("SECRET_LLM_CHAT_COMPLETIONS_API_KEY", "")
+    expected_token = os.environ.get("LLM_CHAT_COMPLETIONS_API_KEY", "")
     request_count = 0
 
     @app.get("/health")

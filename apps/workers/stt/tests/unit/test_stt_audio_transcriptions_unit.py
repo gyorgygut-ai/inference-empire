@@ -27,7 +27,7 @@ def wav_fixture(
 
 @pytest.fixture
 def client():
-    os.environ["SECRET_STT_AUDIO_TRANSCRIPTIONS_API_KEY"] = STT_API_KEY
+    os.environ["STT_AUDIO_TRANSCRIPTIONS_API_KEY"] = STT_API_KEY
     app = build_app(transcriber=stt_transcriber_stub)
     return TestClient(app)
 

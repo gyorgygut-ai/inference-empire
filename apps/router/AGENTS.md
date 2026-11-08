@@ -8,7 +8,7 @@ Stateless task queue api router, routing across worker urls.
 
 **env**:
   - `PORT`: `${DEV_ROUTER_FLUX2_PORT}`
-  - `AUTH_TOKEN`: `${GENERATED_ROUTER_FLUX2_AUTH_TOKEN}`
+  - `AUTH_TOKEN`: `${SECRET_ROUTER_FLUX2_AUTH_TOKEN}`
 
 **NX**:
   - **Cmd**: `wrangler dev` directly
@@ -20,7 +20,7 @@ Stateless task queue api router, routing across worker urls.
 ## deploy-flux2 ENV
 
 **dotenv**:
-  - `AUTH_TOKEN`: `${GENERATED_ROUTER_FLUX2_AUTH_TOKEN}`
+  - `AUTH_TOKEN`: `${SECRET_ROUTER_FLUX2_AUTH_TOKEN}`
 
 **NX**:
   - **Cmd**: `wrangler deploy`

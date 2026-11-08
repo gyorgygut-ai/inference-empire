@@ -11,10 +11,12 @@ First, run the development server:
 
 ```bash
 npm i
-dotenvx run -f env.runtime -- npx nx run face-value:dev
+npx nx run face-value:dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The workspace root `.env` is the shared configuration source. Local Nx commands decrypt it using the `DOTENV_PRIVATE_KEY` resolved from the ignored `.env.keys` file. Keep `.env.keys` outside Git. Use `dotenvx set KEY value` to add or rotate encrypted values.
+
+Open [http://localhost:3050](http://localhost:3050) with your browser to see the result.
 
 ## Agents
 

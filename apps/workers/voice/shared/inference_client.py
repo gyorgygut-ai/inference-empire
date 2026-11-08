@@ -50,17 +50,17 @@ class InferenceClient:
             stt=endpoint(
                 "STT Audio Transcriptions",
                 os.environ.get("STT_AUDIO_TRANSCRIPTIONS_API_URL"),
-                os.environ.get("SECRET_STT_AUDIO_TRANSCRIPTIONS_API_KEY"),
+                os.environ.get("STT_AUDIO_TRANSCRIPTIONS_API_KEY"),
             ),
             llm=endpoint(
                 "LLM Chat Completions",
                 os.environ.get("LLM_CHAT_COMPLETIONS_API_URL"),
-                os.environ.get("SECRET_LLM_CHAT_COMPLETIONS_API_KEY"),
+                os.environ.get("LLM_CHAT_COMPLETIONS_API_KEY"),
             ),
             tts=endpoint(
                 "TTS Audio Speech",
                 os.environ.get("TTS_AUDIO_SPEECH_API_URL"),
-                os.environ.get("SECRET_TTS_AUDIO_SPEECH_API_KEY"),
+                os.environ.get("TTS_AUDIO_SPEECH_API_KEY"),
             ),
         )
 

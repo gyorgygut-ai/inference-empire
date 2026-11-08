@@ -13,7 +13,7 @@
       "options": {
         "cwd": "{projectRoot}",
         "env": {
-          "SECRET_TTS_AUDIO_SPEECH_API_KEY": "${GENERATED_TTS_AUDIO_SPEECH_API_KEY}"
+          "TTS_AUDIO_SPEECH_API_KEY": "${SECRET_TTS_AUDIO_SPEECH_API_KEY}"
         },
         "command": "uv run --locked --project ../../../ uvicorn",
         "args": "fakes.worker_tts_audio_speech_beam:app --host 127.0.0.1 --port 18763"
@@ -33,7 +33,7 @@
         "{workspaceRoot}/packages/schemas/tools/generate_pydantic.py",
         { "env": "SECRET_HUGGINGFACE_TOKEN" },
         { "env": "SECRET_BEAM_TOKEN" },
-        { "env": "GENERATED_TTS_AUDIO_SPEECH_API_KEY" }
+        { "env": "SECRET_TTS_AUDIO_SPEECH_API_KEY" }
       ],
       "outputs": [],
       "options": {
@@ -41,7 +41,7 @@
         "env": {
           "PYTHONPATH": ".",
           "SECRET_HUGGINGFACE_TOKEN": "${SECRET_HUGGINGFACE_TOKEN}",
-          "SECRET_TTS_AUDIO_SPEECH_API_KEY": "${GENERATED_TTS_AUDIO_SPEECH_API_KEY}",
+          "TTS_AUDIO_SPEECH_API_KEY": "${SECRET_TTS_AUDIO_SPEECH_API_KEY}",
           "BEAM_TOKEN": "${SECRET_BEAM_TOKEN}"
         },
         "command": "uv run --locked --project ../../../ beam deploy",
@@ -87,7 +87,8 @@
       "options": {
         "cwd": "{workspaceRoot}",
         "env": {
-          "TTS_AUDIO_SPEECH_API_URL": "$(npx tsx $NX_WORKSPACE_ROOT/tools/get-beam-url.ts worker-tts)"
+          "TTS_AUDIO_SPEECH_API_URL": "$(npx tsx $NX_WORKSPACE_ROOT/tools/get-beam-url.ts worker-tts)",
+          "TTS_AUDIO_SPEECH_API_KEY": "${SECRET_TTS_AUDIO_SPEECH_API_KEY}"
         },
         "command": "uv run --locked --project apps/workers/tts python",
         "args": "apps/workers/tts/tests/acceptance_tts_audio_speech.py"

@@ -6,28 +6,30 @@
 
 ## Non-negotiables
 
-**Secrets**: 
-
-- **Env Vars**: `nx` always injects required secrets from `.env*`
-- **Schemas**: `@packages/schemas` describes `env` var names to use
-
-**Config**:
-
-- **Runtime**: `dotenvx run -f env.runtime --` injects fresh-generated config values
-- **Debug**: `dotenvx run -f env.debug --` injects constant runtime config values
-- **Rule** use `env.debug` to debug with constant values; otherwise use `env.runtime`
-
-**Correct**:
+**Correctness**:
 
 - **Goal**: Spec adherence across the codebase without gaps
 - **Approach**: Code matched to authoritive specs; NOT specs to code
 - **Outcome**: Code fulfilling acceptance criteria as specs dictate
 
-**Proven**:
+**Minimalism**:
 
 - **Goal**: Idiomatic, documented patterns instead of hand-rolling and guesses
 - **Approach**: Use the `nx-*`, `python-uv` skills and the `nx mcp` to verify
 - **Outcome**: Trial-and-error loops eliminated; simple, reliable codebase
+
+**Secrets**:
+
+- **Problem**: Tasks need environment variables, while keeping sensitive values protected
+- **Approach**:
+  - dotenvx encrypted environment vars in tracked root `.env`
+  - Read the key in `.env.local` for seamless use
+  - Keep the `decryption key`, `.env.{keys|local}` uncommitted
+  - Use `dotenvx set KEY value` to mutate encrypted values
+  - Use `@packages/schemas` for environment variable names
+- **Outcome**:
+  - Nx injects required values from the root `.env`
+  - Environment variable names follow shared schema
 
 ---
 
@@ -58,33 +60,23 @@
 - **Outcome**:
   - `consumer` can send requests to `producer` url
 
-**Dynamic Config**:
-
-- **Problem**: I want dynamic values generated on each run
-- **Approach**: 
-  - `config.{dev|deploy}` generates `{GENERATED_TOKEN}`
-  - `dotenv-expand` `1000.0.0` enables command substitution
-- **Outcome**:
-  - `producer` accesses `AUTH_TOKEN={GENERATED_TOKEN}`
-  - `consumer` accesses `AUTH_TOKEN={GENERATED_TOKEN}`
-  - `consumer` can authenticate itself to `producer`
-
 **Config Delegation**:
 
 - **Problem**: I want to delegate `dev` + `deploy` config
 - **Approach**: 
-  - tracked `env.runtime` holds shared mandatory runtime config for dev + deploy
+  - tracked root `.env` holds shared mandatory runtime config for dev + deploy
   - `options.{env|args}` instead of one-by-one env plumbing
   - `dotenvx/run-commands` supports `options.env` interpolation
-  - `.env*`, ids, urls, tokens all treated as secret; gitignored
-  - `dotenvx run -f env.runtime --` ensures consistent env
+  - plaintext config and encrypted credentials coexist in `.env`
+  - `.env.keys` and local `.env*` files are untracked
+  - Nx loads root `.env` and decrypts encrypted values for task processes
 - **Acceptance**:
-  - `workflows/deploy.yml`, `gh secrets` kept in sync
-  - Untracked `.env*` at `{workspaceRoot}` + `{projectRoot}`
+  - `workflows/deploy.yml` receives `DOTENV_PRIVATE_KEY` from GitHub secrets
+  - tracked `.env` at `{workspaceRoot}`; decryption keys remain outside Git
+  - untracked app-local `.env*` files
   - Tracked JSON Schema source contracts live in
     `packages/schemas/env/` and `packages/schemas/workers/`
   - Generated TypeScript contracts are outputs; do not edit them by hand
-  - Tracked `env.runtime` at `{workspaceRoot}`
 
 ---
 
@@ -102,7 +94,7 @@
 - ping `get-cf-worker-url.ts(router_flux2)` suceeds
   - POST `get-cf-worker-url.ts(router_flux2)/q` + `invalid token`
     -> rejects
-  - POST `get-cf-worker-url.ts(router_flux2)/q` + `GENERATED_ROUTER_FLUX2_AUTH_TOKEN`
+  - POST `get-cf-worker-url.ts(router_flux2)/q` + `ROUTER_FLUX2_AUTH_TOKEN`
     -> produces `presigned_url`
 - ping `get-vercel-url.ts(SECRET_FACE_VALUE_VERCEL_PROJECT_ID)` suceeds
 

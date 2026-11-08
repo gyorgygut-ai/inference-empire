@@ -10,7 +10,7 @@ LLM_API_KEY = "llm-test-key"
 
 @pytest.fixture
 def client():
-    os.environ["SECRET_LLM_CHAT_COMPLETIONS_API_KEY"] = LLM_API_KEY
+    os.environ["LLM_CHAT_COMPLETIONS_API_KEY"] = LLM_API_KEY
     app = build_app(generator=llm_generator_stub)
     return TestClient(app)
 

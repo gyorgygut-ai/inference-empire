@@ -42,21 +42,21 @@ reference_volume = Volume(
         "STT_AUDIO_TRANSCRIPTIONS_API_URL": os.environ[
             "STT_AUDIO_TRANSCRIPTIONS_API_URL"
         ],
-        "SECRET_STT_AUDIO_TRANSCRIPTIONS_API_KEY": os.environ[
-            "SECRET_STT_AUDIO_TRANSCRIPTIONS_API_KEY"
+        "STT_AUDIO_TRANSCRIPTIONS_API_KEY": os.environ[
+            "STT_AUDIO_TRANSCRIPTIONS_API_KEY"
         ],
         "LLM_CHAT_COMPLETIONS_API_URL": os.environ[
             "LLM_CHAT_COMPLETIONS_API_URL"
         ],
-        "SECRET_LLM_CHAT_COMPLETIONS_API_KEY": os.environ[
-            "SECRET_LLM_CHAT_COMPLETIONS_API_KEY"
+        "LLM_CHAT_COMPLETIONS_API_KEY": os.environ[
+            "LLM_CHAT_COMPLETIONS_API_KEY"
         ],
         "TTS_AUDIO_SPEECH_API_URL": os.environ["TTS_AUDIO_SPEECH_API_URL"],
-        "SECRET_VOICE_WORKER_AUTH_TOKEN": os.environ[
-            "SECRET_VOICE_WORKER_AUTH_TOKEN"
+        "VOICE_WORKER_AUTH_TOKEN": os.environ[
+            "VOICE_WORKER_AUTH_TOKEN"
         ],
-        "SECRET_TTS_AUDIO_SPEECH_API_KEY": os.environ[
-            "SECRET_TTS_AUDIO_SPEECH_API_KEY"
+        "TTS_AUDIO_SPEECH_API_KEY": os.environ[
+            "TTS_AUDIO_SPEECH_API_KEY"
         ],
         "VOICE_REFERENCES_DIR": "./references",
     },

@@ -20,7 +20,7 @@ TTS_API_KEY = "tts-test-key"
 
 @pytest.fixture
 def client():
-    os.environ["SECRET_TTS_AUDIO_SPEECH_API_KEY"] = TTS_API_KEY
+    os.environ["TTS_AUDIO_SPEECH_API_KEY"] = TTS_API_KEY
     app = build_app(generator=tts_generator_stub)
     return TestClient(app)
 

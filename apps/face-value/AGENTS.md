@@ -10,7 +10,7 @@
 **env**:
   - `PORT`: `${DEV_FACE_VALUE_PORT}`
   - `ROUTER_URL`: `http://localhost:${DEV_ROUTER_FLUX2_PORT}`
-  - `ROUTER_AUTH_TOKEN`: `${GENERATED_ROUTER_FLUX2_AUTH_TOKEN}`
+  - `ROUTER_AUTH_TOKEN`: `${SECRET_ROUTER_FLUX2_AUTH_TOKEN}`
 
 **NX**:
   - **Cmd**: `next dev` directly
@@ -20,7 +20,7 @@
 ## Deploy ENV
 
 **dotenv**:
-  - `ROUTER_AUTH_TOKEN`: `${GENERATED_ROUTER_FLUX2_AUTH_TOKEN}`
+  - `ROUTER_AUTH_TOKEN`: `${SECRET_ROUTER_FLUX2_AUTH_TOKEN}`
 
 **NX**:
   - **Cmd**: `next deploy`, with `SECRET_FACE_VALUE_VERCEL_{TOKEN|ORG_ID|PROJECT_ID}`

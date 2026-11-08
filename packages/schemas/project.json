@@ -24,12 +24,10 @@
         "{projectRoot}/tools/generate-zod-from-json.ts"
       ],
       "outputs": [
-        "{workspaceRoot}/packages/schemas/env/.env.schema.ts",
-        "{workspaceRoot}/packages/schemas/env/env.runtime.schema.ts",
-        "{workspaceRoot}/packages/schemas/env/env.debug.schema.ts"
+        "{workspaceRoot}/packages/schemas/env/.env.schema.ts"
       ],
       "options": {
-        "command": "npx tsx packages/schemas/tools/generate-zod-from-json.ts --source packages/schemas/env/.env.schema.json --out packages/schemas/env/.env.schema.ts && npx tsx packages/schemas/tools/generate-zod-from-json.ts --source packages/schemas/env/env.runtime.schema.json --out packages/schemas/env/env.runtime.schema.ts && npx tsx packages/schemas/tools/generate-zod-from-json.ts --source packages/schemas/env/env.debug.schema.json --out packages/schemas/env/env.debug.schema.ts",
+        "command": "npx tsx packages/schemas/tools/generate-zod-from-json.ts --source packages/schemas/env/.env.schema.json --out packages/schemas/env/.env.schema.ts",
         "cwd": "{workspaceRoot}"
       }
     },

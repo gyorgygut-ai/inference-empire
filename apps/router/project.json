@@ -58,7 +58,7 @@
       "options": {
         "cwd": "apps/router",
         "env": {
-          "AUTH_TOKEN": "${GENERATED_ROUTER_FLUX2_AUTH_TOKEN}",
+          "AUTH_TOKEN": "${SECRET_ROUTER_FLUX2_AUTH_TOKEN}",
           "WORKER_BEAM_URL": "$(npx tsx $NX_WORKSPACE_ROOT/tools/get-beam-url.ts worker-flux2)",
           "CLOUDFLARE_INCLUDE_PROCESS_ENV": "true"
         },
@@ -80,7 +80,7 @@
       "options": {
         "cwd": "apps/router",
         "env": {
-          "AUTH_TOKEN": "${GENERATED_ROUTER_TINYSD_AUTH_TOKEN}",
+          "AUTH_TOKEN": "${SECRET_ROUTER_TINYSD_AUTH_TOKEN}",
           "WORKER_BEAM_URL": "$(npx tsx $NX_WORKSPACE_ROOT/tools/get-beam-url.ts worker-tiny_sd)",
           "CLOUDFLARE_INCLUDE_PROCESS_ENV": "true"
         },
@@ -105,7 +105,7 @@
       "options": {
         "cwd": "apps/router",
         "env": {
-          "AUTH_TOKEN": "${GENERATED_ROUTER_FLUX2_AUTH_TOKEN}",
+          "AUTH_TOKEN": "${SECRET_ROUTER_FLUX2_AUTH_TOKEN}",
           "WORKER_BEAM_URL": "$(npx tsx $NX_WORKSPACE_ROOT/tools/get-beam-url.ts worker-flux2)"
         },
         "commands": [
@@ -126,7 +126,7 @@
       "options": {
         "cwd": "apps/router",
         "env": {
-          "AUTH_TOKEN": "${GENERATED_ROUTER_TINYSD_AUTH_TOKEN}",
+          "AUTH_TOKEN": "${SECRET_ROUTER_TINYSD_AUTH_TOKEN}",
           "WORKER_BEAM_URL": "$(npx tsx $NX_WORKSPACE_ROOT/tools/get-beam-url.ts worker-tiny_sd)"
         },
         "commands": [

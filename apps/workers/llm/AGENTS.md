@@ -14,8 +14,8 @@ Authenticate every Hugging Face Hub request with `SECRET_HUGGINGFACE_TOKEN`. Pas
 
 - **Problem**: Requests need authentication without exposing Beam credentials.
 - **Acceptance**:
-  - Require Bearer token `SECRET_LLM_CHAT_COMPLETIONS_API_KEY` on `POST /v1/chat/completions`.
-  - Map it in `project.json` from `GENERATED_LLM_CHAT_COMPLETIONS_API_KEY`.
+  - Require Bearer token `LLM_CHAT_COMPLETIONS_API_KEY` on `POST /v1/chat/completions`.
+  - Map it in `project.json` from the root `SECRET_LLM_CHAT_COMPLETIONS_API_KEY` credential.
   - Validate the token server-side.
   - Reject missing or invalid tokens with `401`.
 - **Outcome**: Only callers with the configured API key can request completions.

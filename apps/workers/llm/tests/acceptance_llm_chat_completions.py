@@ -3,7 +3,7 @@ import os
 import httpx
 
 BASE = os.environ["LLM_CHAT_COMPLETIONS_API_URL"].rstrip("/")
-TOKEN = os.environ["GENERATED_LLM_CHAT_COMPLETIONS_API_KEY"]
+TOKEN = os.environ["LLM_CHAT_COMPLETIONS_API_KEY"]
 HEADERS = {"Authorization": f"Bearer {TOKEN}"}
 
 

@@ -246,7 +246,7 @@ def build_app(
     client = inference_client if inference_client is not None else InferenceClient.from_env()
     tokens = token_store if token_store is not None else SessionTokens()
     trusted_server_token = client_secret_auth_token or os.environ.get(
-        "SECRET_VOICE_WORKER_AUTH_TOKEN"
+        "VOICE_WORKER_AUTH_TOKEN"
     )
     huggingface_token = os.environ.get("SECRET_HUGGINGFACE_TOKEN")
     if turn_credentials_provider is None:

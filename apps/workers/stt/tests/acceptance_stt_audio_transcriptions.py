@@ -7,7 +7,7 @@ import wave
 import httpx
 
 BASE = os.environ["STT_AUDIO_TRANSCRIPTIONS_API_URL"].rstrip("/")
-TOKEN = os.environ["GENERATED_STT_AUDIO_TRANSCRIPTIONS_API_KEY"]
+TOKEN = os.environ["STT_AUDIO_TRANSCRIPTIONS_API_KEY"]
 HEADERS = {"Authorization": f"Bearer {TOKEN}"}
 
 

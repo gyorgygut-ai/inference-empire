@@ -14,9 +14,7 @@ from aiortc.contrib.media import MediaPlayer
 from aiortc.mediastreams import MediaStreamError
 
 BASE = os.environ["VOICE_REALTIME_SESSION_API_URL"].rstrip("/")
-SERVER_TOKEN = os.environ.get("SECRET_VOICE_WORKER_AUTH_TOKEN") or os.environ[
-    "GENERATED_VOICE_WORKER_AUTH_TOKEN"
-]
+SERVER_TOKEN = os.environ["VOICE_WORKER_AUTH_TOKEN"]
 FIXTURES = Path(__file__).parent.parent / "fixtures"
 MESSAGE_AUDIO = FIXTURES / "message.wav"
 CLIENT_TIMEOUT = httpx.Timeout(connect=2.0, read=30.0, write=5.0, pool=2.0)

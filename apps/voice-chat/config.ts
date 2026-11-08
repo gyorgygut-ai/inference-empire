@@ -8,5 +8,5 @@ export const config = {
   elevenLabsApiKey: env.ELEVENLABS_API_KEY,
   elevenLabsAgentId: env.ELEVENLABS_AGENT_ID,
   voiceWorkerUrl: env.SECRET_WORKER_URL,
-  voiceWorkerAuthToken: env.GENERATED_VOICE_WORKER_AUTH_TOKEN,
+  voiceWorkerAuthToken: env.VOICE_WORKER_AUTH_TOKEN,
 }

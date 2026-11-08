@@ -5,7 +5,7 @@ from fastapi import FastAPI, File, HTTPException, Request, UploadFile
 
 def build_app() -> FastAPI:
     app = FastAPI(title="worker-stt-local-stub")
-    expected_token = os.environ.get("SECRET_STT_AUDIO_TRANSCRIPTIONS_API_KEY", "")
+    expected_token = os.environ.get("STT_AUDIO_TRANSCRIPTIONS_API_KEY", "")
     request_count = 0
 
     @app.get("/health")

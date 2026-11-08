@@ -28,7 +28,7 @@ def _wav(pcm: bytes) -> bytes:
 
 def build_app() -> FastAPI:
     app = FastAPI(title="worker-tts-local-stub")
-    expected_token = os.environ.get("SECRET_TTS_AUDIO_SPEECH_API_KEY", "")
+    expected_token = os.environ.get("TTS_AUDIO_SPEECH_API_KEY", "")
     request_count = 0
 
     def authorize(request: Request) -> None:

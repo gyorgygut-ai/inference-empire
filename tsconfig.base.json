@@ -6,9 +6,6 @@
     "strict": true,
     "skipLibCheck": true,
     "paths": {
-      "@inference/nx-generate-auth-token": [
-        "./tools/nx-generate-auth-token/src/index.ts"
-      ],
       "@inference/task-queue-client": [
         "./packages/task-queue-client/src/index.ts"
       ],

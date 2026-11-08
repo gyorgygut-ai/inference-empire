@@ -34,17 +34,17 @@ BACKENDS = {
     "stub": Backend(
         stt=Service(
             os.environ["STUB_STT_AUDIO_TRANSCRIPTIONS_API_URL"].rstrip("/"),
-            os.environ["STUB_SECRET_STT_AUDIO_TRANSCRIPTIONS_API_KEY"],
+            os.environ["STUB_STT_AUDIO_TRANSCRIPTIONS_API_KEY"],
             "/v1/audio/transcriptions",
         ),
         llm=Service(
             os.environ["STUB_LLM_CHAT_COMPLETIONS_API_URL"].rstrip("/"),
-            os.environ["STUB_SECRET_LLM_CHAT_COMPLETIONS_API_KEY"],
+            os.environ["STUB_LLM_CHAT_COMPLETIONS_API_KEY"],
             "/v1/chat/completions",
         ),
         tts=Service(
             os.environ["STUB_TTS_AUDIO_SPEECH_API_URL"].rstrip("/"),
-            os.environ["STUB_SECRET_TTS_AUDIO_SPEECH_API_KEY"],
+            os.environ["STUB_TTS_AUDIO_SPEECH_API_KEY"],
             "/v1/audio/speech",
         ),
         is_stub=True,
@@ -52,17 +52,17 @@ BACKENDS = {
     "real": Backend(
         stt=Service(
             os.environ["REAL_STT_AUDIO_TRANSCRIPTIONS_API_URL"].rstrip("/"),
-            os.environ["REAL_SECRET_STT_AUDIO_TRANSCRIPTIONS_API_KEY"],
+            os.environ["REAL_STT_AUDIO_TRANSCRIPTIONS_API_KEY"],
             "/v1/audio/transcriptions",
         ),
         llm=Service(
             os.environ["REAL_LLM_CHAT_COMPLETIONS_API_URL"].rstrip("/"),
-            os.environ["REAL_SECRET_LLM_CHAT_COMPLETIONS_API_KEY"],
+            os.environ["REAL_LLM_CHAT_COMPLETIONS_API_KEY"],
             "/v1/chat/completions",
         ),
         tts=Service(
             os.environ["REAL_TTS_AUDIO_SPEECH_API_URL"].rstrip("/"),
-            os.environ["REAL_SECRET_TTS_AUDIO_SPEECH_API_KEY"],
+            os.environ["REAL_TTS_AUDIO_SPEECH_API_KEY"],
             "/v1/audio/speech",
         ),
         is_stub=False,

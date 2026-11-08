@@ -205,7 +205,7 @@ def build_app(
     streaming_generator: Callable[[Input], Iterator[bytes]] = stream_synthesize,
 ) -> FastAPI:
     app = FastAPI(title="worker-tts")
-    expected_api_key = api_key if api_key is not None else os.environ.get("SECRET_TTS_AUDIO_SPEECH_API_KEY")
+    expected_api_key = api_key if api_key is not None else os.environ.get("TTS_AUDIO_SPEECH_API_KEY")
 
     @app.get("/health")
     def health() -> dict[str, str]:

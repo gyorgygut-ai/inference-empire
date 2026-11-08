@@ -8,7 +8,7 @@ const api = z.object({
   output: z.object({ image: z.string() }),
 })
 
-const env = { AUTH_TOKEN: 'secret-token-12345678901234567890', WORKER_BEAM_URL: 'http://example.test', BEAM_TOKEN: 'beam' }
+const env = { AUTH_TOKEN: 'secret-token-12345678901234567890', WORKER_BEAM_URL: 'http://example.test', SECRET_BEAM_TOKEN: 'beam' }
 
 describe('createRouter', () => {
   it('rejects unauthenticated requests', async () => {

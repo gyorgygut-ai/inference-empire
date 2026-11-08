@@ -45,6 +45,14 @@
       ],
       "options": {
         "cwd": "tools/test",
+        "env": {
+          "ROUTER_FLUX2_AUTH_TOKEN": "${SECRET_ROUTER_FLUX2_AUTH_TOKEN}",
+          "ROUTER_TINYSD_AUTH_TOKEN": "${SECRET_ROUTER_TINYSD_AUTH_TOKEN}",
+          "STT_AUDIO_TRANSCRIPTIONS_API_KEY": "${SECRET_STT_AUDIO_TRANSCRIPTIONS_API_KEY}",
+          "LLM_CHAT_COMPLETIONS_API_KEY": "${SECRET_LLM_CHAT_COMPLETIONS_API_KEY}",
+          "TTS_AUDIO_SPEECH_API_KEY": "${SECRET_TTS_AUDIO_SPEECH_API_KEY}",
+          "VOICE_WORKER_AUTH_TOKEN": "${SECRET_VOICE_WORKER_AUTH_TOKEN}"
+        },
         "command": "vitest run",
         "args": "--config vitest.config.mts acceptance.dev.test.ts"
       }
@@ -58,6 +66,14 @@
       ],
       "options": {
         "cwd": "tools/test",
+        "env": {
+          "ROUTER_FLUX2_AUTH_TOKEN": "${SECRET_ROUTER_FLUX2_AUTH_TOKEN}",
+          "ROUTER_TINYSD_AUTH_TOKEN": "${SECRET_ROUTER_TINYSD_AUTH_TOKEN}",
+          "STT_AUDIO_TRANSCRIPTIONS_API_KEY": "${SECRET_STT_AUDIO_TRANSCRIPTIONS_API_KEY}",
+          "LLM_CHAT_COMPLETIONS_API_KEY": "${SECRET_LLM_CHAT_COMPLETIONS_API_KEY}",
+          "TTS_AUDIO_SPEECH_API_KEY": "${SECRET_TTS_AUDIO_SPEECH_API_KEY}",
+          "VOICE_WORKER_AUTH_TOKEN": "${SECRET_VOICE_WORKER_AUTH_TOKEN}"
+        },
         "command": "vitest run",
         "args": "--config vitest.config.mts acceptance.dev-tinysd.test.ts"
       }
@@ -73,7 +89,15 @@
       ],
       "options": {
         "cwd": "tools/test",
-        "env": { "VERCEL_TOKEN": "${FACE_VALUE_VERCEL_TOKEN}" },
+        "env": {
+          "VERCEL_TOKEN": "${SECRET_FACE_VALUE_VERCEL_TOKEN}",
+          "ROUTER_FLUX2_AUTH_TOKEN": "${SECRET_ROUTER_FLUX2_AUTH_TOKEN}",
+          "ROUTER_TINYSD_AUTH_TOKEN": "${SECRET_ROUTER_TINYSD_AUTH_TOKEN}",
+          "STT_AUDIO_TRANSCRIPTIONS_API_KEY": "${SECRET_STT_AUDIO_TRANSCRIPTIONS_API_KEY}",
+          "LLM_CHAT_COMPLETIONS_API_KEY": "${SECRET_LLM_CHAT_COMPLETIONS_API_KEY}",
+          "TTS_AUDIO_SPEECH_API_KEY": "${SECRET_TTS_AUDIO_SPEECH_API_KEY}",
+          "VOICE_WORKER_AUTH_TOKEN": "${SECRET_VOICE_WORKER_AUTH_TOKEN}"
+        },
         "command": "vitest run",
         "args": "--config vitest.config.mts acceptance.deploy.test.ts"
       }

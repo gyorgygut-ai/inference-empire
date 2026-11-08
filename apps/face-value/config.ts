@@ -5,5 +5,5 @@ const env = envSchema.parse(process.env);
 
 export const config = {
   ROUTER_RESOLVED_URL: env.ROUTER_URL,
-  ROUTER_GENERATED_AUTH_TOKEN: env.ROUTER_AUTH_TOKEN,
+  ROUTER_AUTH_TOKEN: env.ROUTER_AUTH_TOKEN,
 };

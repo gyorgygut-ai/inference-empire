@@ -14,11 +14,11 @@
     "lint": "nx run-many -t lint",
     "lint:fix": "nx run-many -t lint-fix",
     "verify": "nx run-many -t verify --nxBail --parallel=1",
-    "nx:face-value:dev": "dotenvx run -f env.runtime -- npx nx run face-value:dev",
-    "nx:voice-chat:dev": "dotenvx run -f env.runtime -- npx nx run voice-chat:dev",
-    "nx:deploy": "dotenvx run -f env.runtime -- npx nx affected -t deploy --base=origin/main~1",
-    "nx:face-value:deploy": "dotenvx run -f env.runtime -- npx nx run face-value:deploy",
-    "nx:voice-chat:deploy": "dotenvx run -f env.runtime -- npx nx run voice-chat:deploy"
+    "nx:face-value:dev": "npx nx run face-value:dev",
+    "nx:voice-chat:dev": "npx nx run voice-chat:dev",
+    "nx:deploy": "npx nx affected -t deploy --base=origin/main~1",
+    "nx:face-value:deploy": "npx nx run face-value:deploy",
+    "nx:voice-chat:deploy": "npx nx run voice-chat:deploy"
   },
   "devDependencies": {
     "@apidevtools/json-schema-ref-parser": "^15.5.2",

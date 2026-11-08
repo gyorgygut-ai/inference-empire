@@ -13,8 +13,8 @@ Authenticate every Hugging Face Hub request with `SECRET_HUGGINGFACE_TOKEN`. Pas
 
 - **Problem**: Requests need authentication without exposing Beam credentials.
 - **Acceptance**:
-  - Require Bearer token `SECRET_STT_AUDIO_TRANSCRIPTIONS_API_KEY` on `POST /v1/audio/transcriptions`.
-  - Map it in `project.json` from `GENERATED_STT_AUDIO_TRANSCRIPTIONS_API_KEY`.
+  - Require Bearer token `STT_AUDIO_TRANSCRIPTIONS_API_KEY` on `POST /v1/audio/transcriptions`.
+  - Map it in `project.json` from the root `SECRET_STT_AUDIO_TRANSCRIPTIONS_API_KEY` credential.
   - Reject missing or invalid tokens with `401`.
 - **Outcome**: Only callers with the configured API key can submit transcriptions.
 
@@ -49,8 +49,8 @@ TTS Audio Speech worker. OpenAI-compatible Audio Speech API.
 
 - **Problem**: Requests need authentication without exposing Beam credentials.
 - **Acceptance**:
-  - Require Bearer token `SECRET_TTS_AUDIO_SPEECH_API_KEY` on `POST /v1/audio/speech`.
-  - Map it in `project.json` from `GENERATED_TTS_AUDIO_SPEECH_API_KEY`.
+  - Require Bearer token `TTS_AUDIO_SPEECH_API_KEY` on `POST /v1/audio/speech`.
+  - Map it in `project.json` from the root `SECRET_TTS_AUDIO_SPEECH_API_KEY` credential.
   - Reject missing or invalid tokens with `401`.
 - **Outcome**: Only callers with the configured API key can request speech synthesis.
 

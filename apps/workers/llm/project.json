@@ -13,7 +13,7 @@
       "options": {
         "cwd": "{projectRoot}",
         "env": {
-          "SECRET_LLM_CHAT_COMPLETIONS_API_KEY": "${GENERATED_LLM_CHAT_COMPLETIONS_API_KEY}"
+          "LLM_CHAT_COMPLETIONS_API_KEY": "${SECRET_LLM_CHAT_COMPLETIONS_API_KEY}"
         },
         "command": "uv run --locked --project ../../../ uvicorn",
         "args": "fakes.worker_llm_chat_completions_beam:app --host 127.0.0.1 --port 18762"
@@ -33,7 +33,7 @@
         "{workspaceRoot}/packages/schemas/tools/generate_pydantic.py",
         { "env": "SECRET_HUGGINGFACE_TOKEN" },
         { "env": "SECRET_BEAM_TOKEN" },
-        { "env": "GENERATED_LLM_CHAT_COMPLETIONS_API_KEY" }
+        { "env": "SECRET_LLM_CHAT_COMPLETIONS_API_KEY" }
       ],
       "outputs": [],
       "options": {
@@ -41,7 +41,7 @@
         "env": {
           "PYTHONPATH": ".",
           "SECRET_HUGGINGFACE_TOKEN": "${SECRET_HUGGINGFACE_TOKEN}",
-          "SECRET_LLM_CHAT_COMPLETIONS_API_KEY": "${GENERATED_LLM_CHAT_COMPLETIONS_API_KEY}",
+          "LLM_CHAT_COMPLETIONS_API_KEY": "${SECRET_LLM_CHAT_COMPLETIONS_API_KEY}",
           "BEAM_TOKEN": "${SECRET_BEAM_TOKEN}"
         },
         "command": "uv run --locked --project ../../../ beam deploy",
@@ -87,7 +87,8 @@
       "options": {
         "cwd": "{workspaceRoot}",
         "env": {
-          "LLM_CHAT_COMPLETIONS_API_URL": "$(npx tsx $NX_WORKSPACE_ROOT/tools/get-beam-url.ts worker-llm)"
+          "LLM_CHAT_COMPLETIONS_API_URL": "$(npx tsx $NX_WORKSPACE_ROOT/tools/get-beam-url.ts worker-llm)",
+          "LLM_CHAT_COMPLETIONS_API_KEY": "${SECRET_LLM_CHAT_COMPLETIONS_API_KEY}"
         },
         "command": "uv run --locked --project apps/workers/llm python",
         "args": "apps/workers/llm/tests/acceptance_llm_chat_completions.py"

@@ -17,7 +17,7 @@
       "options": {
         "cwd": "{projectRoot}",
         "env": {
-          "SECRET_STT_AUDIO_TRANSCRIPTIONS_API_KEY": "${GENERATED_STT_AUDIO_TRANSCRIPTIONS_API_KEY}"
+          "STT_AUDIO_TRANSCRIPTIONS_API_KEY": "${SECRET_STT_AUDIO_TRANSCRIPTIONS_API_KEY}"
         },
         "command": "uv run --locked --project ../../../ uvicorn",
         "args": "fakes.worker_stt_audio_transcriptions_beam:app --host 127.0.0.1 --port 18761"
@@ -37,7 +37,7 @@
         "{workspaceRoot}/packages/schemas/tools/generate_pydantic.py",
         { "env": "SECRET_HUGGINGFACE_TOKEN" },
         { "env": "SECRET_BEAM_TOKEN" },
-        { "env": "GENERATED_STT_AUDIO_TRANSCRIPTIONS_API_KEY" }
+        { "env": "SECRET_STT_AUDIO_TRANSCRIPTIONS_API_KEY" }
       ],
       "outputs": [],
       "options": {
@@ -45,7 +45,7 @@
         "env": {
           "PYTHONPATH": ".",
           "SECRET_HUGGINGFACE_TOKEN": "${SECRET_HUGGINGFACE_TOKEN}",
-          "SECRET_STT_AUDIO_TRANSCRIPTIONS_API_KEY": "${GENERATED_STT_AUDIO_TRANSCRIPTIONS_API_KEY}",
+          "STT_AUDIO_TRANSCRIPTIONS_API_KEY": "${SECRET_STT_AUDIO_TRANSCRIPTIONS_API_KEY}",
           "BEAM_TOKEN": "${SECRET_BEAM_TOKEN}"
         },
         "command": "uv run --locked --project ../../../ beam deploy",
@@ -109,7 +109,8 @@
       "options": {
         "cwd": "{workspaceRoot}",
         "env": {
-          "STT_AUDIO_TRANSCRIPTIONS_API_URL": "$(npx tsx $NX_WORKSPACE_ROOT/tools/get-beam-url.ts worker-stt)"
+          "STT_AUDIO_TRANSCRIPTIONS_API_URL": "$(npx tsx $NX_WORKSPACE_ROOT/tools/get-beam-url.ts worker-stt)",
+          "STT_AUDIO_TRANSCRIPTIONS_API_KEY": "${SECRET_STT_AUDIO_TRANSCRIPTIONS_API_KEY}"
         },
         "command": "uv run --locked --project apps/workers/stt python",
         "args": "apps/workers/stt/tests/acceptance_stt_audio_transcriptions.py"

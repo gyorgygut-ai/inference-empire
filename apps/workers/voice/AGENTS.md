@@ -21,8 +21,8 @@ Authenticate every Hugging Face Hub request with `SECRET_HUGGINGFACE_TOKEN`. Pas
 - **Problem**: Browser clients need worker access without receiving the trusted server credential.
 - **Acceptance**:
   - Public Beam ingress allows the browser to connect directly to the worker.
-  - Require `SECRET_VOICE_WORKER_AUTH_TOKEN` on `POST /v1/realtime/client_secrets`.
-  - Map it in `project.json` from `GENERATED_VOICE_WORKER_AUTH_TOKEN`.
+  - Require `VOICE_WORKER_AUTH_TOKEN` on `POST /v1/realtime/client_secrets`.
+  - Map it in `project.json` from the root `SECRET_VOICE_WORKER_AUTH_TOKEN` credential.
   - Issue an in-process ephemeral session token with a `60s` TTL.
   - Run one instance (`max_containers=1`); token persistence is not guaranteed beyond that running instance.
   - Require the session token on `POST /v1/realtime/calls`.
