@@ -13,7 +13,7 @@ import type { ChatOptions } from "./options"
 
 type ChatApi = Pick<
   ReturnType<typeof useChatContext>,
-  "messages" | "append" | "addToolResult"
+  "messages" | "setMessages" | "append" | "addToolResult"
 >
 
 type OutcomeSelection = ToolProps<ChatOptions, "presentOutcomeOptions">["part"]
@@ -41,31 +41,15 @@ export const selectOutcome = async (
   part: OutcomeSelection,
   outcome: { id: string },
 ): Promise<void> => {
-  const message = {
-    id: crypto.randomUUID(),
-    role: "assistant" as const,
-    parts: [
-      {
-        type: "tool-call" as const,
-        id: crypto.randomUUID(),
-        name: "presentOutcomeOptions" as const,
-        arguments: JSON.stringify({}),
-        input: { outcomes: part.input?.outcomes ?? [] },
-        state: "input-complete" as const,
-      },
-    ],
-  }
-
-  await chat.append(message)
-  await chat.addToolResult(outcomeSelected(message.parts[0].id, outcome))
   const hasUpload = chat.messages.some((message) =>
     message.parts.some(
-      (part) => part.type === "tool-call" && part.name === "presentImageUpload",
+      (item) => item.type === "tool-call" && item.name === "presentImageUpload",
     ),
   )
   if (!hasUpload) {
-    await chat.append(requestReferenceImage(outcome.id))
+    chat.setMessages([...chat.messages, requestReferenceImage(outcome.id)])
   }
+  await chat.addToolResult(outcomeSelected(part.id, outcome))
 }
 
 export const uploadReference = async (

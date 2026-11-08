@@ -11,7 +11,7 @@ import numpy as np
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
-INFERENCE_TIMEOUT = httpx.Timeout(connect=2.0, read=30.0, write=2.0, pool=1.0)
+INFERENCE_TIMEOUT = httpx.Timeout(connect=2.0, read=120.0, write=2.0, pool=1.0)
 LLM_TIMEOUT = httpx.Timeout(connect=2.0, read=120.0, write=2.0, pool=1.0)
 TTS_TIMEOUT = httpx.Timeout(connect=2.0, read=120.0, write=2.0, pool=1.0)
 
