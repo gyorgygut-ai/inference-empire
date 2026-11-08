@@ -32,7 +32,8 @@
         "{workspaceRoot}/packages/schemas/workers/voice_tts_audio_speech.schema.json",
         "{workspaceRoot}/packages/schemas/tools/generate_pydantic.py",
         { "env": "SECRET_HUGGINGFACE_TOKEN" },
-        { "env": "SECRET_BEAM_TOKEN" }
+        { "env": "SECRET_BEAM_TOKEN" },
+        { "env": "GENERATED_TTS_AUDIO_SPEECH_API_KEY" }
       ],
       "outputs": [],
       "options": {

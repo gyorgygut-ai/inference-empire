@@ -1,6 +1,7 @@
 # Face Value
 
-NextJS app for chat + inference requests.
+**Value Proposition**: NextJS chat app that turns you into a hotdog 
+**Production URL**: [face-value.gyorgygutai.dev](https://face-value.gyorgygutai.dev)
 
 ---
 

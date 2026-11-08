@@ -20,7 +20,11 @@
         "{workspaceRoot}/packages/schemas/workers/voice.schema.json",
         "{workspaceRoot}/packages/schemas/tools/generate_pydantic.py",
         { "env": "SECRET_HUGGINGFACE_TOKEN" },
-        { "env": "SECRET_BEAM_TOKEN" }
+        { "env": "SECRET_BEAM_TOKEN" },
+        { "env": "GENERATED_VOICE_WORKER_AUTH_TOKEN" },
+        { "env": "GENERATED_STT_AUDIO_TRANSCRIPTIONS_API_KEY" },
+        { "env": "GENERATED_LLM_CHAT_COMPLETIONS_API_KEY" },
+        { "env": "GENERATED_TTS_AUDIO_SPEECH_API_KEY" }
       ],
       "outputs": [],
       "options": {
@@ -101,19 +105,6 @@
         "args": "apps/workers/voice/tests/integration/test_inference_backends.py"
       }
     },
-    "test-acceptance": {
-      "executor": "dotenvx:run-commands",
-      "cache": false,
-      "dependsOn": ["deploy-beam"],
-      "options": {
-        "cwd": "{workspaceRoot}",
-        "env": {
-          "VOICE_REALTIME_SESSION_API_URL": "$(npx tsx $NX_WORKSPACE_ROOT/tools/get-beam-url.ts worker-voice)"
-        },
-        "command": "uv run --locked --project apps/workers/voice python",
-        "args": "apps/workers/voice/tests/acceptance_realtime_session.py"
-      }
-    },
     "dev-beam": {
       "executor": "dotenvx:run-commands",
       "continuous": true,
@@ -121,6 +112,11 @@
       "readyWhen": {
         "url": "http://127.0.0.1:{env.DEV_VOICE_WORKER_PORT}/health"
       },
+      "dependsOn": [
+        "worker-stt:deploy-beam",
+        "worker-llm:deploy-beam",
+        "worker-tts:deploy-beam"
+      ],
       "options": {
         "cwd": "{projectRoot}",
         "env": {
@@ -132,7 +128,6 @@
           "LLM_CHAT_COMPLETIONS_API_URL": "$(npx tsx $NX_WORKSPACE_ROOT/tools/get-beam-url.ts worker-llm)",
           "SECRET_TTS_AUDIO_SPEECH_API_KEY": "${GENERATED_TTS_AUDIO_SPEECH_API_KEY}",
           "TTS_AUDIO_SPEECH_API_URL": "$(npx tsx $NX_WORKSPACE_ROOT/tools/get-beam-url.ts worker-tts)",
-          "VOICE_TEST_DIAGNOSTICS": "1",
           "VOICE_REFERENCES_DIR": "tests/fixtures"
         },
         "command": "uv run --locked uvicorn",
@@ -168,7 +163,7 @@
         "args": "shared.worker_voice:build_app --factory --host 127.0.0.1 --port=\"$DEV_VOICE_WORKER_PORT\""
       }
     },
-    "test-e2e": {
+    "e2e-dev": {
       "executor": "dotenvx:run-commands",
       "cache": false,
       "dependsOn": [
@@ -179,6 +174,20 @@
         "cwd": "{workspaceRoot}",
         "env": {
           "VOICE_REALTIME_SESSION_API_URL": "http://127.0.0.1:${DEV_VOICE_WORKER_PORT}",
+          "SECRET_VOICE_WORKER_AUTH_TOKEN": "${GENERATED_VOICE_WORKER_AUTH_TOKEN}"
+        },
+        "command": "uv run --locked --project apps/workers/voice pytest",
+        "args": "apps/workers/voice/tests/e2e/test_realtime_voice.py"
+      }
+    },
+    "e2e-deploy": {
+      "executor": "dotenvx:run-commands",
+      "cache": false,
+      "dependsOn": ["deploy-beam"],
+      "options": {
+        "cwd": "{workspaceRoot}",
+        "env": {
+          "VOICE_REALTIME_SESSION_API_URL": "$(npx tsx $NX_WORKSPACE_ROOT/tools/get-beam-url.ts worker-voice)",
           "SECRET_VOICE_WORKER_AUTH_TOKEN": "${GENERATED_VOICE_WORKER_AUTH_TOKEN}"
         },
         "command": "uv run --locked --project apps/workers/voice pytest",

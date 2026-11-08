@@ -441,57 +441,6 @@ def build_app(
     app.state.stream = stream
     app.state.turn_handler = on_turn
     app.state.histories = histories
-    async_errors: list[dict[str, object]] = []
-
-    if os.environ.get("VOICE_TEST_DIAGNOSTICS") == "1":
-        app.state.async_errors = async_errors
-
-        def record_async_error(
-            loop: asyncio.AbstractEventLoop, context: dict[str, object]
-        ) -> None:
-            task = context.get("future")
-            error = context.get("exception")
-            frame = None
-            traceback = getattr(error, "__traceback__", None)
-            while traceback is not None:
-                if traceback.tb_frame.f_code.co_name == "send_data":
-                    frame = traceback.tb_frame
-                traceback = traceback.tb_next
-            local_vars = frame.f_locals if frame is not None else {}
-            protocol = local_vars.get("self")
-            response = getattr(error, "response", None)
-            attributes = getattr(response, "attributes", {})
-            error_code = attributes.get("ERROR-CODE")
-            detail = {
-                "exception": str(error),
-                "message": context.get("message"),
-                "task": (
-                    task.get_name()
-                    if isinstance(task, asyncio.Task)
-                    else None
-                ),
-                "turn_server": getattr(protocol, "server", None),
-                "peer_address": local_vars.get("addr"),
-                "turn_error_code": error_code,
-                "turn_realm_present": "REALM" in attributes,
-                "turn_nonce_present": "NONCE" in attributes,
-            }
-            async_errors.append(detail)
-            logger.error("uncaught asyncio task error diagnostics=%s", detail)
-            loop.default_exception_handler(context)
-
-        app.router.on_startup.append(
-            lambda: asyncio.get_running_loop().set_exception_handler(record_async_error)
-        )
-
-        @app.get("/__test__/async-errors")
-        def get_async_errors() -> dict[str, list[dict[str, object]]]:
-            return {"errors": list(async_errors)}
-
-        @app.post("/__test__/async-errors/reset")
-        def reset_async_errors() -> dict[str, list[dict[str, object]]]:
-            async_errors.clear()
-            return {"errors": []}
 
     @app.get("/health")
     def health() -> dict[str, str]:

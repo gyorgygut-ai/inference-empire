@@ -18,6 +18,9 @@
       "@inference/ui": [
         "./packages/ui/src/index.ts"
       ],
+      "@inference/ui/*": [
+        "./packages/ui/src/*"
+      ],
       "@inference/workspace-plugin": [
         "./tools/workspace-plugin/src/index.ts"
       ],
