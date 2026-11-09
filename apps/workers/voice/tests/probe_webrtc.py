@@ -1,0 +1,219 @@
+"""Exercise a deployed WebRTC turn and retain playable audio proof."""
+
+from __future__ import annotations
+
+import argparse
+import asyncio
+import hashlib
+import json
+import os
+import sys
+import time
+import uuid
+from fractions import Fraction
+from pathlib import Path
+
+import av
+import httpx
+import numpy as np
+import soundfile as sf
+from aiortc import RTCConfiguration, RTCIceServer, RTCPeerConnection, RTCSessionDescription
+from aiortc.mediastreams import MediaStreamError, MediaStreamTrack
+
+RATE = 48_000
+FRAME = 960
+RESPONSE_TIMEOUT_SECONDS = 600
+DEFAULT_INPUT = Path(__file__).parent / "fixtures" / "message.wav"
+
+
+class SpeechTrack(MediaStreamTrack):
+    kind = "audio"
+
+    def __init__(self, audio: np.ndarray):
+        super().__init__()
+        self.audio = audio
+        self.offset = 0
+        self.pts = 0
+        self.started = time.monotonic()
+
+    async def recv(self) -> av.AudioFrame:
+        samples = np.zeros(FRAME, dtype=np.int16)
+        count = min(FRAME, len(self.audio) - self.offset)
+        if count > 0:
+            samples[:count] = self.audio[self.offset : self.offset + count]
+            self.offset += count
+        self.pts += FRAME
+        delay = self.started + self.pts / RATE - time.monotonic()
+        if delay > 0:
+            await asyncio.sleep(delay)
+        frame = av.AudioFrame(format="s16", layout="mono", samples=FRAME)
+        frame.planes[0].update(samples.tobytes())
+        frame.sample_rate = RATE
+        frame.pts = self.pts - FRAME
+        frame.time_base = Fraction(1, RATE)
+        return frame
+
+
+def load_speech(path: Path) -> np.ndarray:
+    audio, source_rate = sf.read(path, dtype="float32", always_2d=True)
+    mono = audio.mean(axis=1)
+    converted = np.interp(
+        np.linspace(0, len(mono) - 1, round(len(mono) * RATE / source_rate)),
+        np.arange(len(mono)),
+        mono,
+    )
+    if converted.size == 0 or float(np.max(np.abs(converted))) < 0.005:
+        raise ValueError(f"speech fixture is empty or silent: {path}")
+    return np.clip(converted * 32767, -32768, 32767).astype(np.int16)
+
+
+def ice_configuration(payload: dict) -> RTCConfiguration:
+    ice_servers = payload.get("rtc_configuration", {}).get("iceServers", [])
+    turn_servers = []
+    for server in ice_servers:
+        urls = server.get("urls", [])
+        urls = [urls] if isinstance(urls, str) else urls
+        turn_urls = [url for url in urls if url.startswith("turn:") or url.startswith("turns:")]
+        if turn_urls:
+            turn_servers.append(
+                RTCIceServer(
+                    urls=turn_urls,
+                    username=server.get("username"),
+                    credential=server.get("credential"),
+                )
+            )
+    if not turn_servers:
+        raise RuntimeError("client_secrets returned no TURN ICE server")
+    return RTCConfiguration(iceServers=turn_servers)
+
+
+async def run(url: str, token: str, voice: str, input_path: Path, output_dir: Path) -> dict:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    session_id = str(uuid.uuid4())
+    session = {"voice": voice}
+    timeout = httpx.Timeout(30.0, read=300.0)
+    async with httpx.AsyncClient(timeout=timeout) as client:
+        secret_response = await client.post(
+            f"{url}/v1/realtime/client_secrets",
+            headers={"Authorization": f"Bearer {token}"},
+            json={"session": session},
+        )
+        if secret_response.status_code != 200:
+            raise RuntimeError(
+                "client_secrets failed: "
+                f"HTTP {secret_response.status_code}: {secret_response.text}"
+            )
+        secret = secret_response.json()
+        session_token = secret.get("value")
+        if not isinstance(session_token, str) or not session_token:
+            raise RuntimeError("client_secrets returned no ephemeral token")
+
+    peer = RTCPeerConnection(configuration=ice_configuration(secret))
+    input_audio = load_speech(input_path)
+    peer.addTrack(SpeechTrack(input_audio))
+    connected = asyncio.Event()
+    voiced = asyncio.Event()
+    response: list[np.ndarray] = []
+    consumers: list[asyncio.Task] = []
+
+    @peer.on("connectionstatechange")
+    async def connection_changed():
+        if peer.connectionState == "connected":
+            connected.set()
+
+    @peer.on("track")
+    def incoming(track):
+        print(f"received remote {track.kind} track", file=sys.stderr, flush=True)
+
+        async def consume():
+            while True:
+                try:
+                    frame = await track.recv()
+                except MediaStreamError:
+                    return
+                samples = np.frombuffer(bytes(frame.planes[0]), dtype=np.int16).copy()
+                response.append(samples)
+                if float(np.sqrt(np.mean(samples.astype(np.float32) ** 2))) > 160:
+                    voiced.set()
+
+        consumers.append(asyncio.create_task(consume()))
+
+    try:
+        await peer.setLocalDescription(await peer.createOffer())
+        await asyncio.wait_for(_ice_complete(peer), timeout=30)
+        async with httpx.AsyncClient(timeout=timeout) as client:
+            answer = await client.post(
+                f"{url}/v1/realtime/calls",
+                headers={"Authorization": f"Bearer {session_token}"},
+                data={"sdp": peer.localDescription.sdp},
+            )
+            answer.raise_for_status()
+        await peer.setRemoteDescription(RTCSessionDescription(sdp=answer.text, type="answer"))
+        await asyncio.wait_for(connected.wait(), timeout=45)
+        try:
+            await asyncio.wait_for(voiced.wait(), timeout=RESPONSE_TIMEOUT_SECONDS)
+        except TimeoutError as error:
+            raise TimeoutError(
+                f"no response audio; connection={peer.connectionState}, "
+                f"frames={len(response)}, session_id={session_id}"
+            ) from error
+        await asyncio.sleep(8)
+    finally:
+        await peer.close()
+        for consumer in consumers:
+            consumer.cancel()
+
+    audio = np.concatenate(response) if response else np.zeros(0, dtype=np.int16)
+    output_rms = float(np.sqrt(np.mean(audio.astype(np.float32) ** 2))) if audio.size else 0
+    if output_rms <= 160:
+        raise AssertionError("WebRTC returned no non-silent response audio")
+
+    input_copy = output_dir / f"{session_id}-input.wav"
+    output_path = output_dir / f"{session_id}-output.wav"
+    sf.write(input_copy, input_audio.astype(np.float32) / 32767, RATE)
+    sf.write(output_path, audio, RATE)
+    report = {
+        "session_id": session_id,
+        "voice_id": secret.get("session", {}).get("voice", voice),
+        "input_audio": str(input_copy),
+        "input_sha256": hashlib.sha256(input_copy.read_bytes()).hexdigest(),
+        "output_audio": str(output_path),
+        "output_sha256": hashlib.sha256(output_path.read_bytes()).hexdigest(),
+        "output_samples": int(audio.size),
+        "output_rms": round(output_rms, 2),
+    }
+    (output_dir / f"{session_id}.json").write_text(json.dumps(report, indent=2))
+    return report
+
+
+async def _ice_complete(peer: RTCPeerConnection) -> None:
+    if peer.iceGatheringState == "complete":
+        return
+    changed = asyncio.Event()
+
+    @peer.on("icegatheringstatechange")
+    def gathering_changed():
+        if peer.iceGatheringState == "complete":
+            changed.set()
+
+    await changed.wait()
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--url", required=True)
+    parser.add_argument("--server-token", default=os.getenv("VOICE_WORKER_AUTH_TOKEN", ""))
+    parser.add_argument("--voice", default="GUT")
+    parser.add_argument("--input", type=Path, default=DEFAULT_INPUT)
+    parser.add_argument("--output-dir", type=Path, default=Path(".proof"))
+    args = parser.parse_args()
+    if not args.server_token:
+        raise RuntimeError("VOICE_WORKER_AUTH_TOKEN is required")
+    report = asyncio.run(
+        run(args.url.rstrip("/"), args.server_token, args.voice, args.input, args.output_dir)
+    )
+    print(json.dumps(report, indent=2))
+
+
+if __name__ == "__main__":
+    main()

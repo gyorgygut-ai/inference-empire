@@ -33,7 +33,7 @@ model_volumes = [Volume(name="worker-stt-hf-cache", mount_path="./hf-cache")]
     name="worker-stt",
     image=image,
     volumes=model_volumes,
-    gpu="RTX4090",
+    gpu="A10G",
     cpu=4,
     memory="16Gi",
     concurrent_requests=1,

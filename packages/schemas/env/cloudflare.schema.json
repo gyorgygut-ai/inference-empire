@@ -1,9 +1,10 @@
 {
   "title": "Api",
   "type": "object",
-  "required": ["SECRET_CLOUDFLARE_ACCOUNT_ID", "SECRET_CLOUDFLARE_API_TOKEN"],
+  "required": ["SECRET_CLOUDFLARE_ACCOUNT_ID", "SECRET_CLOUDFLARE_API_TOKEN", "SECRET_CLOUDFLARE_R2_API_TOKEN"],
   "properties": {
     "SECRET_CLOUDFLARE_ACCOUNT_ID": { "type": "string", "minLength": 1 },
-    "SECRET_CLOUDFLARE_API_TOKEN": { "type": "string", "minLength": 1 }
+    "SECRET_CLOUDFLARE_API_TOKEN": { "type": "string", "minLength": 1 },
+    "SECRET_CLOUDFLARE_R2_API_TOKEN": { "type": "string", "minLength": 1 }
   }
 }

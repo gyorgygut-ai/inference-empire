@@ -28,7 +28,7 @@
     },
     "prebuild-tiny-sd": {
       "executor": "nx:noop",
-      "dependsOn": [{ "projects": ["schemas"], "target": "build-ts", "options": "forward" }],
+      "dependsOn": [{ "projects": ["schemas"], "target": "build-ts-tiny-sd", "options": "forward" }],
       "options": {
         "source": "packages/schemas/workers/tiny_sd.schema.json",
         "out": "apps/router/dist/tiny_sd.schema.ts"
@@ -39,7 +39,8 @@
       "dependsOn": [
         "prebuild"
       ],
-      "cache": true,
+      "cache": false,
+      "outputs": [],
       "options": {
         "command": "echo 'no build step'"
       }

@@ -65,9 +65,9 @@ def load_model() -> dict[str, Any]:
         if use_cuda:
             options["quantization_config"] = BitsAndBytesConfig(
                 load_in_4bit=True,
-                bnb_4bit_compute_dtype=torch.bfloat16,
+                bnb_4bit_compute_dtype=torch.float16,
             )
-            options["torch_dtype"] = torch.bfloat16
+            options["torch_dtype"] = torch.float16
 
         MODEL_STATE = {
             "model": AutoModelForCausalLM.from_pretrained(
