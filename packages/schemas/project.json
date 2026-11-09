@@ -11,7 +11,17 @@
       "inputs": ["{projectRoot}/{env,workers}/*.schema.json", "{projectRoot}/tools/generate-zod-from-json.ts"],
       "outputs": ["{options.out}"],
       "options": {
-        "command": "npx tsx {projectRoot}/tools/generate-zod-from-json.ts",
+        "command": "npx tsx {projectRoot}/tools/generate-zod-from-json.ts --source={args.source} --out={args.out}",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "build-ts-tiny-sd": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "inputs": ["{projectRoot}/{env,workers}/*.schema.json", "{projectRoot}/tools/generate-zod-from-json.ts"],
+      "outputs": ["{options.out}"],
+      "options": {
+        "command": "npx tsx {projectRoot}/tools/generate-zod-from-json.ts --source={args.source} --out={args.out}",
         "cwd": "{workspaceRoot}"
       }
     },

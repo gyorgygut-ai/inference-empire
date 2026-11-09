@@ -5,6 +5,8 @@ import importlib
 import io
 import logging
 import os
+import platform
+import sys
 import tempfile
 import threading
 import wave
@@ -82,6 +84,25 @@ def load_model() -> Any:
         hub_constants.HF_HUB_CACHE = MODELS["resembleai_chatterbox_tts"]["path"]
         try:
             hub_auth.login(token=os.environ["SECRET_HUGGINGFACE_TOKEN"], add_to_git_credential=False)
+            import torch
+
+            is_apple_silicon = (
+                sys.platform == "darwin" and platform.machine() == "arm64"
+            )
+            if is_apple_silicon:
+                original_torch_load = torch.load
+
+                def patched_torch_load(f, map_location=None, **kwargs):
+                    if map_location is None:
+                        map_location = "cpu"
+                    return original_torch_load(
+                        f,
+                        map_location=map_location,
+                        **kwargs,
+                    )
+
+                setattr(torch, "load", patched_torch_load)
+
             perth = importlib.import_module("perth")
             if getattr(perth, "PerthImplicitWatermarker", None) is None:
                 setattr(perth, "PerthImplicitWatermarker", perth.DummyWatermarker)
@@ -89,9 +110,31 @@ def load_model() -> Any:
             repo_id = urlparse(MODELS["resembleai_chatterbox_tts"]["url"]).path.strip("/")
             if chatterbox.REPO_ID != repo_id:
                 raise RuntimeError("Chatterbox package repo differs from the declared model")
-            import torch
-            device = "cuda" if torch.cuda.is_available() else "cpu"
-            MODEL_STATE = chatterbox.ChatterboxTTS.from_pretrained(device=device)
+
+            if is_apple_silicon:
+                if torch.backends.mps.is_available():
+                    device = "mps"
+                elif torch.cuda.is_available():
+                    device = "cuda"
+                else:
+                    device = "cpu"
+
+                if os.environ.get("TTS_EXPECT_DEVICE") == "mps" and device != "mps":
+                    raise RuntimeError("MPS is required for this local TTS verification")
+
+                model = chatterbox.ChatterboxTTS.from_pretrained(device="cpu")
+                if device != "cpu":
+                    model.t3 = model.t3.to(device)
+                    model.s3gen = model.s3gen.to(device)
+                    model.ve = model.ve.to(device)
+                if model.conds is not None:
+                    model.conds = model.conds.to(device)
+                model.device = device
+                MODEL_STATE = model
+            else:
+                device = "cuda" if torch.cuda.is_available() else "cpu"
+                MODEL_STATE = chatterbox.ChatterboxTTS.from_pretrained(device=device)
+            logger.info("Loaded Chatterbox model on %s", device)
         finally:
             hub_constants.HF_HUB_CACHE = previous_cache
         return MODEL_STATE
@@ -259,8 +302,15 @@ def build_app(
                 status_code=422,
                 detail="Reference audio is required for a reference voice",
             )
+        audio_chunks = streaming_generator(request)
+        if os.environ.get("TTS_EXPECT_DEVICE") == "mps":
+            # Chatterbox keeps torch.inference_mode active across generator yields.
+            # Starlette advances sync iterators in a thread pool, where successive
+            # next() calls may run on different threads and lose that thread-local
+            # mode. Materialize MPS output in this request thread before responding.
+            audio_chunks = iter(list(audio_chunks))
         return StreamingResponse(
-            streaming_generator(request),
+            audio_chunks,
             media_type="application/octet-stream",
             headers={"X-Sample-Rate": str(SAMPLE_RATE)},
         )

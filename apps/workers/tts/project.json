@@ -19,6 +19,36 @@
         "args": "fakes.worker_tts_audio_speech_beam:app --host 127.0.0.1 --port 18763"
       }
     },
+    "dev-local": {
+      "executor": "dotenvx:run-commands",
+      "continuous": true,
+      "cache": false,
+      "dependsOn": ["prebuild"],
+      "readyWhen": { "url": "http://127.0.0.1:18764/health" },
+      "options": {
+        "cwd": "{projectRoot}",
+        "env": {
+          "SECRET_HUGGINGFACE_TOKEN": "${SECRET_HUGGINGFACE_TOKEN}",
+          "TTS_AUDIO_SPEECH_API_KEY": "${SECRET_TTS_AUDIO_SPEECH_API_KEY}",
+          "TTS_EXPECT_DEVICE": "mps"
+        },
+        "command": "bash tools/dev-mps.sh"
+      }
+    },
+    "test-local": {
+      "executor": "dotenvx:run-commands",
+      "cache": false,
+      "dependsOn": [{ "target": "dev-local", "waitFor": "ready" }],
+      "options": {
+        "cwd": "{workspaceRoot}",
+        "env": {
+          "TTS_AUDIO_SPEECH_API_URL": "http://127.0.0.1:18764",
+          "TTS_AUDIO_SPEECH_API_KEY": "${SECRET_TTS_AUDIO_SPEECH_API_KEY}"
+        },
+        "command": "apps/workers/tts/.venv/bin/python",
+        "args": "apps/workers/tts/tests/e2e/test_mps.py"
+      }
+    },
     "deploy-beam": {
       "executor": "dotenvx:run-commands",
       "cache": true,
