@@ -1,0 +1,42 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "webrtc-bench",
+  "projectType": "application",
+  "sourceRoot": "apps/webrtc-bench/src",
+  "tags": ["type:app", "scope:realtime"],
+  "targets": {
+    "dev": {
+      "executor": "dotenvx:run-commands",
+      "continuous": true,
+      "cache": false,
+      "readyWhen": {
+        "url": "http://127.0.0.1:{env.DEV_WEBRTC_BENCH_PORT}"
+      },
+      "dependsOn": [
+        { "projects": ["worker-webrtc"], "target": "dev", "waitFor": "ready" }
+      ],
+      "options": {
+        "cwd": "apps/webrtc-bench",
+        "env": {
+          "PORT": "${DEV_WEBRTC_BENCH_PORT}"
+        },
+        "command": "npx vite --host 127.0.0.1 --port=\"$PORT\""
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "outputs": ["{workspaceRoot}/dist/apps/webrtc-bench"],
+      "options": {
+        "cwd": "apps/webrtc-bench",
+        "command": "npx vite build --outDir ../../dist/apps/webrtc-bench"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "{workspaceRoot}",
+        "command": "npx oxlint apps/webrtc-bench"
+      }
+    }
+  }
+}

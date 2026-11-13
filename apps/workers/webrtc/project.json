@@ -1,0 +1,53 @@
+{
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "name": "worker-webrtc",
+  "projectType": "application",
+  "sourceRoot": "apps/workers/webrtc/src",
+  "tags": ["type:app", "scope:realtime"],
+  "targets": {
+    "dev": {
+      "executor": "dotenvx:run-commands",
+      "continuous": true,
+      "cache": false,
+      "readyWhen": {
+        "url": "http://127.0.0.1:{env.DEV_WEBRTC_WORKER_PORT}"
+      },
+      "options": {
+        "cwd": "{workspaceRoot}",
+        "env": {
+          "WORKER_WEBRTC_PORT": "${DEV_WEBRTC_WORKER_PORT}"
+        },
+        "command": "npx tsx apps/workers/webrtc/src/server.ts"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "{workspaceRoot}",
+        "command": "npx oxlint apps/workers/webrtc"
+      }
+    },
+    "test-unit": {
+      "executor": "dotenvx:run-commands",
+      "cache": false,
+      "options": {
+        "cwd": "{workspaceRoot}",
+        "env": {
+          "WORKER_WEBRTC_PORT": "${DEV_WEBRTC_WORKER_PORT}"
+        },
+        "command": "npx vitest run --config apps/workers/webrtc/vitest.config.ts"
+      }
+    },
+    "test-unit:watch": {
+      "executor": "dotenvx:run-commands",
+      "cache": false,
+      "options": {
+        "cwd": "{workspaceRoot}",
+        "env": {
+          "WORKER_WEBRTC_PORT": "${DEV_WEBRTC_WORKER_PORT}"
+        },
+        "command": "npx vitest --config apps/workers/webrtc/vitest.config.ts"
+      }
+    }
+  }
+}

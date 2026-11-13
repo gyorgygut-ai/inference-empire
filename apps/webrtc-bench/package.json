@@ -1,0 +1,10 @@
+{
+  "name": "webrtc-bench",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@vitejs/plugin-vue": "^6.0.0",
+    "vue": "^3.5.0"
+  }
+}
