@@ -34,8 +34,8 @@
     "lint": {
       "executor": "nx:run-commands",
       "options": {
-        "cwd": "{workspaceRoot}",
-        "command": "npx oxlint apps/webrtc-bench"
+        "cwd": "apps/webrtc-bench",
+        "command": "npx oxlint ."
       }
     }
   }
