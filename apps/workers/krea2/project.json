@@ -130,7 +130,7 @@
       "options": {
         "cwd": "{workspaceRoot}",
         "command": "uv run --locked --project ../../../ krea2 python",
-        "args": "apps/workers/krea2/tests/test_worker_krea2_acceptance.py"
+        "args": "apps/workers/krea2/acceptance/test_worker_krea2_acceptance.py"
       }
     }
   }

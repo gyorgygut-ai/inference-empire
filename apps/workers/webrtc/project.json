@@ -9,13 +9,15 @@
       "executor": "dotenvx:run-commands",
       "continuous": true,
       "cache": false,
+      "dependsOn": ["prebuild"],
       "readyWhen": {
         "url": "http://127.0.0.1:{env.DEV_WEBRTC_WORKER_PORT}"
       },
       "options": {
         "cwd": "{workspaceRoot}",
         "env": {
-          "WORKER_WEBRTC_PORT": "${DEV_WEBRTC_WORKER_PORT}"
+          "PORT": "${DEV_WEBRTC_WORKER_PORT}",
+          "SECRET_HUGGINGFACE_TOKEN": "${SECRET_HUGGINGFACE_TOKEN}"
         },
         "command": "npx tsx apps/workers/webrtc/src/server.ts"
       }
@@ -30,10 +32,12 @@
     "test-unit": {
       "executor": "dotenvx:run-commands",
       "cache": false,
+      "dependsOn": ["prebuild"],
       "options": {
         "cwd": "{workspaceRoot}",
         "env": {
-          "WORKER_WEBRTC_PORT": "${DEV_WEBRTC_WORKER_PORT}"
+          "PORT": "${DEV_WEBRTC_WORKER_PORT}",
+          "SECRET_HUGGINGFACE_TOKEN": "${SECRET_HUGGINGFACE_TOKEN}"
         },
         "command": "npx vitest run --config apps/workers/webrtc/vitest.config.ts"
       }
@@ -41,12 +45,27 @@
     "test-unit:watch": {
       "executor": "dotenvx:run-commands",
       "cache": false,
+      "dependsOn": ["prebuild"],
       "options": {
         "cwd": "{workspaceRoot}",
         "env": {
-          "WORKER_WEBRTC_PORT": "${DEV_WEBRTC_WORKER_PORT}"
+          "PORT": "${DEV_WEBRTC_WORKER_PORT}",
+          "SECRET_HUGGINGFACE_TOKEN": "${SECRET_HUGGINGFACE_TOKEN}"
         },
         "command": "npx vitest --config apps/workers/webrtc/vitest.config.ts"
+      }
+    },
+    "prebuild": {
+      "executor": "nx:noop",
+      "cache": true,
+      "inputs": ["{workspaceRoot}/packages/schemas/workers/webrtc.schema.json"],
+      "outputs": ["{projectRoot}/dist/webrtc.schema.ts"],
+      "dependsOn": [
+        { "projects": ["schemas"], "target": "build-ts", "options": "forward" }
+      ],
+      "options": {
+        "source": "packages/schemas/workers/webrtc.schema.json",
+        "out": "apps/workers/webrtc/dist/webrtc.schema.ts"
       }
     }
   }

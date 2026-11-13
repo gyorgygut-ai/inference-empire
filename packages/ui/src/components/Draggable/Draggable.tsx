@@ -1,6 +1,7 @@
 "use client"
 
 import {
+  useState,
   useRef,
   type KeyboardEvent,
   type PointerEvent,
@@ -51,11 +52,14 @@ export const Draggable = ({
   initialPosition = { x: 0, y: 48 },
 }: DraggableProps) => {
   const position = useRef<Position>(initialPosition)
+  const [renderedPosition, setRenderedPosition] = useState(initialPosition)
   const dragSession = useRef<DragSession | null>(null)
   const suppressClick = useRef(false)
 
   const onPointerDown = (event: PointerEvent<HTMLButtonElement>) => {
-    if (event.button !== 0 || dragSession.current) return
+    if (event.button !== 0 || dragSession.current) {
+      return
+    }
 
     suppressClick.current = false
     event.currentTarget.setPointerCapture(event.pointerId)
@@ -70,23 +74,30 @@ export const Draggable = ({
 
   const onPointerMove = (event: PointerEvent<HTMLButtonElement>) => {
     const session = dragSession.current
-    if (!session || session.pointerId !== event.pointerId) return
+    if (!session || session.pointerId !== event.pointerId) {
+      return
+    }
 
     const deltaX = event.clientX - session.clientX
     const deltaY = event.clientY - session.clientY
-    if (!session.moved && Math.hypot(deltaX, deltaY) < 6) return
+    if (!session.moved && Math.hypot(deltaX, deltaY) < 6) {
+      return
+    }
     session.moved = true
 
     position.current = constrainPosition(event.currentTarget, {
       x: session.x + deltaX,
       y: session.y + deltaY,
     })
+    setRenderedPosition(position.current)
     setPosition(event.currentTarget, position.current)
   }
 
   const finishPointer = (event: PointerEvent<HTMLButtonElement>) => {
     const session = dragSession.current
-    if (!session || session.pointerId !== event.pointerId) return
+    if (!session || session.pointerId !== event.pointerId) {
+      return
+    }
 
     suppressClick.current = session.moved
     dragSession.current = null
@@ -109,18 +120,26 @@ export const Draggable = ({
     const step = event.shiftKey ? 40 : 12
     let delta: Position | undefined
 
-    if (event.key === "ArrowLeft") delta = { x: -step, y: 0 }
-    else if (event.key === "ArrowRight") delta = { x: step, y: 0 }
-    else if (event.key === "ArrowUp") delta = { x: 0, y: -step }
-    else if (event.key === "ArrowDown") delta = { x: 0, y: step }
+    if (event.key === "ArrowLeft") {
+      delta = { x: -step, y: 0 }
+    } else if (event.key === "ArrowRight") {
+      delta = { x: step, y: 0 }
+    } else if (event.key === "ArrowUp") {
+      delta = { x: 0, y: -step }
+    } else if (event.key === "ArrowDown") {
+      delta = { x: 0, y: step }
+    }
 
-    if (!delta) return
+    if (!delta) {
+      return
+    }
 
     event.preventDefault()
     position.current = constrainPosition(event.currentTarget, {
       x: position.current.x + delta.x,
       y: position.current.y + delta.y,
     })
+    setRenderedPosition(position.current)
     setPosition(event.currentTarget, position.current)
   }
 
@@ -129,7 +148,7 @@ export const Draggable = ({
       type="button"
       className="absolute left-1/2 top-1/2 z-10 cursor-grab touch-none select-none rounded-full bg-transparent p-0 active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
       style={{
-        transform: `translate3d(calc(-50% + ${position.current.x}px), calc(-50% + ${position.current.y}px), 0)`,
+        transform: `translate3d(calc(-50% + ${renderedPosition.x}px), calc(-50% + ${renderedPosition.y}px), 0)`,
       }}
       aria-label={label}
       aria-pressed={pressed}

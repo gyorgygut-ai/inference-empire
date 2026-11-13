@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "WebRtcApi",
+  "type": "object",
+  "required": ["input", "output", "ice_configuration"],
+  "properties": {
+    "input": { "$ref": "#/$defs/Input" },
+    "output": { "$ref": "#/$defs/Output" },
+    "ice_configuration": { "$ref": "#/$defs/IceConfiguration" }
+  },
+  "$defs": {
+    "JsonValue": {},
+    "Input": {
+      "title": "Input",
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "id", "value"],
+          "properties": {
+            "type": { "const": "input", "type": "string" },
+            "id": { "type": "string", "minLength": 1 },
+            "value": { "$ref": "#/$defs/JsonValue" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "id", "values"],
+          "properties": {
+            "type": { "const": "stream", "type": "string" },
+            "id": { "type": "string", "minLength": 1 },
+            "values": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/JsonValue" } }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "id"],
+          "properties": {
+            "type": { "const": "interrupt", "type": "string" },
+            "id": { "type": "string", "minLength": 1 }
+          }
+        }
+      ]
+    },
+    "Output": {
+      "title": "Output",
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "id", "value"],
+          "properties": {
+            "type": { "const": "output", "type": "string" },
+            "id": { "type": "string", "minLength": 1 },
+            "value": { "$ref": "#/$defs/JsonValue" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "id", "index", "value"],
+          "properties": {
+            "type": { "const": "chunk", "type": "string" },
+            "id": { "type": "string", "minLength": 1 },
+            "index": { "type": "integer", "minimum": 0 },
+            "value": { "$ref": "#/$defs/JsonValue" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "id"],
+          "properties": {
+            "type": { "enum": ["done", "interrupted"], "type": "string" },
+            "id": { "type": "string", "minLength": 1 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "error"],
+          "properties": {
+            "type": { "const": "error", "type": "string" },
+            "error": { "type": "string", "minLength": 1 }
+          }
+        }
+      ]
+    },
+    "IceConfiguration": {
+      "title": "IceConfiguration",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["iceServers"],
+      "properties": {
+        "iceServers": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/IceServer" }
+        }
+      }
+    },
+    "IceServer": {
+      "title": "IceServer",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["urls"],
+      "properties": {
+        "urls": {
+          "oneOf": [
+            { "type": "string", "minLength": 1 },
+            { "type": "array", "items": { "type": "string", "minLength": 1 }, "minItems": 1 }
+          ]
+        },
+        "username": { "type": "string", "minLength": 1 },
+        "credential": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

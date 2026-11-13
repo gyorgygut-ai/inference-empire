@@ -11,7 +11,9 @@ export const useMessageQueue = () => {
 
   const removeMessage = (message: ToastMessage) => {
     const index = messages.indexOf(message)
-    if (index === -1) return
+    if (index === -1) {
+      return
+    }
     setMessages([...messages.slice(0, index), ...messages.slice(index + 1)])
   }
 

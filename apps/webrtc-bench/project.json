@@ -18,7 +18,8 @@
       "options": {
         "cwd": "apps/webrtc-bench",
         "env": {
-          "PORT": "${DEV_WEBRTC_BENCH_PORT}"
+          "PORT": "${DEV_WEBRTC_BENCH_PORT}",
+          "VITE_WEBRTC_WORKER_URL": "http://127.0.0.1:${DEV_WEBRTC_WORKER_PORT}"
         },
         "command": "npx vite --host 127.0.0.1 --port=\"$PORT\""
       }
