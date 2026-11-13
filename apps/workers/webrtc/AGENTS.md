@@ -1,16 +1,21 @@
 # WebRTC Worker
 
-TypeScript server for WebRTC.
+Realtime HTTP service for WebRTC; not a GPU inference worker.
 
 ---
 
-## SPECS
+## Dev ENV
 
-- **Port**: `WORKER_WEBRTC_PORT`
-- **Health**: serve a health response
-- **Testing**: test that the server responds on the configured port
-- **Nx**: provide `dev`, `lint`, `test-unit`, and `test-unit:watch`
+**env**:
+  - `WORKER_WEBRTC_PORT`: `${DEV_WEBRTC_WORKER_PORT}`
 
-## SCOPE
+**NX**:
+  - **Cmd**: `npx tsx apps/workers/webrtc/src/server.ts`
+  - **Readiness**: `{ continuous, readyWhen: { url: "http://127.0.0.1:{env.DEV_WEBRTC_WORKER_PORT}" }}`
+  - **Testing**: `test-unit` checks the health response; `test-unit:watch` watches the same test
+  - **Lint**: `lint`
 
-This is a TypeScript service, not a GPU inference worker.
+## Structure: `./src/`
+
+- `server.ts`: serves the health response on `WORKER_WEBRTC_PORT`
+- `./tests/server.test.ts`: verifies the configured port responds
