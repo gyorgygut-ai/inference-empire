@@ -89,11 +89,49 @@
         "prebuild"
       ]
     },
+    "deploy-fal": {
+      "executor": "dotenvx:run-commands",
+      "cache": false,
+      "inputs": [
+        "{projectRoot}/worker_flux2_fal.py",
+        "{projectRoot}/shared/**/*.py",
+        "{projectRoot}/pyproject.toml",
+        "{workspaceRoot}/nx.json",
+        "{workspaceRoot}/package.json",
+        "{workspaceRoot}/pyproject.toml",
+        "{workspaceRoot}/uv.lock",
+        "{workspaceRoot}/packages/schemas/workers/flux2.schema.json",
+        "{workspaceRoot}/packages/schemas/tools/generate_pydantic.py",
+        { "env": "SECRET_FAL_KEY" },
+        { "env": "SECRET_HUGGINGFACE_TOKEN" },
+        { "env": "SECRET_R2_ACCESS_KEY" },
+        { "env": "SECRET_R2_SECRET_KEY" },
+        { "env": "SECRET_R2_ENDPOINT" },
+        { "env": "SECRET_R2_BUCKET" }
+      ],
+      "outputs": [],
+      "options": {
+        "cwd": "{projectRoot}",
+        "env": {
+          "FAL_KEY": "${SECRET_FAL_KEY}",
+          "SECRET_HUGGINGFACE_TOKEN": "${SECRET_HUGGINGFACE_TOKEN}",
+          "SECRET_R2_ACCESS_KEY": "${SECRET_R2_ACCESS_KEY}",
+          "SECRET_R2_SECRET_KEY": "${SECRET_R2_SECRET_KEY}",
+          "SECRET_R2_ENDPOINT": "${SECRET_R2_ENDPOINT}",
+          "SECRET_R2_BUCKET": "${SECRET_R2_BUCKET}"
+        },
+        "command": "uvx --from fal fal secrets set SECRET_HUGGINGFACE_TOKEN=\"$SECRET_HUGGINGFACE_TOKEN\" SECRET_R2_ACCESS_KEY=\"$SECRET_R2_ACCESS_KEY\" SECRET_R2_SECRET_KEY=\"$SECRET_R2_SECRET_KEY\" SECRET_R2_ENDPOINT=\"$SECRET_R2_ENDPOINT\" SECRET_R2_BUCKET=\"$SECRET_R2_BUCKET\" && uvx --from fal fal deploy worker_flux2_fal.py::FluxKleinWorker"
+      },
+      "dependsOn": [
+        "prebuild"
+      ]
+    },
     "deploy": {
       "executor": "nx:noop",
       "dependsOn": [
         "deploy-modal",
-        "deploy-beam"
+        "deploy-beam",
+        "deploy-fal"
       ],
       "cache": false
     },
