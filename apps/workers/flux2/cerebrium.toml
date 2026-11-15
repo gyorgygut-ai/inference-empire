@@ -1,16 +1,16 @@
 [cerebrium.deployment]
 name = "worker-flux2"
 python_version = "3.11"
-disable_auth = true
+disable_auth = false
 include = ["./*", "main.py", "worker_flux2_cerebrium.py", "cerebrium.toml", "shared/**/*"]
-exclude = [".*", "__pycache__/*", "*.pyc", ".venv/*", "fakes/*", "tests/*"]
+exclude = [".*", "__pycache__/*", "*.pyc", ".venv", ".venv/**", "fakes/*", "tests/*"]
 use_uv = true
 deployment_initialization_timeout = 800
 
 [cerebrium.hardware]
-cpu = 8
-memory = 32.0
-compute = ["HOPPER_H100", "HOPPER_H200", "AMPERE_A100_80GB"]
+cpu = 4
+memory = 24.0
+compute = "TURING_T4"
 gpu_count = 1
 provider = "aws"
 region = "us-east-1"
@@ -25,13 +25,17 @@ cooldown = 60
 compute_tier = "interruptible"
 
 [cerebrium.dependencies.pip]
-torch = "==2.14.0"
-transformers = "4.57.3"
-diffusers = "0.39.0"
-sdnq = "latest"
-boto3 = "==1.43.89"
+torch = "==2.9.1"
+transformers = "==5.16.1"
+accelerate = "==1.14.0"
+diffusers = "==0.40.0"
+sdnq = "==0.2.6"
+safetensors = "==0.8.0"
+huggingface-hub = "==1.29.0"
 pillow = "==12.3.0"
-numpy = "==2.4.6"
+boto3 = "==1.43.83"
+fastapi = "==0.141.1"
+hf-transfer = "==0.1.9"
 
 [cerebrium.dependencies.apt]
 ffmpeg = "latest"

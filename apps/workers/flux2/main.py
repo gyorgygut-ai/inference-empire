@@ -4,12 +4,12 @@ Cerebrium requires main.py; this file delegates to the actual worker logic.
 """
 from __future__ import annotations
 
-from worker_flux2_cerebrium import run
+from worker_flux2_cerebrium import generate
 
-__all__ = ["run"]
+__all__ = ["generate"]
 
 if __name__ == "__main__":
     import json
     import sys
-    result = run(json.loads(sys.stdin.read()))
+    result = generate(**json.loads(sys.stdin.read()))
     print(json.dumps(result))

@@ -31,6 +31,7 @@ def test_download_models_authenticates_with_secret(monkeypatch):
         sys.modules,
         "huggingface_hub",
         SimpleNamespace(
+            login=lambda **_: None,
             snapshot_download=lambda **kwargs: calls.append(kwargs) or "/model"
         ),
     )

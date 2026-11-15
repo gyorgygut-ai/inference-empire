@@ -67,18 +67,21 @@ def model_volumes():
     ]
 
 
-def download_models() -> dict[str, Path]:
+def download_models(cache_dir: str | Path | None = None) -> dict[str, Path]:
     """Download declared models into their mounted cache paths."""
     import os
 
     from huggingface_hub import snapshot_download
 
     token = os.environ["SECRET_HUGGINGFACE_TOKEN"]
+    from huggingface_hub import login
+
+    login(token=token, add_to_git_credential=False)
     return {
         name: Path(
             snapshot_download(
                 repo_id=urlparse(model["url"]).path.strip("/"),
-                cache_dir=model["path"],
+                cache_dir=str(Path(cache_dir) / name) if cache_dir else model["path"],
                 token=token,
             )
         )
@@ -190,7 +193,7 @@ def pipe_factory() -> Flux2KleinPipeline:
     """Factory for the flux2 pipeline."""
     return load_pipeline()[0]
 
-def load_pipeline_lazy():
+def load_pipeline_lazy(cache_dir: str | Path | None = None):
     """Lazy load pipeline on first request (not at startup)."""
     import os
 
@@ -205,7 +208,7 @@ def load_pipeline_lazy():
     # importing sdnq registers its quantizer with transformers
     importlib.import_module("sdnq")
 
-    model_dir = download_models()[MODEL_NAME]
+    model_dir = download_models(cache_dir=cache_dir)[MODEL_NAME]
     pipe = diffusers.Flux2KleinPipeline.from_pretrained(
         str(model_dir),
         torch_dtype=torch.bfloat16,

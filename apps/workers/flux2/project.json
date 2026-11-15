@@ -89,6 +89,46 @@
         "prebuild"
       ]
     },
+    "deploy-cerebrium": {
+      "executor": "dotenvx:run-commands",
+      "cache": false,
+      "inputs": [
+        "{projectRoot}/cerebrium.toml",
+        "{projectRoot}/main.py",
+        "{projectRoot}/worker_flux2_cerebrium.py",
+        "{projectRoot}/shared/**/*.py",
+        "{workspaceRoot}/nx.json",
+        "{workspaceRoot}/package.json",
+        "{workspaceRoot}/pyproject.toml",
+        "{workspaceRoot}/uv.lock",
+        "{workspaceRoot}/packages/schemas/workers/flux2.schema.json",
+        "{workspaceRoot}/packages/schemas/tools/generate_pydantic.py",
+        { "env": "CEREBRIUM_PROJECT_ID" },
+        { "env": "SECRET_CEREBRIUM_SERVICE_ACCOUNT_TOKEN" },
+        { "env": "SECRET_HUGGINGFACE_TOKEN" },
+        { "env": "SECRET_R2_ACCESS_KEY" },
+        { "env": "SECRET_R2_SECRET_KEY" },
+        { "env": "SECRET_R2_ENDPOINT" },
+        { "env": "SECRET_R2_BUCKET" }
+      ],
+      "outputs": [],
+      "options": {
+        "cwd": "{projectRoot}",
+        "env": {
+          "CEREBRIUM_PROJECT_ID": "${CEREBRIUM_PROJECT_ID}",
+          "CEREBRIUM_SERVICE_ACCOUNT_TOKEN": "${SECRET_CEREBRIUM_SERVICE_ACCOUNT_TOKEN}",
+          "SECRET_HUGGINGFACE_TOKEN": "${SECRET_HUGGINGFACE_TOKEN}",
+          "SECRET_R2_ACCESS_KEY": "${SECRET_R2_ACCESS_KEY}",
+          "SECRET_R2_SECRET_KEY": "${SECRET_R2_SECRET_KEY}",
+          "SECRET_R2_ENDPOINT": "${SECRET_R2_ENDPOINT}",
+          "SECRET_R2_BUCKET": "${SECRET_R2_BUCKET}"
+        },
+        "command": "uvx --from cerebrium cerebrium projects set \"$CEREBRIUM_PROJECT_ID\" && uvx --from cerebrium cerebrium deploy -y && uvx --from cerebrium cerebrium secrets add --app \"${CEREBRIUM_PROJECT_ID}_worker-flux2\" SECRET_HUGGINGFACE_TOKEN=\"$SECRET_HUGGINGFACE_TOKEN\" SECRET_R2_ACCESS_KEY=\"$SECRET_R2_ACCESS_KEY\" SECRET_R2_SECRET_KEY=\"$SECRET_R2_SECRET_KEY\" SECRET_R2_ENDPOINT=\"$SECRET_R2_ENDPOINT\" SECRET_R2_BUCKET=\"$SECRET_R2_BUCKET\" && uvx --from cerebrium cerebrium deploy -y"
+      },
+      "dependsOn": [
+        "prebuild"
+      ]
+    },
     "deploy-fal": {
       "executor": "dotenvx:run-commands",
       "cache": false,
@@ -126,12 +166,49 @@
         "prebuild"
       ]
     },
+    "deploy-azure": {
+      "executor": "dotenvx:run-commands",
+      "cache": false,
+      "inputs": [
+        "{projectRoot}/Dockerfile",
+        "{projectRoot}/.dockerignore",
+        "{projectRoot}/deploy_azure.sh",
+        "{projectRoot}/worker_flux2_azure.py",
+        "{projectRoot}/prefetch_model.py",
+        "{projectRoot}/shared/**/*.py",
+        "{projectRoot}/pyproject.toml",
+        "{projectRoot}/uv.lock",
+        "{workspaceRoot}/packages/schemas/workers/flux2.schema.json",
+        { "env": "SECRET_HUGGINGFACE_TOKEN" },
+        { "env": "SECRET_R2_ACCESS_KEY" },
+        { "env": "SECRET_R2_SECRET_KEY" },
+        { "env": "SECRET_R2_ENDPOINT" },
+        { "env": "SECRET_R2_BUCKET" }
+      ],
+      "outputs": [],
+      "options": {
+        "cwd": "{projectRoot}",
+        "env": {
+          "SECRET_HUGGINGFACE_TOKEN": "${SECRET_HUGGINGFACE_TOKEN}",
+          "SECRET_R2_ACCESS_KEY": "${SECRET_R2_ACCESS_KEY}",
+          "SECRET_R2_SECRET_KEY": "${SECRET_R2_SECRET_KEY}",
+          "SECRET_R2_ENDPOINT": "${SECRET_R2_ENDPOINT}",
+          "SECRET_R2_BUCKET": "${SECRET_R2_BUCKET}"
+        },
+        "command": "bash deploy_azure.sh"
+      },
+      "dependsOn": [
+        "prebuild"
+      ]
+    },
     "deploy": {
       "executor": "nx:noop",
       "dependsOn": [
         "deploy-modal",
         "deploy-beam",
-        "deploy-fal"
+        "deploy-cerebrium",
+        "deploy-fal",
+        "deploy-azure"
       ],
       "cache": false
     },
@@ -164,15 +241,26 @@
     "test-acceptance": {
       "executor": "dotenvx:run-commands",
       "cache": false,
-      "dependsOn": ["deploy-beam"],
+      "dependsOn": ["deploy-beam", "deploy-cerebrium"],
       "options": {
         "cwd": "{workspaceRoot}",
         "env": {
           "SECRET_WORKER_FLUX2_URL": "$(npx tsx $NX_WORKSPACE_ROOT/tools/get-beam-url.ts worker-flux2)",
-          "SECRET_BEAM_TOKEN": "${SECRET_BEAM_TOKEN}"
+          "SECRET_BEAM_TOKEN": "${SECRET_BEAM_TOKEN}",
+          "CEREBRIUM_PROJECT_ID": "${CEREBRIUM_PROJECT_ID}",
+          "SECRET_CEREBRIUM_SERVICE_ACCOUNT_TOKEN": "${SECRET_CEREBRIUM_SERVICE_ACCOUNT_TOKEN}"
         },
         "command": "uv run --locked --group test pytest",
         "args": "apps/workers/flux2/tests/test_worker_flux2_acceptance.py -q"
+      }
+    },
+    "test-acceptance-azure": {
+      "executor": "dotenvx:run-commands",
+      "cache": false,
+      "dependsOn": ["deploy-azure"],
+      "options": {
+        "cwd": "{workspaceRoot}",
+        "command": "AZURE_WORKER_FLUX2_URL=\"https://$(az containerapp show --resource-group worker-flux2 --name worker-flux2 --query properties.configuration.ingress.fqdn -o tsv)\" uv run --locked --group test pytest apps/workers/flux2/tests/test_worker_flux2_azure_acceptance.py -q"
       }
     }
   }
