@@ -1,11 +1,23 @@
 {
-  "version": 1,
+  "version": 2,
   "skills": {
+    "container-apps-gpu-2025": {
+      "source": "JosiahSiegel/claude-plugin-marketplace",
+      "sourceType": "github",
+      "skillPath": "plugins/azure-master/skills/container-apps-gpu-2025/SKILL.md",
+      "computedHash": "024a55b00735fe37451c47f9b2662bd7e9986c0e8edeb0626a971aff1a8a8446"
+    },
     "deploy-to-vercel": {
       "source": "vercel-labs/agent-skills",
       "sourceType": "github",
       "skillPath": "skills/deploy-to-vercel/SKILL.md",
-      "computedHash": "d2b5bcc7c09fdb649129ffc7dd7b647ec1b155736974b974292675afd588cb39"
+      "computedHash": "18a7fec359bb9eeec22d65757120c6c9dd833dd9cd579e9e68cb632ceebc55dd"
+    },
+    "fal-serverless-guide": {
+      "source": "JosiahSiegel/claude-plugin-marketplace",
+      "sourceType": "github",
+      "skillPath": "plugins/fal-ai-master/skills/fal-serverless-guide/SKILL.md",
+      "computedHash": "4e7da8210b6b34b37723f4399e695ea489d3cae002df81b4a5e7c75188133911"
     }
   }
 }

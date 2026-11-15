@@ -23,10 +23,15 @@ from shared.auth import require_bearer_token
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+_MODEL_CACHE_DIR = os.environ.get("LLM_MODEL_CACHE_DIR") or str(
+    Path(os.environ.get("HF_HOME", "./hf-cache"))
+    / "worker-llm"
+    / "qwen2_5_3b_instruct"
+)
 MODELS = {
     "qwen2_5_3b_instruct": {
         "url": "https://huggingface.co/Qwen/Qwen2.5-3B-Instruct",
-        "path": "./hf-cache/qwen2_5_3b_instruct",
+        "path": _MODEL_CACHE_DIR,
     },
 }
 MODEL_LOCK = threading.RLock()
@@ -41,8 +46,11 @@ def load_model() -> dict[str, Any]:
         if MODEL_STATE is not None:
             return MODEL_STATE
 
+        hf_token = os.environ["SECRET_HUGGINGFACE_TOKEN"]
+        from huggingface_hub import login, snapshot_download
+
+        login(token=hf_token, add_to_git_credential=False)
         import torch
-        from huggingface_hub import snapshot_download
         from transformers import (
             AutoModelForCausalLM,
             AutoTokenizer,
@@ -53,7 +61,7 @@ def load_model() -> dict[str, Any]:
             snapshot_download(
                 repo_id=urlparse(MODELS["qwen2_5_3b_instruct"]["url"]).path.strip("/"),
                 cache_dir=MODELS["qwen2_5_3b_instruct"]["path"],
-                token=os.environ["SECRET_HUGGINGFACE_TOKEN"],
+                token=hf_token,
             )
         )
         use_cuda = torch.cuda.is_available()

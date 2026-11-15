@@ -34,6 +34,39 @@
   - Local-only fake workers may use a thin platform wrapper and shared stub logic under `{projectRoot}/fakes/`; keep fake code self-contained, CPU-only, and outside deploy targets.
 - **Outcome**: Each worker separates platform code, shared logic, and generated contracts.
 
+---
+
+## PROVIDERS
+
+**Beam**:
+- Configure GPU
+- Configure secrets
+- Configure volumes
+- Configure dependencies
+- Expose `generate`
+
+**Modal**:
+- Configure GPU
+- Configure secrets
+- Configure volumes
+- Configure dependencies
+- Expose `generate`
+
+**Flash**:
+- Configure GPU
+- Configure secrets
+- Configure dependencies
+- Expose `generate`
+
+**Cerebrium**:
+- Configure GPU
+- Configure secrets
+- Configure volumes
+- Configure dependencies
+- Expose `generate`
+
+---
+
 ## DEPLOY
 
 `worker-{family}:deploy`:
@@ -42,7 +75,6 @@
 - Expose `deploy` as the public target.
 - Use `deploy-{platform}` only as an internal edge when a worker has multiple platforms.
 - Deploy from `{projectRoot}` with no extra files.
-- Deploy only to Modal and Beam for now; maintain other platforms without deploying them.
 
 ## NON-NEGOTIABLES
 
