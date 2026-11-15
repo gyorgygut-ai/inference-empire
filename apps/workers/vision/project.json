@@ -89,11 +89,42 @@
         "prebuild"
       ]
     },
+    "deploy-cerebrium": {
+      "executor": "dotenvx:run-commands",
+      "cache": false,
+      "inputs": [
+        "{projectRoot}/cerebrium.toml",
+        "{projectRoot}/main.py",
+        "{projectRoot}/worker_vision_cerebrium.py",
+        "{projectRoot}/shared/**/*.py",
+        "{workspaceRoot}/nx.json",
+        "{workspaceRoot}/package.json",
+        "{workspaceRoot}/pyproject.toml",
+        "{workspaceRoot}/uv.lock",
+        "{workspaceRoot}/packages/schemas/workers/vision.schema.json",
+        "{workspaceRoot}/packages/schemas/tools/generate_pydantic.py",
+        { "env": "CEREBRIUM_PROJECT_ID" },
+        { "env": "SECRET_CEREBRIUM_SERVICE_ACCOUNT_TOKEN" },
+        { "env": "SECRET_HUGGINGFACE_TOKEN" }
+      ],
+      "outputs": [],
+      "options": {
+        "cwd": "{projectRoot}",
+        "env": {
+          "CEREBRIUM_PROJECT_ID": "${CEREBRIUM_PROJECT_ID}",
+          "CEREBRIUM_SERVICE_ACCOUNT_TOKEN": "${SECRET_CEREBRIUM_SERVICE_ACCOUNT_TOKEN}",
+          "SECRET_HUGGINGFACE_TOKEN": "${SECRET_HUGGINGFACE_TOKEN}"
+        },
+        "command": "uvx --from cerebrium cerebrium projects set \"$CEREBRIUM_PROJECT_ID\" && uvx --from cerebrium cerebrium deploy -y && uvx --from cerebrium cerebrium secrets add --app \"${CEREBRIUM_PROJECT_ID}_worker-vision\" SECRET_HUGGINGFACE_TOKEN=\"$SECRET_HUGGINGFACE_TOKEN\" && uvx --from cerebrium cerebrium deploy -y"
+      },
+      "dependsOn": ["prebuild"]
+    },
     "deploy": {
       "executor": "nx:noop",
       "dependsOn": [
         "deploy-modal",
-        "deploy-beam"
+        "deploy-beam",
+        "deploy-cerebrium"
       ],
       "cache": false
     },
@@ -135,6 +166,21 @@
         },
         "command": "uv run --locked --group test pytest",
         "args": "apps/workers/vision/tests/test_worker_vision_acceptance.py -q"
+      }
+    },
+    "test-acceptance-cerebrium": {
+      "executor": "dotenvx:run-commands",
+      "cache": false,
+      "dependsOn": ["deploy-cerebrium"],
+      "options": {
+        "cwd": "{workspaceRoot}",
+        "env": {
+          "CEREBRIUM_PROJECT_ID": "${CEREBRIUM_PROJECT_ID}",
+          "SECRET_CEREBRIUM_SERVICE_ACCOUNT_TOKEN": "${SECRET_CEREBRIUM_SERVICE_ACCOUNT_TOKEN}",
+          "PYTHONPATH": "apps/workers/vision"
+        },
+        "command": "uv run --locked --project apps/workers/vision python",
+        "args": "apps/workers/vision/tests/acceptance_cerebrium.py"
       }
     }
   }

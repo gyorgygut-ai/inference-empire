@@ -29,6 +29,8 @@ DEPENDENCIES = [
     "accelerate==1.14.0",
     "boto3==1.43.83",
     "fastapi==0.141.1",
+    "huggingface-hub==1.29.0",
+    "hf_transfer==0.1.9",
 ]
 
 def model_volumes():
@@ -40,16 +42,19 @@ def model_volumes():
     ]
 
 
-def download_models() -> dict[str, Path]:
+def download_models(cache_dir: str | Path | None = None) -> dict[str, Path]:
     """Download declared models into their mounted cache paths."""
-    from huggingface_hub import snapshot_download
+    from huggingface_hub import login, snapshot_download
 
+    token = os.environ["SECRET_HUGGINGFACE_TOKEN"]
+    login(token=token, add_to_git_credential=False)
+    cache_root = Path(cache_dir) if cache_dir is not None else None
     return {
         name: Path(
             snapshot_download(
                 repo_id=urlparse(model["url"]).path.strip("/"),
-                cache_dir=model["path"],
-                token=os.environ["SECRET_HUGGINGFACE_TOKEN"],
+                cache_dir=str(cache_root / name) if cache_root is not None else model["path"],
+                token=token,
             )
         )
         for name, model in MODEL_CACHES.items()
@@ -69,7 +74,7 @@ def resolve_analyze_prompt(loaded_default: str, override: str | None) -> str:
     """Return caller override when set, else the built-in default prompt."""
     return override if override else loaded_default
 
-def load_pipeline_lazy():
+def load_pipeline_lazy(cache_dir: str | Path | None = None):
     """Lazy load model on first request (not at startup)."""
     print(f"[INIT] lazily loading model {REPO_ID}", flush=True)
     t0 = time.time()
@@ -88,7 +93,7 @@ def load_pipeline_lazy():
 
     from transformers import AutoProcessor, Qwen2VLForConditionalGeneration
 
-    model_dir = download_models()[MODEL_NAME]
+    model_dir = download_models(cache_dir=cache_dir)[MODEL_NAME]
     model = Qwen2VLForConditionalGeneration.from_pretrained(
         str(model_dir), torch_dtype=torch.bfloat16, device_map="auto"
     ).eval()

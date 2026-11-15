@@ -137,6 +137,7 @@ def test_model_download_uses_schema_huggingface_token(monkeypatch, tmp_path):
         return str(tmp_path)
 
     monkeypatch.setenv("SECRET_HUGGINGFACE_TOKEN", "hf-sentinel")
+    monkeypatch.setattr("huggingface_hub.login", lambda **_kwargs: None)
     monkeypatch.setattr("huggingface_hub.snapshot_download", snapshot_download)
     vision_worker.download_models()
     assert seen.get("token") == "hf-sentinel"

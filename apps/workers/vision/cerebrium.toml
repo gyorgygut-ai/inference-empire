@@ -1,0 +1,35 @@
+[cerebrium.deployment]
+name = "worker-vision"
+python_version = "3.11"
+disable_auth = false
+include = ["./*", "main.py", "worker_vision_cerebrium.py", "cerebrium.toml", "shared/**/*", "dist/**/*"]
+exclude = [".*", "__pycache__/*", "*.pyc", ".venv", ".venv/**", "fakes/*", "tests/*"]
+use_uv = true
+deployment_initialization_timeout = 800
+
+[cerebrium.hardware]
+cpu = 2
+memory = 16.0
+compute = "ADA_L4"
+gpu_count = 1
+region = "global"
+
+[cerebrium.scaling]
+min_replicas = 0
+max_replicas = 1
+replica_concurrency = 1
+scaling_metric = "concurrency_utilization"
+scaling_target = 100
+cooldown = 60
+compute_tier = "interruptible"
+
+[cerebrium.dependencies.pip]
+torch = "==2.9.1"
+transformers = "==5.16.1"
+torchvision = "==0.24.1"
+pillow = "==12.3.0"
+accelerate = "==1.14.0"
+boto3 = "==1.43.83"
+fastapi = "==0.141.1"
+huggingface-hub = "==1.29.0"
+hf-transfer = "==0.1.9"
