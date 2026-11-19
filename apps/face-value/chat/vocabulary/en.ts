@@ -8,6 +8,7 @@ export const vocabulary = {
     uploadReference: "Upload your photo...",
     uploadCta: "Click || drop",
     outcomesAria: "Outcomes",
+    goAgain: "Go again",
 
     working: "Working on it...",
     resultAlt: "Generated",

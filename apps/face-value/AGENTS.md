@@ -53,6 +53,8 @@
   - default: full width `chat/Client`
   - from md: 2/3 `aside > HeroImage` + 1/3 `chat/Client`
 - `./chat/shell/HeroImage.tsx`: hero image fills space
+- `@inference/ui`: generic `BottomDrawer`
+- `./chat/shell/FlowDrawers.tsx`: outcome and reference-image drawers
 - `./chat/client.tsx`: `chat.AppChat`
 - `./chat/options.ts`: chat ui `options` (append-only fetcher inline, no LLM transport)
 - `./chat/messages/`: a `message factory` per file
@@ -70,6 +72,13 @@
 ## UI Flow
 
 Progressive chat thread, with NO LLM: tool result triggres next tool call.
+
+**Drawers**:
+
+- Outcome and reference-image drawers render outside `Messages`
+- Each drawer opens while its corresponding tool call is unresolved
+- Open state derives from TanStack AI chat messages/tool results; no separate state
+- Drawers are separate; `BottomDrawer` is generic UI
 
 **Inference Requests**:
 
@@ -89,13 +98,15 @@ Progressive chat thread, with NO LLM: tool result triggres next tool call.
 
 - Trigger: initial assistant message
 - Text: `requestSelectedOutcome.assistantMessage`
-- Tool: `presentOutcomeOptions` -> `title` in 2-col grid; sort by `order`
+- Drawer: `presentOutcomeOptions` -> `title` in 2-col grid; sort by `order`
+- Selection: append selected outcome as a user message
 
 **2. Request Reference Image**:
 
 - Trigger: `requestSelectedOutcome` result
 - Text: `requestReferenceImage.assistantMessage`
-- Tool: `presentImageUpload` -> image upload dropzone
+- Drawer: `presentImageUpload` -> image upload dropzone
+- Upload: append uploaded image as a user message
 
 **3. Approve + Run Image Generation**:
 
@@ -107,7 +118,9 @@ Progressive chat thread, with NO LLM: tool result triggres next tool call.
   - call 2 `input-complete`: `<Spinner />`
     - text: `runGenerateImage.responded.assistantMessage`
   - error: `runGenerateImage.error.assistantMessage`
+    - button: `Go again`
   - complete: `<GenerateImageArtifact src={presigned url} />`
+    - button: `Go again`
 
 <!-- BEGIN:nextjs-agent-rules -->
 

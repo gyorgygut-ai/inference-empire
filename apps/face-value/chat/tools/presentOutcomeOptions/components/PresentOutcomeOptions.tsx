@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { useChatContext } from "@/chat/client";
+import { useChatContext } from "@/chat/contexts";
 import { selectOutcome } from "../../../thread";
 import { vocabulary } from "@/chat/vocabulary/en";
 import { findLastToolCall } from "../../../findLastToolCall";
@@ -13,9 +13,12 @@ import { OutcomeOptionButton } from "./OutcomeOptionButton";
 type PresentOutcomeOptionsProps = ToolProps<
   ChatOptions,
   "presentOutcomeOptions"
->;
+> & { inDrawer?: boolean }
 
-export const PresentOutcomeOptions = ({ part }: PresentOutcomeOptionsProps) => {
+export const PresentOutcomeOptions = ({
+  inDrawer = false,
+  part,
+}: PresentOutcomeOptionsProps) => {
   const chat = useChatContext();
   const { messages } = chat;
   const outcomes = [...(part.input?.outcomes ?? [])].sort(
@@ -33,6 +36,10 @@ export const PresentOutcomeOptions = ({ part }: PresentOutcomeOptionsProps) => {
       void selectOutcome(chat, part, outcome);
     }
   };
+
+  if (!inDrawer) {
+    return null;
+  }
 
   return (
     <div

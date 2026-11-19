@@ -1,4 +1,4 @@
-import type { useChatContext } from "@/chat/client"
+import type { useChatContext } from "@/chat/contexts"
 
 type AddResult = Parameters<ReturnType<typeof useChatContext>["addToolResult"]>[0]
 

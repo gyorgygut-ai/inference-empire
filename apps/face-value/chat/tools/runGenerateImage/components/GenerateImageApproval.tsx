@@ -1,6 +1,6 @@
 "use client"
 import React from "react"
-import { useChatContext } from "@/chat/client"
+import { useChatContext } from "@/chat/contexts"
 import { approveGeneration } from "../../../thread"
 import { vocabulary } from "@/chat/vocabulary/en"
 import type { ToolProps } from "@tanstack/ai-react/ui"

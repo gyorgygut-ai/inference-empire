@@ -1,16 +1,25 @@
 "use client";
 
-import { useChatContext } from "@/chat/client";
+import { useChatContext } from "@/chat/contexts";
 import type { ChatOptions } from "./options";
+import type { ToolProps } from "@tanstack/ai-react/ui";
 
-export function findLastToolCall(
+type ToolName = ChatOptions["tools"][number]["name"]
+type ToolPart<TName extends ToolName> = Extract<
+  ToolProps<ChatOptions>["part"],
+  { name: TName }
+>
+
+export function findLastToolCall<TName extends ToolName>(
   messages: ReturnType<typeof useChatContext>["messages"],
-  name: ChatOptions["tools"][number]["name"],
+  name: TName,
 ) {
   return [...messages]
     .reverse()
     .flatMap(({ parts }) => parts)
-    .find((part) => part.type === "tool-call" && part.name === name);
+    .find((part): part is ToolPart<TName> =>
+      part.type === "tool-call" && part.name === name,
+    )
 }
 
 export function isGenerationLocked(
@@ -21,5 +30,5 @@ export function isGenerationLocked(
     return false;
   }
 
-  return last.state !== "approval-requested";
+  return last.state === "input-complete" || last.state === "input-streaming"
 }

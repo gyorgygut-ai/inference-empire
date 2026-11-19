@@ -1,6 +1,6 @@
 "use client"
 import React from "react"
-import { useChatContext } from "@/chat/client"
+import { useChatContext } from "@/chat/contexts"
 import { vocabulary } from "@/chat/vocabulary/en"
 import { findLastToolCall } from "../../../findLastToolCall"
 import type { ToolProps } from "@tanstack/ai-react/ui"
@@ -8,6 +8,7 @@ import type { ChatOptions } from "../../../options"
 import { Spinner } from "./Spinner"
 import { GenerateImageArtifact } from "./GenerateImageArtifact"
 import { GenerateImageApproval } from "./GenerateImageApproval"
+import { GoAgainButton } from "./GoAgainButton"
 
 type RunGenerateImageProps = ToolProps<ChatOptions, "runGenerateImage">
 
@@ -26,14 +27,22 @@ export const GenerateImageTool = ({ part, result }: RunGenerateImageProps) => {
   if (part.state === "error") {
     const detail = result?.error?.trim() ? result.error : vocabulary.runGenerateImage.error.assistantMessage
     return (
-      <p className="my-2 text-sm italic" aria-labelledby="errorRejected">
-        <span id="errorRejected" className="sr-only">{detail}</span>
-        {detail}
-      </p>
+      <div className="my-2 flex flex-col items-start gap-3">
+        <p className="text-sm italic" aria-labelledby="errorRejected">
+          <span id="errorRejected" className="sr-only">{detail}</span>
+          {detail}
+        </p>
+        <GoAgainButton />
+      </div>
     )
   }
   if (part.output?.presignedUrl) {
-    return <GenerateImageArtifact url={part.output.presignedUrl} />
+    return (
+      <div className="flex flex-col items-start gap-3">
+        <GenerateImageArtifact url={part.output.presignedUrl} />
+        <GoAgainButton />
+      </div>
+    )
   }
   if (part.state === "input-complete") {
     return (

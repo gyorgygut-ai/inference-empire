@@ -1,13 +1,15 @@
 "use client"
 import { requestReferenceImage } from "./messages/requestReferenceImage"
 import { runGenerateImage } from "./messages/runGenerateImage"
+import { selectedOutcome } from "./messages/selectedOutcome"
+import { referenceImage } from "./messages/referenceImage"
 import { outcomeSelected } from "./tools/presentOutcomeOptions/results/outcomeSelected"
 import { referenceUploaded } from "./tools/presentImageUpload/results/referenceUploaded"
 import { generationSucceeded } from "./tools/runGenerateImage/results/generationSucceeded"
 import { generationFailed } from "./tools/runGenerateImage/results/generationFailed"
 import { generateImageAction } from "@/app/actions/generate-image"
 import { findLastToolCall, isGenerationLocked } from "./findLastToolCall"
-import type { useChatContext } from "@/chat/client"
+import type { useChatContext } from "@/chat/contexts"
 import type { ToolProps } from "@tanstack/ai-react/ui"
 import type { ChatOptions } from "./options"
 
@@ -17,6 +19,7 @@ type ChatApi = Pick<
 >
 
 type OutcomeSelection = ToolProps<ChatOptions, "presentOutcomeOptions">["part"]
+type Outcome = NonNullable<OutcomeSelection["input"]>["outcomes"][number]
 type UploadCall = ToolProps<ChatOptions, "presentImageUpload">["part"]
 type GenerationCall = ToolProps<ChatOptions, "runGenerateImage">["part"]
 
@@ -39,16 +42,13 @@ const readFileAsData = (file: File): Promise<{ base64: string; mimeType: string 
 export const selectOutcome = async (
   chat: ChatApi,
   part: OutcomeSelection,
-  outcome: { id: string },
+  outcome: Outcome,
 ): Promise<void> => {
-  const hasUpload = chat.messages.some((message) =>
-    message.parts.some(
-      (item) => item.type === "tool-call" && item.name === "presentImageUpload",
-    ),
-  )
-  if (!hasUpload) {
-    chat.setMessages([...chat.messages, requestReferenceImage(outcome.id)])
-  }
+  chat.setMessages([
+    ...chat.messages,
+    selectedOutcome(outcome.title),
+    requestReferenceImage(outcome.id),
+  ])
   await chat.addToolResult(outcomeSelected(part.id, outcome))
 }
 
@@ -70,6 +70,7 @@ export const uploadReference = async (
     return
   }
   const data = await readFileAsData(file)
+  chat.setMessages([...chat.messages, referenceImage(data)])
   await chat.addToolResult(referenceUploaded(part.id, data))
   const lastGeneration = findLastToolCall(chat.messages, "runGenerateImage")
   const hasPendingApproval =

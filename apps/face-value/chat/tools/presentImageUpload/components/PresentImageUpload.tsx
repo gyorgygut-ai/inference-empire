@@ -1,16 +1,21 @@
 "use client"
 import React from "react"
 import clsx from "clsx"
-import { useChatContext } from "@/chat/client"
+import { useChatContext } from "@/chat/contexts"
 import { vocabulary } from "@/chat/vocabulary/en"
 import { uploadReference } from "../../../thread"
 import { isGenerationLocked } from "../../../findLastToolCall"
 import type { ToolProps } from "@tanstack/ai-react/ui"
 import type { ChatOptions } from "../../../options"
 
-type PresentImageUploadProps = ToolProps<ChatOptions, "presentImageUpload">
+type PresentImageUploadProps = ToolProps<ChatOptions, "presentImageUpload"> & {
+  inDrawer?: boolean
+}
 
-export const PresentImageUpload = ({ part }: PresentImageUploadProps) => {
+export const PresentImageUpload = ({
+  inDrawer = false,
+  part,
+}: PresentImageUploadProps) => {
   const chat = useChatContext()
   const inputRef = React.useRef<HTMLInputElement>(null)
   const outcomeId = part.input?.outcomeId
@@ -32,6 +37,10 @@ export const PresentImageUpload = ({ part }: PresentImageUploadProps) => {
     if (inputRef.current) {
       inputRef.current.value = ""
     }
+  }
+
+  if (!inDrawer) {
+    return null
   }
 
   return (

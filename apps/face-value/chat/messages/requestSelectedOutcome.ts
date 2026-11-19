@@ -5,10 +5,11 @@ import type { PublicOutcome } from "@/outcomes"
 import type { ChatOptions } from "../options"
 
 type AppTools = ChatOptions["tools"]
+type OutcomeOption = Pick<PublicOutcome, "id" | "title" | "order">
 
-export function requestSelectedOutcome(outcomes: PublicOutcome[] = []): UIMessage<AppTools> {
+export function requestSelectedOutcome(outcomes: OutcomeOption[] = []): UIMessage<AppTools> {
   return {
-    id: "select-outcome",
+    id: crypto.randomUUID(),
     role: "assistant",
     parts: [
       textPart(vocabulary.requestSelectedOutcome.assistantMessage),
