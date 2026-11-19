@@ -43,7 +43,6 @@ export const PresentOutcomeOptions = ({
 
   return (
     <div
-      className="animate-in fade-in-50 slide-in-from-bottom-2 duration-400"
       aria-labelledby="selectOutcome"
     >
       <div

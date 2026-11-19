@@ -5,7 +5,7 @@ export const vocabulary = {
   },
   messages: {
     selectOutcome: "Select an outcome.",
-    uploadReference: "Upload your photo...",
+    uploadReference: "Upload your photo.",
     uploadCta: "Click || drop",
     outcomesAria: "Outcomes",
     goAgain: "Go again",
@@ -14,10 +14,10 @@ export const vocabulary = {
     resultAlt: "Generated",
   },
   requestSelectedOutcome: {
-    assistantMessage: "Select an outcome:",
+    assistantMessage: "Select an outcome.",
   },
   requestReferenceImage: {
-    assistantMessage: "Upload your photo...",
+    assistantMessage: "Upload your photo.",
   },
   runGenerateImage: {
     requested: {

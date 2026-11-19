@@ -45,7 +45,7 @@ export const PresentImageUpload = ({
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="animate-in fade-in-50 slide-in-from-bottom-2 duration-500 bg-surface italic rounded-xl p-4" aria-labelledby="uploadReference">
+      <div className="bg-surface italic rounded-xl p-4" aria-labelledby="uploadReference">
         <span id="uploadReference" className="sr-only">{vocabulary.messages.uploadReference}</span>
         <input
           ref={inputRef}
