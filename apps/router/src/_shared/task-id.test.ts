@@ -6,6 +6,10 @@ describe('task id encoding', () => {
     expect(decodeTaskId(encodeTaskId('beam', 'task-123'))).toEqual({ provider: 'beam', originalTaskId: 'task-123' })
   })
 
+  it('round-trips Cloudflare task ids inferred from the strategy registry', () => {
+    expect(decodeTaskId(encodeTaskId('cloudflare', 'task-123'))).toEqual({ provider: 'cloudflare', originalTaskId: 'task-123' })
+  })
+
   it('rejects non-canonical base64', () => {
     expect(() => decodeTaskId('YmVhbTp0YXNrLTEyMw')).toThrow()
   })

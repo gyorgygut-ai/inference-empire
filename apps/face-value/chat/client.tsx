@@ -10,14 +10,14 @@ import type { PublicOutcome } from "@/outcomes"
 import { PresentOutcomeOptions } from "./tools/presentOutcomeOptions"
 import { PresentImageUpload } from "./tools/presentImageUpload"
 import { GenerateImageTool } from "./tools/runGenerateImage"
-import { FlowDrawers } from "./shell/FlowDrawers"
+import { ChatLayout } from "./shell/ChatLayout"
 import { chatContext, interruptContext, partContext } from "./contexts"
 
 export const { useAppChat, useChatContext } = createChatHook({
   options: chatOptions,
   context: { chatContext, interruptContext, partContext },
   components: {
-    layout: FlowDrawers,
+    layout: ChatLayout,
     message: Message,
   },
   partsComponents: {

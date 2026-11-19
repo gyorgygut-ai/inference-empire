@@ -5,7 +5,7 @@ export default defineConfig({
   resolve: {
     tsconfigPaths: true,
   },
-  root: __dirname,
+  root: import.meta.dirname,
   cacheDir: '../../node_modules/.vite/packages/ui',
   plugins: [react()],
   test: {

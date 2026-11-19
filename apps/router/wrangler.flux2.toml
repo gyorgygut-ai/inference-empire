@@ -6,3 +6,7 @@ tsconfig = "tsconfig.json"
 
 [observability]
 enabled = true
+
+[[services]]
+binding = "WORKER_CLOUDFLARE"
+service = "worker-flux2-cloudflare"

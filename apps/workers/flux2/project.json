@@ -9,6 +9,99 @@
     "model:flux2"
   ],
   "targets": {
+    "types-cloudflare": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "options": {
+        "cwd": "{projectRoot}/cloudflare",
+        "command": "npx wrangler types worker-configuration.d.ts --config wrangler.jsonc"
+      }
+    },
+    "prebuild-cloudflare": {
+      "executor": "nx:noop",
+      "cache": false,
+      "dependsOn": [
+        "types-cloudflare",
+        {
+          "projects": ["schemas"],
+          "target": "build-ts",
+          "options": "forward"
+        }
+      ],
+      "options": {
+        "source": "packages/schemas/workers/flux2.schema.json",
+        "out": "apps/workers/flux2/cloudflare/dist/flux2.schema.ts"
+      }
+    },
+    "test-cloudflare": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "dependsOn": ["prebuild-cloudflare"],
+      "options": {
+        "cwd": "{projectRoot}",
+        "command": "npx vitest run --config cloudflare/vitest.config.mts"
+      }
+    },
+    "typecheck-cloudflare": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "dependsOn": ["prebuild-cloudflare"],
+      "options": {
+        "cwd": "{projectRoot}",
+        "command": "npx tsc --project cloudflare/tsconfig.json --noEmit"
+      }
+    },
+    "lint-cloudflare": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "options": {
+        "cwd": "{projectRoot}",
+        "command": "npx oxlint cloudflare/src"
+      }
+    },
+    "build-cloudflare": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "dependsOn": ["prebuild-cloudflare"],
+      "options": {
+        "cwd": "{projectRoot}/cloudflare",
+        "command": "npx wrangler deploy --dry-run --config wrangler.jsonc"
+      }
+    },
+    "dev-cloudflare": {
+      "executor": "dotenvx:run-commands",
+      "continuous": true,
+      "cache": false,
+      "readyWhen": {
+        "url": "http://localhost:8791/health"
+      },
+      "dependsOn": ["prebuild-cloudflare"],
+      "options": {
+        "cwd": "{projectRoot}/cloudflare",
+        "env": {
+          "AUTH_TOKEN": "${SECRET_ROUTER_FLUX2_AUTH_TOKEN}",
+          "CLOUDFLARE_INCLUDE_PROCESS_ENV": "true"
+        },
+        "command": "npx wrangler dev",
+        "args": "--config wrangler.jsonc --port 8791 --inspector-port 9231 --persist-to $NX_WORKSPACE_ROOT/tmp/wrangler/flux2-cloudflare"
+      }
+    },
+    "deploy-cloudflare": {
+      "executor": "dotenvx:run-commands",
+      "cache": false,
+      "dependsOn": ["build-cloudflare"],
+      "options": {
+        "cwd": "{projectRoot}/cloudflare",
+        "env": {
+          "AUTH_TOKEN": "${SECRET_ROUTER_FLUX2_AUTH_TOKEN}"
+        },
+        "commands": [
+          "npx wrangler deploy --config wrangler.jsonc",
+          "npx tsx $NX_WORKSPACE_ROOT/tools/worker-secrets.ts env.schema.deploy.ts | npx wrangler secret bulk --config wrangler.jsonc"
+        ],
+        "parallel": false
+      }
+    },
     "deploy-modal": {
       "executor": "dotenvx:run-commands",
       "cache": true,

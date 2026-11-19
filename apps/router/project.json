@@ -54,13 +54,13 @@
       },
       "dependsOn": [
         "predev",
-        "worker-flux2:deploy-beam"
+        "worker-flux2:dev-cloudflare"
       ],
       "options": {
         "cwd": "apps/router",
         "env": {
           "AUTH_TOKEN": "${SECRET_ROUTER_FLUX2_AUTH_TOKEN}",
-          "WORKER_BEAM_URL": "$(npx tsx $NX_WORKSPACE_ROOT/tools/get-beam-url.ts worker-flux2)",
+          "WORKER_CLOUDFLARE_URL": "http://localhost:8791",
           "CLOUDFLARE_INCLUDE_PROCESS_ENV": "true"
         },
         "command": "npx wrangler dev",
@@ -101,17 +101,17 @@
       "cache": false,
       "dependsOn": [
         "build",
-        "worker-flux2:deploy-beam"
+        "worker-flux2:deploy-cloudflare"
       ],
       "options": {
         "cwd": "apps/router",
         "env": {
           "AUTH_TOKEN": "${SECRET_ROUTER_FLUX2_AUTH_TOKEN}",
-          "WORKER_BEAM_URL": "$(npx tsx $NX_WORKSPACE_ROOT/tools/get-beam-url.ts worker-flux2)"
+          "WORKER_CLOUDFLARE_URL": "$(npx tsx $NX_WORKSPACE_ROOT/tools/get-cf-worker-url.ts worker-flux2-cloudflare)"
         },
         "commands": [
           "npx wrangler deploy {args}",
-          "npx tsx $NX_WORKSPACE_ROOT/tools/worker-secrets.ts env.schema.deploy.ts | npx wrangler secret bulk {args}"
+          "set -o pipefail && npx tsx $NX_WORKSPACE_ROOT/tools/worker-secrets.ts env.schema.deploy.ts | npx wrangler secret bulk {args}"
         ],
         "args": "-c wrangler.flux2.toml",
         "parallel": false

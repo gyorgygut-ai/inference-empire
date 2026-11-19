@@ -1,0 +1,54 @@
+{
+  "$schema": "../../../../node_modules/wrangler/config-schema.json",
+  "name": "worker-flux2-cloudflare",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-07",
+  "tsconfig": "tsconfig.json",
+  "ai": {
+    "binding": "AI",
+    "remote": true
+  },
+  "queues": {
+    "producers": [
+      {
+        "binding": "FLUX2_QUEUE",
+        "queue": "worker-flux2-cloudflare"
+      }
+    ],
+    "consumers": [
+      {
+        "queue": "worker-flux2-cloudflare",
+        "max_batch_size": 1,
+        "max_batch_timeout": 1,
+        "max_retries": 3
+      }
+    ]
+  },
+  "r2_buckets": [
+    {
+      "binding": "ARTIFACTS",
+      "bucket_name": "worker-flux2-cloudflare-artifacts"
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "TASKS",
+        "class_name": "TaskState"
+      }
+    ]
+  },
+  "exports": {
+    "TaskState": {
+      "type": "durable-object",
+      "storage": "sqlite"
+    }
+  },
+  "observability": {
+    "enabled": true,
+    "traces": {
+      "enabled": true,
+      "head_sampling_rate": 0.1
+    }
+  }
+}

@@ -2,7 +2,7 @@ import { createRouter } from "./_shared/router"
 import { api as tinysdApi } from "../dist/tiny_sd.schema"
 import { readConfig, type RouterEnv } from "./_shared/config"
 
-const router = createRouter(tinysdApi, "", { readConfig })
+const router = createRouter(tinysdApi, "", { readConfig, provider: 'beam' })
 
 export default {
   fetch(request: Request, env: RouterEnv): Promise<Response> {

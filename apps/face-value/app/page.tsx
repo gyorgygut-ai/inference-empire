@@ -7,7 +7,11 @@ export const dynamic = "force-dynamic"
 
 const Home = async () => {
   const outcomes = getPublicOutcomes()
-  return <SplitLayout chat={<ChatClient outcomes={outcomes} />} />
+  return (
+    <SplitLayout>
+      <ChatClient outcomes={outcomes} />
+    </SplitLayout>
+  )
 }
 
 export default Home

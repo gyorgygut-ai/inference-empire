@@ -8,4 +8,4 @@ if (!res.ok) {
   throw new Error(await res.text())
 }
 const { result } = (await res.json()) as { result: { subdomain: string } }
-process.stdout.write(`https://${workerName}.${result.subdomain}.workers.dev\n`)
+process.stdout.write(`https://${workerName}.${result.subdomain}.workers.dev`)

@@ -1,1 +1,3 @@
 /dist/
+/cloudflare/worker-configuration.d.ts
+/cloudflare/.wrangler/

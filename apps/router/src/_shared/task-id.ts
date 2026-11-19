@@ -1,7 +1,7 @@
-import { z } from 'zod'
+import { providerSchema, type Provider } from './strategies/strategy'
 
-export const providerSchema = z.enum(['beam', 'modal', 'flash'])
-export type Provider = z.infer<typeof providerSchema>
+export { providerSchema }
+export type { Provider }
 
 function encodeBase64(text: string): string {
   let binary = ''

@@ -1,9 +1,8 @@
 import { Router } from 'itty-router'
 import { z } from 'zod'
 import type { RouterEnv, RuntimeConfig } from './config'
-import { pickStrategy } from './services/pick-strategy'
-import { createStrategy } from './services/create-strategy'
-import { StrategyUnavailableError, taskStatusSchema } from './strategies/strategy'
+import { createStrategy } from './strategies'
+import { StrategyUnavailableError, taskStatusSchema, type Provider } from './strategies/strategy'
 import { decodeTaskId, encodeTaskId } from './task-id'
 
 function json(body: unknown, status = 200) {
@@ -12,6 +11,7 @@ function json(body: unknown, status = 200) {
 
 interface Dependencies {
   readConfig: (env: RouterEnv) => RuntimeConfig;
+  provider: Provider;
   fetchImpl?: typeof fetch;
 }
 
@@ -29,6 +29,8 @@ export function createRouter<Api extends z.ZodObject<{ input: z.ZodType; output:
     return config
   }
   function upstreamError(error: unknown) {
+    // oxlint-disable-next-line no-console
+    console.error(JSON.stringify({ message: 'Router upstream request failed', error: String(error) }))
     return json({ error: error instanceof StrategyUnavailableError ? 'Strategy unavailable' : 'Worker request failed' },
       error instanceof StrategyUnavailableError ? 503 : 502)
   }
@@ -44,7 +46,7 @@ export function createRouter<Api extends z.ZodObject<{ input: z.ZodType; output:
     const envelope = z.object({ input: api.shape.input }).safeParse(body)
     if (!envelope.success) {return json({ error: 'Invalid input' }, 400)}
     try {
-      const provider = pickStrategy()
+      const provider = dependencies.provider
       const strategy = createStrategy(provider, config, dependencies.fetchImpl)
       const result = await strategy.pushToTaskQueue(envelope.data.input)
       return json({ task_id: encodeTaskId(provider, result.task_id) })

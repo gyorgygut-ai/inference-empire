@@ -9,22 +9,31 @@ export const BottomDrawer = ({
   children: ReactNode
   label: string
   open: boolean
-}) => {
-  if (!open) {
-    return null
-  }
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center">
-      <div aria-hidden="true" className="absolute inset-0 bg-black/50" />
+}) => (
+  <div
+    aria-hidden={!open}
+    className={`relative grid w-full transition-[grid-template-rows] duration-300 ease-out motion-reduce:transition-none ${
+      open ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+    }`}
+  >
+    <div
+      aria-hidden="true"
+      className={`fixed inset-0 z-40 bg-black/50 transition-opacity duration-300 ease-out motion-reduce:transition-none ${
+        open ? "opacity-100" : "pointer-events-none opacity-0"
+      }`}
+    />
+    <div className="min-h-0 overflow-hidden">
       <section
         aria-label={label}
-        aria-modal="true"
-        className="relative max-h-[85vh] w-full overflow-y-auto rounded-t-2xl bg-background p-4 shadow-xl"
+        aria-modal={open}
+        className={`sticky bottom-0 z-50 max-h-[85dvh] w-full overflow-y-auto rounded-t-2xl bg-background p-4 shadow-xl transition-transform duration-300 ease-out motion-reduce:transition-none ${
+          open ? "translate-y-0" : "translate-y-full"
+        }`}
+        inert={!open}
         role="dialog"
       >
         {children}
       </section>
     </div>
-  )
-}
+  </div>
+)
